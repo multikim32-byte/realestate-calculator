@@ -156,6 +156,26 @@ async function callApi(
   };
 }
 
+// page 1 (오래된 항목) + 마지막 페이지 (최신 항목) 를 병합해서 반환
+// → API가 정렬을 지원하지 않아서 최신 항목이 항상 마지막 페이지에 있음
+async function callApiWithLatest(
+  endpoint: string,
+  serviceKey: string,
+  perPage: number,
+  extra?: Record<string, string>
+): Promise<{ data: any[]; totalCount: number }> {
+  const first = await callApi(endpoint, serviceKey, 1, perPage, extra);
+  if (first.totalCount <= perPage) return first;
+
+  const lastPage = Math.ceil(first.totalCount / perPage);
+  const last = await callApi(endpoint, serviceKey, lastPage, perPage, extra);
+
+  const seen = new Set(first.data.map((d: any) => d.HOUSE_MANAGE_NO ?? d.PBLANC_NO));
+  const newItems = last.data.filter((d: any) => !seen.has(d.HOUSE_MANAGE_NO ?? d.PBLANC_NO));
+
+  return { data: [...first.data, ...newItems], totalCount: first.totalCount };
+}
+
 // ─── 파서: 상세조회 ──────────────────────────────────────────────────────────
 
 function parseDetail(raw: any, recruitType: '신규공급' | '선착순'): PublicSaleItem {
@@ -239,10 +259,8 @@ export async function fetchAPTSaleList(
   perPage = 10,
   df: DateFilter = {}
 ): Promise<{ items: PublicSaleItem[]; total: number }> {
-  // 최신 공고 누락 방지: API perPage를 2배로 요청 후 공고일 내림차순 정렬
-  const fetchSize = Math.min(perPage * 2, 100);
-  const { data, totalCount } = await callApi(
-    'getAPTLttotPblancDetail', serviceKey, page, fetchSize, buildDateCond(df)
+  const { data, totalCount } = await callApiWithLatest(
+    'getAPTLttotPblancDetail', serviceKey, Math.min(perPage * 2, 100), buildDateCond(df)
   );
   const items = sortByAnnouncementDesc(data.map(d => parseDetail(d, '신규공급')), perPage);
   return { items, total: totalCount };
@@ -257,9 +275,8 @@ export async function fetchOfficetelSaleList(
   perPage = 10,
   df: DateFilter = {}
 ): Promise<{ items: PublicSaleItem[]; total: number }> {
-  const fetchSize = Math.min(perPage * 2, 100);
-  const { data, totalCount } = await callApi(
-    'getUrbtyOfctlLttotPblancDetail', serviceKey, page, fetchSize, buildDateCond(df)
+  const { data, totalCount } = await callApiWithLatest(
+    'getUrbtyOfctlLttotPblancDetail', serviceKey, Math.min(perPage * 2, 100), buildDateCond(df)
   );
   const items = sortByAnnouncementDesc(data.map(d => parseDetail(d, '신규공급')), perPage);
   return { items, total: totalCount };
@@ -274,9 +291,8 @@ export async function fetchRemndrSaleList(
   perPage = 10,
   df: DateFilter = {}
 ): Promise<{ items: PublicSaleItem[]; total: number }> {
-  const fetchSize = Math.min(perPage * 2, 100);
-  const { data, totalCount } = await callApi(
-    'getRemndrLttotPblancDetail', serviceKey, page, fetchSize, buildDateCond(df)
+  const { data, totalCount } = await callApiWithLatest(
+    'getRemndrLttotPblancDetail', serviceKey, Math.min(perPage * 2, 100), buildDateCond(df)
   );
   const items = sortByAnnouncementDesc(data.map(d => parseDetail(d, '선착순')), perPage);
   return { items, total: totalCount };
@@ -291,9 +307,8 @@ export async function fetchPblPvtRentSaleList(
   perPage = 10,
   df: DateFilter = {}
 ): Promise<{ items: PublicSaleItem[]; total: number }> {
-  const fetchSize = Math.min(perPage * 2, 100);
-  const { data, totalCount } = await callApi(
-    'getPblPvtRentLttotPblancDetail', serviceKey, page, fetchSize, buildDateCond(df)
+  const { data, totalCount } = await callApiWithLatest(
+    'getPblPvtRentLttotPblancDetail', serviceKey, Math.min(perPage * 2, 100), buildDateCond(df)
   );
   const items = sortByAnnouncementDesc(data.map(d => parseDetail(d, '신규공급')), perPage);
   return { items, total: totalCount };
@@ -308,9 +323,8 @@ export async function fetchOptSaleList(
   perPage = 10,
   df: DateFilter = {}
 ): Promise<{ items: PublicSaleItem[]; total: number }> {
-  const fetchSize = Math.min(perPage * 2, 100);
-  const { data, totalCount } = await callApi(
-    'getOPTLttotPblancDetail', serviceKey, page, fetchSize, buildDateCond(df)
+  const { data, totalCount } = await callApiWithLatest(
+    'getOPTLttotPblancDetail', serviceKey, Math.min(perPage * 2, 100), buildDateCond(df)
   );
   const items = sortByAnnouncementDesc(data.map(d => parseDetail(d, '선착순')), perPage);
   return { items, total: totalCount };
