@@ -1,27 +1,7 @@
 import { Suspense } from 'react';
-import { mockSaleItems } from '@/lib/mockData';
 import SaleListClient from '../components/SaleListClient';
 
-async function getSaleItems() {
-  // 서버에서 API 키 확인 후 데이터 fetch
-  const apiKey = process.env.PUBLIC_DATA_API_KEY;
-
-  if (!apiKey) {
-    return { items: mockSaleItems, total: mockSaleItems.length, source: 'mock' };
-  }
-
-  try {
-    const { fetchPublicSaleList } = await import('@/lib/publicDataApi');
-    const result = await fetchPublicSaleList({ perPage: 10 });
-    return { ...result, source: 'api' };
-  } catch {
-    return { items: mockSaleItems, total: mockSaleItems.length, source: 'mock_fallback' };
-  }
-}
-
-export default async function SalePage() {
-  const { items, total, source } = await getSaleItems();
-
+export default function SalePage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
@@ -32,9 +12,9 @@ export default async function SalePage() {
 
       <Suspense fallback={null}>
         <SaleListClient
-          initialItems={items as any}
-          initialTotal={total}
-          dataSource={source}
+          initialItems={[]}
+          initialTotal={0}
+          dataSource="loading"
         />
       </Suspense>
     </div>
