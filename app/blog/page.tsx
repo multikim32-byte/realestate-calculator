@@ -1,4 +1,5 @@
 import Link from "next/link";
+import GlobalNav from "../components/GlobalNav";
 import { posts } from "./data";
 import type { Metadata } from "next";
 
@@ -10,14 +11,11 @@ export const metadata: Metadata = {
 export default function BlogPage() {
   return (
     <div style={{ minHeight: "100vh", background: "#f0f4f9", fontFamily: "'Apple SD Gothic Neo', sans-serif" }}>
+      <GlobalNav />
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 16px 60px" }}>
 
         {/* 헤더 */}
         <div style={{ marginBottom: 8 }}>
-          <Link href="/" style={{ fontSize: 13, color: "#2563eb", textDecoration: "none", fontWeight: 600 }}>
-            ← 계산기로 돌아가기
-          </Link>
-        </div>
         <div style={{ marginBottom: 32 }}>
           <h1 style={{ margin: "12px 0 6px", fontSize: 26, fontWeight: 800, color: "#1e3a5f" }}>
             🏠 부동산 정보 블로그

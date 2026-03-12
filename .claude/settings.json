@@ -4,7 +4,8 @@
       "Bash(vercel env:*)",
       "WebSearch",
       "Read(//c/Users/김경래소장/sale24/app/**)",
-      "Read(//c/Users/김경래소장/sale24/components/**)"
+      "Read(//c/Users/김경래소장/sale24/components/**)",
+      "Bash(vercel --prod)"
     ],
     "additionalDirectories": [
       "c:\\Users\\김경래소장\\realestate-calculator\\app\\sale\\[id]"

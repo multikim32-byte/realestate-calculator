@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { posts } from "../data";
+import GlobalNav from "../../components/GlobalNav";
 import type { Metadata } from "next";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -26,17 +27,8 @@ export default async function PostPage({ params }: Props) {
 
   return (
     <div style={{ minHeight: "100vh", background: "#f0f4f9", fontFamily: "'Apple SD Gothic Neo', sans-serif" }}>
+      <GlobalNav />
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 16px 60px" }}>
-
-        {/* 네비게이션 */}
-        <div style={{ marginBottom: 24, display: "flex", gap: 16 }}>
-          <Link href="/" style={{ fontSize: 13, color: "#2563eb", textDecoration: "none", fontWeight: 600 }}>
-            ← 계산기
-          </Link>
-          <Link href="/blog" style={{ fontSize: 13, color: "#2563eb", textDecoration: "none", fontWeight: 600 }}>
-            블로그 목록
-          </Link>
-        </div>
 
         {/* 본문 */}
         <div style={{ background: "#fff", borderRadius: 20, padding: "36px 28px", boxShadow: "0 2px 16px rgba(0,0,0,0.07)" }}>

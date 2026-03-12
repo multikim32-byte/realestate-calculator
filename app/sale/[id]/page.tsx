@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import GlobalNav from '../../components/GlobalNav';
 
 type UnitDetail = { type: string; area: number; count: number; price: number };
 
@@ -140,14 +141,7 @@ export default function SaleDetailPage() {
 
   return (
     <div style={{ background: '#f8f9fa', minHeight: '100vh', fontFamily: "'Apple SD Gothic Neo', sans-serif" }}>
-      {/* 헤더 네비 */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '12px 16px' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', gap: 16, alignItems: 'center' }}>
-          <Link href="/sale" style={{ fontSize: 14, color: '#1d4ed8', textDecoration: 'none', fontWeight: 600 }}>← 분양정보</Link>
-          <span style={{ color: '#d1d5db' }}>|</span>
-          <Link href="/" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>계산기</Link>
-        </div>
-      </div>
+      <GlobalNav />
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px 60px' }}>
         {/* 타이틀 카드 */}

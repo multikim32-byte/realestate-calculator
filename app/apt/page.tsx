@@ -1,4 +1,5 @@
 import Link from "next/link";
+import GlobalNav from "../components/GlobalNav";
 import { aptPosts } from "./data";
 import type { Metadata } from "next";
 
@@ -20,13 +21,8 @@ const tagColors: Record<string, { bg: string; color: string }> = {
 export default function AptPage() {
   return (
     <div style={{ minHeight: "100vh", background: "#f0f4f9", fontFamily: "'Apple SD Gothic Neo', sans-serif" }}>
+      <GlobalNav />
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 16px 60px" }}>
-
-        {/* 네비게이션 */}
-        <div style={{ marginBottom: 8, display: "flex", gap: 16 }}>
-          <Link href="/sale" style={{ fontSize: 13, color: "#2563eb", textDecoration: "none", fontWeight: 600 }}>📋 분양정보</Link>
-          <Link href="/" style={{ fontSize: 13, color: "#2563eb", textDecoration: "none", fontWeight: 600 }}>🏠 계산기</Link>
-        </div>
 
         {/* 헤더 */}
         <div style={{ marginBottom: 32 }}>
