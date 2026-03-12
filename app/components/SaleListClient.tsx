@@ -1,14 +1,11 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { SaleItem } from '@/lib/types';
-import { BuildingType, Region, SupplyType } from '@/lib/types';
+import { SaleItem, Region } from '@/lib/types';
 import Link from 'next/link';
 
 const regions: Region[] = ['전체', '서울', '경기', '인천', '부산', '대구', '광주', '대전', '울산', '세종', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'];
-const buildingTypes: BuildingType[] = ['전체', '아파트', '오피스텔', '도시형생활주택', '상업시설'];
-const supplyTypes: SupplyType[] = ['전체', '민간분양', '공공분양', '임대'];
 
 type FetchType = 'apt' | 'remndr_opt' | 'ofcl_pblpvt';
 
@@ -50,8 +47,6 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
   const defaultDateFrom = new Date(new Date().setMonth(new Date().getMonth() - 3)).toISOString().slice(0, 10);
 
   const [region, setRegionState] = useState<Region>((searchParams.get('region') as Region) || '전체');
-  const [buildingType, setBuildingTypeState] = useState<BuildingType>((searchParams.get('buildingType') as BuildingType) || '전체');
-  const [supplyType, setSupplyTypeState] = useState<SupplyType>((searchParams.get('supplyType') as SupplyType) || '전체');
   const [fetchType, setFetchTypeState] = useState<FetchType>(() => {
     const t = searchParams.get('type');
     if (t === 'officetel' || t === 'pblpvtrent') return 'ofcl_pblpvt';
@@ -72,8 +67,6 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
   }
 
   function setRegion(v: Region) { setRegionState(v); updateUrl({ region: v }); setOpenDrop(null); }
-  function setBuildingType(v: BuildingType) { setBuildingTypeState(v); updateUrl({ buildingType: v }); setOpenDrop(null); }
-  function setSupplyType(v: SupplyType) { setSupplyTypeState(v); updateUrl({ supplyType: v }); setOpenDrop(null); }
   function setFetchType(v: FetchType) { setFetchTypeState(v); updateUrl({ type: v }); }
 
   const fetchItems = useCallback(async (reg: Region, ft: FetchType) => {
@@ -117,14 +110,7 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
 
   useEffect(() => { fetchItems(region, fetchType); }, [region, fetchType, fetchItems]);
 
-  // 드롭다운 필터 적용
-  const filtered = useMemo(() => {
-    return items.filter((item) => {
-      if (buildingType !== '전체' && item.buildingType !== buildingType) return false;
-      if (supplyType !== '전체' && item.supplyType !== supplyType) return false;
-      return true;
-    });
-  }, [items, buildingType, supplyType]);
+  const filtered = items;
 
   const fetchTypeLabels: Record<FetchType, string> = {
     apt: '아파트',
@@ -174,105 +160,37 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
       </div>
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '20px 16px' }}>
-        {/* 필터 행 */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-          {/* 필터 드롭다운들 */}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', position: 'relative' }}>
-            {/* 지역 드롭다운 */}
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => setOpenDrop(openDrop === 'region' ? null : 'region')}
-                style={{
-                  padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-                  border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer',
-                  color: region !== '전체' ? '#1d4ed8' : '#374151',
-                  display: 'flex', alignItems: 'center', gap: 6,
-                }}
-              >
-                지역: {region} <span style={{ fontSize: 10 }}>▼</span>
-              </button>
-              {openDrop === 'region' && (
-                <div style={{
-                  position: 'absolute', top: '110%', left: 0, background: '#fff',
-                  border: '1px solid #e5e7eb', borderRadius: 10, padding: 12,
-                  zIndex: 100, boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-                  display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, minWidth: 260,
-                }}>
-                  {regions.map((r) => (
-                    <button key={r} onClick={() => setRegion(r)} style={{
-                      padding: '5px 8px', borderRadius: 6, fontSize: 12, fontWeight: 600,
-                      border: 'none', cursor: 'pointer',
-                      background: region === r ? '#1d4ed8' : '#f3f4f6',
-                      color: region === r ? '#fff' : '#374151',
-                    }}>{r}</button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* 건물유형 드롭다운 */}
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => setOpenDrop(openDrop === 'building' ? null : 'building')}
-                style={{
-                  padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-                  border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer',
-                  color: buildingType !== '전체' ? '#1d4ed8' : '#374151',
-                  display: 'flex', alignItems: 'center', gap: 6,
-                }}
-              >
-                건물유형: {buildingType} <span style={{ fontSize: 10 }}>▼</span>
-              </button>
-              {openDrop === 'building' && (
-                <div style={{
-                  position: 'absolute', top: '110%', left: 0, background: '#fff',
-                  border: '1px solid #e5e7eb', borderRadius: 10, padding: 12,
-                  zIndex: 100, boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-                  display: 'flex', flexDirection: 'column', gap: 6, minWidth: 160,
-                }}>
-                  {buildingTypes.map((t) => (
-                    <button key={t} onClick={() => setBuildingType(t)} style={{
-                      padding: '6px 12px', borderRadius: 6, fontSize: 13, fontWeight: 600,
-                      border: 'none', cursor: 'pointer', textAlign: 'left',
-                      background: buildingType === t ? '#1d4ed8' : '#f3f4f6',
-                      color: buildingType === t ? '#fff' : '#374151',
-                    }}>{t}</button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* 공급유형 드롭다운 */}
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => setOpenDrop(openDrop === 'supply' ? null : 'supply')}
-                style={{
-                  padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-                  border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer',
-                  color: supplyType !== '전체' ? '#1d4ed8' : '#374151',
-                  display: 'flex', alignItems: 'center', gap: 6,
-                }}
-              >
-                공급유형: {supplyType} <span style={{ fontSize: 10 }}>▼</span>
-              </button>
-              {openDrop === 'supply' && (
-                <div style={{
-                  position: 'absolute', top: '110%', right: 0, background: '#fff',
-                  border: '1px solid #e5e7eb', borderRadius: 10, padding: 12,
-                  zIndex: 100, boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-                  display: 'flex', flexDirection: 'column', gap: 6, minWidth: 140,
-                }}>
-                  {supplyTypes.map((t) => (
-                    <button key={t} onClick={() => setSupplyType(t)} style={{
-                      padding: '6px 12px', borderRadius: 6, fontSize: 13, fontWeight: 600,
-                      border: 'none', cursor: 'pointer', textAlign: 'left',
-                      background: supplyType === t ? '#1d4ed8' : '#f3f4f6',
-                      color: supplyType === t ? '#fff' : '#374151',
-                    }}>{t}</button>
-                  ))}
-                </div>
-              )}
-            </div>
+        {/* 지역 필터 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setOpenDrop(openDrop === 'region' ? null : 'region')}
+              style={{
+                padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer',
+                color: region !== '전체' ? '#1d4ed8' : '#374151',
+                display: 'flex', alignItems: 'center', gap: 6,
+              }}
+            >
+              지역: {region} <span style={{ fontSize: 10 }}>▼</span>
+            </button>
+            {openDrop === 'region' && (
+              <div style={{
+                position: 'absolute', top: '110%', left: 0, background: '#fff',
+                border: '1px solid #e5e7eb', borderRadius: 10, padding: 12,
+                zIndex: 100, boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+                display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, minWidth: 260,
+              }}>
+                {regions.map((r) => (
+                  <button key={r} onClick={() => setRegion(r)} style={{
+                    padding: '5px 8px', borderRadius: 6, fontSize: 12, fontWeight: 600,
+                    border: 'none', cursor: 'pointer',
+                    background: region === r ? '#1d4ed8' : '#f3f4f6',
+                    color: region === r ? '#fff' : '#374151',
+                  }}>{r}</button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
