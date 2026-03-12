@@ -112,10 +112,10 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
 
   const filtered = items;
 
-  const fetchTypeLabels: Record<FetchType, string> = {
-    apt: '아파트',
-    remndr_opt: '아파트잔여세대',
-    ofcl_pblpvt: '오피스텔/도시형/(공공지원)민간임대',
+  const fetchTypeLabels: Record<FetchType, { full: string; short: string }> = {
+    apt:        { full: '아파트',                          short: '아파트' },
+    remndr_opt: { full: '아파트잔여세대',                  short: '잔여세대' },
+    ofcl_pblpvt:{ full: '오피스텔/도시형/(공공지원)민간임대', short: '오피스텔/민간임대' },
   };
 
   const isLive = source === 'api';
@@ -142,7 +142,8 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
                   color: fetchType === ft ? '#1d4ed8' : '#6b7280',
                 }}
               >
-                {fetchTypeLabels[ft]}
+                <span className="tab-label-full">{fetchTypeLabels[ft].full}</span>
+                <span className="tab-label-short">{fetchTypeLabels[ft].short}</span>
               </button>
             ))}
           </div>
