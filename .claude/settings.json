@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(vercel env:*)",
+      "WebSearch",
+      "Read(//c/Users/김경래소장/sale24/app/**)",
+      "Read(//c/Users/김경래소장/sale24/components/**)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\김경래소장\\realestate-calculator\\app\\sale\\[id]"
+    ]
+  }
+}

@@ -1,0 +1,446 @@
+'use client';
+
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { SaleItem } from '@/lib/types';
+import { BuildingType, Region, SupplyType } from '@/lib/types';
+import Link from 'next/link';
+
+const regions: Region[] = ['전체', '서울', '경기', '인천', '부산', '대구', '광주', '대전', '울산', '세종', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'];
+const buildingTypes: BuildingType[] = ['전체', '아파트', '오피스텔', '도시형생활주택', '상업시설'];
+const supplyTypes: SupplyType[] = ['전체', '민간분양', '공공분양', '임대'];
+
+type FetchType = 'apt' | 'remndr_opt' | 'ofcl_pblpvt';
+
+interface Props {
+  initialItems: SaleItem[];
+  initialTotal: number;
+  dataSource: string;
+}
+
+const statusStyle: Record<string, { bg: string; color: string; border: string }> = {
+  '청약예정':  { bg: '#e8f0fe', color: '#1a56db', border: '#bfcffd' },
+  '청약중':    { bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' },
+  '당첨발표':  { bg: '#fef3c7', color: '#92400e', border: '#fcd34d' },
+  '선착순분양':{ bg: '#fce7f3', color: '#9d174d', border: '#f9a8d4' },
+  '완판':      { bg: '#f3f4f6', color: '#6b7280', border: '#d1d5db' },
+  '완료':      { bg: '#f3f4f6', color: '#6b7280', border: '#d1d5db' },
+};
+
+
+function formatPrice(p: number) {
+  if (!p) return '-';
+  const eok = Math.floor(p / 10000);
+  const rest = p % 10000;
+  if (eok > 0 && rest > 0) return `${eok}억 ${rest.toLocaleString()}만`;
+  if (eok > 0) return `${eok}억`;
+  return `${p.toLocaleString()}만`;
+}
+
+export default function SaleListClient({ initialItems, initialTotal, dataSource }: Props) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [items, setItems] = useState<SaleItem[]>(initialItems);
+  const [source, setSource] = useState(dataSource);
+  const [loading, setLoading] = useState(false);
+
+  const today = new Date().toISOString().slice(0, 10);
+  const _to = new Date(); _to.setMonth(_to.getMonth() + 6);
+  const defaultDateTo = _to.toISOString().slice(0, 10);
+  const defaultDateFrom = new Date(new Date().setMonth(new Date().getMonth() - 3)).toISOString().slice(0, 10);
+
+  const [region, setRegionState] = useState<Region>((searchParams.get('region') as Region) || '전체');
+  const [buildingType, setBuildingTypeState] = useState<BuildingType>((searchParams.get('buildingType') as BuildingType) || '전체');
+  const [supplyType, setSupplyTypeState] = useState<SupplyType>((searchParams.get('supplyType') as SupplyType) || '전체');
+  const [fetchType, setFetchTypeState] = useState<FetchType>(() => {
+    const t = searchParams.get('type');
+    if (t === 'officetel' || t === 'pblpvtrent') return 'ofcl_pblpvt';
+    if (t === 'remndr' || t === 'opt') return 'remndr_opt';
+    return (t as FetchType) || 'apt';
+  });
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || '전체');
+
+  // 드롭다운 열림 상태
+  const [openDrop, setOpenDrop] = useState<string | null>(null);
+
+  function updateUrl(params: Record<string, string>) {
+    const next = new URLSearchParams(searchParams.toString());
+    Object.entries(params).forEach(([k, v]) => {
+      if (v === '전체' || v === 'all') next.delete(k);
+      else next.set(k, v);
+    });
+    router.replace(`/sale?${next.toString()}`, { scroll: false });
+  }
+
+  function setRegion(v: Region) { setRegionState(v); updateUrl({ region: v }); setOpenDrop(null); }
+  function setBuildingType(v: BuildingType) { setBuildingTypeState(v); updateUrl({ buildingType: v }); setOpenDrop(null); }
+  function setSupplyType(v: SupplyType) { setSupplyTypeState(v); updateUrl({ supplyType: v }); setOpenDrop(null); }
+  function setFetchType(v: FetchType) { setFetchTypeState(v); updateUrl({ type: v }); }
+  function setTab(t: string) { setActiveTab(t); updateUrl({ tab: t }); }
+
+  const fetchItems = useCallback(async (reg: Region, ft: FetchType) => {
+    setLoading(true);
+    try {
+      let merged: SaleItem[] = [];
+      let src = 'api';
+
+      const sortByDate = (arr: SaleItem[]) =>
+        arr.sort((a, b) => ((b.announcementDate || b.receiptStart || '') > (a.announcementDate || a.receiptStart || '') ? 1 : -1));
+
+      if (ft === 'ofcl_pblpvt') {
+        // 오피스텔/도시형 + 공공지원민간임대 병합
+        const [r1, r2] = await Promise.all([
+          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'officetel', perPage: '25' })}`).then(r => r.json()),
+          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'pblpvtrent', perPage: '25' })}`).then(r => r.json()),
+        ]);
+        merged = sortByDate([...(r1.items || []), ...(r2.items || [])]);
+        src = r1.source || r2.source;
+      } else if (ft === 'remndr_opt') {
+        // 잔여세대(선착순) + 임의공급(무순위) 병합
+        const [r1, r2] = await Promise.all([
+          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'remndr', perPage: '25' })}`).then(r => r.json()),
+          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'opt', perPage: '25' })}`).then(r => r.json()),
+        ]);
+        merged = sortByDate([...(r1.items || []), ...(r2.items || [])]);
+        src = r1.source || r2.source;
+      } else {
+        const params = new URLSearchParams({ region: reg, type: ft, dateFrom: defaultDateFrom, dateTo: defaultDateTo, perPage: '50' });
+        const data = await fetch(`/api/sale?${params}`).then(r => r.json());
+        merged = data.items || [];
+        src = data.source;
+      }
+
+      setItems(merged);
+      setSource(src);
+    } catch { /* keep existing */ } finally {
+      setLoading(false);
+    }
+  }, [defaultDateFrom, defaultDateTo]);
+
+  useEffect(() => { fetchItems(region, fetchType); }, [region, fetchType, fetchItems]);
+
+  // 탭별 필터
+  const tabFiltered = useMemo(() => {
+    return items.filter((item) => {
+      if (activeTab === '오늘청약') return item.receiptStart <= today && today <= item.receiptEnd;
+      if (activeTab === '분양예정') return item.status === '청약예정';
+      if (activeTab === '청약중') return item.status === '청약중';
+      if (activeTab === '선착순분양') return item.status === '선착순분양';
+      if (activeTab === '당첨발표') return item.status === '당첨발표';
+      if (activeTab === '완료') return item.status === '완판';
+      return true;
+    });
+  }, [items, activeTab, today]);
+
+  // 드롭다운 필터 적용
+  const filtered = useMemo(() => {
+    return tabFiltered.filter((item) => {
+      if (buildingType !== '전체' && item.buildingType !== buildingType) return false;
+      if (supplyType !== '전체' && item.supplyType !== supplyType) return false;
+      return true;
+    });
+  }, [tabFiltered, buildingType, supplyType]);
+
+  const counts = useMemo(() => ({
+    '전체': items.length,
+    '오늘청약': items.filter(i => i.receiptStart <= today && today <= i.receiptEnd).length,
+    '분양예정': items.filter(i => i.status === '청약예정').length,
+    '청약중': items.filter(i => i.status === '청약중').length,
+    '선착순분양': items.filter(i => i.status === '선착순분양').length,
+    '당첨발표': items.filter(i => i.status === '당첨발표').length,
+    '완료': items.filter(i => i.status === '완판').length,
+  }), [items, today]);
+
+  const tabs = ['전체', '오늘청약', '분양예정', '청약중', '선착순분양', '당첨발표', '완료'];
+
+  const fetchTypeLabels: Record<FetchType, string> = {
+    apt: '아파트',
+    remndr_opt: '아파트잔여세대',
+    ofcl_pblpvt: '오피스텔/도시형/(공공지원)민간임대',
+  };
+
+  const isLive = source === 'api';
+
+  return (
+    <div style={{ background: '#f8f9fa', minHeight: '100vh' }}>
+      {/* 글로벌 네비게이션 */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '10px 16px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', gap: 20, justifyContent: 'flex-end' }}>
+          <Link href="/sale" style={{ fontSize: 13, color: '#1d4ed8', textDecoration: 'none', fontWeight: 600 }}>📋 분양정보</Link>
+          <Link href="/" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>🏠 계산기</Link>
+          <Link href="/apt" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>🏠 부동산정보</Link>
+          <button onClick={() => navigator.share ? navigator.share({ title: document.title, url: window.location.href }) : navigator.clipboard.writeText(window.location.href).then(() => alert('링크가 복사되었습니다.'))} style={{ fontSize: 13, color: '#374151', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, padding: 0 }}>🔗 공유</button>
+        </div>
+      </div>
+
+      {/* 상단 모집유형 탭 */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #e5e7eb' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 16px' }}>
+          <div style={{ display: 'flex', gap: 0, overflowX: 'auto' }}>
+            {(['apt', 'remndr_opt', 'ofcl_pblpvt'] as FetchType[]).map((ft) => (
+              <button
+                key={ft}
+                onClick={() => setFetchType(ft)}
+                style={{
+                  padding: '12px 16px',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  border: 'none',
+                  background: 'none',
+                  cursor: 'pointer',
+                  borderBottom: fetchType === ft ? '2px solid #1d4ed8' : '2px solid transparent',
+                  color: fetchType === ft ? '#1d4ed8' : '#6b7280',
+                }}
+              >
+                {fetchTypeLabels[ft]}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '20px 16px' }}>
+        {/* 상태 탭 + 필터 행 */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+          {/* 상태 탭 */}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setTab(tab)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 20,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  border: '1px solid',
+                  borderColor: activeTab === tab ? '#1d4ed8' : '#e5e7eb',
+                  background: activeTab === tab ? '#1d4ed8' : '#fff',
+                  color: activeTab === tab ? '#fff' : '#374151',
+                  cursor: 'pointer',
+                }}
+              >
+                {tab}
+                {counts[tab as keyof typeof counts] !== undefined && (
+                  <span style={{ marginLeft: 5, fontSize: 11, opacity: 0.8 }}>
+                    {counts[tab as keyof typeof counts]}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* 필터 드롭다운들 */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', position: 'relative' }}>
+            {/* 지역 드롭다운 */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setOpenDrop(openDrop === 'region' ? null : 'region')}
+                style={{
+                  padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                  border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer',
+                  color: region !== '전체' ? '#1d4ed8' : '#374151',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}
+              >
+                지역: {region} <span style={{ fontSize: 10 }}>▼</span>
+              </button>
+              {openDrop === 'region' && (
+                <div style={{
+                  position: 'absolute', top: '110%', left: 0, background: '#fff',
+                  border: '1px solid #e5e7eb', borderRadius: 10, padding: 12,
+                  zIndex: 100, boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+                  display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, minWidth: 260,
+                }}>
+                  {regions.map((r) => (
+                    <button key={r} onClick={() => setRegion(r)} style={{
+                      padding: '5px 8px', borderRadius: 6, fontSize: 12, fontWeight: 600,
+                      border: 'none', cursor: 'pointer',
+                      background: region === r ? '#1d4ed8' : '#f3f4f6',
+                      color: region === r ? '#fff' : '#374151',
+                    }}>{r}</button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 건물유형 드롭다운 */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setOpenDrop(openDrop === 'building' ? null : 'building')}
+                style={{
+                  padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                  border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer',
+                  color: buildingType !== '전체' ? '#1d4ed8' : '#374151',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}
+              >
+                건물유형: {buildingType} <span style={{ fontSize: 10 }}>▼</span>
+              </button>
+              {openDrop === 'building' && (
+                <div style={{
+                  position: 'absolute', top: '110%', left: 0, background: '#fff',
+                  border: '1px solid #e5e7eb', borderRadius: 10, padding: 12,
+                  zIndex: 100, boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+                  display: 'flex', flexDirection: 'column', gap: 6, minWidth: 160,
+                }}>
+                  {buildingTypes.map((t) => (
+                    <button key={t} onClick={() => setBuildingType(t)} style={{
+                      padding: '6px 12px', borderRadius: 6, fontSize: 13, fontWeight: 600,
+                      border: 'none', cursor: 'pointer', textAlign: 'left',
+                      background: buildingType === t ? '#1d4ed8' : '#f3f4f6',
+                      color: buildingType === t ? '#fff' : '#374151',
+                    }}>{t}</button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 공급유형 드롭다운 */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setOpenDrop(openDrop === 'supply' ? null : 'supply')}
+                style={{
+                  padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                  border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer',
+                  color: supplyType !== '전체' ? '#1d4ed8' : '#374151',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}
+              >
+                공급유형: {supplyType} <span style={{ fontSize: 10 }}>▼</span>
+              </button>
+              {openDrop === 'supply' && (
+                <div style={{
+                  position: 'absolute', top: '110%', right: 0, background: '#fff',
+                  border: '1px solid #e5e7eb', borderRadius: 10, padding: 12,
+                  zIndex: 100, boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+                  display: 'flex', flexDirection: 'column', gap: 6, minWidth: 140,
+                }}>
+                  {supplyTypes.map((t) => (
+                    <button key={t} onClick={() => setSupplyType(t)} style={{
+                      padding: '6px 12px', borderRadius: 6, fontSize: 13, fontWeight: 600,
+                      border: 'none', cursor: 'pointer', textAlign: 'left',
+                      background: supplyType === t ? '#1d4ed8' : '#f3f4f6',
+                      color: supplyType === t ? '#fff' : '#374151',
+                    }}>{t}</button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 건수 + 데이터 소스 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+          <span style={{ fontSize: 13, color: '#6b7280' }}>
+            총 <strong style={{ color: '#1d4ed8' }}>{filtered.length}</strong>건
+            {loading && <span style={{ marginLeft: 8, color: '#aaa', fontSize: 12 }}>불러오는 중...</span>}
+          </span>
+          {isLive ? (
+            <span style={{
+              fontSize: 11, padding: '2px 10px', borderRadius: 20,
+              background: '#d1fae5', color: '#065f46', border: '1px solid #6ee7b7',
+              display: 'flex', alignItems: 'center', gap: 4,
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'pulse 1.5s infinite' }} />
+              실시간 공공데이터
+            </span>
+          ) : (
+            <span style={{ fontSize: 11, padding: '2px 10px', borderRadius: 20, background: '#f3f4f6', color: '#6b7280', border: '1px solid #e5e7eb' }}>
+              샘플 데이터
+            </span>
+          )}
+          <button
+            onClick={() => fetchItems(region, fetchType)}
+            disabled={loading}
+            style={{ fontSize: 12, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}
+          >
+            ↻ 새로고침
+          </button>
+        </div>
+
+        {/* 목록 */}
+        {loading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {[1,2,3,4,5].map(i => (
+              <div key={i} style={{ height: 96, background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', opacity: 0.6 }} />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: '60px 0', textAlign: 'center', color: '#aaa', fontSize: 14 }}>
+            조건에 맞는 분양 정보가 없습니다.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {filtered.map((item) => {
+              const ss = statusStyle[item.status] || statusStyle['완료'];
+              return (
+                <Link key={item.id} href={`/sale/${item.id}`} style={{ textDecoration: 'none' }}>
+                  <div style={{
+                    background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12,
+                    display: 'flex', alignItems: 'stretch', overflow: 'hidden',
+                    transition: 'box-shadow 0.15s',
+                  }}
+                    onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.10)')}
+                    onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
+                  >
+                    {/* 정보 */}
+                    <div style={{ flex: 1, padding: '14px 18px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                        <span style={{
+                          fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
+                          color: ss.color, background: ss.bg, border: `1px solid ${ss.border}`,
+                        }}>{item.status}</span>
+                        <span style={{ fontSize: 16, fontWeight: 700, color: '#1d4ed8' }}>{item.name}</span>
+                        <span style={{ fontSize: 11, background: '#f3f4f6', color: '#6b7280', padding: '2px 7px', borderRadius: 6 }}>{item.buildingType}</span>
+                        <span style={{ fontSize: 11, background: '#f3f4f6', color: '#6b7280', padding: '2px 7px', borderRadius: 6 }}>{item.supplyType}</span>
+                        {item.recruitType === '선착순' && (
+                          <span style={{ fontSize: 11, background: '#fff0f6', color: '#c026d3', padding: '2px 7px', borderRadius: 6, border: '1px solid #f9a8d4' }}>선착순</span>
+                        )}
+                      </div>
+
+                      <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>
+                        📍 {item.location}
+                      </div>
+
+                      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', fontSize: 12, color: '#374151' }}>
+                        <span>세대수 <strong>{item.totalUnits.toLocaleString()}세대</strong></span>
+                        {item.minPrice > 0 && (
+                          <span>분양가 <strong style={{ color: '#1d4ed8' }}>{formatPrice(item.minPrice)}~{formatPrice(item.maxPrice)}</strong></span>
+                        )}
+                        <span>접수 <strong>{item.receiptStart} ~ {item.receiptEnd}</strong></span>
+                        {item.winnerDate && <span>당첨발표 <strong>{item.winnerDate}</strong></span>}
+                      </div>
+                    </div>
+
+                    {/* 우측 공고일 */}
+                    <div style={{
+                      width: 90, flexShrink: 0, display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'center', borderLeft: '1px solid #f3f4f6',
+                      padding: '12px 8px', color: '#9ca3af', fontSize: 11, textAlign: 'center',
+                    }}>
+                      <span>공고일</span>
+                      <span style={{ fontWeight: 600, color: '#374151', marginTop: 2 }}>
+                        {item.announcementDate || '-'}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* 드롭다운 외부 클릭 닫기 */}
+      {openDrop && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 90 }}
+          onClick={() => setOpenDrop(null)}
+        />
+      )}
+    </div>
+  );
+}
