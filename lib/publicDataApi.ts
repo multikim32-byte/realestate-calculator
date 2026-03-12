@@ -439,18 +439,24 @@ export async function fetchPublicSaleList(params?: {
   const perPage     = params?.perPage     ?? 10;
   const type        = params?.type        ?? 'all';
   const skipEnrich  = params?.skipEnrich  ?? true;   // 목록에서는 가격 enrichment 생략
-  const df: DateFilter = { dateFrom: params?.dateFrom, dateTo: params?.dateTo };
-  const emptyDf: DateFilter = {};  // OPT/잔여세대는 날짜 필터 없이 최신순
+
+  // 최근 3개월~6개월 후 범위로 필터링 → page 1에 오늘 공고 포함
+  const defaultFrom = new Date(); defaultFrom.setMonth(defaultFrom.getMonth() - 3);
+  const defaultTo   = new Date(); defaultTo.setMonth(defaultTo.getMonth() + 6);
+  const recentDf: DateFilter = {
+    dateFrom: (params?.dateFrom ?? defaultFrom.toISOString().slice(0, 10)),
+    dateTo:   (params?.dateTo   ?? defaultTo.toISOString().slice(0, 10)),
+  };
 
   if (type === 'all') {
     // 각 타입에서 동등하게 가져온 뒤 공고일 기준 통합 정렬
     const sub = Math.ceil(perPage / 5);  // 5개 타입으로 균등 분배
     const [apt, ofcl, remndr, pblpvt, opt] = await Promise.allSettled([
-      fetchAPTSaleList(serviceKey, page, sub, emptyDf),
-      fetchOfficetelSaleList(serviceKey, page, sub, emptyDf),
-      fetchRemndrSaleList(serviceKey, page, sub, emptyDf),
-      fetchPblPvtRentSaleList(serviceKey, page, sub, emptyDf),
-      fetchOptSaleList(serviceKey, page, sub, emptyDf),
+      fetchAPTSaleList(serviceKey, page, sub, recentDf),
+      fetchOfficetelSaleList(serviceKey, page, sub, recentDf),
+      fetchRemndrSaleList(serviceKey, page, sub, recentDf),
+      fetchPblPvtRentSaleList(serviceKey, page, sub, recentDf),
+      fetchOptSaleList(serviceKey, page, sub, recentDf),
     ]);
 
     const items: PublicSaleItem[] = [];
@@ -477,12 +483,12 @@ export async function fetchPublicSaleList(params?: {
     skipEnrich ? r : { ...r, items: await enrichWithPrices(r.items) };
 
   switch (type) {
-    case 'apt':        return maybeEnrich(await fetchAPTSaleList(serviceKey, page, perPage, emptyDf));
-    case 'officetel':  return maybeEnrich(await fetchOfficetelSaleList(serviceKey, page, perPage, emptyDf));
-    case 'remndr':     return maybeEnrich(await fetchRemndrSaleList(serviceKey, page, perPage, emptyDf));
-    case 'pblpvtrent': return maybeEnrich(await fetchPblPvtRentSaleList(serviceKey, page, perPage, emptyDf));
-    case 'opt':        return maybeEnrich(await fetchOptSaleList(serviceKey, page, perPage, emptyDf));
-    default:           return maybeEnrich(await fetchAPTSaleList(serviceKey, page, perPage, df));
+    case 'apt':        return maybeEnrich(await fetchAPTSaleList(serviceKey, page, perPage, recentDf));
+    case 'officetel':  return maybeEnrich(await fetchOfficetelSaleList(serviceKey, page, perPage, recentDf));
+    case 'remndr':     return maybeEnrich(await fetchRemndrSaleList(serviceKey, page, perPage, recentDf));
+    case 'pblpvtrent': return maybeEnrich(await fetchPblPvtRentSaleList(serviceKey, page, perPage, recentDf));
+    case 'opt':        return maybeEnrich(await fetchOptSaleList(serviceKey, page, perPage, recentDf));
+    default:           return maybeEnrich(await fetchAPTSaleList(serviceKey, page, perPage, recentDf));
   }
 }
 

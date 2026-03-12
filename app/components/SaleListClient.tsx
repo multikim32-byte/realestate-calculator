@@ -81,16 +81,16 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
       if (ft === 'ofcl_pblpvt') {
         // 오피스텔/도시형 + 공공지원민간임대 병합
         const [r1, r2] = await Promise.all([
-          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'officetel', perPage: '25' })}`).then(r => r.json()),
-          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'pblpvtrent', perPage: '25' })}`).then(r => r.json()),
+          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'officetel', perPage: '50' })}`).then(r => r.json()),
+          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'pblpvtrent', perPage: '50' })}`).then(r => r.json()),
         ]);
         merged = sortByDate([...(r1.items || []), ...(r2.items || [])]);
         src = r1.source || r2.source;
       } else if (ft === 'remndr_opt') {
         // 잔여세대(선착순) + 임의공급(무순위) 병합
         const [r1, r2] = await Promise.all([
-          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'remndr', perPage: '25' })}`).then(r => r.json()),
-          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'opt', perPage: '25' })}`).then(r => r.json()),
+          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'remndr', perPage: '50' })}`).then(r => r.json()),
+          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'opt', perPage: '50' })}`).then(r => r.json()),
         ]);
         merged = sortByDate([...(r1.items || []), ...(r2.items || [])]);
         src = r1.source || r2.source;
