@@ -122,16 +122,6 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
 
   return (
     <div style={{ background: '#f8f9fa', minHeight: '100vh' }}>
-      {/* 글로벌 네비게이션 */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '10px 16px' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', gap: 20, justifyContent: 'flex-end' }}>
-          <Link href="/sale" style={{ fontSize: 13, color: '#1d4ed8', textDecoration: 'none', fontWeight: 600 }}>📋 분양정보</Link>
-          <Link href="/" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>🏠 계산기</Link>
-          <Link href="/apt" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>🏠 부동산정보</Link>
-          <button onClick={() => navigator.share ? navigator.share({ title: document.title, url: window.location.href }) : navigator.clipboard.writeText(window.location.href).then(() => alert('링크가 복사되었습니다.'))} style={{ fontSize: 13, color: '#374151', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, padding: 0 }}>🔗 공유</button>
-        </div>
-      </div>
-
       {/* 상단 모집유형 탭 */}
       <div style={{ background: '#fff', borderBottom: '1px solid #e5e7eb' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 16px' }}>

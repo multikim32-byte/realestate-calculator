@@ -1,9 +1,12 @@
 import { Suspense } from 'react';
 import SaleListClient from '../components/SaleListClient';
+import GlobalNav from '../components/GlobalNav';
 
 export default function SalePage() {
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div>
+      <GlobalNav />
+      <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-6" style={{ textAlign: 'center' }}>
         <h1 className="text-2xl font-bold text-gray-900 mb-1">분양정보</h1>
@@ -17,6 +20,7 @@ export default function SalePage() {
           dataSource="loading"
         />
       </Suspense>
+      </div>
     </div>
   );
 }
