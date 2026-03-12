@@ -45,7 +45,6 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
   const [source, setSource] = useState(dataSource);
   const [loading, setLoading] = useState(false);
 
-  const today = new Date().toISOString().slice(0, 10);
   const _to = new Date(); _to.setMonth(_to.getMonth() + 6);
   const defaultDateTo = _to.toISOString().slice(0, 10);
   const defaultDateFrom = new Date(new Date().setMonth(new Date().getMonth() - 3)).toISOString().slice(0, 10);
@@ -59,7 +58,6 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
     if (t === 'remndr' || t === 'opt') return 'remndr_opt';
     return (t as FetchType) || 'apt';
   });
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || '전체');
 
   // 드롭다운 열림 상태
   const [openDrop, setOpenDrop] = useState<string | null>(null);
@@ -77,7 +75,6 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
   function setBuildingType(v: BuildingType) { setBuildingTypeState(v); updateUrl({ buildingType: v }); setOpenDrop(null); }
   function setSupplyType(v: SupplyType) { setSupplyTypeState(v); updateUrl({ supplyType: v }); setOpenDrop(null); }
   function setFetchType(v: FetchType) { setFetchTypeState(v); updateUrl({ type: v }); }
-  function setTab(t: string) { setActiveTab(t); updateUrl({ tab: t }); }
 
   const fetchItems = useCallback(async (reg: Region, ft: FetchType) => {
     setLoading(true);
@@ -120,39 +117,14 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
 
   useEffect(() => { fetchItems(region, fetchType); }, [region, fetchType, fetchItems]);
 
-  // 탭별 필터
-  const tabFiltered = useMemo(() => {
-    return items.filter((item) => {
-      if (activeTab === '오늘청약') return item.receiptStart <= today && today <= item.receiptEnd;
-      if (activeTab === '분양예정') return item.status === '청약예정';
-      if (activeTab === '청약중') return item.status === '청약중';
-      if (activeTab === '선착순분양') return item.status === '선착순분양';
-      if (activeTab === '당첨발표') return item.status === '당첨발표';
-      if (activeTab === '완료') return item.status === '완판';
-      return true;
-    });
-  }, [items, activeTab, today]);
-
   // 드롭다운 필터 적용
   const filtered = useMemo(() => {
-    return tabFiltered.filter((item) => {
+    return items.filter((item) => {
       if (buildingType !== '전체' && item.buildingType !== buildingType) return false;
       if (supplyType !== '전체' && item.supplyType !== supplyType) return false;
       return true;
     });
-  }, [tabFiltered, buildingType, supplyType]);
-
-  const counts = useMemo(() => ({
-    '전체': items.length,
-    '오늘청약': items.filter(i => i.receiptStart <= today && today <= i.receiptEnd).length,
-    '분양예정': items.filter(i => i.status === '청약예정').length,
-    '청약중': items.filter(i => i.status === '청약중').length,
-    '선착순분양': items.filter(i => i.status === '선착순분양').length,
-    '당첨발표': items.filter(i => i.status === '당첨발표').length,
-    '완료': items.filter(i => i.status === '완판').length,
-  }), [items, today]);
-
-  const tabs = ['전체', '오늘청약', '분양예정', '청약중', '선착순분양', '당첨발표', '완료'];
+  }, [items, buildingType, supplyType]);
 
   const fetchTypeLabels: Record<FetchType, string> = {
     apt: '아파트',
@@ -202,36 +174,8 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
       </div>
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '20px 16px' }}>
-        {/* 상태 탭 + 필터 행 */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-          {/* 상태 탭 */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {tabs.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setTab(tab)}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: 20,
-                  fontSize: 13,
-                  fontWeight: 600,
-                  border: '1px solid',
-                  borderColor: activeTab === tab ? '#1d4ed8' : '#e5e7eb',
-                  background: activeTab === tab ? '#1d4ed8' : '#fff',
-                  color: activeTab === tab ? '#fff' : '#374151',
-                  cursor: 'pointer',
-                }}
-              >
-                {tab}
-                {counts[tab as keyof typeof counts] !== undefined && (
-                  <span style={{ marginLeft: 5, fontSize: 11, opacity: 0.8 }}>
-                    {counts[tab as keyof typeof counts]}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-
+        {/* 필터 행 */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
           {/* 필터 드롭다운들 */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', position: 'relative' }}>
             {/* 지역 드롭다운 */}
