@@ -15,7 +15,6 @@ export default function BlogPage() {
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 16px 60px" }}>
 
         {/* 헤더 */}
-        <div style={{ marginBottom: 8 }}>
         <div style={{ marginBottom: 32 }}>
           <h1 style={{ margin: "12px 0 6px", fontSize: 26, fontWeight: 800, color: "#1e3a5f" }}>
             🏠 부동산 정보 블로그
