@@ -24,12 +24,3 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
-
-/* 탭 레이블: 데스크톱=전체 텍스트, 모바일=짧은 텍스트 */
-.tab-label-short { display: none; }
-.tab-label-full  { display: inline; }
-
-@media (max-width: 480px) {
-  .tab-label-full  { display: none; }
-  .tab-label-short { display: inline; }
-}

@@ -142,8 +142,8 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
                   color: fetchType === ft ? '#1d4ed8' : '#6b7280',
                 }}
               >
-                <span className="tab-label-full">{fetchTypeLabels[ft].full}</span>
-                <span className="tab-label-short">{fetchTypeLabels[ft].short}</span>
+                <span className="hidden sm:inline">{fetchTypeLabels[ft].full}</span>
+                <span className="sm:hidden">{fetchTypeLabels[ft].short}</span>
               </button>
             ))}
           </div>
