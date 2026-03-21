@@ -8,6 +8,7 @@ const tabs = [
   { id: "acquisition", label: "취득세" },
   { id: "brokerage", label: "중개수수료" },
   { id: "roi", label: "수익률" },
+  { id: "subscription", label: "청약 가점" },
 ];
 
 const fmt = (n: number) => Math.round(n).toLocaleString("ko-KR");
@@ -615,8 +616,127 @@ function ROICalc() {
   );
 }
 
+// 청약 가점 계산기
+const HOMELESS_SCORE = [2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32];
+const ACCOUNT_SCORE  = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17];
+
+function getHomelessScore(years: number) {
+  if (years < 1) return 2;
+  return HOMELESS_SCORE[Math.min(Math.floor(years), 15)];
+}
+function getAccountScore(years: number) {
+  if (years < 0.5) return 1;
+  if (years < 1) return 2;
+  return ACCOUNT_SCORE[Math.min(Math.floor(years), 15) + 1];
+}
+function getDependentScore(n: number) {
+  return Math.min(n + 1, 6) * 5 + (n === 0 ? 0 : 0);
+  // 0명:5 1명:10 2명:15 3명:20 4명:25 5명:30 6명이상:35
+}
+
+function SubscriptionCalc() {
+  const [homelessYears, setHomelessYears] = useState('');
+  const [dependents, setDependents] = useState('0');
+  const [accountYears, setAccountYears] = useState('');
+  const [result, setResult] = useState<{homeless:number;dep:number;account:number;total:number}|null>(null);
+
+  function calc() {
+    const hy = parseFloat(homelessYears) || 0;
+    const dep = parseInt(dependents) || 0;
+    const ay = parseFloat(accountYears) || 0;
+
+    const homeless = getHomelessScore(hy);
+    const depScore = Math.min(dep, 6) * 5 + (dep === 0 ? 5 : 0);
+    // 부양가족: 0명→5점, 1명→10점, ..., 6명이상→35점
+    const depFinal = dep === 0 ? 5 : Math.min(dep, 6) * 5 + 5;
+    const account = getAccountScore(ay);
+    const total = homeless + depFinal + account;
+    setResult({ homeless, dep: depFinal, account, total });
+  }
+
+  const scoreColor = (total: number) =>
+    total >= 70 ? '#059669' : total >= 55 ? '#d97706' : '#dc2626';
+
+  return (
+    <Card title="청약 가점 계산기">
+      <div style={{ background: '#eff6ff', borderRadius: 10, padding: '12px 16px', marginBottom: 20, fontSize: 12, color: '#1d4ed8', lineHeight: 1.6 }}>
+        <strong>가점제 배점 기준</strong><br/>
+        무주택기간 (최대 32점) + 부양가족수 (최대 35점) + 청약통장 가입기간 (최대 17점) = 총 84점
+      </div>
+
+      <Field label="무주택 기간 (년)">
+        <input
+          style={inputStyle} type="number" min="0" max="15" step="0.5"
+          placeholder="예: 5 (5년), 2.5 (2년 6개월)"
+          value={homelessYears}
+          onChange={e => setHomelessYears(e.target.value)}
+        />
+        <div style={{ fontSize: 11, color: '#888', marginTop: 4 }}>※ 만 30세 미만 미혼은 부모와 세대 분리 시 인정</div>
+      </Field>
+
+      <Field label="부양가족 수 (본인 제외)">
+        <select style={selectStyle} value={dependents} onChange={e => setDependents(e.target.value)}>
+          {[0,1,2,3,4,5,6].map(n => (
+            <option key={n} value={n}>{n}명{n === 6 ? ' 이상' : ''} → {(n===0?5:Math.min(n,6)*5+5)}점</option>
+          ))}
+        </select>
+        <div style={{ fontSize: 11, color: '#888', marginTop: 4 }}>※ 배우자·직계존속(부모·조부모)·직계비속(자녀·손자녀) 포함</div>
+      </Field>
+
+      <Field label="청약통장 가입기간 (년)">
+        <input
+          style={inputStyle} type="number" min="0" max="15" step="0.5"
+          placeholder="예: 10 (10년), 7.5 (7년 6개월)"
+          value={accountYears}
+          onChange={e => setAccountYears(e.target.value)}
+        />
+        <div style={{ fontSize: 11, color: '#888', marginTop: 4 }}>※ 청약저축·주택청약종합저축 가입일 기준</div>
+      </Field>
+
+      <CalcBtn onClick={calc} />
+
+      {result && (
+        <div style={{ marginTop: 20 }}>
+          {/* 총점 강조 */}
+          <div style={{
+            textAlign: 'center', padding: '24px 16px', borderRadius: 14,
+            background: `linear-gradient(135deg, ${scoreColor(result.total)}15, ${scoreColor(result.total)}25)`,
+            border: `2px solid ${scoreColor(result.total)}40`, marginBottom: 16,
+          }}>
+            <div style={{ fontSize: 13, color: '#666', marginBottom: 6 }}>나의 청약 가점</div>
+            <div style={{ fontSize: 52, fontWeight: 900, color: scoreColor(result.total), lineHeight: 1 }}>
+              {result.total}
+            </div>
+            <div style={{ fontSize: 14, color: '#888', marginTop: 4 }}>/ 84점</div>
+            <div style={{ marginTop: 10, fontSize: 13, fontWeight: 700, color: scoreColor(result.total) }}>
+              {result.total >= 70 ? '🏆 높은 가점 — 당첨 가능성 높음' :
+               result.total >= 55 ? '📊 중간 가점 — 지역·단지별 경쟁률 확인 필요' :
+               '📌 낮은 가점 — 추첨제 물량 노리기 추천'}
+            </div>
+          </div>
+
+          <ResultRow label="무주택기간" value={`${result.homeless}점`} sub="최대 32점 (15년 이상)" />
+          <ResultRow label="부양가족수" value={`${result.dep}점`} sub="최대 35점 (6명 이상)" />
+          <ResultRow label="청약통장 가입기간" value={`${result.account}점`} sub="최대 17점 (15년 이상)" />
+          <ResultRow label="총 가점" value={`${result.total}점 / 84점`} highlight />
+
+          <div style={{ marginTop: 16, background: '#f8fafc', borderRadius: 10, padding: '14px 16px', fontSize: 12, color: '#555', lineHeight: 1.8 }}>
+            <strong style={{ color: '#1e3a5f' }}>📌 가점제 당첨 참고 기준 (서울 기준)</strong><br/>
+            · 강남3구 인기 단지: 60~70점대<br/>
+            · 서울 일반 단지: 50~60점대<br/>
+            · 경기·인천: 40~55점대<br/>
+            · 지방: 30~50점대<br/>
+            <span style={{ color: '#888', fontSize: 11 }}>※ 단지·면적·시기에 따라 크게 다를 수 있습니다</span>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 const COMPS: Record<string, React.ComponentType> = {
   loan: LoanCalc, intermediate: IntermediateCalc, acquisition: AcquisitionCalc, brokerage: BrokerageCalc, roi: ROICalc,
+  subscription: SubscriptionCalc,
 };
 
 export default function Calculator() {
