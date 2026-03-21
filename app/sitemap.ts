@@ -2,11 +2,9 @@ import type { MetadataRoute } from 'next';
 import { posts } from './blog/data';
 import { aptPosts } from './apt/data';
 
-export const dynamic = 'force-dynamic';
-
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = 'https://realestate-calculator.vercel.app';
-  const now = new Date();
+  const now = new Date('2026-03-21');
 
   const aptUrls: MetadataRoute.Sitemap = aptPosts.map((post) => ({
     url: `${base}/apt/${post.slug}`,
