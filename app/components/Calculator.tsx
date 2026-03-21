@@ -1,5 +1,4 @@
 "use client";
-// ← 이 코드 전체를 복사해서 components/Calculator.tsx 에 붙여넣으세요
 
 import { useState, useMemo } from "react";
 
@@ -81,6 +80,30 @@ function CalcBtn({ onClick }: { onClick: () => void }) {
       width: "100%", padding: "13px", borderRadius: 10, background: "#2563eb",
       color: "#fff", fontWeight: 700, fontSize: 15, border: "none", cursor: "pointer", marginTop: 8,
     }}>계산하기</button>
+  );
+}
+
+function ShareResultBtn({ params }: { params: Record<string, string> }) {
+  const [copied, setCopied] = useState(false);
+  function share() {
+    const url = new URL(window.location.href);
+    url.pathname = '/';
+    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+    const text = url.toString();
+    if (navigator.share) {
+      navigator.share({ title: '부동산 계산기 결과', url: text });
+    } else {
+      navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+    }
+  }
+  return (
+    <button onClick={share} style={{
+      marginTop: 12, width: "100%", padding: "10px", borderRadius: 10,
+      border: "1.5px solid #2563eb", background: "#eff6ff",
+      color: "#2563eb", fontWeight: 700, fontSize: 14, cursor: "pointer",
+    }}>
+      {copied ? "✅ 링크 복사됨!" : "🔗 계산 결과 공유"}
+    </button>
   );
 }
 
@@ -220,6 +243,7 @@ function LoanCalc() {
             ) : (
               <><ResultRow label="첫 달 납입금" value={won(result.firstMonth)} highlight /><ResultRow label="마지막 달 납입금" value={won(result.lastMonth)} /><ResultRow label="총 이자" value={won(result.totalInterest)} /><ResultRow label="총 납입금" value={won(result.total)} /></>
             )}
+            <ShareResultBtn params={{ tab: "loan", amt, rate, years, type }} />
           </div>
         )}
       </Card>
@@ -231,84 +255,137 @@ function LoanCalc() {
 // 2. 중도금 이자
 function IntermediateCalc() {
   const [salePrice, setSalePrice] = useState("");
-  const [ratio, setRatio] = useState("60");
+  const [perAmount, setPerAmount] = useState("");
   const [rate, setRate] = useState("");
-  const [moveInDate, setMoveInDate] = useState("");
+  const [balanceDate, setBalanceDate] = useState("");
   const [count, setCount] = useState("6");
-  const [payDates, setPayDates] = useState(["", "", "", "", "", ""]);
+  const [payDates, setPayDates] = useState(Array(6).fill(""));
+  const [loanFlags, setLoanFlags] = useState(Array(6).fill(true));
   const [result, setResult] = useState<any>(null);
   const cnt = parseInt(count);
+
+  // 총 분양가 변경 시 회차별 중도금 자동 계산 (60% / 회차수)
+  const handleSalePrice = (v: string) => {
+    setSalePrice(v);
+    const total = parseWon(v);
+    if (total) setPerAmount(fmt(Math.round(total * 0.6 / cnt)));
+  };
+
+  const handleCount = (v: string) => {
+    setCount(v);
+    const total = parseWon(salePrice);
+    if (total) setPerAmount(fmt(Math.round(total * 0.6 / parseInt(v))));
+    setResult(null);
+  };
 
   const updatePayDate = (i: number, v: string) => {
     const arr = [...payDates]; arr[i] = v; setPayDates(arr);
   };
 
+  const toggleLoan = (i: number) => {
+    const arr = [...loanFlags]; arr[i] = !arr[i]; setLoanFlags(arr);
+  };
+
   const calc = () => {
-    const total = parseWon(salePrice), r = parseFloat(rate) / 100 / 12;
-    if (!moveInDate || !total || !r) return;
-    const moveIn = new Date(moveInDate);
-    const intermediate = total * parseFloat(ratio) / 100;
-    const perPayment = intermediate / cnt;
+    const per = parseWon(perAmount), r = parseFloat(rate) / 100;
+    if (!balanceDate || !per || !r) return;
+    const balDay = new Date(balanceDate);
     let totalInterest = 0;
     const payments = [];
     for (let i = 0; i < cnt; i++) {
+      const loan = loanFlags[i];
       const pd = payDates[i] ? new Date(payDates[i]) : null;
-      const diffDays = pd ? Math.max(0, Math.round((moveIn.getTime() - pd.getTime()) / 86400000)) : null;
-      const remainMonths = diffDays !== null ? diffDays / 30.4375 : null;
-      const paid = perPayment * (i + 1);
-      const interest = remainMonths !== null ? paid * r * remainMonths : null;
+      const days = pd ? Math.max(0, Math.round((balDay.getTime() - pd.getTime()) / 86400000)) : null;
+      // 이자 = 회차별 중도금 × 연이율 × 적용일수 / 365
+      const interest = (loan && days !== null) ? Math.round(per * r * days / 365) : null;
       if (interest !== null) totalInterest += interest;
-      payments.push({ round: i + 1, paid, interest, diffDays, date: payDates[i] });
+      payments.push({ round: i + 1, amount: per, date: payDates[i], days, interest, loan });
     }
-    setResult({ intermediate, totalInterest, perPayment, payments });
+    setResult({ perAmount: per, totalAmount: per * cnt, totalInterest, payments });
+  };
+
+  const tableHeaderStyle: React.CSSProperties = {
+    padding: "9px 8px", textAlign: "center", fontWeight: 700, fontSize: 12,
+    color: "#555", background: "#f0f4f9", whiteSpace: "nowrap", borderBottom: "1px solid #e0e7ef",
+  };
+  const tableCellStyle: React.CSSProperties = {
+    padding: "8px", textAlign: "center", fontSize: 13, borderBottom: "1px solid #f0f4f9", whiteSpace: "nowrap",
   };
 
   return (
-    <Card title="중도금 이자 계산">
-      <Field label="분양가"><WonInput placeholder="예: 500,000,000" value={salePrice} onChange={setSalePrice} /></Field>
-      <Field label="중도금 비율">
-        <select style={selectStyle} value={ratio} onChange={e => setRatio(e.target.value)}>
-          <option value="60">60%</option><option value="50">50%</option><option value="40">40%</option>
-        </select>
-      </Field>
+    <Card title="중도금 대출 이자 계산기">
+      <Field label="총 분양가"><WonInput placeholder="예: 518,000,000" value={salePrice} onChange={handleSalePrice} /></Field>
+      <Field label="회차별 중도금 (분양가×60%÷회차)"><WonInput placeholder="예: 51,800,000" value={perAmount} onChange={setPerAmount} /></Field>
       <Field label="납부 회차">
-        <select style={selectStyle} value={count} onChange={e => { setCount(e.target.value); setResult(null); }}>
-          <option value="2">2회차</option><option value="3">3회차</option><option value="4">4회차</option><option value="5">5회차</option><option value="6">6회차</option>
+        <select style={selectStyle} value={count} onChange={e => handleCount(e.target.value)}>
+          {["2","3","4","5","6"].map(v => <option key={v} value={v}>{v}회차</option>)}
         </select>
       </Field>
-      <Field label="이자율 (연, %)"><input style={inputStyle} type="number" placeholder="예: 5.5" value={rate} onChange={e => setRate(e.target.value)} /></Field>
-      <Field label="입주 예정일"><input style={inputStyle} type="date" value={moveInDate} onChange={e => setMoveInDate(e.target.value)} /></Field>
-      <div style={{ marginBottom: 16 }}>
-        <label style={{ display: "block", fontSize: 13, color: "#666", marginBottom: 8, fontWeight: 600 }}>회차별 납부일</label>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          {Array.from({ length: cnt }).map((_, i) => (
-            <div key={i}>
-              <div style={{ fontSize: 12, color: "#888", marginBottom: 4 }}>{i + 1}회차</div>
-              <input style={{ ...inputStyle, fontSize: 13, padding: "8px 10px" }} type="date" value={payDates[i] || ""} onChange={e => updatePayDate(i, e.target.value)} />
-            </div>
-          ))}
-        </div>
-      </div>
+      <Field label="중도금 대출 이율 (연, %)">
+        <input style={inputStyle} type="number" step="0.1" placeholder="예: 4.2" value={rate} onChange={e => setRate(e.target.value)} />
+      </Field>
+      <Field label="잔금일">
+        <input style={inputStyle} type="date" value={balanceDate} onChange={e => setBalanceDate(e.target.value)} />
+      </Field>
       <CalcBtn onClick={calc} />
       {result && (
         <div style={{ marginTop: 20 }}>
-          <div style={{ fontSize: 12, color: "#888", marginBottom: 10 }}>입주일: {moveInDate}</div>
-          <ResultRow label="총 중도금" value={won(result.intermediate)} />
-          <ResultRow label="회차당 중도금" value={won(result.perPayment)} />
-          <ResultRow label="총 예상 이자" value={won(result.totalInterest)} highlight />
-          <div style={{ marginTop: 12 }}>
-            {result.payments.map((p: any) => (
-              <div key={p.round} style={{ borderRadius: 8, marginBottom: 6, background: "#f9fafc", padding: "10px 12px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "#1e3a5f" }}>{p.round}회차</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "#2563eb" }}>{p.interest !== null ? won(p.interest) : <span style={{ color: "#bbb" }}>날짜 미입력</span>}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontSize: 12, color: "#888" }}>
-                  <span>납부일: {p.date || "미입력"}</span>
-                  <span>{p.diffDays !== null ? `잔여 ${p.diffDays}일` : ""}</span>
-                </div>
-              </div>
-            ))}
+          <div style={{ overflowX: "auto", borderRadius: 10, border: "1px solid #e0e7ef" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th style={tableHeaderStyle}>회차</th>
+                  <th style={tableHeaderStyle}>회차별 중도금</th>
+                  <th style={tableHeaderStyle}>납부일</th>
+                  <th style={tableHeaderStyle}>적용 일수</th>
+                  <th style={tableHeaderStyle}>총 이자</th>
+                  <th style={tableHeaderStyle}>대출 여부</th>
+                </tr>
+              </thead>
+              <tbody>
+                {result.payments.map((p: any, i: number) => (
+                  <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#fafbfd" }}>
+                    <td style={{ ...tableCellStyle, fontWeight: 700, color: "#1e3a5f" }}>{p.round}</td>
+                    <td style={tableCellStyle}>{fmt(p.amount)}원</td>
+                    <td style={{ ...tableCellStyle }}>
+                      <input
+                        type="date"
+                        value={payDates[i] || ""}
+                        onChange={e => updatePayDate(i, e.target.value)}
+                        style={{ fontSize: 12, border: "1px solid #e0e7ef", borderRadius: 6, padding: "4px 6px" }}
+                      />
+                    </td>
+                    <td style={{ ...tableCellStyle, color: p.days !== null ? "#374151" : "#bbb" }}>
+                      {p.days !== null ? p.days : "-"}
+                    </td>
+                    <td style={{ ...tableCellStyle, fontWeight: 700, color: p.interest !== null ? "#2563eb" : "#bbb" }}>
+                      {p.interest !== null ? `${fmt(p.interest)}원` : "-"}
+                    </td>
+                    <td style={tableCellStyle}>
+                      <button
+                        onClick={() => toggleLoan(i)}
+                        style={{
+                          width: 28, height: 28, borderRadius: "50%", border: "none", cursor: "pointer",
+                          background: loanFlags[i] ? "#dcfce7" : "#fee2e2",
+                          color: loanFlags[i] ? "#16a34a" : "#dc2626",
+                          fontWeight: 700, fontSize: 14,
+                        }}
+                      >{loanFlags[i] ? "O" : "X"}</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div style={{ marginTop: 16, padding: "12px 16px", background: "#f4f7fb", borderRadius: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#555", marginBottom: 6 }}>
+              <span>회차별 중도금 합계</span>
+              <span style={{ fontWeight: 700, color: "#1e3a5f" }}>{won(result.totalAmount)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 15, fontWeight: 700 }}>
+              <span style={{ color: "#555" }}>총 이자 합계</span>
+              <span style={{ color: "#2563eb" }}>{won(result.totalInterest)}</span>
+            </div>
           </div>
         </div>
       )}
@@ -397,6 +474,7 @@ function AcquisitionCalc() {
             ※ 생애최초 구입 시 취득세 200만원 감면 가능 (2025.12.31까지)<br />
             ※ 일시적 2주택(3년 내 종전주택 처분)은 1주택 세율 적용
           </div>
+          <ShareResultBtn params={{ tab: "acquisition", price, houseCount, houseType, isAdjusted: String(isAdjusted), isOver85: String(isOver85) }} />
         </div>
       )}
     </Card>

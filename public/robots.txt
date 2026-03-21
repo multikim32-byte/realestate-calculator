@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://realestate-calculator.vercel.app/sitemap.xml

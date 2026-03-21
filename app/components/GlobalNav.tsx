@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import ShareButton from './ShareButton';
+import InstallButton from './InstallButton';
 
 export default function GlobalNav() {
   return (
@@ -9,6 +10,7 @@ export default function GlobalNav() {
         <Link href="/" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>🏠 계산기</Link>
         <Link href="/apt" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>🏠 부동산정보</Link>
         <ShareButton />
+        <InstallButton />
       </div>
     </div>
   );

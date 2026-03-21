@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import GlobalNav from '../../components/GlobalNav';
+import KakaoMap from '../../components/KakaoMap';
 
 type UnitDetail = { type: string; area: number; count: number; price: number };
 
@@ -31,6 +32,9 @@ type SaleDetail = {
   constructionCompany?: string;
   contact?: string;
   units: UnitDetail[];
+  pblancUrl?: string;
+  houseManageNo?: string;
+  pblancNo?: string;
 };
 
 const statusStyle: Record<string, { bg: string; color: string }> = {
@@ -161,7 +165,7 @@ export default function SaleDetailPage() {
           <p style={{ margin: '0 0 20px', fontSize: 14, color: '#6b7280' }}>📍 {item.location}</p>
 
           {/* 핵심 정보 요약 */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10 }}>
             {[
               { label: '총 세대수', value: `${item.totalUnits.toLocaleString()}세대` },
               { label: '분양가', value: item.minPrice ? `${formatPrice(item.minPrice)}~${formatPrice(item.maxPrice)}` : '미정' },
@@ -176,9 +180,27 @@ export default function SaleDetailPage() {
               </div>
             ))}
           </div>
+
+          {/* 모집공고문 버튼 */}
+          <div style={{ marginTop: 16 }}>
+            <a
+              href={item.pblancUrl ||
+                `https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancDetail.do?houseManageNo=${item.houseManageNo ?? item.id}&pblancNo=${item.pblancNo ?? ''}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                padding: '10px 22px', borderRadius: 10, fontWeight: 700, fontSize: 14,
+                background: '#1d4ed8', color: '#fff', textDecoration: 'none',
+                boxShadow: '0 2px 8px rgba(29,78,216,0.3)',
+              }}
+            >
+              📄 모집공고문 보기 (청약홈)
+            </a>
+          </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
           {/* 상세 정보 */}
           <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: '24px 24px 16px' }}>
             <h2 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 800, color: '#1e293b' }}>단지 상세정보</h2>
@@ -214,29 +236,44 @@ export default function SaleDetailPage() {
         {item.units && item.units.length > 0 && (
           <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: '24px', marginTop: 16 }}>
             <h2 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 800, color: '#1e293b' }}>주택형별 공급정보</h2>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                <thead>
-                  <tr style={{ background: '#f8f9fa' }}>
-                    {['주택형', '전용면적(㎡)', '공급세대수', '분양가'].map(h => (
-                      <th key={h} style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 700, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>{h}</th>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {item.units.map((u, i) => (
+                <div key={i} style={{
+                  border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden',
+                  background: i % 2 === 0 ? '#fff' : '#f8f9fa',
+                }}>
+                  {/* 주택형 헤더 */}
+                  <div style={{
+                    padding: '8px 14px', background: '#eff6ff',
+                    borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', gap: 8,
+                  }}>
+                    <span style={{ fontSize: 11, color: '#6b7280', fontWeight: 600 }}>주택형</span>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: '#1d4ed8' }}>{u.type}</span>
+                  </div>
+                  {/* 3개 정보 */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                    {[
+                      { label: '전용면적(㎡)', value: u.area ? u.area.toFixed(2) : '-' },
+                      { label: '공급세대수', value: u.count ? `${u.count.toLocaleString()}세대` : '-' },
+                      { label: '분양가', value: u.price ? formatPrice(u.price) : '미정' },
+                    ].map(({ label, value }, j) => (
+                      <div key={label} style={{
+                        padding: '10px 8px', textAlign: 'center',
+                        borderRight: j < 2 ? '1px solid #e5e7eb' : 'none',
+                      }}>
+                        <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600, marginBottom: 4 }}>{label}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', wordBreak: 'keep-all' }}>{value}</div>
+                      </div>
                     ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {item.units.map((u, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                      <td style={{ padding: '12px 14px', textAlign: 'center', fontWeight: 700, color: '#1d4ed8' }}>{u.type}</td>
-                      <td style={{ padding: '12px 14px', textAlign: 'center', color: '#374151' }}>{u.area ? u.area.toFixed(2) : '-'}</td>
-                      <td style={{ padding: '12px 14px', textAlign: 'center', color: '#374151' }}>{u.count ? `${u.count.toLocaleString()}세대` : '-'}</td>
-                      <td style={{ padding: '12px 14px', textAlign: 'center', color: '#374151', fontWeight: 600 }}>{u.price ? formatPrice(u.price) : '미정'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
+
+        {/* 카카오 지도 */}
+        {item.location && <KakaoMap address={item.location} name={item.name} />}
 
         {/* 계산기 유도 */}
         <div style={{ marginTop: 16, background: '#1e3a5f', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>

@@ -45,6 +45,7 @@ export interface PublicSaleItem {
   constructionCompany: string;
   contact: string;
   units: UnitDetail[];
+  pblancUrl: string;
 }
 
 export interface UnitDetail {
@@ -213,6 +214,7 @@ function parseDetail(raw: any, recruitType: '신규공급' | '선착순'): Publi
     constructionCompany: raw.CNSTRCTN_CMPNY_NM ?? '',
     contact:         raw.MDHS_TELNO ?? '',
     units:           [],
+    pblancUrl:       raw.PBLANC_URL ?? '',
   };
 }
 

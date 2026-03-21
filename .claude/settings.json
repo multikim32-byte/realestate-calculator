@@ -5,7 +5,14 @@
       "WebSearch",
       "Read(//c/Users/김경래소장/sale24/app/**)",
       "Read(//c/Users/김경래소장/sale24/components/**)",
-      "Bash(vercel --prod)"
+      "Bash(vercel --prod)",
+      "WebFetch(domain:support.google.com)",
+      "Bash(curl -s https://realestate-calculator.vercel.app/sitemap.xml)",
+      "Bash(npx next:*)",
+      "Bash(node -e \":*)",
+      "Bash(find .next -name *calendar*)",
+      "Bash(rm -rf .next)",
+      "Bash(git add:*)"
     ],
     "additionalDirectories": [
       "c:\\Users\\김경래소장\\realestate-calculator\\app\\sale\\[id]"

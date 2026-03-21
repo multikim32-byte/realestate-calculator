@@ -21,6 +21,9 @@ export interface SaleItem {
   imageUrl?: string;
   floors: number;
   units: UnitType[];
+  pblancUrl?: string;
+  houseManageNo?: string;
+  pblancNo?: string;
 }
 
 export interface UnitType {

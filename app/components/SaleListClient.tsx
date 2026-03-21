@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { SaleItem, Region } from '@/lib/types';
-import Link from 'next/link';
+import KakaoMapList from './KakaoMapList';
 
 const regions: Region[] = ['전체', '서울', '경기', '인천', '부산', '대구', '광주', '대전', '울산', '세종', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'];
 
@@ -24,6 +24,25 @@ const statusStyle: Record<string, { bg: string; color: string; border: string }>
   '완료':      { bg: '#f3f4f6', color: '#6b7280', border: '#d1d5db' },
 };
 
+
+function getDDay(receiptStart: string, receiptEnd: string, status: string): { label: string; color: string } | null {
+  if (!receiptStart) return null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const start = new Date(receiptStart); start.setHours(0, 0, 0, 0);
+  const end = new Date(receiptEnd); end.setHours(0, 0, 0, 0);
+
+  if (status === '청약중') {
+    const diff = Math.ceil((end.getTime() - today.getTime()) / 86400000);
+    if (diff === 0) return { label: '오늘 마감', color: '#dc2626' };
+    if (diff > 0) return { label: `D-${diff} 마감`, color: '#dc2626' };
+  }
+  if (status === '청약예정') {
+    const diff = Math.ceil((start.getTime() - today.getTime()) / 86400000);
+    if (diff === 0) return { label: 'D-Day 오늘', color: '#059669' };
+    if (diff > 0) return { label: `D-${diff}`, color: '#059669' };
+  }
+  return null;
+}
 
 function formatPrice(p: number) {
   if (!p) return '-';
@@ -56,6 +75,9 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
 
   // 드롭다운 열림 상태
   const [openDrop, setOpenDrop] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [displayCount, setDisplayCount] = useState(20);
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   function updateUrl(params: Record<string, string>) {
     const next = new URLSearchParams(searchParams.toString());
@@ -108,9 +130,11 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
     }
   }, [defaultDateFrom, defaultDateTo]);
 
-  useEffect(() => { fetchItems(region, fetchType); }, [region, fetchType, fetchItems]);
+  useEffect(() => { fetchItems(region, fetchType); setDisplayCount(20); }, [region, fetchType, fetchItems]);
 
-  const filtered = items;
+  const filtered = search.trim()
+    ? items.filter(i => i.name.includes(search.trim()) || i.location.includes(search.trim()))
+    : items;
 
   const fetchTypeLabels: Record<FetchType, { full: string; short: string }> = {
     apt:        { full: '아파트',                          short: '아파트' },
@@ -142,8 +166,7 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
                   color: fetchType === ft ? '#1d4ed8' : '#6b7280',
                 }}
               >
-                <span className="hidden sm:inline">{fetchTypeLabels[ft].full}</span>
-                <span className="sm:hidden">{fetchTypeLabels[ft].short}</span>
+                {fetchTypeLabels[ft].full}
               </button>
             ))}
           </div>
@@ -151,8 +174,19 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
       </div>
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '20px 16px' }}>
-        {/* 지역 필터 */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        {/* 검색 + 지역 필터 + 뷰 토글 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="단지명·주소 검색"
+            style={{
+              padding: '7px 14px', borderRadius: 8, fontSize: 13,
+              border: '1px solid #e5e7eb', background: '#fff', outline: 'none',
+              width: 180, color: '#374151',
+            }}
+          />
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setOpenDrop(openDrop === 'region' ? null : 'region')}
@@ -182,6 +216,27 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
                 ))}
               </div>
             )}
+          </div>
+          {/* 뷰 토글 버튼 */}
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
+            <button
+              onClick={() => setViewMode('list')}
+              style={{
+                padding: '7px 12px', borderRadius: '8px 0 0 8px', fontSize: 13, fontWeight: 600,
+                border: '1px solid #e5e7eb', cursor: 'pointer',
+                background: viewMode === 'list' ? '#1d4ed8' : '#fff',
+                color: viewMode === 'list' ? '#fff' : '#6b7280',
+              }}
+            >≡ 목록</button>
+            <button
+              onClick={() => setViewMode('map')}
+              style={{
+                padding: '7px 12px', borderRadius: '0 8px 8px 0', fontSize: 13, fontWeight: 600,
+                border: '1px solid #e5e7eb', borderLeft: 'none', cursor: 'pointer',
+                background: viewMode === 'map' ? '#1d4ed8' : '#fff',
+                color: viewMode === 'map' ? '#fff' : '#6b7280',
+              }}
+            >📍 지도</button>
           </div>
         </div>
 
@@ -214,28 +269,39 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
           </button>
         </div>
 
-        {/* 목록 */}
-        {loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {[1,2,3,4,5].map(i => (
-              <div key={i} style={{ height: 96, background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', opacity: 0.6 }} />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: '60px 0', textAlign: 'center', color: '#aaa', fontSize: 14 }}>
-            조건에 맞는 분양 정보가 없습니다.
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {filtered.map((item) => {
-              const ss = statusStyle[item.status] || statusStyle['완료'];
-              return (
-                <Link key={item.id} href={`/sale/${item.id}`} style={{ textDecoration: 'none' }}>
-                  <div style={{
-                    background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12,
-                    display: 'flex', alignItems: 'stretch', overflow: 'hidden',
-                    transition: 'box-shadow 0.15s',
-                  }}
+        {/* 지도뷰 */}
+        {viewMode === 'map' && !loading && (
+          <KakaoMapList items={filtered} />
+        )}
+
+        {/* 목록뷰 */}
+        {viewMode === 'list' && (
+          loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[1,2,3,4,5].map(i => (
+                <div key={i} style={{ height: 96, background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', opacity: 0.6 }} />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: '60px 0', textAlign: 'center', color: '#aaa', fontSize: 14 }}>
+              조건에 맞는 분양 정보가 없습니다.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {filtered.slice(0, displayCount).map((item) => {
+                const ss = statusStyle[item.status] || statusStyle['완료'];
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      try { sessionStorage.setItem(`sale_item_${item.id}`, JSON.stringify(item)); } catch {}
+                      router.push(`/sale/${item.id}`);
+                    }}
+                    style={{
+                      background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12,
+                      display: 'flex', alignItems: 'stretch', overflow: 'hidden',
+                      transition: 'box-shadow 0.15s', cursor: 'pointer',
+                    }}
                     onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.10)')}
                     onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
                   >
@@ -246,6 +312,9 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
                           fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
                           color: ss.color, background: ss.bg, border: `1px solid ${ss.border}`,
                         }}>{item.status}</span>
+                        {(() => { const d = getDDay(item.receiptStart, item.receiptEnd, item.status); return d ? (
+                          <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: d.color, color: '#fff' }}>{d.label}</span>
+                        ) : null; })()}
                         <span style={{ fontSize: 16, fontWeight: 700, color: '#1d4ed8' }}>{item.name}</span>
                         <span style={{ fontSize: 11, background: '#f3f4f6', color: '#6b7280', padding: '2px 7px', borderRadius: 6 }}>{item.buildingType}</span>
                         <span style={{ fontSize: 11, background: '#f3f4f6', color: '#6b7280', padding: '2px 7px', borderRadius: 6 }}>{item.supplyType}</span>
@@ -258,7 +327,7 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
                         📍 {item.location}
                       </div>
 
-                      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', fontSize: 12, color: '#374151' }}>
+                      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', fontSize: 12, color: '#374151', alignItems: 'center' }}>
                         <span>세대수 <strong>{item.totalUnits.toLocaleString()}세대</strong></span>
                         {item.minPrice > 0 && (
                           <span>분양가 <strong style={{ color: '#1d4ed8' }}>{formatPrice(item.minPrice)}~{formatPrice(item.maxPrice)}</strong></span>
@@ -280,10 +349,24 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
                       </span>
                     </div>
                   </div>
-                </Link>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )
+        )}
+
+        {/* 더보기 버튼 (목록뷰 only) */}
+        {viewMode === 'list' && !loading && filtered.length > displayCount && (
+          <button
+            onClick={() => setDisplayCount(c => c + 20)}
+            style={{
+              marginTop: 8, width: '100%', padding: '14px', borderRadius: 12,
+              border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer',
+              fontSize: 14, fontWeight: 600, color: '#1d4ed8',
+            }}
+          >
+            더보기 ({displayCount}/{filtered.length})
+          </button>
         )}
       </div>
 

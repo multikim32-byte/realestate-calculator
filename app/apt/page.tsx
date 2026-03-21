@@ -34,6 +34,15 @@ export default function AptPage() {
           </p>
         </div>
 
+        {/* 소개 문구 */}
+        <div style={{ background: "#fff", borderRadius: 12, padding: "20px 24px", marginBottom: 24, boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
+          <p style={{ margin: 0, fontSize: 14, lineHeight: 1.9, color: "#374151" }}>
+            주택 취득세, 주택담보대출, 중도금 이자, 양도소득세, 전세·월세, 청약, 분양, 부동산 투자까지
+            부동산 거래에 필요한 모든 정보를 쉽고 자세하게 설명합니다.
+            최신 법령과 2025년 기준 세율을 반영한 실용적인 정보를 확인하세요.
+          </p>
+        </div>
+
         {/* 글 목록 */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {aptPosts.map((post) => {
