@@ -1951,7 +1951,7 @@ export const aptPosts: AptPost[] = [
     `,
   },
   {
-    slug: "mortgage-refinancing-guide",
+    slug: "mortgage-refinancing-complete-guide",
     title: "주택담보대출 갈아타기(대환) 완벽 가이드 — 금리 낮추는 방법",
     description: "대출 갈아타기(대환대출)의 절차, 비용 계산, 실제 유리한 조건과 주의사항을 정리합니다. 금리 1%p만 낮춰도 얼마를 절약할 수 있는지 확인하세요.",
     date: "2026-03-09",
@@ -2386,7 +2386,7 @@ export const aptPosts: AptPost[] = [
     `,
   },
   {
-    slug: "reconstruction-redevelopment-guide",
+    slug: "reconstruction-redevelopment-investment-guide",
     title: "재건축·재개발 완벽 가이드 — 절차·투자 포인트·주의사항",
     description: "재건축과 재개발의 차이점, 사업 단계별 절차, 조합원 권리, 투자 시 체크포인트까지 내 집 마련과 투자 관점에서 핵심 정보를 정리했습니다.",
     date: "2026-03-16",

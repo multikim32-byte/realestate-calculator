@@ -12,7 +12,10 @@
       "Bash(node -e \":*)",
       "Bash(find .next -name *calendar*)",
       "Bash(rm -rf .next)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git remote:*)"
     ],
     "additionalDirectories": [
       "c:\\Users\\김경래소장\\realestate-calculator\\app\\sale\\[id]"
