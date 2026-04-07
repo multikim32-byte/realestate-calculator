@@ -221,11 +221,14 @@ function parseDetail(raw: any, recruitType: '신규공급' | '선착순'): Publi
 // ─── 파서: 주택형별 ───────────────────────────────────────────────────────────
 
 function parseUnit(raw: any): UnitDetail {
+  // APT API: HOUSE_TY, SUPLY_AR, LTTOT_TOP_AMOUNT
+  // 오피스텔 API: TP, EXCLUSE_AR, SUPLY_AMOUNT
+  const priceRaw = (raw.LTTOT_TOP_AMOUNT ?? raw.SUPLY_AMOUNT ?? '0').toString().replace(/,/g, '');
   return {
-    type:  raw.HOUSE_TY ?? '',
-    area:  parseFloat(raw.SUPLY_AR ?? raw.HOUSE_TY ?? '0') || 0,
+    type:  raw.HOUSE_TY ?? raw.TP ?? '',
+    area:  parseFloat(raw.EXCLUSE_AR ?? raw.HOUSE_TY ?? raw.TP ?? '0') || 0,
     count: parseInt(raw.SUPLY_HSHLDCO ?? '0') || 0,
-    price: parseInt((raw.LTTOT_TOP_AMOUNT ?? '0').replace(/,/g, '')) || 0,
+    price: parseInt(priceRaw) || 0,
   };
 }
 
@@ -257,7 +260,7 @@ function sortByAnnouncementDesc(items: PublicSaleItem[], limit: number): PublicS
  */
 export async function fetchAPTSaleList(
   serviceKey: string,
-  page = 1,
+  _page = 1,
   perPage = 10,
   df: DateFilter = {}
 ): Promise<{ items: PublicSaleItem[]; total: number }> {
@@ -273,7 +276,7 @@ export async function fetchAPTSaleList(
  */
 export async function fetchOfficetelSaleList(
   serviceKey: string,
-  page = 1,
+  _page = 1,
   perPage = 10,
   df: DateFilter = {}
 ): Promise<{ items: PublicSaleItem[]; total: number }> {
@@ -289,7 +292,7 @@ export async function fetchOfficetelSaleList(
  */
 export async function fetchRemndrSaleList(
   serviceKey: string,
-  page = 1,
+  _page = 1,
   perPage = 10,
   df: DateFilter = {}
 ): Promise<{ items: PublicSaleItem[]; total: number }> {
@@ -305,7 +308,7 @@ export async function fetchRemndrSaleList(
  */
 export async function fetchPblPvtRentSaleList(
   serviceKey: string,
-  page = 1,
+  _page = 1,
   perPage = 10,
   df: DateFilter = {}
 ): Promise<{ items: PublicSaleItem[]; total: number }> {
@@ -321,7 +324,7 @@ export async function fetchPblPvtRentSaleList(
  */
 export async function fetchOptSaleList(
   serviceKey: string,
-  page = 1,
+  _page = 1,
   perPage = 10,
   df: DateFilter = {}
 ): Promise<{ items: PublicSaleItem[]; total: number }> {
@@ -456,12 +459,11 @@ export async function fetchPublicSaleList(params?: {
   const type        = params?.type        ?? 'all';
   const skipEnrich  = params?.skipEnrich  ?? true;   // 목록에서는 가격 enrichment 생략
 
-  // 최근 3개월~6개월 후 범위로 필터링 → page 1에 오늘 공고 포함
-  const defaultFrom = new Date(); defaultFrom.setMonth(defaultFrom.getMonth() - 3);
-  const defaultTo   = new Date(); defaultTo.setMonth(defaultTo.getMonth() + 6);
+  // 날짜 필터는 명시적으로 전달된 경우만 적용
+  // (기본값 없음 — callApiWithLatest가 첫 페이지+마지막 페이지를 병합해 최신 데이터 확보)
   const recentDf: DateFilter = {
-    dateFrom: (params?.dateFrom ?? defaultFrom.toISOString().slice(0, 10)),
-    dateTo:   (params?.dateTo   ?? defaultTo.toISOString().slice(0, 10)),
+    dateFrom: params?.dateFrom,
+    dateTo:   params?.dateTo,
   };
 
   if (type === 'all') {

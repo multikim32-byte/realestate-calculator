@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: '부동산 계산기',
     short_name: '부동산계산기',
     description: '취득세·대출·중도금·중개수수료 무료 계산 및 분양정보',
-    id: 'https://realestate-calculator.vercel.app/',
+    id: 'https://www.mk-land.kr/',
     start_url: '/',
     scope: '/',
     display: 'standalone',

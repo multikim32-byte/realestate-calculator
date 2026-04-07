@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: '개인정보처리방침 | 부동산 계산기',
   description: '부동산 계산기 서비스의 개인정보처리방침입니다. 수집하는 정보, 이용 목적, 광고 및 쿠키 사용에 대해 안내합니다.',
+  alternates: { canonical: 'https://www.mk-land.kr/privacy' },
 };
 
 export default function PrivacyPage() {
@@ -57,7 +58,7 @@ export default function PrivacyPage() {
 
         <h2 style={{ fontSize: 18, fontWeight: 700, marginTop: 32, marginBottom: 12 }}>8. 문의</h2>
         <p>개인정보 관련 문의사항은 아래 이메일로 연락해 주시기 바랍니다.</p>
-        <p style={{ marginTop: 8 }}>이메일: <a href="mailto:multikim32@gmail.com" style={{ color: '#1d4ed8' }}>multikim32@gmail.com</a></p>
+        <p style={{ marginTop: 8 }}>이메일: <a href="mailto:multikim@naver.com" style={{ color: '#1d4ed8' }}>multikim@naver.com</a></p>
 
         <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid #e5e7eb', color: '#9ca3af', fontSize: 13 }}>
           <p>본 방침은 2026년 3월 20일부터 시행됩니다.</p>

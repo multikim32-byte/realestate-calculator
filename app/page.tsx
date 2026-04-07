@@ -4,8 +4,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "부동산 계산기 — 취득세·대출·중도금·중개수수료 무료 계산 (2025년)",
-  description: "2025년 최신 기준 취득세, 주택담보대출 원리금, 중도금 이자, 중개수수료, 수익률을 한 번에 무료로 계산하세요. 생애최초 감면, 원리금균등·원금균등 비교 지원.",
+  title: "부동산 계산기 — 취득세·대출·중도금·중개수수료 무료 계산 (2026년)",
+  description: "2026년 최신 기준 취득세, 주택담보대출 원리금, 중도금 이자, 중개수수료, 수익률을 한 번에 무료로 계산하세요. 생애최초 감면, 원리금균등·원금균등 비교 지원.",
+  alternates: { canonical: 'https://www.mk-land.kr' },
 };
 
 const faqJsonLd = {
@@ -44,11 +45,11 @@ const websiteJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: '부동산 계산기',
-  url: 'https://realestate-calculator.vercel.app',
+  url: 'https://www.mk-land.kr',
   description: '취득세, 주택담보대출 원리금, 중도금 이자, 중개수수료, 수익률을 무료로 계산하세요.',
   potentialAction: {
     '@type': 'SearchAction',
-    target: 'https://realestate-calculator.vercel.app/sale?region={search_term_string}',
+    target: 'https://www.mk-land.kr/sale?region={search_term_string}',
     'query-input': 'required name=search_term_string',
   },
 };
@@ -69,7 +70,7 @@ export default function Home() {
           <h2 style={{ fontSize: 20, fontWeight: 700, color: "#1e3a5f", marginBottom: 12 }}>부동산 계산기 소개</h2>
           <p style={{ lineHeight: 1.8, color: "#374151", fontSize: 15 }}>
             본 서비스는 주택 매입·분양·임대 등 부동산 거래에 필요한 모든 비용을 빠르고 정확하게 계산할 수 있는 무료 계산기입니다.
-            복잡한 세율표나 금융 공식 없이 숫자만 입력하면 즉시 결과를 확인할 수 있으며, 2025년 최신 세율 및 규정을 반영합니다.
+            복잡한 세율표나 금융 공식 없이 숫자만 입력하면 즉시 결과를 확인할 수 있으며, 2026년 최신 세율 및 규정을 반영합니다.
           </p>
         </section>
 
@@ -123,9 +124,9 @@ export default function Home() {
           <h2 style={{ fontSize: 18, fontWeight: 700, color: "#78350f", marginBottom: 8 }}>취득세 계산기 사용법</h2>
           <p style={{ lineHeight: 1.8, color: "#374151", fontSize: 14, marginBottom: 16 }}>
             주택 매입 시 발생하는 취득세를 계산합니다. 주택 가격, 보유 주택 수, 조정대상지역 여부에 따라 세율이 다르게 적용됩니다.
-            2025년 최신 세율과 생애최초 취득세 감면 혜택을 반영합니다.
+            2026년 최신 세율과 생애최초 취득세 감면 혜택을 반영합니다.
           </p>
-          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#78350f", marginBottom: 8 }}>2025년 취득세율 요약</h3>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#78350f", marginBottom: 8 }}>2026년 취득세율 요약</h3>
           <ul style={{ paddingLeft: 20, lineHeight: 2, color: "#374151", fontSize: 14 }}>
             <li><strong>1주택 (6억 이하):</strong> 1% + 지방교육세 0.1%</li>
             <li><strong>1주택 (6~9억):</strong> 1~3% 누진 + 지방교육세</li>
@@ -149,7 +150,7 @@ export default function Home() {
             부동산 거래 시 공인중개사에게 지급하는 중개보수를 계산합니다. 거래 유형(매매·전세·월세)과 거래 금액에 따라
             법정 요율이 다르게 적용됩니다.
           </p>
-          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#581c87", marginBottom: 8 }}>2025년 주택 중개수수료 요율</h3>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#581c87", marginBottom: 8 }}>2026년 주택 중개수수료 요율</h3>
           <ul style={{ paddingLeft: 20, lineHeight: 2, color: "#374151", fontSize: 14 }}>
             <li><strong>매매 5천만 원 미만:</strong> 0.6% 이내 (한도 25만 원)</li>
             <li><strong>매매 5천만~2억 원:</strong> 0.5% 이내 (한도 80만 원)</li>
@@ -239,11 +240,11 @@ export default function Home() {
           <h2 style={{ fontSize: 20, fontWeight: 700, color: "#1e3a5f", marginBottom: 16 }}>관련 부동산 정보</h2>
           <div style={{ display: "grid", gap: 12 }}>
             {[
-              { href: "/apt/acquisition-tax-guide-2025", title: "2025년 취득세 완벽 가이드 — 1주택부터 다주택까지", desc: "취득세율 표, 생애최초 감면, 절세 전략 총정리" },
-              { href: "/apt/mortgage-loan-complete-guide-2025", title: "2025년 주택담보대출 완벽 가이드", desc: "LTV·DTI·DSR 한도, 은행별 금리 비교, 신청 절차" },
-              { href: "/apt/loan-repayment-comparison", title: "원리금균등 vs 원금균등 — 어떤 상환 방식이 유리?", desc: "두 방식의 총 이자 차이를 실제 계산으로 비교" },
+              { href: "/apt/acquisition-tax-guide", title: "2026년 취득세 완벽 가이드 — 1주택부터 다주택까지", desc: "취득세율 표, 생애최초 감면, 절세 전략 총정리" },
+              { href: "/apt/mortgage-loan-guide", title: "2026년 주택담보대출 완벽 가이드", desc: "LTV·DTI·DSR 한도, 은행별 금리 비교, 신청 절차" },
+              { href: "/apt/repayment-method-comparison", title: "원리금균등 vs 원금균등 — 어떤 상환 방식이 유리?", desc: "두 방식의 총 이자 차이를 실제 계산으로 비교" },
               { href: "/apt/dsr-calculation-guide", title: "DSR 계산 방법과 대출 한도 늘리는 전략", desc: "DSR 계산식, 예외 상품, 합법적 한도 확장 방법" },
-              { href: "/apt/brokerage-fee-saving-tips", title: "중개수수료 아끼는 방법 — 합법적 절약 전략", desc: "협상 요령, 직거래 주의사항, 수수료 분쟁 예방" },
+              { href: "/apt/real-estate-brokerage-fee", title: "중개수수료 아끼는 방법 — 합법적 절약 전략", desc: "협상 요령, 직거래 주의사항, 수수료 분쟁 예방" },
             ].map(({ href, title, desc }) => (
               <Link key={href} href={href} style={{ display: "block", padding: "16px 20px", background: "#f9fafb", borderRadius: 10, textDecoration: "none", border: "1px solid #e5e7eb" }}>
                 <div style={{ fontSize: 15, fontWeight: 600, color: "#1e3a5f", marginBottom: 4 }}>{title}</div>

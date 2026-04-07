@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 
-const BASE_URL = 'https://realestate-calculator.vercel.app';
+const BASE_URL = 'https://www.mk-land.kr';
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: "부동산 계산기 — 취득세·대출·중도금·중개수수료 무료 계산 (2025년)",
+    default: "부동산 계산기 — 취득세·대출·중도금·중개수수료 무료 계산 (2026년)",
     template: "%s | 부동산 계산기",
   },
-  description: "취득세, 주택담보대출 원리금, 중도금 이자, 중개수수료, 수익률을 한 번에 무료로 계산하세요. 2025년 최신 세율 반영. 분양정보·부동산 정보 제공.",
+  description: "취득세, 주택담보대출 원리금, 중도금 이자, 중개수수료, 수익률을 한 번에 무료로 계산하세요. 2026년 최신 세율 반영. 청약정보·부동산 정보 제공.",
   keywords: ["부동산 계산기", "취득세 계산기", "주택담보대출", "중도금 이자", "중개수수료", "분양정보", "청약", "수익률 계산"],
   authors: [{ name: "부동산 계산기" }],
   creator: "부동산 계산기",
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     url: BASE_URL,
     siteName: "부동산 계산기",
     title: "부동산 계산기 — 취득세·대출·중도금·중개수수료 무료 계산",
-    description: "취득세, 주택담보대출 원리금, 중도금 이자, 중개수수료, 수익률을 한 번에 무료로 계산하세요. 2025년 최신 세율 반영.",
+    description: "취득세, 주택담보대출 원리금, 중도금 이자, 중개수수료, 수익률을 한 번에 무료로 계산하세요. 2026년 최신 세율 반영.",
     images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: '부동산 계산기' }],
   },
   twitter: {
@@ -28,8 +28,8 @@ export const metadata: Metadata = {
     images: ['/opengraph-image'],
   },
   verification: {
-    google: 'mEuNcF9_rSk6ZF9wdymiCNQdSfpTO0N10GIlpbYEYxU',
-    other: { 'naver-site-verification': 'cd4df1e77a8f1612c642bbf5861975b1ad200c55' },
+    google: 'RAqDPK6ChEYWgVUEXLItRYmja-LdtaytbxpW9dXuAk8',
+    other: { 'naver-site-verification': 'bcba8a5bb1b134d013e9e06b23c7616efca70c3d' },
   },
   robots: {
     index: true,
@@ -50,6 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6751517797498225"
           crossOrigin="anonymous"
         />
+        <meta name="google-adsense-account" content="ca-pub-6751517797498225" />
         <meta name="theme-color" content="#1d4ed8" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -63,7 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <footer style={{ background: '#f9fafb', borderTop: '1px solid #e5e7eb', padding: '24px 16px', marginTop: 40 }}>
           <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'space-between', alignItems: 'center' }}>
-            <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>© 2025 부동산 계산기 · 취득세·대출·중도금·중개수수료 무료 계산</p>
+            <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>© 2026 부동산 계산기 · 취득세·대출·중도금·중개수수료 무료 계산</p>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <a href="/about" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>서비스 소개</a>
               <a href="/privacy" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>개인정보처리방침</a>

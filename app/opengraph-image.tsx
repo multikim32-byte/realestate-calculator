@@ -35,7 +35,7 @@ export default function Image() {
           color: '#fff',
           fontWeight: 600,
         }}>
-          2025년 최신 세율 반영 · 무료 계산
+          2026년 최신 세율 반영 · 무료 계산
         </div>
       </div>
     ),

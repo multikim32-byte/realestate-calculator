@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "부동산정보 — 청약·분양·세금·대출 완벽 가이드",
   description: "2026년 최신 부동산 정보를 제공합니다. 청약 자격, 취득세, 주담대, 양도세, 전세·월세까지 부동산에 필요한 모든 정보를 알아보세요.",
+  alternates: { canonical: 'https://www.mk-land.kr/apt' },
 };
 
 const tagColors: Record<string, { bg: string; color: string }> = {
@@ -39,7 +40,7 @@ export default function AptPage() {
           <p style={{ margin: 0, fontSize: 14, lineHeight: 1.9, color: "#374151" }}>
             주택 취득세, 주택담보대출, 중도금 이자, 양도소득세, 전세·월세, 청약, 분양, 부동산 투자까지
             부동산 거래에 필요한 모든 정보를 쉽고 자세하게 설명합니다.
-            최신 법령과 2025년 기준 세율을 반영한 실용적인 정보를 확인하세요.
+            최신 법령과 2026년 기준 세율을 반영한 실용적인 정보를 확인하세요.
           </p>
         </div>
 

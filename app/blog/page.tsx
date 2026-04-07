@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "부동산 정보 블로그 — 취득세·대출·수익률 완벽 가이드",
   description: "부동산 취득세, 대출 상환 방식, 중도금 이자, 중개수수료, 수익률 계산까지 실전에 필요한 부동산 정보를 알기 쉽게 설명합니다.",
+  alternates: { canonical: 'https://www.mk-land.kr/blog' },
 };
 
 export default function BlogPage() {

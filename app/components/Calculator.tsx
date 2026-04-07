@@ -227,6 +227,9 @@ function LoanCalc() {
   return (
     <>
       <Card title="대출 원리금 상환 계산">
+        <p style={{ fontSize: 13, color: '#6b7280', marginTop: 0, marginBottom: 18, lineHeight: 1.6 }}>
+          이 계산기는 주택담보대출·신용대출 등의 <strong>월 납입금과 총 이자 부담</strong>을 계산하는 데 사용합니다. 원리금균등상환과 원금균등상환 방식을 모두 지원하며, 회차별 상환 내역을 확인할 수 있습니다.
+        </p>
         <Field label="대출 금액"><WonInput placeholder="예: 300,000,000" value={amt} onChange={setAmt} /></Field>
         <Field label="연 이자율 (%)"><input style={inputStyle} type="number" placeholder="예: 4.5" value={rate} onChange={e => setRate(e.target.value)} /></Field>
         <Field label="대출 기간 (년)"><input style={inputStyle} type="number" placeholder="예: 30" value={years} onChange={e => setYears(e.target.value)} /></Field>
@@ -315,6 +318,9 @@ function IntermediateCalc() {
 
   return (
     <Card title="중도금 대출 이자 계산기">
+      <p style={{ fontSize: 13, color: '#6b7280', marginTop: 0, marginBottom: 18, lineHeight: 1.6 }}>
+        이 계산기는 분양 아파트 계약 후 납부하는 <strong>중도금 대출 이자 총액</strong>을 계산하는 데 사용합니다. 회차별 납부일과 잔금일을 입력하면 각 회차의 이자와 합계를 자동으로 계산합니다.
+      </p>
       <Field label="총 분양가"><WonInput placeholder="예: 518,000,000" value={salePrice} onChange={handleSalePrice} /></Field>
       <Field label="회차별 중도금 (분양가×60%÷회차)"><WonInput placeholder="예: 51,800,000" value={perAmount} onChange={setPerAmount} /></Field>
       <Field label="납부 회차">
@@ -430,6 +436,9 @@ function AcquisitionCalc() {
 
   return (
     <Card title="취득세 계산">
+      <p style={{ fontSize: 13, color: '#6b7280', marginTop: 0, marginBottom: 18, lineHeight: 1.6 }}>
+        이 계산기는 주택·상가·오피스텔 등 부동산 취득 시 납부해야 하는 <strong>취득세·지방교육세·농어촌특별세</strong>를 계산하는 데 사용합니다. 주택 수와 조정대상지역 여부에 따른 중과세율도 반영됩니다.
+      </p>
       <div style={{ background: "#fff8e1", border: "1px solid #ffe082", borderRadius: 8, padding: "10px 14px", marginBottom: 18, fontSize: 12, color: "#7a6000", lineHeight: 1.6 }}>
         📌 2026년 현재 조정대상지역<br />
         · 서울특별시 25개 구 전 지역 (강남·서초·송파·용산 포함 전 구)<br />
@@ -472,7 +481,7 @@ function AcquisitionCalc() {
           {result.specialTax > 0 && <ResultRow label={`농어촌특별세 (${(result.specRate * 100).toFixed(2)}%)`} value={won(result.specialTax)} />}
           <ResultRow label="합계" value={won(result.total)} />
           <div style={{ fontSize: 11, color: "#aaa", marginTop: 8, lineHeight: 1.6 }}>
-            ※ 생애최초 구입 시 취득세 200만원 감면 가능 (2025.12.31까지)<br />
+            ※ 생애최초 구입 시 취득세 200만원 감면 가능 (2026.12.31까지)<br />
             ※ 일시적 2주택(3년 내 종전주택 처분)은 1주택 세율 적용
           </div>
           <ShareResultBtn params={{ tab: "acquisition", price, houseCount, houseType, isAdjusted: String(isAdjusted), isOver85: String(isOver85) }} />
@@ -538,6 +547,9 @@ function BrokerageCalc() {
 
   return (
     <Card title="부동산 중개수수료 계산">
+      <p style={{ fontSize: 13, color: '#6b7280', marginTop: 0, marginBottom: 18, lineHeight: 1.6 }}>
+        이 계산기는 매매·전세·월세 거래 시 발생하는 <strong>부동산 중개수수료(법정 상한액)</strong>를 계산하는 데 사용합니다. VAT 10%를 포함한 최종 납부액까지 확인할 수 있습니다.
+      </p>
       <div style={{ background: "#fff8e1", border: "1px solid #ffe082", borderRadius: 8, padding: "10px 14px", marginBottom: 18, fontSize: 12, color: "#7a6000" }}>
         📌 2021년 10월 개정 법정 상한 요율 기준
       </div>
@@ -587,6 +599,9 @@ function ROICalc() {
 
   return (
     <Card title="수익률 / ROI 계산">
+      <p style={{ fontSize: 13, color: '#6b7280', marginTop: 0, marginBottom: 18, lineHeight: 1.6 }}>
+        이 계산기는 임대용 부동산의 <strong>총수익률(Gross Yield)과 순수익률(Net ROI)</strong>을 계산하는 데 사용합니다. 대출 이자와 임차인 보증금을 반영한 실질 투자 수익률을 확인하세요.
+      </p>
       <Field label="매입 가격"><WonInput placeholder="예: 500,000,000" value={buyPrice} onChange={setBuyPrice} /></Field>
       <div style={{ background: "#f0f4fb", borderRadius: 10, padding: "14px 14px 6px", marginBottom: 16 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: "#2563eb", marginBottom: 10 }}>💰 자금 구성</div>
@@ -659,6 +674,9 @@ function SubscriptionCalc() {
 
   return (
     <Card title="청약 가점 계산기">
+      <p style={{ fontSize: 13, color: '#6b7280', marginTop: 0, marginBottom: 18, lineHeight: 1.6 }}>
+        이 계산기는 아파트 청약 시 <strong>가점제 총점(최대 84점)</strong>을 계산하는 데 사용합니다. 무주택기간·부양가족수·청약통장 가입기간을 입력하면 나의 가점과 당첨 가능성을 바로 확인할 수 있습니다.
+      </p>
       <div style={{ background: '#eff6ff', borderRadius: 10, padding: '12px 16px', marginBottom: 20, fontSize: 12, color: '#1d4ed8', lineHeight: 1.6 }}>
         <strong>가점제 배점 기준</strong><br/>
         무주택기간 (최대 32점) + 부양가족수 (최대 35점) + 청약통장 가입기간 (최대 17점) = 총 84점

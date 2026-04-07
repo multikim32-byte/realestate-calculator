@@ -61,10 +61,6 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
   const [source, setSource] = useState(dataSource);
   const [loading, setLoading] = useState(false);
 
-  const _to = new Date(); _to.setMonth(_to.getMonth() + 6);
-  const defaultDateTo = _to.toISOString().slice(0, 10);
-  const defaultDateFrom = new Date(new Date().setMonth(new Date().getMonth() - 3)).toISOString().slice(0, 10);
-
   const [region, setRegionState] = useState<Region>((searchParams.get('region') as Region) || '전체');
   const [fetchType, setFetchTypeState] = useState<FetchType>(() => {
     const t = searchParams.get('type');
@@ -117,7 +113,7 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
         merged = sortByDate([...(r1.items || []), ...(r2.items || [])]);
         src = r1.source || r2.source;
       } else {
-        const params = new URLSearchParams({ region: reg, type: ft, dateFrom: defaultDateFrom, dateTo: defaultDateTo, perPage: '50' });
+        const params = new URLSearchParams({ region: reg, type: ft, perPage: '50' });
         const data = await fetch(`/api/sale?${params}`).then(r => r.json());
         merged = data.items || [];
         src = data.source;
@@ -128,7 +124,7 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
     } catch { /* keep existing */ } finally {
       setLoading(false);
     }
-  }, [defaultDateFrom, defaultDateTo]);
+  }, []);
 
   useEffect(() => { fetchItems(region, fetchType); setDisplayCount(20); }, [region, fetchType, fetchItems]);
 

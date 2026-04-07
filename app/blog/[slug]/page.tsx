@@ -4,7 +4,7 @@ import { posts } from "../data";
 import GlobalNav from "../../components/GlobalNav";
 import type { Metadata } from "next";
 
-const BASE_URL = 'https://realestate-calculator.vercel.app';
+const BASE_URL = 'https://www.mk-land.kr';
 
 type Props = { params: Promise<{ slug: string }> };
 
