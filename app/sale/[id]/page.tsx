@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import GlobalNav from '../../components/GlobalNav';
 import KakaoMap from '../../components/KakaoMap';
+import NearbyTradeSection from '../../components/NearbyTradeSection';
 
 type UnitDetail = { type: string; area: number; count: number; price: number };
 
@@ -135,7 +136,7 @@ export default function SaleDetailPage() {
           <Link href="/sale" style={{
             display: 'inline-block', padding: '10px 24px', borderRadius: 10,
             background: '#1d4ed8', color: '#fff', textDecoration: 'none', fontWeight: 700,
-          }}>← 분양정보로</Link>
+          }}>← 청약정보로</Link>
         </div>
       </div>
     );
@@ -274,6 +275,13 @@ export default function SaleDetailPage() {
 
         {/* 카카오 지도 */}
         {item.location && <KakaoMap address={item.location} name={item.name} />}
+
+        {/* 인근 실거래가 */}
+        <NearbyTradeSection
+          location={item.location}
+          aptName={item.name}
+          units={item.units ?? []}
+        />
 
         {/* 계산기 유도 */}
         <div style={{ marginTop: 16, background: '#1e3a5f', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
