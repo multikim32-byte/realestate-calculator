@@ -28,6 +28,16 @@ function findLawdCd(location: string): { code: string; areaName: string } | null
   return null;
 }
 
+// ── 주소에서 동 추출 ────────────────────────────────────────────────────────
+
+function extractDong(location: string): string {
+  const parts = location.split(/\s+/);
+  for (const part of parts) {
+    if (/^[가-힣]+(동|읍|면|리)$/.test(part)) return part;
+  }
+  return '';
+}
+
 // ── 최근 3개월 YYYYMM 생성 ──────────────────────────────────────────────────
 
 function recentYms(n = 3): string[] {
@@ -106,8 +116,13 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
   // 동일 단지명 거래
   const sameApt = trades.filter(t => t.name === aptName);
 
-  // 인근 거래 (동일 단지 제외, 최대 10건)
-  const nearby = trades.filter(t => t.name !== aptName).slice(0, 10);
+  // 주소에서 동 추출
+  const dong = extractDong(location);
+
+  // 인근 거래 (동일 단지 제외, 같은 동 우선, 최대 10건)
+  const nearby = trades
+    .filter(t => t.name !== aptName && (dong ? t.dong === dong : true))
+    .slice(0, 10);
 
   // 분양가 vs 실거래가 비교: units의 면적과 ±10㎡ 범위에서 매칭
   const comparisons = units
@@ -227,7 +242,7 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
           {nearby.length > 0 && (
             <div>
               <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1e3a5f', marginBottom: 10 }}>
-                {areaName} 인근 최근 거래
+                {dong || areaName} 인근 최근 거래
               </h3>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
