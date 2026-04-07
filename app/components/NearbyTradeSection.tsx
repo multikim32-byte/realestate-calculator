@@ -17,18 +17,32 @@ interface Props {
 
 function findLawdCd(location: string): { code: string; areaName: string } | null {
   const loc = location.replace(/\s/g, '');
+  const isHangul = (c: string) => c >= '가' && c <= '힣';
 
-  for (const list of Object.values(LAWD_CODE_MAP)) {
-    for (const { name, code } of list) {
-      const bare = name.replace(/\s/g, '');
-      // 1차: 직접 포함 (예: "의정부시" → 매칭)
-      if (loc.includes(bare)) return { code, areaName: name };
-      // 2차: "용인 처인구" → "용인처인구"가 "용인시처인구"에 안 맞으므로
-      //      공백으로 분리된 각 단어가 모두 포함되는지 확인
-      if (name.includes(' ')) {
-        const parts = name.split(' ');
-        if (parts.every(p => loc.includes(p))) return { code, areaName: name };
-      }
+  // 긴 이름부터 매칭 (구체적인 이름이 먼저 → "북구"보다 "천안 서북구" 우선)
+  const entries = Object.values(LAWD_CODE_MAP)
+    .flat()
+    .map(e => ({ ...e, bare: e.name.replace(/\s/g, '') }))
+    .sort((a, b) => b.bare.length - a.bare.length);
+
+  for (const { name, code, bare } of entries) {
+    // 1차: 직접 포함 + 앞 글자가 한글이면 부분 매칭이므로 제외
+    // (예: "북구"가 "서북구" 안에 매칭되는 것 방지)
+    const idx = loc.indexOf(bare);
+    if (idx !== -1 && !isHangul(loc[idx - 1] ?? '')) {
+      return { code, areaName: name };
+    }
+    // 2차: "용인 처인구" → 단어별로 분리해 각각 포함 여부 확인
+    // (예: "용인시처인구"에서 "용인"+"처인구" 각각 매칭)
+    if (name.includes(' ')) {
+      const parts = name.split(' ');
+      const allMatch = parts.every((p, i) => {
+        const pi = loc.indexOf(p);
+        if (pi === -1) return false;
+        // 마지막 파트(구 이름)는 앞 글자 경계 체크
+        return i < parts.length - 1 || !isHangul(loc[pi - 1] ?? '');
+      });
+      if (allMatch) return { code, areaName: name };
     }
   }
   return null;
