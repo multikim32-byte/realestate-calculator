@@ -55,13 +55,18 @@ function areaLabel(area: number) {
 
 export default function NearbyTradeSection({ location, aptName, units }: Props) {
   const [trades, setTrades] = useState<TradeItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [areaName, setAreaName] = useState('');
   const [noKey, setNoKey] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     const found = findLawdCd(location);
-    if (!found) return;
+    if (!found) {
+      setNotFound(true);
+      setLoading(false);
+      return;
+    }
     setAreaName(found.areaName);
     loadTrades(found.code);
   }, [location]);
@@ -95,11 +100,8 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
     }
   }
 
-  // API 키 없음
-  if (noKey) return null;
-
-  // 주소에서 구 못 찾음
-  if (!loading && !areaName && !trades.length) return null;
+  // API 키 없음 또는 주소 매칭 실패
+  if (noKey || notFound) return null;
 
   // 동일 단지명 거래
   const sameApt = trades.filter(t => t.name === aptName);
