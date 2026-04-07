@@ -136,10 +136,13 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
   // 주소에서 동 추출
   const dong = extractDong(location);
 
-  // 인근 거래 (동일 단지 제외, 같은 동 우선, 최대 10건)
-  const nearby = trades
-    .filter(t => t.name !== aptName && (dong ? t.dong === dong : true))
-    .slice(0, 10);
+  // 인근 거래: 같은 동 우선, 없으면 시/군/구 전체에서 표시 (최대 10건)
+  const nearbyInDong = trades.filter(t => t.name !== aptName && dong && t.dong === dong);
+  const nearby = (nearbyInDong.length > 0
+    ? nearbyInDong
+    : trades.filter(t => t.name !== aptName)
+  ).slice(0, 10);
+  const nearbyLabel = nearbyInDong.length > 0 ? dong : areaName;
 
   // 분양가 vs 실거래가 비교: units의 면적과 ±10㎡ 범위에서 매칭
   const comparisons = units
@@ -259,7 +262,7 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
           {nearby.length > 0 && (
             <div>
               <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1e3a5f', marginBottom: 10 }}>
-                {dong || areaName} 인근 최근 거래
+                {nearbyLabel} 인근 최근 거래
               </h3>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
