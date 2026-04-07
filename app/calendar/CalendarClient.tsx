@@ -9,12 +9,6 @@ const REGIONS = [
   '대전', '울산', '세종', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주',
 ];
 
-const TYPE_COLOR: Record<string, string> = {
-  '아파트': '#3b82f6',
-  '오피스텔': '#8b5cf6',
-  '도시형생활주택': '#10b981',
-};
-
 const MONTH_NAMES = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
 const DAY_NAMES = ['월', '화', '수', '목', '금', '토', '일'];
 
@@ -23,12 +17,28 @@ function daysInMonth(year: number, month: number) {
 }
 
 function startOffset(year: number, month: number) {
-  const day = new Date(year, month, 1).getDay(); // 0=Sun
-  return (day + 6) % 7; // Mon=0 … Sun=6
+  const day = new Date(year, month, 1).getDay();
+  return (day + 6) % 7;
 }
 
 function pad2(n: number) {
   return String(n).padStart(2, '0');
+}
+
+function getEventStyle(item: PublicSaleItem): { label: string; bg: string; color: string; border?: string } {
+  if (item.recruitType === '선착순') {
+    return { label: '특', bg: '#f97316', color: '#fff' };
+  }
+  if (item.buildingType === '아파트') {
+    return { label: '아', bg: '#3b82f6', color: '#fff' };
+  }
+  if (item.buildingType === '오피스텔') {
+    return { label: '오', bg: '#8b5cf6', color: '#fff' };
+  }
+  if (item.buildingType === '도시형생활주택') {
+    return { label: '도', bg: '#10b981', color: '#fff' };
+  }
+  return { label: '기', bg: '#6b7280', color: '#fff' };
 }
 
 export default function CalendarClient() {
@@ -39,6 +49,14 @@ export default function CalendarClient() {
   const [items, setItems] = useState<PublicSaleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 700);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -96,7 +114,7 @@ export default function CalendarClient() {
 
   return (
     <>
-      {/* 지역 필터 — 가로 스크롤 */}
+      {/* 지역 필터 */}
       <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 4, marginBottom: 20 }}>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'nowrap', minWidth: 'max-content' }}>
           {REGIONS.map(r => (
@@ -104,144 +122,161 @@ export default function CalendarClient() {
               key={r}
               onClick={() => { setRegion(r); setSelectedDay(null); }}
               style={{
-                padding: '5px 13px',
-                borderRadius: 20,
+                padding: '5px 13px', borderRadius: 20,
                 border: `1px solid ${region === r ? '#1d4ed8' : '#e5e7eb'}`,
                 background: region === r ? '#1d4ed8' : '#fff',
                 color: region === r ? '#fff' : '#374151',
-                fontSize: 13,
-                cursor: 'pointer',
-                fontWeight: region === r ? 600 : 400,
-                whiteSpace: 'nowrap',
+                fontSize: 13, cursor: 'pointer',
+                fontWeight: region === r ? 600 : 400, whiteSpace: 'nowrap',
               }}
-            >
-              {r}
-            </button>
+            >{r}</button>
           ))}
         </div>
       </div>
 
       {/* 월 탐색 */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <button
-          onClick={prevMonth}
-          style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 14 }}
-        >
+        <button onClick={prevMonth} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 14 }}>
           ← 이전달
         </button>
         <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1e3a5f', margin: 0 }}>
           {year}년 {MONTH_NAMES[month]}
         </h2>
-        <button
-          onClick={nextMonth}
-          style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 14 }}
-        >
+        <button onClick={nextMonth} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 14 }}>
           다음달 →
         </button>
       </div>
 
       {/* 범례 */}
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
-        {Object.entries(TYPE_COLOR).map(([type, color]) => (
-          <span key={type} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#374151' }}>
-            <span style={{ width: 10, height: 10, borderRadius: '50%', background: color, display: 'inline-block' }} />
-            {type}
-          </span>
-        ))}
-        <span style={{ fontSize: 12, color: '#9ca3af' }}>· 날짜를 눌러 상세 확인</span>
-      </div>
+      {!isMobile && (
+        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 12 }}>
+          {[
+            { label: '아', color: '#3b82f6', name: '아파트' },
+            { label: '오', color: '#8b5cf6', name: '오피스텔' },
+            { label: '도', color: '#10b981', name: '도시형' },
+            { label: '특', color: '#f97316', name: '선착순/특별' },
+          ].map(({ label, color, name }) => (
+            <span key={name} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#374151' }}>
+              <span style={{
+                width: 18, height: 18, borderRadius: '50%', background: color,
+                color: '#fff', fontSize: 10, fontWeight: 700,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              }}>{label}</span>
+              {name}
+            </span>
+          ))}
+          <span style={{ fontSize: 12, color: '#9ca3af' }}>· 항목 클릭 시 상세 페이지로 이동</span>
+        </div>
+      )}
 
       {/* 요일 헤더 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 2 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, marginBottom: 1 }}>
         {DAY_NAMES.map((d, i) => (
-          <div
-            key={d}
-            style={{
-              textAlign: 'center',
-              padding: '8px 2px',
-              fontSize: 12,
-              fontWeight: 600,
-              color: i === 5 ? '#3b82f6' : i === 6 ? '#ef4444' : '#374151',
-              background: '#f9fafb',
-              borderRadius: 4,
-            }}
-          >
-            {d}
-          </div>
+          <div key={d} style={{
+            textAlign: 'center', padding: isMobile ? '6px 2px' : '8px 4px',
+            fontSize: isMobile ? 11 : 12, fontWeight: 600,
+            color: i === 5 ? '#3b82f6' : i === 6 ? '#ef4444' : '#374151',
+            background: '#f9fafb', borderRadius: 4,
+          }}>{d}</div>
         ))}
       </div>
 
       {/* 달력 그리드 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
-        {/* 빈 칸 */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1 }}>
         {Array.from({ length: offset }).map((_, i) => (
-          <div key={`e${i}`} style={{ aspectRatio: '1', background: '#f9fafb', borderRadius: 6 }} />
+          <div key={`e${i}`} style={{
+            background: '#fafafa',
+            border: '1px solid #f3f4f6',
+            minHeight: isMobile ? 52 : 110,
+            borderRadius: 4,
+          }} />
         ))}
 
-        {/* 날짜 */}
         {Array.from({ length: totalDays }).map((_, i) => {
           const d = i + 1;
           const dayItems = byDay[d] ?? [];
           const hasItems = dayItems.length > 0;
           const isSel = selectedDay === d;
           const today_ = isToday(d);
-          const colPos = (offset + i) % 7; // 0=월…5=토,6=일
+          const colPos = (offset + i) % 7;
+          const isSat = colPos === 5;
+          const isSun = colPos === 6;
 
           return (
             <div
               key={d}
               onClick={() => hasItems && setSelectedDay(isSel ? null : d)}
               style={{
-                aspectRatio: '1',
+                minHeight: isMobile ? 52 : 110,
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                padding: '6px 2px 4px',
+                padding: isMobile ? '4px 2px' : '6px 4px',
                 background: isSel ? '#eff6ff' : '#fff',
-                border: `1px solid ${isSel ? '#3b82f6' : '#e5e7eb'}`,
-                borderRadius: 6,
+                border: `1px solid ${isSel ? '#93c5fd' : '#e5e7eb'}`,
+                borderRadius: 4,
                 cursor: hasItems ? 'pointer' : 'default',
+                overflow: 'hidden',
               }}
             >
               {/* 날짜 숫자 */}
-              <div
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 12,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 13,
-                  fontWeight: today_ ? 700 : 400,
-                  background: today_ ? '#1d4ed8' : 'transparent',
-                  color: today_ ? '#fff' : colPos === 5 ? '#3b82f6' : colPos === 6 ? '#ef4444' : '#374151',
-                  marginBottom: 4,
-                  flexShrink: 0,
-                }}
-              >
-                {d}
-              </div>
+              <div style={{
+                width: isMobile ? 20 : 24,
+                height: isMobile ? 20 : 24,
+                borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: isMobile ? 11 : 13,
+                fontWeight: today_ ? 700 : 400,
+                background: today_ ? '#1d4ed8' : 'transparent',
+                color: today_ ? '#fff' : isSat ? '#3b82f6' : isSun ? '#ef4444' : '#374151',
+                marginBottom: 3, flexShrink: 0, alignSelf: 'flex-start',
+              }}>{d}</div>
 
-              {/* 컬러 점 */}
-              {hasItems && (
-                <div style={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
-                  {dayItems.slice(0, 3).map((item, idx) => (
-                    <span
-                      key={idx}
-                      style={{
-                        width: 7,
-                        height: 7,
-                        borderRadius: '50%',
-                        background: TYPE_COLOR[item.buildingType] ?? '#6b7280',
-                        display: 'inline-block',
-                      }}
-                    />
-                  ))}
-                  {dayItems.length > 3 && (
-                    <span style={{ fontSize: 9, color: '#6b7280', lineHeight: '7px' }}>+{dayItems.length - 3}</span>
+              {/* PC: 이벤트 목록 */}
+              {!isMobile && hasItems && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, overflow: 'hidden' }}>
+                  {dayItems.slice(0, 4).map((item, idx) => {
+                    const s = getEventStyle(item);
+                    return (
+                      <Link
+                        key={idx}
+                        href={`/sale/${item.id}`}
+                        onClick={e => e.stopPropagation()}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 3,
+                          background: s.bg, borderRadius: 3,
+                          padding: '2px 4px', textDecoration: 'none',
+                          overflow: 'hidden', flexShrink: 0,
+                        }}
+                      >
+                        <span style={{
+                          fontSize: 9, fontWeight: 700, color: s.color,
+                          background: 'rgba(0,0,0,0.15)', borderRadius: '50%',
+                          width: 14, height: 14, display: 'inline-flex',
+                          alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                        }}>{s.label}</span>
+                        <span style={{
+                          fontSize: 10, color: '#fff', fontWeight: 500,
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          flex: 1,
+                        }}>{item.name}</span>
+                      </Link>
+                    );
+                  })}
+                  {dayItems.length > 4 && (
+                    <span style={{ fontSize: 10, color: '#6b7280', paddingLeft: 2 }}>
+                      +{dayItems.length - 4}건 더보기
+                    </span>
                   )}
+                </div>
+              )}
+
+              {/* Mobile: 총 N건 */}
+              {isMobile && hasItems && (
+                <div style={{
+                  fontSize: 11, color: '#1d4ed8', fontWeight: 700,
+                  textAlign: 'center', marginTop: 2,
+                }}>
+                  총{dayItems.length}건
                 </div>
               )}
             </div>
@@ -257,7 +292,7 @@ export default function CalendarClient() {
         </div>
       )}
 
-      {/* 선택된 날짜 상세 */}
+      {/* 선택된 날짜 상세 (모바일용 / PC에서 +N더보기 클릭 시) */}
       {!loading && selectedDay !== null && selectedItems.length > 0 && (
         <div style={{ marginTop: 16, padding: 20, background: '#eff6ff', borderRadius: 12, border: '1px solid #bfdbfe' }}>
           <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1d4ed8', marginBottom: 12 }}>
@@ -278,47 +313,35 @@ export default function CalendarClient() {
             이번 달 진행 중인 청약 ({ongoing.length}건)
           </h3>
           <div style={{ display: 'grid', gap: 0 }}>
-            {ongoing.map((item, idx) => (
-              <div
-                key={item.id}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: 6,
-                  padding: '10px 0',
+            {ongoing.map((item, idx) => {
+              const s = getEventStyle(item);
+              return (
+                <div key={item.id} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  flexWrap: 'wrap', gap: 6, padding: '10px 0',
                   borderBottom: idx < ongoing.length - 1 ? '1px solid #d1fae5' : 'none',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1 }}>
-                  <span
-                    style={{
-                      flexShrink: 0,
-                      fontSize: 11,
-                      padding: '2px 7px',
-                      borderRadius: 10,
-                      background: TYPE_COLOR[item.buildingType] ?? '#6b7280',
-                      color: '#fff',
-                    }}
-                  >
-                    {item.buildingType}
-                  </span>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {item.name}
-                  </span>
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1 }}>
+                    <span style={{
+                      flexShrink: 0, fontSize: 11, padding: '2px 7px', borderRadius: 10,
+                      background: s.bg, color: '#fff',
+                    }}>{item.buildingType}</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item.name}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                    <span style={{ fontSize: 12, color: '#374151' }}>~ {item.receiptEnd}</span>
+                    <Link href={`/sale/${item.id}`} style={{ fontSize: 12, color: '#1d4ed8', textDecoration: 'none' }}>상세</Link>
+                    {item.pblancUrl && (
+                      <a href={item.pblancUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#059669', textDecoration: 'none' }}>
+                        청약홈↗
+                      </a>
+                    )}
+                  </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                  <span style={{ fontSize: 12, color: '#374151' }}>~ {item.receiptEnd}</span>
-                  <Link href={`/sale/${item.id}`} style={{ fontSize: 12, color: '#1d4ed8', textDecoration: 'none' }}>상세</Link>
-                  {item.pblancUrl && (
-                    <a href={item.pblancUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#059669', textDecoration: 'none' }}>
-                      청약홈↗
-                    </a>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -335,23 +358,14 @@ export default function CalendarClient() {
   );
 }
 
-// ─── 항목 카드 ────────────────────────────────────────────────────────────────
-
 function ItemCard({ item }: { item: PublicSaleItem }) {
+  const s = getEventStyle(item);
   return (
     <div style={{ background: '#fff', borderRadius: 10, padding: 16, border: '1px solid #dbeafe' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, flexWrap: 'wrap' }}>
-            <span
-              style={{
-                fontSize: 11,
-                padding: '2px 8px',
-                borderRadius: 20,
-                background: TYPE_COLOR[item.buildingType] ?? '#6b7280',
-                color: '#fff',
-              }}
-            >
+            <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: s.bg, color: '#fff' }}>
               {item.buildingType}
             </span>
             <span style={{ fontSize: 11, color: '#6b7280' }}>{item.region}</span>
@@ -372,21 +386,12 @@ function ItemCard({ item }: { item: PublicSaleItem }) {
           )}
         </div>
       </div>
-
       <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <Link
-          href={`/sale/${item.id}`}
-          style={{ fontSize: 13, padding: '6px 14px', borderRadius: 6, background: '#1d4ed8', color: '#fff', textDecoration: 'none' }}
-        >
+        <Link href={`/sale/${item.id}`} style={{ fontSize: 13, padding: '6px 14px', borderRadius: 6, background: '#1d4ed8', color: '#fff', textDecoration: 'none' }}>
           상세보기
         </Link>
         {item.pblancUrl && (
-          <a
-            href={item.pblancUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ fontSize: 13, padding: '6px 14px', borderRadius: 6, border: '1px solid #1d4ed8', color: '#1d4ed8', textDecoration: 'none' }}
-          >
+          <a href={item.pblancUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, padding: '6px 14px', borderRadius: 6, border: '1px solid #1d4ed8', color: '#1d4ed8', textDecoration: 'none' }}>
             청약홈 바로가기 →
           </a>
         )}
