@@ -26,7 +26,7 @@ export interface PublicSaleItem {
   region: string;
   district: string;
   buildingType: '아파트' | '오피스텔' | '도시형생활주택' | '상업시설';
-  supplyType: '민간분양' | '공공분양' | '임대';
+  supplyType: '민간분양' | '공공분양' | '공공지원민간임대' | '임대';
   recruitType: '신규공급' | '선착순';
   totalUnits: number;
   receiptStart: string;
@@ -179,7 +179,7 @@ async function callApiWithLatest(
 
 // ─── 파서: 상세조회 ──────────────────────────────────────────────────────────
 
-function parseDetail(raw: any, recruitType: '신규공급' | '선착순'): PublicSaleItem {
+function parseDetail(raw: any, recruitType: '신규공급' | '선착순', supplyTypeOverride?: PublicSaleItem['supplyType']): PublicSaleItem {
   const receiptStart = fmtDate(raw.RCEPT_BGNDE);
   const receiptEnd   = fmtDate(raw.RCEPT_ENDDE);
   const winnerDate   = fmtDate(raw.PRZWNER_PRESNATN_DE);
@@ -195,7 +195,7 @@ function parseDetail(raw: any, recruitType: '신규공급' | '선착순'): Publi
     region:          extractRegion(location),
     district:        extractDistrict(location),
     buildingType:    mapBuildingType(secdNm),
-    supplyType:      mapSupplyType(secdNm),
+    supplyType:      supplyTypeOverride ?? mapSupplyType(secdNm),
     recruitType,
     totalUnits:      parseInt(raw.TOT_SUPLY_HSHLDCO ?? '0') || 0,
     receiptStart,
@@ -315,7 +315,7 @@ export async function fetchPblPvtRentSaleList(
   const { data, totalCount } = await callApiWithLatest(
     'getPblPvtRentLttotPblancDetail', serviceKey, Math.min(perPage * 2, 100), buildDateCond(df)
   );
-  const items = sortByAnnouncementDesc(data.map(d => parseDetail(d, '신규공급')), perPage);
+  const items = sortByAnnouncementDesc(data.map(d => parseDetail(d, '신규공급', '공공지원민간임대')), perPage);
   return { items, total: totalCount };
 }
 
