@@ -46,13 +46,22 @@ function findLawdCd(location: string): { code: string; areaName: string } | null
 }
 
 // ── 주소에서 동 추출 ────────────────────────────────────────────────────────
+// API umdNm이 "양지읍 양지리"처럼 읍+리 합쳐서 반환하는 경우 대비해
+// 연속된 읍/면/동/리를 최대 2개까지 추출해 공백으로 합침
 
 function extractDong(location: string): string {
   const parts = location.split(/\s+/);
+  const result: string[] = [];
   for (const part of parts) {
-    if (/^[가-힣]+(동|읍|면|리)$/.test(part)) return part;
+    if (/^[가-힣]+(동|읍|면|리)$/.test(part)) {
+      result.push(part);
+      if (result.length === 2) break;
+    } else if (result.length > 0) {
+      // 동/읍/면/리가 아닌 부분이 나오면 중단
+      break;
+    }
   }
-  return '';
+  return result.join(' ');
 }
 
 // ── 최근 3개월 YYYYMM 생성 ──────────────────────────────────────────────────
