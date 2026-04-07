@@ -20,9 +20,15 @@ function findLawdCd(location: string): { code: string; areaName: string } | null
 
   for (const list of Object.values(LAWD_CODE_MAP)) {
     for (const { name, code } of list) {
-      // "수원 영통구" → "수원영통구" 등 공백 제거 후 비교
       const bare = name.replace(/\s/g, '');
+      // 1차: 직접 포함 (예: "의정부시" → 매칭)
       if (loc.includes(bare)) return { code, areaName: name };
+      // 2차: "용인 처인구" → "용인처인구"가 "용인시처인구"에 안 맞으므로
+      //      공백으로 분리된 각 단어가 모두 포함되는지 확인
+      if (name.includes(' ')) {
+        const parts = name.split(' ');
+        if (parts.every(p => loc.includes(p))) return { code, areaName: name };
+      }
     }
   }
   return null;
