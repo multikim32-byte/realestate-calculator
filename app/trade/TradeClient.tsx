@@ -446,12 +446,26 @@ export default function TradeClient() {
           </div>
 
           {/* ── 선택 단지 위치 지도 (테이블 클릭 후 하단 표시) ── */}
-          {selectedApt && (
-            <KakaoMap
-              address={`${sido} ${sigunguName} ${filtered.find(i => i.name === selectedApt)?.dong ?? ''} ${selectedApt}`}
-              name={selectedApt}
-            />
-          )}
+          {selectedApt && (() => {
+            const dong = filtered.find(i => i.name === selectedApt)?.dong ?? '';
+            const mapAddress = `${sido} ${sigunguName} ${dong}`.trim();
+            const kakaoSearchUrl = `https://map.kakao.com/link/search/${encodeURIComponent(selectedApt)}`;
+            return (
+              <div style={{ marginTop: 16 }}>
+                <KakaoMap address={mapAddress} name={selectedApt} />
+                <div style={{ textAlign: 'center', marginTop: 8 }}>
+                  <a
+                    href={kakaoSearchUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ fontSize: 13, color: '#1d4ed8', textDecoration: 'none' }}
+                  >
+                    카카오맵에서 &quot;{selectedApt}&quot; 정확한 위치 보기 →
+                  </a>
+                </div>
+              </div>
+            );
+          })()}
         </>
       )}
 
