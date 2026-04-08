@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
 import SaleListClient from './components/SaleListClient';
 import GlobalNav from './components/GlobalNav';
 import type { Metadata } from 'next';
@@ -9,7 +10,12 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://www.mk-land.kr' },
 };
 
-export default function Home() {
+export default function Home({ searchParams }: { searchParams: Record<string, string> }) {
+  // 구버전 공유 링크 /?tab=loan&... → /calculator?tab=loan&... 로 redirect
+  if (searchParams.tab) {
+    const qs = new URLSearchParams(searchParams as Record<string, string>).toString();
+    redirect(`/calculator?${qs}`);
+  }
   return (
     <div>
       <GlobalNav />

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'realestate-v1';
+const CACHE_NAME = 'realestate-v3';
 const STATIC_ASSETS = ['/', '/sale', '/apt', '/about'];
 
 self.addEventListener('install', (e) => {
