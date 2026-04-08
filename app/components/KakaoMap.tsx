@@ -76,11 +76,13 @@ export default function KakaoMap({ address, name }: Props) {
       const ps = new window.kakao.maps.services.Places();
       const geocoder = new window.kakao.maps.services.Geocoder();
 
-      // 1차: 단지명으로 키워드 검색 (가장 정확한 위치)
+      // 1차: 단지명으로 키워드 검색 → AG2(아파트) 카테고리 우선 선택
       if (name) {
         ps.keywordSearch(name, (places: any, ksStatus: any) => {
           if (ksStatus === window.kakao.maps.services.Status.OK && places.length > 0) {
-            const coords = { y: places[0].y, x: places[0].x };
+            // AG2: 아파트 카테고리 우선 선택, 없으면 첫 번째 결과 사용
+            const apt = places.find((p: any) => p.category_group_code === 'AG2') ?? places[0];
+            const coords = { y: apt.y, x: apt.x };
             geocodeCache.set(cacheKey, coords);
             placeMarker(coords);
           } else {
