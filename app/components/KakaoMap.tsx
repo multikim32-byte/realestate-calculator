@@ -72,15 +72,28 @@ export default function KakaoMap({ address, name }: Props) {
       }
 
       const geocoder = new window.kakao.maps.services.Geocoder();
+
+      // 1차: 주소 검색
       geocoder.addressSearch(cleanAddress, (result: any, status: any) => {
         if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
           const coords = { y: result[0].y, x: result[0].x };
           geocodeCache.set(cleanAddress, coords);
           placeMarker(coords);
         } else {
-          geocodeCache.set(cleanAddress, null);
-          setError(true);
-          setLoadingMap(false);
+          // 2차 fallback: 주소+단지명 키워드 검색
+          // (주소에 단지명 포함 시 addressSearch가 실패하는 경우 대응)
+          const ps = new window.kakao.maps.services.Places();
+          ps.keywordSearch(cleanAddress, (places: any, ksStatus: any) => {
+            if (ksStatus === window.kakao.maps.services.Status.OK && places.length > 0) {
+              const coords = { y: places[0].y, x: places[0].x };
+              geocodeCache.set(cleanAddress, coords);
+              placeMarker(coords);
+            } else {
+              geocodeCache.set(cleanAddress, null);
+              setError(true);
+              setLoadingMap(false);
+            }
+          });
         }
       });
     }
