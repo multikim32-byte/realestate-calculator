@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
-export const alt = '부동산 계산기 — 취득세·대출·중도금·중개수수료 무료 계산';
+export const alt = '청약정보 & 실거래가 — 전국 아파트·오피스텔 분양 청약 정보';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -20,12 +20,12 @@ export default function Image() {
           fontFamily: 'sans-serif',
         }}
       >
-        <div style={{ fontSize: 72, marginBottom: 20 }}>🏠</div>
+        <div style={{ fontSize: 72, marginBottom: 20 }}>📋</div>
         <div style={{ fontSize: 56, fontWeight: 800, color: '#fff', marginBottom: 16, textAlign: 'center' }}>
-          부동산 계산기
+          청약정보 & 실거래가
         </div>
         <div style={{ fontSize: 28, color: 'rgba(255,255,255,0.85)', marginBottom: 32, textAlign: 'center' }}>
-          취득세 · 대출 · 중도금 · 중개수수료 · 수익률
+          전국 아파트·오피스텔 청약 일정 · 인근 실거래가
         </div>
         <div style={{
           background: 'rgba(255,255,255,0.15)',
@@ -35,7 +35,7 @@ export default function Image() {
           color: '#fff',
           fontWeight: 600,
         }}>
-          2026년 최신 세율 반영 · 무료 계산
+          청약달력 · 실거래가 조회 · 부동산 계산기
         </div>
       </div>
     ),
