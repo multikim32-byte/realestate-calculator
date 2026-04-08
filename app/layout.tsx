@@ -54,7 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="theme-color" content="#1d4ed8" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="부동산계산기" />
+        <meta name="apple-mobile-web-app-title" content="청약정보" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <script dangerouslySetInnerHTML={{
           __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`
