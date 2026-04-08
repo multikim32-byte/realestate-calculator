@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 const tabs = [
   { id: "loan", label: "대출 상환" },
@@ -88,7 +88,7 @@ function ShareResultBtn({ params }: { params: Record<string, string> }) {
   const [copied, setCopied] = useState(false);
   function share() {
     const url = new URL(window.location.href);
-    url.pathname = '/';
+    url.pathname = '/calculator';
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
     const text = url.toString();
     if (navigator.share) {
@@ -200,15 +200,15 @@ function LoanCalc() {
   const [type, setType] = useState("equal");
   const [result, setResult] = useState<any>(null);
 
-  const calc = () => {
-    const P = parseWon(amt), r = parseFloat(rate) / 100 / 12, n = parseFloat(years) * 12;
-    if (!P || !r || !n) return;
+  function computeLoan(a: string, r: string, y: string, t: string) {
+    const P = parseWon(a), mr = parseFloat(r) / 100 / 12, n = parseFloat(y) * 12;
+    if (!P || !mr || !n) return;
     let schedule: ScheduleRow[] = [];
-    if (type === "equal") {
-      const monthly = P * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+    if (t === "equal") {
+      const monthly = P * mr * Math.pow(1 + mr, n) / (Math.pow(1 + mr, n) - 1);
       let balance = P;
       for (let i = 1; i <= n; i++) {
-        const interest = balance * r, principal = monthly - interest;
+        const interest = balance * mr, principal = monthly - interest;
         balance = Math.max(0, balance - principal);
         schedule.push({ month: i, payment: monthly, principal, interest, balance });
       }
@@ -216,13 +216,24 @@ function LoanCalc() {
     } else {
       const principal = P / n; let balance = P, totalInterest = 0;
       for (let i = 1; i <= n; i++) {
-        const interest = balance * r, payment = principal + interest;
+        const interest = balance * mr, payment = principal + interest;
         balance = Math.max(0, balance - principal); totalInterest += interest;
         schedule.push({ month: i, payment, principal, interest, balance });
       }
       setResult({ principal, firstMonth: schedule[0].payment, lastMonth: schedule[n - 1].payment, totalInterest, total: P + totalInterest, type: "reducing", schedule });
     }
-  };
+  }
+
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get('tab') !== 'loan') return;
+    const a = sp.get('amt') || '', r = sp.get('rate') || '', y = sp.get('years') || '', t = sp.get('type') || 'equal';
+    if (!a && !r && !y) return;
+    setAmt(a); setRate(r); setYears(y); setType(t);
+    computeLoan(a, r, y, t);
+  }, []);
+
+  const calc = () => computeLoan(amt, rate, years, type);
 
   return (
     <>
@@ -425,14 +436,26 @@ function AcquisitionCalc() {
   const [isOver85, setIsOver85] = useState(false);
   const [result, setResult] = useState<any>(null);
 
-  const calc = () => {
-    const p = parseWon(price); if (!p) return;
-    const { acqRate, eduRate, note } = calcAcqRate(p, houseCount, isAdjusted, houseType);
+  function computeAcq(pr: string, hc: string, ht: string, adj: boolean, o85: boolean) {
+    const p = parseWon(pr); if (!p) return;
+    const { acqRate, eduRate, note } = calcAcqRate(p, hc, adj, ht);
     const acquisitionTax = p * acqRate, localEduTax = p * eduRate;
-    const specRate = isOver85 ? acqRate * 0.1 : 0;
+    const specRate = o85 ? acqRate * 0.1 : 0;
     const specialTax = p * specRate;
     setResult({ acquisitionTax, localEduTax, specialTax, total: acquisitionTax + localEduTax + specialTax, acqRate, eduRate, specRate, note });
-  };
+  }
+
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get('tab') !== 'acquisition') return;
+    const pr = sp.get('price') || '', hc = sp.get('houseCount') || '1', ht = sp.get('houseType') || 'general';
+    const adj = sp.get('isAdjusted') === 'true', o85 = sp.get('isOver85') === 'true';
+    if (!pr) return;
+    setPrice(pr); setHouseCount(hc); setHouseType(ht); setIsAdjusted(adj); setIsOver85(o85);
+    computeAcq(pr, hc, ht, adj, o85);
+  }, []);
+
+  const calc = () => computeAcq(price, houseCount, houseType, isAdjusted, isOver85);
 
   return (
     <Card title="취득세 계산">
@@ -526,24 +549,35 @@ function BrokerageCalc() {
   const [monthly, setMonthly] = useState("");
   const [result, setResult] = useState<any>(null);
 
-  const calc = () => {
-    if (tradeType === "sale") {
-      const p = parseWon(price); if (!p) return;
+  function computeBrokerage(tt: string, pr: string, dep: string, mo: string) {
+    if (tt === "sale") {
+      const p = parseWon(pr); if (!p) return;
       const { fee, rate } = getBrokerageFee(p, SALE_BRACKETS);
-      setResult({ fee, rate, vat: fee * 0.1, total: fee * 1.1, note: "매매가 기준" });
-    } else if (tradeType === "jeonse") {
-      const d = parseWon(deposit); if (!d) return;
+      setResult({ fee, rate, vat: fee * 0.1, total: fee * 1.1, note: "매매가 기준", tt, pr, dep, mo });
+    } else if (tt === "jeonse") {
+      const d = parseWon(dep); if (!d) return;
       const { fee, rate } = getBrokerageFee(d, RENT_BRACKETS);
-      setResult({ fee, rate, vat: fee * 0.1, total: fee * 1.1, note: "전세금 기준" });
+      setResult({ fee, rate, vat: fee * 0.1, total: fee * 1.1, note: "전세금 기준", tt, pr, dep, mo });
     } else {
-      const d = parseWon(deposit), m = parseWon(monthly);
+      const d = parseWon(dep), m = parseWon(mo);
       if (!m && !d) return;
       const calc1 = d + m * 100, calc2 = d + m * 70;
       const useAmt = calc2 < 50000000 ? calc2 : calc1;
       const { fee, rate } = getBrokerageFee(useAmt, RENT_BRACKETS);
-      setResult({ fee, rate, vat: fee * 0.1, total: fee * 1.1, note: calc2 < 50000000 ? `보증금+월세×70 = ${won(useAmt)}` : `보증금+월세×100 = ${won(useAmt)}` });
+      setResult({ fee, rate, vat: fee * 0.1, total: fee * 1.1, note: calc2 < 50000000 ? `보증금+월세×70 = ${won(useAmt)}` : `보증금+월세×100 = ${won(useAmt)}`, tt, pr, dep, mo });
     }
-  };
+  }
+
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get('tab') !== 'brokerage') return;
+    const tt = sp.get('tradeType') || 'sale', pr = sp.get('price') || '', dep = sp.get('deposit') || '', mo = sp.get('monthly') || '';
+    if (!pr && !dep && !mo) return;
+    setTradeType(tt); setPrice(pr); setDeposit(dep); setMonthly(mo);
+    computeBrokerage(tt, pr, dep, mo);
+  }, []);
+
+  const calc = () => computeBrokerage(tradeType, price, deposit, monthly);
 
   return (
     <Card title="부동산 중개수수료 계산">
@@ -571,6 +605,7 @@ function BrokerageCalc() {
           <ResultRow label="중개수수료 (상한)" value={won(result.fee)} highlight />
           <ResultRow label="VAT (10%)" value={won(result.vat)} />
           <ResultRow label="합계 (VAT 포함)" value={won(result.total)} />
+          <ShareResultBtn params={{ tab: "brokerage", tradeType: result.tt, price: result.pr, deposit: result.dep, monthly: result.mo }} />
         </div>
       )}
     </Card>
@@ -587,15 +622,27 @@ function ROICalc() {
   const [monthlyRent, setMonthlyRent] = useState("");
   const [result, setResult] = useState<any>(null);
 
-  const calc = () => {
-    const buy = parseWon(buyPrice), eq = parseWon(equity), ln = parseWon(loan);
-    const rate = parseFloat(loanRate) || 0, dep = parseWon(tenantDeposit), rent = parseWon(monthlyRent) * 12;
+  function computeROI(bp: string, eq: string, ln: string, lr: string, td: string, mr: string) {
+    const buy = parseWon(bp), eqV = parseWon(eq), lnV = parseWon(ln);
+    const rate = parseFloat(lr) || 0, dep = parseWon(td), rent = parseWon(mr) * 12;
     if (!buy) return;
-    const annualLoanInterest = ln * (rate / 100);
-    const totalInvested = eq || (buy - ln - dep);
+    const annualLoanInterest = lnV * (rate / 100);
+    const totalInvested = eqV || (buy - lnV - dep);
     const netIncome = rent - annualLoanInterest;
-    setResult({ buy, eq: totalInvested, ln, annualLoanInterest, dep, rent, netIncome, grossYield: rent / buy * 100, netYield: totalInvested > 0 ? netIncome / totalInvested * 100 : 0 });
-  };
+    setResult({ buy, eq: totalInvested, ln: lnV, annualLoanInterest, dep, rent, netIncome, grossYield: rent / buy * 100, netYield: totalInvested > 0 ? netIncome / totalInvested * 100 : 0, bp, eqStr: eq, lnStr: ln, lr, td, mr });
+  }
+
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get('tab') !== 'roi') return;
+    const bp = sp.get('buyPrice') || '', eq = sp.get('equity') || '', ln = sp.get('loan') || '';
+    const lr = sp.get('loanRate') || '', td = sp.get('tenantDeposit') || '', mr = sp.get('monthlyRent') || '';
+    if (!bp) return;
+    setBuyPrice(bp); setEquity(eq); setLoan(ln); setLoanRate(lr); setTenantDeposit(td); setMonthlyRent(mr);
+    computeROI(bp, eq, ln, lr, td, mr);
+  }, []);
+
+  const calc = () => computeROI(buyPrice, equity, loan, loanRate, tenantDeposit, monthlyRent);
 
   return (
     <Card title="수익률 / ROI 계산">
@@ -625,6 +672,7 @@ function ROICalc() {
           <div style={{ height: 8 }} />
           <ResultRow label="총수익률 (Gross)" value={`${result.grossYield.toFixed(2)}%`} />
           <ResultRow label="순수익률 (Net ROI)" value={`${result.netYield.toFixed(2)}%`} highlight />
+          <ShareResultBtn params={{ tab: "roi", buyPrice: result.bp, equity: result.eqStr, loan: result.lnStr, loanRate: result.lr, tenantDeposit: result.td, monthlyRent: result.mr }} />
         </div>
       )}
     </Card>
@@ -653,20 +701,27 @@ function SubscriptionCalc() {
   const [homelessYears, setHomelessYears] = useState('');
   const [dependents, setDependents] = useState('0');
   const [accountYears, setAccountYears] = useState('');
-  const [result, setResult] = useState<{homeless:number;dep:number;account:number;total:number}|null>(null);
+  const [result, setResult] = useState<{homeless:number;dep:number;account:number;total:number;hy:string;dep0:string;ay:string}|null>(null);
+
+  function computeSub(hy: string, dep0: string, ay: string) {
+    const hyN = parseFloat(hy) || 0, depN = parseInt(dep0) || 0, ayN = parseFloat(ay) || 0;
+    const homeless = getHomelessScore(hyN);
+    const depFinal = depN === 0 ? 5 : Math.min(depN, 6) * 5 + 5;
+    const account = getAccountScore(ayN);
+    setResult({ homeless, dep: depFinal, account, total: homeless + depFinal + account, hy, dep0, ay });
+  }
+
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get('tab') !== 'subscription') return;
+    const hy = sp.get('homelessYears') || '', dep0 = sp.get('dependents') || '0', ay = sp.get('accountYears') || '';
+    if (!hy && !ay) return;
+    setHomelessYears(hy); setDependents(dep0); setAccountYears(ay);
+    computeSub(hy, dep0, ay);
+  }, []);
 
   function calc() {
-    const hy = parseFloat(homelessYears) || 0;
-    const dep = parseInt(dependents) || 0;
-    const ay = parseFloat(accountYears) || 0;
-
-    const homeless = getHomelessScore(hy);
-    const depScore = Math.min(dep, 6) * 5 + (dep === 0 ? 5 : 0);
-    // 부양가족: 0명→5점, 1명→10점, ..., 6명이상→35점
-    const depFinal = dep === 0 ? 5 : Math.min(dep, 6) * 5 + 5;
-    const account = getAccountScore(ay);
-    const total = homeless + depFinal + account;
-    setResult({ homeless, dep: depFinal, account, total });
+    computeSub(homelessYears, dependents, accountYears);
   }
 
   const scoreColor = (total: number) =>
@@ -746,6 +801,7 @@ function SubscriptionCalc() {
             · 지방: 30~50점대<br/>
             <span style={{ color: '#888', fontSize: 11 }}>※ 단지·면적·시기에 따라 크게 다를 수 있습니다</span>
           </div>
+          <ShareResultBtn params={{ tab: "subscription", homelessYears: result.hy, dependents: result.dep0, accountYears: result.ay }} />
         </div>
       )}
     </Card>
@@ -758,7 +814,11 @@ const COMPS: Record<string, React.ComponentType> = {
 };
 
 export default function Calculator() {
-  const [active, setActive] = useState("loan");
+  const [active, setActive] = useState(() => {
+    if (typeof window === 'undefined') return 'loan';
+    const tab = new URLSearchParams(window.location.search).get('tab');
+    return tab && COMPS[tab] ? tab : 'loan';
+  });
   const Comp = COMPS[active];
   return (
     <div style={{ minHeight: "100vh", background: "#f0f4f9", fontFamily: "'Apple SD Gothic Neo', sans-serif" }}>
