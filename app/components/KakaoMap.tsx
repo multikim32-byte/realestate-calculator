@@ -63,39 +63,57 @@ export default function KakaoMap({ address, name }: Props) {
     }
 
     function geocodeAndPlace() {
+      const cacheKey = name || cleanAddress;
+
       // 캐시 확인
-      if (geocodeCache.has(cleanAddress)) {
-        const cached = geocodeCache.get(cleanAddress);
+      if (geocodeCache.has(cacheKey)) {
+        const cached = geocodeCache.get(cacheKey);
         if (cached) placeMarker(cached);
         else { setError(true); setLoadingMap(false); }
         return;
       }
 
+      const ps = new window.kakao.maps.services.Places();
       const geocoder = new window.kakao.maps.services.Geocoder();
 
-      // 1차: 주소 검색
-      geocoder.addressSearch(cleanAddress, (result: any, status: any) => {
-        if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
-          const coords = { y: result[0].y, x: result[0].x };
-          geocodeCache.set(cleanAddress, coords);
-          placeMarker(coords);
-        } else {
-          // 2차 fallback: 주소+단지명 키워드 검색
-          // (주소에 단지명 포함 시 addressSearch가 실패하는 경우 대응)
-          const ps = new window.kakao.maps.services.Places();
-          ps.keywordSearch(cleanAddress, (places: any, ksStatus: any) => {
-            if (ksStatus === window.kakao.maps.services.Status.OK && places.length > 0) {
-              const coords = { y: places[0].y, x: places[0].x };
-              geocodeCache.set(cleanAddress, coords);
-              placeMarker(coords);
-            } else {
-              geocodeCache.set(cleanAddress, null);
-              setError(true);
-              setLoadingMap(false);
-            }
-          });
-        }
-      });
+      // 1차: 단지명으로 키워드 검색 (가장 정확한 위치)
+      if (name) {
+        ps.keywordSearch(name, (places: any, ksStatus: any) => {
+          if (ksStatus === window.kakao.maps.services.Status.OK && places.length > 0) {
+            const coords = { y: places[0].y, x: places[0].x };
+            geocodeCache.set(cacheKey, coords);
+            placeMarker(coords);
+          } else {
+            // 2차: 주소로 지오코딩
+            geocodeByAddress();
+          }
+        });
+      } else {
+        geocodeByAddress();
+      }
+
+      function geocodeByAddress() {
+        geocoder.addressSearch(cleanAddress, (result: any, status: any) => {
+          if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
+            const coords = { y: result[0].y, x: result[0].x };
+            geocodeCache.set(cacheKey, coords);
+            placeMarker(coords);
+          } else {
+            // 3차: 주소 키워드 검색
+            ps.keywordSearch(cleanAddress, (places: any, ksStatus: any) => {
+              if (ksStatus === window.kakao.maps.services.Status.OK && places.length > 0) {
+                const coords = { y: places[0].y, x: places[0].x };
+                geocodeCache.set(cacheKey, coords);
+                placeMarker(coords);
+              } else {
+                geocodeCache.set(cacheKey, null);
+                setError(true);
+                setLoadingMap(false);
+              }
+            });
+          }
+        });
+      }
     }
 
     function initMap() {
