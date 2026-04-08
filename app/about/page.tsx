@@ -80,8 +80,8 @@ export default function AboutPage() {
         </div>
 
         <div style={{ marginTop: 32, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-          <Link href="/" style={{ color: '#1d4ed8', textDecoration: 'none', fontSize: 14 }}>계산기 바로가기</Link>
-          <Link href="/sale" style={{ color: '#1d4ed8', textDecoration: 'none', fontSize: 14 }}>분양정보 바로가기</Link>
+          <Link href="/calculator" style={{ color: '#1d4ed8', textDecoration: 'none', fontSize: 14 }}>계산기 바로가기</Link>
+          <Link href="/" style={{ color: '#1d4ed8', textDecoration: 'none', fontSize: 14 }}>분양정보 바로가기</Link>
           <Link href="/apt" style={{ color: '#1d4ed8', textDecoration: 'none', fontSize: 14 }}>부동산 정보</Link>
           <Link href="/privacy" style={{ color: '#6b7280', textDecoration: 'none', fontSize: 14 }}>개인정보처리방침</Link>
         </div>

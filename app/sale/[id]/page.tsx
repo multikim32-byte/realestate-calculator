@@ -133,7 +133,7 @@ export default function SaleDetailPage() {
           <div style={{ fontSize: 48, marginBottom: 16 }}>😕</div>
           <h2 style={{ margin: '0 0 8px', color: '#1e293b' }}>단지 정보를 찾을 수 없습니다</h2>
           <p style={{ color: '#6b7280', margin: '0 0 20px' }}>존재하지 않거나 삭제된 단지입니다.</p>
-          <Link href="/sale" style={{
+          <Link href="/" style={{
             display: 'inline-block', padding: '10px 24px', borderRadius: 10,
             background: '#1d4ed8', color: '#fff', textDecoration: 'none', fontWeight: 700,
           }}>← 청약정보로</Link>
