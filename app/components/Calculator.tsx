@@ -279,6 +279,35 @@ function IntermediateCalc() {
   const [result, setResult] = useState<any>(null);
   const cnt = parseInt(count);
 
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get('tab') !== 'intermediate') return;
+    const sp_ = sp.get('salePrice') || '', pa = sp.get('perAmount') || '', r = sp.get('rate') || '';
+    const bd = sp.get('balanceDate') || '', ct = sp.get('count') || '6';
+    const dates = sp.get('payDates') || '';
+    const flags = sp.get('loanFlags') || '';
+    if (!sp_ && !pa) return;
+    const parsedDates = dates ? dates.split(',') : Array(parseInt(ct)).fill('');
+    const parsedFlags = flags ? flags.split(',').map(f => f === '1') : Array(parseInt(ct)).fill(true);
+    setSalePrice(sp_); setPerAmount(pa); setRate(r); setBalanceDate(bd); setCount(ct);
+    setPayDates(parsedDates); setLoanFlags(parsedFlags);
+    // 자동 계산
+    const per = parseWon(pa), rv = parseFloat(r) / 100;
+    if (!bd || !per || !rv) return;
+    const balDay = new Date(bd);
+    let totalInterest = 0;
+    const payments = [];
+    for (let i = 0; i < parseInt(ct); i++) {
+      const loan = parsedFlags[i];
+      const pd = parsedDates[i] ? new Date(parsedDates[i]) : null;
+      const days = pd ? Math.max(0, Math.round((balDay.getTime() - pd.getTime()) / 86400000)) : null;
+      const interest = (loan && days !== null) ? Math.round(per * rv * days / 365) : null;
+      if (interest !== null) totalInterest += interest;
+      payments.push({ round: i + 1, amount: per, date: parsedDates[i], days, interest, loan });
+    }
+    setResult({ perAmount: per, totalAmount: per * parseInt(ct), totalInterest, payments });
+  }, []);
+
   // 총 분양가 변경 시 회차별 중도금 자동 계산 (60% / 회차수)
   const handleSalePrice = (v: string) => {
     setSalePrice(v);
@@ -405,6 +434,16 @@ function IntermediateCalc() {
               <span style={{ color: "#2563eb" }}>{won(result.totalInterest)}</span>
             </div>
           </div>
+          <ShareResultBtn params={{
+            tab: "intermediate",
+            salePrice,
+            perAmount,
+            rate,
+            balanceDate,
+            count,
+            payDates: payDates.join(','),
+            loanFlags: loanFlags.map(f => f ? '1' : '0').join(','),
+          }} />
         </div>
       )}
     </Card>
