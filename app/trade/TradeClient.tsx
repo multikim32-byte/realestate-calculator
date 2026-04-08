@@ -3,10 +3,11 @@
 import { useState, useMemo } from 'react';
 import {
   ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, LineChart, Line, ReferenceLine,
+  ResponsiveContainer,
 } from 'recharts';
 import { LAWD_CODE_MAP, recentMonths } from '@/lib/tradeApi';
 import type { TradeItem } from '@/lib/tradeApi';
+import KakaoMap from '@/app/components/KakaoMap';
 
 const SIDOS = Object.keys(LAWD_CODE_MAP) as Array<keyof typeof LAWD_CODE_MAP>;
 const MONTHS = recentMonths(12);
@@ -350,6 +351,12 @@ export default function TradeClient() {
                   </tbody>
                 </table>
               </div>
+
+              {/* 단지 위치 지도 */}
+              <KakaoMap
+                address={`${sido} ${sigunguName} ${aptTrades[0]?.dong ?? ''} ${selectedApt}`}
+                name={selectedApt}
+              />
             </div>
           )}
 
