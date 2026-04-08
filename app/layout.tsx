@@ -5,10 +5,10 @@ const BASE_URL = 'https://www.mk-land.kr';
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: "부동산 계산기 — 취득세·대출·중도금·중개수수료 무료 계산 (2026년)",
-    template: "%s | 부동산 계산기",
+    default: "청약정보 & 실거래가 — 전국 분양·청약 일정 한눈에 | mk-land",
+    template: "%s | mk-land",
   },
-  description: "취득세, 주택담보대출 원리금, 중도금 이자, 중개수수료, 수익률을 한 번에 무료로 계산하세요. 2026년 최신 세율 반영. 청약정보·부동산 정보 제공.",
+  description: "전국 아파트·오피스텔 청약 일정과 인근 실거래가를 한눈에 확인하세요. 청약달력, 실거래가 조회, 부동산 계산기(취득세·대출·중도금) 무료 제공.",
   keywords: ["부동산 계산기", "취득세 계산기", "주택담보대출", "중도금 이자", "중개수수료", "분양정보", "청약", "수익률 계산"],
   authors: [{ name: "부동산 계산기" }],
   creator: "부동산 계산기",
