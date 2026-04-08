@@ -352,11 +352,6 @@ export default function TradeClient() {
                 </table>
               </div>
 
-              {/* 단지 위치 지도 */}
-              <KakaoMap
-                address={`${sido} ${sigunguName} ${aptTrades[0]?.dong ?? ''} ${selectedApt}`}
-                name={selectedApt}
-              />
             </div>
           )}
 
@@ -449,6 +444,14 @@ export default function TradeClient() {
               </div>
             )}
           </div>
+
+          {/* ── 선택 단지 위치 지도 (테이블 클릭 후 하단 표시) ── */}
+          {selectedApt && (
+            <KakaoMap
+              address={`${sido} ${sigunguName} ${filtered.find(i => i.name === selectedApt)?.dong ?? ''} ${selectedApt}`}
+              name={selectedApt}
+            />
+          )}
         </>
       )}
 
