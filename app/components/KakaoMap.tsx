@@ -11,43 +11,90 @@ declare global {
   interface Window { kakao: any; }
 }
 
+// 지오코딩 결과 캐시 (주소 → 좌표) — 같은 단지 재클릭 시 API 호출 생략
+const geocodeCache = new Map<string, { y: string; x: string } | null>();
+
 export default function KakaoMap({ address, name }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstance = useRef<any>(null);
   const [error, setError] = useState(false);
+  const [loadingMap, setLoadingMap] = useState(true);
   const apiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
 
   useEffect(() => {
     if (!apiKey || !mapRef.current) return;
 
-    // 주소에서 콤마 이후 제거 (지번 복수 표기 정리)
+    setError(false);
+    setLoadingMap(true);
+
     const cleanAddress = address.split(',')[0].trim();
 
-    function initMap() {
+    function placeMarker(coords: { y: string; x: string }) {
       try {
         const container = mapRef.current;
         if (!container) return;
+        const latlng = new window.kakao.maps.LatLng(coords.y, coords.x);
 
-        const map = new window.kakao.maps.Map(container, {
+        // 지도 인스턴스 재사용 (새로 생성 X → 이동만)
+        if (!mapInstance.current) {
+          mapInstance.current = new window.kakao.maps.Map(container, {
+            center: latlng,
+            level: 4,
+          });
+        } else {
+          mapInstance.current.setCenter(latlng);
+          // 기존 마커/인포윈도우 초기화
+          mapInstance.current.relayout();
+        }
+
+        const marker = new window.kakao.maps.Marker({
+          map: mapInstance.current,
+          position: latlng,
+        });
+        new window.kakao.maps.InfoWindow({
+          content: `<div style="padding:8px 12px;font-size:13px;font-weight:700;color:#1d4ed8;white-space:nowrap">${name}</div>`,
+        }).open(mapInstance.current, marker);
+
+        setLoadingMap(false);
+      } catch {
+        setError(true);
+        setLoadingMap(false);
+      }
+    }
+
+    function geocodeAndPlace() {
+      // 캐시 확인
+      if (geocodeCache.has(cleanAddress)) {
+        const cached = geocodeCache.get(cleanAddress);
+        if (cached) placeMarker(cached);
+        else { setError(true); setLoadingMap(false); }
+        return;
+      }
+
+      const geocoder = new window.kakao.maps.services.Geocoder();
+      geocoder.addressSearch(cleanAddress, (result: any, status: any) => {
+        if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
+          const coords = { y: result[0].y, x: result[0].x };
+          geocodeCache.set(cleanAddress, coords);
+          placeMarker(coords);
+        } else {
+          geocodeCache.set(cleanAddress, null);
+          setError(true);
+          setLoadingMap(false);
+        }
+      });
+    }
+
+    function initMap() {
+      if (!mapRef.current) return;
+      // 지도 컨테이너가 처음이면 초기 지도 생성 후 지오코딩
+      if (!mapInstance.current) {
+        mapInstance.current = new window.kakao.maps.Map(mapRef.current, {
           center: new window.kakao.maps.LatLng(37.5665, 126.9780),
           level: 4,
         });
-
-        const geocoder = new window.kakao.maps.services.Geocoder();
-        geocoder.addressSearch(cleanAddress, (result: any, status: any) => {
-          if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
-            const coords = new window.kakao.maps.LatLng(result[0].y, result[0].x);
-            map.setCenter(coords);
-            const marker = new window.kakao.maps.Marker({ map, position: coords });
-            new window.kakao.maps.InfoWindow({
-              content: `<div style="padding:8px 12px;font-size:13px;font-weight:700;color:#1d4ed8;white-space:nowrap">${name}</div>`,
-            }).open(map, marker);
-          } else {
-            setError(true);
-          }
-        });
-      } catch (e) {
-        setError(true);
       }
+      geocodeAndPlace();
     }
 
     const scriptId = 'kakao-map-sdk';
@@ -61,7 +108,7 @@ export default function KakaoMap({ address, name }: Props) {
     script.id = scriptId;
     script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&libraries=services&autoload=false`;
     script.onload = () => window.kakao.maps.load(initMap);
-    script.onerror = () => setError(true);
+    script.onerror = () => { setError(true); setLoadingMap(false); };
     document.head.appendChild(script);
   }, [address, name, apiKey]);
 
@@ -77,7 +124,19 @@ export default function KakaoMap({ address, name }: Props) {
           지도를 불러올 수 없습니다.
         </div>
       ) : (
-        <div ref={mapRef} style={{ width: '100%', height: 320 }} />
+        <div style={{ position: 'relative' }}>
+          {loadingMap && (
+            <div style={{
+              position: 'absolute', inset: 0, zIndex: 1,
+              background: '#f3f4f6',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 13, color: '#9ca3af', height: 320,
+            }}>
+              지도 불러오는 중...
+            </div>
+          )}
+          <div ref={mapRef} style={{ width: '100%', height: 320 }} />
+        </div>
       )}
       <div style={{ padding: '10px 20px', fontSize: 12, color: '#9ca3af' }}>
         {address}
