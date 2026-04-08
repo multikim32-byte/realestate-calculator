@@ -76,46 +76,57 @@ export default function KakaoMap({ address, name }: Props) {
       const ps = new window.kakao.maps.services.Places();
       const geocoder = new window.kakao.maps.services.Geocoder();
 
-      // 1차: 단지명으로 키워드 검색 → AG2(아파트) 카테고리 우선 선택
-      if (name) {
+      // 단지명 키워드 검색 (위치 바이어스 적용 가능 시 적용)
+      function searchByName(center?: { y: string; x: string }) {
+        const opts: any = { category_group_code: 'AG2' };
+        if (center) {
+          opts.location = new window.kakao.maps.LatLng(center.y, center.x);
+          opts.radius = 3000; // 3km 반경
+          opts.sort = window.kakao.maps.services.SortBy?.DISTANCE;
+        }
         ps.keywordSearch(name, (places: any, ksStatus: any) => {
           if (ksStatus === window.kakao.maps.services.Status.OK && places.length > 0) {
-            // AG2: 아파트 카테고리 우선 선택, 없으면 첫 번째 결과 사용
-            const apt = places.find((p: any) => p.category_group_code === 'AG2') ?? places[0];
-            const coords = { y: apt.y, x: apt.x };
+            const coords = { y: places[0].y, x: places[0].x };
             geocodeCache.set(cacheKey, coords);
             placeMarker(coords);
-          } else {
-            // 2차: 주소로 지오코딩
-            geocodeByAddress();
-          }
-        });
-      } else {
-        geocodeByAddress();
-      }
-
-      function geocodeByAddress() {
-        geocoder.addressSearch(cleanAddress, (result: any, status: any) => {
-          if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
-            const coords = { y: result[0].y, x: result[0].x };
-            geocodeCache.set(cacheKey, coords);
-            placeMarker(coords);
-          } else {
-            // 3차: 주소 키워드 검색
-            ps.keywordSearch(cleanAddress, (places: any, ksStatus: any) => {
-              if (ksStatus === window.kakao.maps.services.Status.OK && places.length > 0) {
-                const coords = { y: places[0].y, x: places[0].x };
+          } else if (center) {
+            // AG2 필터로 없으면 위치 바이어스만 유지하고 재검색
+            ps.keywordSearch(name, (p2: any, s2: any) => {
+              if (s2 === window.kakao.maps.services.Status.OK && p2.length > 0) {
+                const coords = { y: p2[0].y, x: p2[0].x };
                 geocodeCache.set(cacheKey, coords);
                 placeMarker(coords);
               } else {
-                geocodeCache.set(cacheKey, null);
-                setError(true);
-                setLoadingMap(false);
+                // 최후 fallback: 동 중심 사용
+                geocodeCache.set(cacheKey, center);
+                placeMarker(center);
               }
-            });
+            }, { location: opts.location, radius: opts.radius });
+          } else {
+            geocodeCache.set(cacheKey, null);
+            setError(true);
+            setLoadingMap(false);
           }
-        });
+        }, opts);
       }
+
+      // 1단계: 동 주소로 대략적 중심 좌표 확보
+      geocoder.addressSearch(cleanAddress, (result: any, status: any) => {
+        if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
+          const center = { y: result[0].y, x: result[0].x };
+          if (name) {
+            // 2단계: 중심 좌표 주변에서 아파트명 검색
+            searchByName(center);
+          } else {
+            geocodeCache.set(cacheKey, center);
+            placeMarker(center);
+          }
+        } else {
+          // 주소 geocoding 실패 → 위치 바이어스 없이 이름 검색
+          if (name) searchByName();
+          else { geocodeCache.set(cacheKey, null); setError(true); setLoadingMap(false); }
+        }
+      });
     }
 
     function initMap() {
