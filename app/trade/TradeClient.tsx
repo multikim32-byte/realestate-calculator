@@ -39,6 +39,12 @@ export default function TradeClient() {
     return () => window.removeEventListener('resize', check);
   }, []);
 
+  // 초기 진입 시 자동 조회
+  useEffect(() => {
+    handleSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const sigunguList = LAWD_CODE_MAP[sido];
 
   const handleSidoChange = (s: keyof typeof LAWD_CODE_MAP) => {
@@ -138,20 +144,8 @@ export default function TradeClient() {
             </select>
           </div>
 
-          {/* 거래월 */}
-          <div>
-            <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 4 }}>거래월</label>
-            <select
-              value={dealYmd}
-              onChange={e => setDealYmd(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14, background: '#fff' }}
-            >
-              {MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-            </select>
-          </div>
-
           {/* 읍·면·동 */}
-          {searched && dongList.length > 2 && (
+          {dongList.length > 1 && (
             <div>
               <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 4 }}>읍·면·동</label>
               <select
@@ -163,6 +157,18 @@ export default function TradeClient() {
               </select>
             </div>
           )}
+
+          {/* 거래월 */}
+          <div>
+            <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 4 }}>거래월</label>
+            <select
+              value={dealYmd}
+              onChange={e => setDealYmd(e.target.value)}
+              style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14, background: '#fff' }}
+            >
+              {MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+            </select>
+          </div>
 
           {/* 조회 버튼 */}
           <button
@@ -416,12 +422,10 @@ export default function TradeClient() {
         </>
       )}
 
-      {/* ── 초기 상태 ── */}
-      {!searched && !loading && (
+      {/* ── 로딩 중 ── */}
+      {loading && (
         <div style={{ textAlign: 'center', padding: 60, color: '#9ca3af' }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>🏠</div>
-          <p style={{ fontSize: 15, fontWeight: 600, color: '#374151', marginBottom: 4 }}>지역과 거래월을 선택 후 조회하세요</p>
-          <p style={{ fontSize: 13 }}>국토교통부 실거래가 공개시스템 데이터를 실시간으로 조회합니다</p>
+          <div style={{ fontSize: 13 }}>데이터를 불러오는 중...</div>
         </div>
       )}
 
