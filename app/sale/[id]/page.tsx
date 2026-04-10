@@ -6,6 +6,7 @@ import Link from 'next/link';
 import GlobalNav from '../../components/GlobalNav';
 import KakaoMap from '../../components/KakaoMap';
 import NearbyTradeSection from '../../components/NearbyTradeSection';
+import CompetitionRateSection from '../../components/CompetitionRateSection';
 
 type UnitDetail = { type: string; area: number; count: number; price: number };
 
@@ -273,6 +274,15 @@ export default function SaleDetailPage() {
           </div>
         )}
 
+        {/* 경쟁률 */}
+        {item.houseManageNo && item.pblancNo && (
+          <CompetitionRateSection
+            houseManageNo={item.houseManageNo}
+            pblancNo={item.pblancNo}
+            status={item.status}
+          />
+        )}
+
         {/* 카카오 지도 */}
         {item.location && <KakaoMap address={item.location} name={item.name} />}
 
@@ -286,7 +296,7 @@ export default function SaleDetailPage() {
         {/* 계산기 유도 */}
         <div style={{ marginTop: 16, background: '#1e3a5f', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <p style={{ margin: 0, color: '#fff', fontWeight: 700, fontSize: 15 }}>💰 중도금 이자·취득세 미리 계산해보기</p>
-          <Link href="/" style={{
+          <Link href="/calculator" style={{
             display: 'inline-block', padding: '10px 22px', borderRadius: 10,
             background: '#fff', color: '#1e3a5f', fontWeight: 700, fontSize: 14, textDecoration: 'none',
           }}>계산기 바로가기 →</Link>
