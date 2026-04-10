@@ -1,5 +1,48 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="80" fill="#1d4ed8"/>
-  <text x="256" y="320" font-size="280" text-anchor="middle" font-family="Apple SD Gothic Neo, sans-serif">🏠</text>
-  <text x="256" y="460" font-size="72" text-anchor="middle" font-family="Apple SD Gothic Neo, sans-serif" fill="white" font-weight="700">계산기</text>
+  <!-- 배경: 진한 파란색 -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e40af"/>
+      <stop offset="100%" style="stop-color:#1d4ed8"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="100" fill="url(#bg)"/>
+
+  <!-- 아파트 건물 아이콘 -->
+  <!-- 왼쪽 건물 -->
+  <rect x="80" y="200" width="120" height="220" rx="8" fill="white" opacity="0.95"/>
+  <!-- 오른쪽 건물 (더 높음) -->
+  <rect x="220" y="140" width="130" height="280" rx="8" fill="white" opacity="0.95"/>
+  <!-- 맨 오른쪽 건물 -->
+  <rect x="370" y="180" width="65" height="240" rx="8" fill="white" opacity="0.85"/>
+
+  <!-- 왼쪽 건물 창문들 -->
+  <rect x="100" y="225" width="30" height="25" rx="4" fill="#1d4ed8" opacity="0.7"/>
+  <rect x="150" y="225" width="30" height="25" rx="4" fill="#1d4ed8" opacity="0.7"/>
+  <rect x="100" y="275" width="30" height="25" rx="4" fill="#1d4ed8" opacity="0.7"/>
+  <rect x="150" y="275" width="30" height="25" rx="4" fill="#1d4ed8" opacity="0.7"/>
+  <rect x="100" y="325" width="30" height="25" rx="4" fill="#1d4ed8" opacity="0.7"/>
+  <rect x="150" y="325" width="30" height="25" rx="4" fill="#1d4ed8" opacity="0.7"/>
+
+  <!-- 오른쪽 건물 창문들 -->
+  <rect x="240" y="165" width="35" height="28" rx="4" fill="#1d4ed8" opacity="0.7"/>
+  <rect x="295" y="165" width="35" height="28" rx="4" fill="#1d4ed8" opacity="0.7"/>
+  <rect x="240" y="215" width="35" height="28" rx="4" fill="#1d4ed8" opacity="0.7"/>
+  <rect x="295" y="215" width="35" height="28" rx="4" fill="#1d4ed8" opacity="0.7"/>
+  <rect x="240" y="265" width="35" height="28" rx="4" fill="#1d4ed8" opacity="0.7"/>
+  <rect x="295" y="265" width="35" height="28" rx="4" fill="#1d4ed8" opacity="0.7"/>
+  <rect x="240" y="315" width="35" height="28" rx="4" fill="#1d4ed8" opacity="0.7"/>
+  <rect x="295" y="315" width="35" height="28" rx="4" fill="#1d4ed8" opacity="0.7"/>
+
+  <!-- 맨 오른쪽 건물 창문 -->
+  <rect x="385" y="205" width="25" height="22" rx="3" fill="#1d4ed8" opacity="0.7"/>
+  <rect x="385" y="248" width="25" height="22" rx="3" fill="#1d4ed8" opacity="0.7"/>
+  <rect x="385" y="291" width="25" height="22" rx="3" fill="#1d4ed8" opacity="0.7"/>
+  <rect x="385" y="334" width="25" height="22" rx="3" fill="#1d4ed8" opacity="0.7"/>
+
+  <!-- 지면 -->
+  <rect x="60" y="415" width="395" height="10" rx="5" fill="white" opacity="0.5"/>
+
+  <!-- 하단 텍스트 "청약정보" -->
+  <text x="256" y="488" font-size="68" text-anchor="middle" font-family="Apple SD Gothic Neo, Noto Sans KR, sans-serif" fill="white" font-weight="800" letter-spacing="-2">청약정보</text>
 </svg>
