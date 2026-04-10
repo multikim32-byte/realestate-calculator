@@ -1,10 +1,6 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import {
-  ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
 import { LAWD_CODE_MAP, recentMonths } from '@/lib/tradeApi';
 import type { TradeItem } from '@/lib/tradeApi';
 import KakaoMap from '@/app/components/KakaoMap';
@@ -109,10 +105,6 @@ export default function TradeClient() {
   }, [filtered]);
 
   // 산점도 데이터 (면적 vs 가격)
-  const scatterData = useMemo(() =>
-    filtered.slice(0, 300).map(i => ({ x: i.area, y: i.price, name: i.name, floor: i.floor, date: i.dealDate })),
-    [filtered]
-  );
 
   const dealYmdLabel = MONTHS.find(m => m.value === dealYmd)?.label ?? dealYmd;
   const sigunguName = sigunguList.find(s => s.code === lawdCd)?.name ?? '';
@@ -285,57 +277,12 @@ export default function TradeClient() {
             ))}
           </div>
 
-          {/* ── 선택 단지 차트 ── */}
+          {/* ── 선택 단지 거래 내역 ── */}
           {selectedApt && aptTrades.length > 0 && (
             <div style={{ marginBottom: 24, padding: 20, background: '#f0f9ff', borderRadius: 12, border: '1px solid #bae6fd' }}>
               <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0369a1', marginBottom: 16 }}>
                 {selectedApt} — {dealYmdLabel} 거래 내역 ({aptTrades.length}건)
               </h3>
-              <ResponsiveContainer width="100%" height={220}>
-                <ScatterChart margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="area"
-                    name="전용면적"
-                    unit="㎡"
-                    type="number"
-                    domain={['auto', 'auto']}
-                    tick={{ fontSize: 11 }}
-                    label={{ value: '전용면적(㎡)', position: 'insideBottom', offset: -5, fontSize: 11 }}
-                  />
-                  <YAxis
-                    dataKey="price"
-                    name="거래금액"
-                    type="number"
-                    tick={{ fontSize: 11 }}
-                    tickFormatter={v => fmt만원(v)}
-                    width={60}
-                  />
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (!active || !payload?.length) return null;
-                      const d = payload[0].payload;
-                      return (
-                        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '10px 14px', fontSize: 12 }}>
-                          <div style={{ fontWeight: 700, marginBottom: 4 }}>{d.name}</div>
-                          <div>면적: {areaLabel(d.x)}</div>
-                          <div>층: {d.floor}층</div>
-                          <div style={{ color: '#1d4ed8', fontWeight: 700 }}>거래가: {fmt만원(d.y)}</div>
-                          <div style={{ color: '#6b7280' }}>거래일: {d.date}</div>
-                        </div>
-                      );
-                    }}
-                  />
-                  <Scatter
-                    data={aptTrades.map(i => ({
-                      x: i.area, y: i.price,
-                      name: i.name, floor: i.floor, date: i.dealDate,
-                    }))}
-                    fill="#3b82f6"
-                    fillOpacity={0.7}
-                  />
-                </ScatterChart>
-              </ResponsiveContainer>
 
               {/* 거래 목록 */}
               {isMobile ? (
@@ -382,59 +329,6 @@ export default function TradeClient() {
 
             </div>
           )}
-
-          {/* ── 전체 산점도 (면적 vs 가격) ── */}
-          <div style={{ marginBottom: 24 }}>
-            <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1e3a5f', marginBottom: 4 }}>
-              전용면적 vs 거래금액 분포
-            </h3>
-            <p style={{ fontSize: 12, color: '#9ca3af', marginBottom: 12 }}>단지 카드를 선택하면 해당 단지만 표시됩니다</p>
-            <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px 8px' }}>
-              <ResponsiveContainer width="100%" height={260}>
-                <ScatterChart margin={{ top: 10, right: 20, bottom: 20, left: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis
-                    dataKey="x"
-                    name="전용면적"
-                    unit="㎡"
-                    type="number"
-                    domain={['auto', 'auto']}
-                    tick={{ fontSize: 11 }}
-                    label={{ value: '전용면적 (㎡)', position: 'insideBottom', offset: -10, fontSize: 11 }}
-                  />
-                  <YAxis
-                    dataKey="y"
-                    name="거래금액"
-                    type="number"
-                    tick={{ fontSize: 11 }}
-                    tickFormatter={v => fmt만원(v)}
-                    width={65}
-                  />
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (!active || !payload?.length) return null;
-                      const d = payload[0].payload;
-                      return (
-                        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '10px 14px', fontSize: 12 }}>
-                          <div style={{ fontWeight: 700, marginBottom: 4 }}>{d.name}</div>
-                          <div>면적: {areaLabel(d.x)}</div>
-                          <div>층: {d.floor}층</div>
-                          <div style={{ color: '#1d4ed8', fontWeight: 700 }}>거래가: {fmt만원(d.y)}</div>
-                          <div style={{ color: '#6b7280' }}>{d.date}</div>
-                        </div>
-                      );
-                    }}
-                  />
-                  <Scatter
-                    data={selectedApt ? scatterData.filter(d => d.name === selectedApt) : scatterData}
-                    fill="#3b82f6"
-                    fillOpacity={0.5}
-                    r={4}
-                  />
-                </ScatterChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
 
           {/* ── 전체 거래 목록 ── */}
           <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1e3a5f', marginBottom: 12 }}>
