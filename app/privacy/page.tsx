@@ -2,8 +2,8 @@ import GlobalNav from '../components/GlobalNav';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: '개인정보처리방침 | 부동산 계산기',
-  description: '부동산 계산기 서비스의 개인정보처리방침입니다. 수집하는 정보, 이용 목적, 광고 및 쿠키 사용에 대해 안내합니다.',
+  title: '개인정보처리방침 | 청약정보 mk-land.kr',
+  description: 'mk-land.kr 서비스의 개인정보처리방침입니다. 수집하는 정보, 이용 목적, 광고 및 쿠키 사용에 대해 안내합니다.',
   alternates: { canonical: 'https://www.mk-land.kr/privacy' },
 };
 
@@ -13,12 +13,12 @@ export default function PrivacyPage() {
       <GlobalNav />
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px', lineHeight: 1.8, color: '#374151' }}>
         <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>개인정보처리방침</h1>
-        <p style={{ color: '#6b7280', marginBottom: 32 }}>최종 수정일: 2026년 3월 20일</p>
+        <p style={{ color: '#6b7280', marginBottom: 32 }}>최종 수정일: 2026년 4월 10일</p>
 
-        <p>부동산 계산기(이하 "서비스")는 이용자의 개인정보를 소중히 여기며, 「개인정보 보호법」 및 관련 법령을 준수합니다. 본 방침은 서비스가 수집하는 정보의 종류와 이용 목적, 제3자 공유 여부 등을 안내합니다.</p>
+        <p>청약정보 mk-land.kr(이하 "서비스")는 이용자의 개인정보를 소중히 여기며, 「개인정보 보호법」 및 관련 법령을 준수합니다. 본 방침은 서비스가 수집하는 정보의 종류와 이용 목적, 제3자 공유 여부 등을 안내합니다.</p>
 
         <h2 style={{ fontSize: 18, fontWeight: 700, marginTop: 32, marginBottom: 12 }}>1. 수집하는 정보</h2>
-        <p>본 서비스는 계산기 이용, 분양정보 조회, 부동산 정보 열람 시 별도의 개인정보(이름, 연락처, 이메일 등)를 직접 수집하지 않습니다. 다만 서비스 이용 과정에서 다음 정보가 자동으로 수집될 수 있습니다.</p>
+        <p>본 서비스는 청약정보 조회, 아파트 실거래가 조회, 부동산 계산기 이용 시 별도의 개인정보(이름, 연락처, 이메일 등)를 직접 수집하지 않습니다. 다만 서비스 이용 과정에서 다음 정보가 자동으로 수집될 수 있습니다.</p>
         <ul style={{ paddingLeft: 20, marginTop: 8 }}>
           <li>브라우저 종류 및 버전</li>
           <li>운영체제 종류</li>
@@ -61,7 +61,7 @@ export default function PrivacyPage() {
         <p style={{ marginTop: 8 }}>이메일: <a href="mailto:multikim@naver.com" style={{ color: '#1d4ed8' }}>multikim@naver.com</a></p>
 
         <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid #e5e7eb', color: '#9ca3af', fontSize: 13 }}>
-          <p>본 방침은 2026년 3월 20일부터 시행됩니다.</p>
+          <p>본 방침은 2026년 4월 10일부터 시행됩니다.</p>
         </div>
       </div>
     </div>
