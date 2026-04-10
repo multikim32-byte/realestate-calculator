@@ -57,9 +57,9 @@ export default function TradePage() {
               </p>
             </div>
             <div style={{ padding: 20, background: '#fdf4ff', borderRadius: 12 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#6b21a8', marginBottom: 6 }}>최대 12개월 조회</h3>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#6b21a8', marginBottom: 6 }}>최근 3년 시세 추이</h3>
               <p style={{ fontSize: 13, lineHeight: 1.7, color: '#374151' }}>
-                최근 12개월 거래 데이터를 선택할 수 있어 가격 추이를 직접 비교할 수 있습니다.
+                최근 3년 월별 실거래가 추이를 단지별로 확인할 수 있습니다.
               </p>
             </div>
           </section>
