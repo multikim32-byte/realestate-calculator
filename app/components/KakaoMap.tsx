@@ -27,7 +27,13 @@ export default function KakaoMap({ address, name }: Props) {
     setError(false);
     setLoadingMap(true);
 
-    const cleanAddress = address.split(',')[0].trim();
+    // 주소 클리닝: 괄호 내용 제거, 개발구역 코드 제거, 번지 이하 제거
+    const cleanAddress = address
+      .replace(/\(.*?\)/g, '')          // 괄호 내용 제거
+      .replace(/[A-Z]{1,3}\d+[A-Z]{0,2}BL/g, '') // AA36BL 같은 블록 코드 제거
+      .replace(/\d+번지.*$/g, '')       // "번지 일원" 이하 제거
+      .replace(/일원.*$/g, '')          // "일원" 이하 제거
+      .trim();
 
     function placeMarker(coords: { y: string; x: string }) {
       try {
@@ -78,36 +84,56 @@ export default function KakaoMap({ address, name }: Props) {
 
       // 단지명 키워드 검색 (위치 바이어스 적용 가능 시 적용)
       function searchByName(center?: { y: string; x: string }) {
-        const opts: any = { category_group_code: 'AG2' };
-        if (center) {
-          opts.location = new window.kakao.maps.LatLng(center.y, center.x);
-          opts.radius = 3000; // 3km 반경
-          opts.sort = window.kakao.maps.services.SortBy?.DISTANCE;
+        const latLng = center ? new window.kakao.maps.LatLng(center.y, center.x) : undefined;
+
+        // 이름 유사도 점수 (검색결과 중 가장 가까운 이름 선택)
+        function bestMatch(places: any[]): any {
+          if (places.length === 1) return places[0];
+          const normalize = (s: string) => s.replace(/\s/g, '').toLowerCase();
+          const target = normalize(name);
+          return places.reduce((best: any, p: any) => {
+            const pn = normalize(p.place_name);
+            const score = pn === target ? 100
+              : target.includes(pn) || pn.includes(target) ? 50
+              : 0;
+            const bestScore = normalize(best.place_name) === target ? 100
+              : normalize(best.place_name).includes(target) ? 50 : 0;
+            return score > bestScore ? p : best;
+          });
         }
-        ps.keywordSearch(name, (places: any, ksStatus: any) => {
-          if (ksStatus === window.kakao.maps.services.Status.OK && places.length > 0) {
-            const coords = { y: places[0].y, x: places[0].x };
+
+        // 1차: AG2(아파트) + 1.5km 반경
+        const opts1: any = { category_group_code: 'AG2' };
+        if (latLng) { opts1.location = latLng; opts1.radius = 1500; opts1.sort = window.kakao.maps.services.SortBy?.DISTANCE; }
+
+        ps.keywordSearch(name, (places: any, st: any) => {
+          if (st === window.kakao.maps.services.Status.OK && places.length > 0) {
+            const best = bestMatch(places);
+            const coords = { y: best.y, x: best.x };
             geocodeCache.set(cacheKey, coords);
             placeMarker(coords);
-          } else if (center) {
-            // AG2 필터로 없으면 위치 바이어스만 유지하고 재검색
+            return;
+          }
+          // 2차: AG2 없으면 카테고리 없이 1.5km
+          if (latLng) {
             ps.keywordSearch(name, (p2: any, s2: any) => {
               if (s2 === window.kakao.maps.services.Status.OK && p2.length > 0) {
-                const coords = { y: p2[0].y, x: p2[0].x };
+                const best = bestMatch(p2);
+                const coords = { y: best.y, x: best.x };
                 geocodeCache.set(cacheKey, coords);
                 placeMarker(coords);
               } else {
-                // 최후 fallback: 동 중심 사용
-                geocodeCache.set(cacheKey, center);
-                placeMarker(center);
+                // fallback: 동 중심 사용
+                geocodeCache.set(cacheKey, center!);
+                placeMarker(center!);
               }
-            }, { location: opts.location, radius: opts.radius });
+            }, { location: latLng, radius: 1500 });
           } else {
             geocodeCache.set(cacheKey, null);
             setError(true);
             setLoadingMap(false);
           }
-        }, opts);
+        }, opts1);
       }
 
       // 1단계: 동 주소로 대략적 중심 좌표 확보
