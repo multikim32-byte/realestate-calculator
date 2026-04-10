@@ -183,8 +183,8 @@ export default function SaleDetailPage() {
             ))}
           </div>
 
-          {/* 모집공고문 버튼 */}
-          <div style={{ marginTop: 16 }}>
+          {/* 버튼 영역 */}
+          <div style={{ marginTop: 16, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
             <a
               href={item.pblancUrl ||
                 `https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancDetail.do?houseManageNo=${item.houseManageNo ?? item.id}&pblancNo=${item.pblancNo ?? ''}`}
@@ -198,6 +198,32 @@ export default function SaleDetailPage() {
               }}
             >
               📄 모집공고문 보기 (청약홈)
+            </a>
+            <a
+              href={`https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancDetail.do?houseManageNo=${item.houseManageNo ?? item.id}&pblancNo=${item.pblancNo ?? ''}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '10px 18px', borderRadius: 10, fontWeight: 700, fontSize: 14,
+                background: '#fff', color: '#374151', textDecoration: 'none',
+                border: '1px solid #d1d5db',
+              }}
+            >
+              📋 신청현황
+            </a>
+            <a
+              href={`https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancDetail.do?houseManageNo=${item.houseManageNo ?? item.id}&pblancNo=${item.pblancNo ?? ''}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '10px 18px', borderRadius: 10, fontWeight: 700, fontSize: 14,
+                background: '#fff', color: '#374151', textDecoration: 'none',
+                border: '1px solid #d1d5db',
+              }}
+            >
+              🏆 경쟁률
             </a>
           </div>
         </div>
