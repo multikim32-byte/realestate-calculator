@@ -47,20 +47,16 @@ export default function TradeClient() {
 
   const sigunguList = LAWD_CODE_MAP[sido];
 
-  const handleSidoChange = (s: keyof typeof LAWD_CODE_MAP) => {
-    setSido(s);
-    setLawdCd(LAWD_CODE_MAP[s][0].code);
-    setSelectedApt('');
-  };
-
-  const handleSearch = async () => {
+  // 검색 로직 분리 (lawdCd/dealYmd를 직접 받아서 stale closure 방지)
+  const doSearch = async (searchLawdCd: string, searchDealYmd: string) => {
     setLoading(true);
     setError('');
     setSearched(true);
     setSelectedApt('');
     setSelectedDong('전체');
+    setItems([]);
     try {
-      const res = await fetch(`/api/trade?lawdCd=${lawdCd}&dealYmd=${dealYmd}&numOfRows=200`);
+      const res = await fetch(`/api/trade?lawdCd=${searchLawdCd}&dealYmd=${searchDealYmd}&numOfRows=200`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setItems(data.items ?? []);
@@ -70,6 +66,20 @@ export default function TradeClient() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = () => doSearch(lawdCd, dealYmd);
+
+  const handleSidoChange = (s: keyof typeof LAWD_CODE_MAP) => {
+    const firstCode = LAWD_CODE_MAP[s][0].code;
+    setSido(s);
+    setLawdCd(firstCode);
+    doSearch(firstCode, dealYmd);
+  };
+
+  const handleSigunguChange = (code: string) => {
+    setLawdCd(code);
+    doSearch(code, dealYmd);
   };
 
   // 동 목록 (조회 결과에서 추출)
@@ -137,7 +147,7 @@ export default function TradeClient() {
             <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 4 }}>시/군/구</label>
             <select
               value={lawdCd}
-              onChange={e => setLawdCd(e.target.value)}
+              onChange={e => handleSigunguChange(e.target.value)}
               style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14, background: '#fff' }}
             >
               {sigunguList.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
