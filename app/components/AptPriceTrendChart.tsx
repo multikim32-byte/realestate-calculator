@@ -34,7 +34,7 @@ function fmt(v: number) {
   return `${v.toLocaleString()}만`;
 }
 
-function recentYms(n = 12): string[] {
+function recentYms(n = 36): string[] {
   const result: string[] = [];
   const now = new Date();
   for (let i = 1; i <= n; i++) {
@@ -74,18 +74,30 @@ export default function AptPriceTrendChart({ aptName, lawdCd }: Props) {
     setAllTrades([]);
     setAreaFilter('전체');
 
-    const yms = recentYms(12);
-    Promise.all(
-      yms.map(ym =>
-        fetch(`/api/trade?lawdCd=${lawdCd}&dealYmd=${ym}&numOfRows=200`)
-          .then(r => r.json())
-          .then(d => (d.items ?? []) as TradeItem[])
-          .catch(() => [] as TradeItem[])
-      )
-    ).then(results => {
-      const all = results.flat().filter(t => t.name === aptName);
-      setAllTrades(all);
-    }).finally(() => setLoading(false));
+    const yms = recentYms(36);
+    // 36개월을 6개씩 묶어서 순차 요청 (API 부하 방지)
+    const chunks: string[][] = [];
+    for (let i = 0; i < yms.length; i += 6) chunks.push(yms.slice(i, i + 6));
+
+    const fetchChunk = (chunk: string[]) =>
+      Promise.all(
+        chunk.map(ym =>
+          fetch(`/api/trade?lawdCd=${lawdCd}&dealYmd=${ym}&numOfRows=200`)
+            .then(r => r.json())
+            .then(d => (d.items ?? []) as TradeItem[])
+            .catch(() => [] as TradeItem[])
+        )
+      );
+
+    (async () => {
+      const allResults: TradeItem[] = [];
+      for (const chunk of chunks) {
+        const res = await fetchChunk(chunk);
+        allResults.push(...res.flat().filter(t => t.name === aptName));
+      }
+      setAllTrades(allResults);
+      setLoading(false);
+    })();
   }, [aptName, lawdCd]);
 
   // 면적 목록 (평 기준)
@@ -161,7 +173,7 @@ export default function AptPriceTrendChart({ aptName, lawdCd }: Props) {
           <div style={{ fontWeight: 800, fontSize: 15, color: '#1e293b' }}>
             📈 {aptName} 시세 추이
           </div>
-          <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 3 }}>최근 12개월 월별 평균 실거래가</div>
+          <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 3 }}>최근 3년 월별 평균 실거래가</div>
         </div>
 
         {/* 면적 필터 */}
@@ -194,14 +206,14 @@ export default function AptPriceTrendChart({ aptName, lawdCd }: Props) {
         )}
         {maxStat && (
           <div style={{ flex: 1, minWidth: 100, background: '#fff7ed', borderRadius: 10, padding: '10px 14px' }}>
-            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>12개월 최고</div>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>3년 최고</div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#ea580c' }}>{fmt(maxStat.avg)}</div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{maxStat.ym}</div>
           </div>
         )}
         {minStat && minStat.ym !== maxStat?.ym && (
           <div style={{ flex: 1, minWidth: 100, background: '#f0fdf4', borderRadius: 10, padding: '10px 14px' }}>
-            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>12개월 최저</div>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>3년 최저</div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#059669' }}>{fmt(minStat.avg)}</div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{minStat.ym}</div>
           </div>
@@ -236,7 +248,7 @@ export default function AptPriceTrendChart({ aptName, lawdCd }: Props) {
       </ResponsiveContainer>
 
       <p style={{ margin: '10px 0 0', fontSize: 11, color: '#9ca3af' }}>
-        ※ 국토교통부 실거래가 기준 · 월별 평균가 · 총 {allTrades.length}건
+        ※ 국토교통부 실거래가 기준 · 최근 3년 월별 평균가 · 총 {allTrades.length}건
       </p>
     </div>
   );
