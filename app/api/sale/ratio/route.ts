@@ -25,20 +25,9 @@ export async function GET(req: NextRequest) {
   const manageNo = parseInt(houseManageNo);
 
   try {
-    // 1) 첫 페이지로 totalCount 파악
-    const first = await fetchPage(key, 1);
-    const totalCount = first.totalCount;
-    const lastPage = Math.ceil(totalCount / PER_PAGE);
-
-    // 2) 최신 데이터가 마지막 페이지에 있으므로 마지막 2페이지 병렬 조회
-    const pages = [lastPage];
-    if (lastPage > 1) pages.push(lastPage - 1);
-
-    const pageResults = await Promise.all(pages.map(p => fetchPage(key, p)));
-    const allData = pageResults.flatMap(r => r.data);
-
-    // 3) 첫 페이지 데이터도 포함 (오래된 단지 대비)
-    const combined = [...first.data, ...allData];
+    // 페이지 1이 최신 데이터 → 첫 3페이지 병렬 조회
+    const pageResults = await Promise.all([1, 2, 3].map(p => fetchPage(key, p)));
+    const combined = pageResults.flatMap(r => r.data);
 
     // 4) 주택관리번호로 JavaScript 필터링
     const ratio = combined.filter((r: any) => {
