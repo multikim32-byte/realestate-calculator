@@ -242,27 +242,24 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
               <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1e3a5f', marginBottom: 10 }}>
                 {aptName} 실거래 내역 ({sameApt.length}건)
               </h3>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ background: '#f0f9ff' }}>
-                      {['거래일', '전용면적', '층', '거래금액', '거래유형'].map(h => (
-                        <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600, color: '#0369a1', whiteSpace: 'nowrap', borderBottom: '1px solid #bae6fd' }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sameApt.slice(0, 20).map((t, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid #f3f4f6', background: i % 2 === 0 ? '#fff' : '#f8faff' }}>
-                        <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>{t.dealDate}</td>
-                        <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>{areaLabel(t.area)}</td>
-                        <td style={{ padding: '7px 10px' }}>{t.floor}층</td>
-                        <td style={{ padding: '7px 10px', fontWeight: 700, color: '#1d4ed8', whiteSpace: 'nowrap' }}>{fmt(t.price)}</td>
-                        <td style={{ padding: '7px 10px', color: '#6b7280' }}>{t.dealType}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {sameApt.slice(0, 20).map((t, i) => (
+                  <div key={i} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '10px 14px', borderRadius: 10,
+                    background: i % 2 === 0 ? '#f0f9ff' : '#fff',
+                    border: '1px solid #e0f2fe',
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <span style={{ fontSize: 13, color: '#374151' }}>{areaLabel(t.area)} · {t.floor}층</span>
+                      <span style={{ fontSize: 12, color: '#9ca3af' }}>{t.dealDate}</span>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: '#1d4ed8' }}>{fmt(t.price)}</div>
+                      {t.dealType && <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{t.dealType}</div>}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -273,28 +270,28 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
               <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1e3a5f', marginBottom: 10 }}>
                 {nearbyLabel} 인근 최근 거래
               </h3>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ background: '#f9fafb' }}>
-                      {['단지명', '동', '전용면적', '층', '거래금액', '거래일'].map(h => (
-                        <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600, color: '#374151', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {nearby.map((t, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid #f3f4f6', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
-                        <td style={{ padding: '7px 10px', fontWeight: 500 }}>{t.name}</td>
-                        <td style={{ padding: '7px 10px', color: '#6b7280' }}>{t.dong}</td>
-                        <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>{areaLabel(t.area)}</td>
-                        <td style={{ padding: '7px 10px' }}>{t.floor}층</td>
-                        <td style={{ padding: '7px 10px', fontWeight: 700, color: '#374151', whiteSpace: 'nowrap' }}>{fmt(t.price)}</td>
-                        <td style={{ padding: '7px 10px', color: '#6b7280', whiteSpace: 'nowrap' }}>{t.dealDate}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {nearby.map((t, i) => (
+                  <div key={i} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '10px 14px', borderRadius: 10,
+                    background: i % 2 === 0 ? '#fff' : '#fafafa',
+                    border: '1px solid #e5e7eb',
+                  }}>
+                    <div style={{ flex: 1, minWidth: 0, marginRight: 12 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {t.name}
+                      </div>
+                      <div style={{ fontSize: 12, color: '#6b7280' }}>
+                        {t.dong} · {areaLabel(t.area)} · {t.floor}층
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: '#374151' }}>{fmt(t.price)}</div>
+                      <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{t.dealDate}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
