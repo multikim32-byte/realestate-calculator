@@ -200,7 +200,7 @@ export default function SaleDetailPage() {
               📄 모집공고문 보기 (청약홈)
             </a>
             <a
-              href={`https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancDetail.do?houseManageNo=${item.houseManageNo ?? item.id}&pblancNo=${item.pblancNo ?? ''}`}
+              href="https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancListView.do"
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -213,7 +213,7 @@ export default function SaleDetailPage() {
               📋 신청현황
             </a>
             <a
-              href={`https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancDetail.do?houseManageNo=${item.houseManageNo ?? item.id}&pblancNo=${item.pblancNo ?? ''}`}
+              href="https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancListView.do"
               target="_blank"
               rel="noopener noreferrer"
               style={{
