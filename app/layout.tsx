@@ -67,6 +67,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>© 2026 청약정보 · 전국 아파트·오피스텔 분양 청약 정보 &amp; 실거래가 | mk-land.kr</p>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <a href="/about" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>서비스 소개</a>
+              <a href="/terms" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>이용약관</a>
               <a href="/privacy" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>개인정보처리방침</a>
               <a href="/apt" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>부동산 정보</a>
             </div>
