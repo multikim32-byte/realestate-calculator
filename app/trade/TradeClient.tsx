@@ -150,6 +150,20 @@ export default function TradeClient() {
             </select>
           </div>
 
+          {/* 읍·면·동 */}
+          {searched && dongList.length > 2 && (
+            <div>
+              <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 4 }}>읍·면·동</label>
+              <select
+                value={selectedDong}
+                onChange={e => { setSelectedDong(e.target.value); setSelectedApt(''); }}
+                style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14, background: '#fff' }}
+              >
+                {dongList.map(d => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </div>
+          )}
+
           {/* 조회 버튼 */}
           <button
             onClick={handleSearch}
@@ -177,35 +191,6 @@ export default function TradeClient() {
         </div>
       )}
 
-      {/* ── 동 필터 (조회 후 표시) ── */}
-      {searched && !loading && items.length > 0 && dongList.length > 2 && (
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 6 }}>읍·면·동 필터</div>
-          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 4 }}>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'nowrap', minWidth: 'max-content' }}>
-              {dongList.map(d => (
-                <button
-                  key={d}
-                  onClick={() => { setSelectedDong(d); setSelectedApt(''); }}
-                  style={{
-                    padding: '4px 12px',
-                    borderRadius: 20,
-                    border: `1px solid ${selectedDong === d ? '#1d4ed8' : '#e5e7eb'}`,
-                    background: selectedDong === d ? '#1d4ed8' : '#fff',
-                    color: selectedDong === d ? '#fff' : '#374151',
-                    fontSize: 13,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    fontWeight: selectedDong === d ? 600 : 400,
-                  }}
-                >
-                  {d}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── 결과 ── */}
       {searched && !loading && items.length > 0 && (
