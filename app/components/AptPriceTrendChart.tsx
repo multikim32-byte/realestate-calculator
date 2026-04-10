@@ -75,29 +75,25 @@ export default function AptPriceTrendChart({ aptName, lawdCd }: Props) {
     setAreaFilter('전체');
 
     const yms = recentYms(36);
-    // 36개월을 6개씩 묶어서 순차 요청 (API 부하 방지)
+    // 36개월을 12개씩 3묶음으로 병렬 요청
     const chunks: string[][] = [];
-    for (let i = 0; i < yms.length; i += 6) chunks.push(yms.slice(i, i + 6));
+    for (let i = 0; i < yms.length; i += 12) chunks.push(yms.slice(i, i + 12));
 
-    const fetchChunk = (chunk: string[]) =>
-      Promise.all(
-        chunk.map(ym =>
-          fetch(`/api/trade?lawdCd=${lawdCd}&dealYmd=${ym}&numOfRows=200`)
-            .then(r => r.json())
-            .then(d => (d.items ?? []) as TradeItem[])
-            .catch(() => [] as TradeItem[])
+    Promise.all(
+      chunks.map(chunk =>
+        Promise.all(
+          chunk.map(ym =>
+            fetch(`/api/trade?lawdCd=${lawdCd}&dealYmd=${ym}&numOfRows=200`)
+              .then(r => r.json())
+              .then(d => (d.items ?? []) as TradeItem[])
+              .catch(() => [] as TradeItem[])
+          )
         )
-      );
-
-    (async () => {
-      const allResults: TradeItem[] = [];
-      for (const chunk of chunks) {
-        const res = await fetchChunk(chunk);
-        allResults.push(...res.flat().filter(t => t.name === aptName));
-      }
-      setAllTrades(allResults);
-      setLoading(false);
-    })();
+      )
+    ).then(results => {
+      const all = results.flat(2).filter(t => t.name === aptName);
+      setAllTrades(all);
+    }).finally(() => setLoading(false));
   }, [aptName, lawdCd]);
 
   // 면적 목록 (평 기준)
@@ -148,7 +144,7 @@ export default function AptPriceTrendChart({ aptName, lawdCd }: Props) {
           📈 {aptName} 시세 추이
         </div>
         <div style={{ textAlign: 'center', padding: '32px 0', color: '#9ca3af' }}>
-          최근 12개월 데이터 불러오는 중...
+          최근 3년 데이터 불러오는 중...
         </div>
       </div>
     );
