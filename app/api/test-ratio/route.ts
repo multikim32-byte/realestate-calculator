@@ -1,51 +1,49 @@
 import { NextResponse } from 'next/server';
 
-const BASE = 'https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1';
-
-// 검단호수공원역 파라곤 AA36BL 기준 테스트
-const TEST_HOUSE_MANAGE_NO = '2024000659';
-const TEST_PBLANC_NO       = '2024000659';
-
-async function tryEndpoint(endpoint: string, key: string, cond: Record<string, string>) {
-  let qs = `serviceKey=${encodeURIComponent(key)}&page=1&perPage=10`;
-  for (const [k, v] of Object.entries(cond)) {
-    qs += `&${k}=${encodeURIComponent(v)}`;
-  }
-  const url = `${BASE}/${endpoint}?${qs}`;
-  try {
-    const res = await fetch(url, { headers: { Accept: 'application/json' }, cache: 'no-store' });
-    const text = await res.text();
-    let json: any;
-    try { json = JSON.parse(text); } catch { json = { raw: text.slice(0, 200) }; }
-    return { endpoint, status: res.status, totalCount: json.totalCount ?? null, dataLen: (json.data ?? []).length, ok: res.ok && (json.data?.length ?? 0) > 0 };
-  } catch (e) {
-    return { endpoint, status: 0, error: String(e), ok: false };
-  }
-}
+const RATIO_BASE = 'https://api.odcloud.kr/api/15101048/v1/uddi:2f83a0c5-ef17-4c1a-bee6-d53e37fd67e5';
 
 export async function GET() {
-  const key = process.env.PUBLIC_DATA_API_KEY;
-  if (!key) return NextResponse.json({ error: 'API 키 없음' });
+  const key = process.env.APT_RATIO_API_KEY;
+  if (!key) return NextResponse.json({ error: 'APT_RATIO_API_KEY 없음' });
 
-  const cond = {
-    'cond[HOUSE_MANAGE_NO::EQ]': TEST_HOUSE_MANAGE_NO,
-    'cond[PBLANC_NO::EQ]':       TEST_PBLANC_NO,
-  };
+  const results: any[] = [];
 
-  // 가능한 경쟁률/접수현황 엔드포인트 후보들 테스트
-  const candidates = [
-    'getAPTLttotPblancMdlRatio',
-    'getAPTLttotPblancSpcltRcept',
-    'getAPTRatioInfo',
-    'getAPTRcntInfo',
-    'getAPTSplySttusInfo',
-    'getAPTLttotPblancRatio',
-    'getAPTRcptRatioInfo',
-    'getAPTLttotPblancRcptRatio',
-  ];
+  // 1) 필터 없이 최근 데이터 10건 조회 (API 자체가 동작하는지 확인)
+  try {
+    const qs = `serviceKey=${encodeURIComponent(key)}&page=1&perPage=10`;
+    const res = await fetch(`${RATIO_BASE}?${qs}`, {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    });
+    const json = await res.json();
+    results.push({
+      test: '필터없이 10건',
+      status: res.status,
+      totalCount: json.totalCount,
+      firstRow: json.data?.[0] ?? null,
+      dataLen: (json.data ?? []).length,
+    });
+  } catch (e) {
+    results.push({ test: '필터없이 10건', error: String(e) });
+  }
 
-  const results = await Promise.all(candidates.map(ep => tryEndpoint(ep, key, cond)));
-  const working = results.filter(r => r.ok);
+  // 2) 주택관리번호 필터 테스트 (cond[] 방식)
+  try {
+    const qs = `serviceKey=${encodeURIComponent(key)}&page=1&perPage=10&cond[주택관리번호::EQ]=2024000659`;
+    const res = await fetch(`${RATIO_BASE}?${qs}`, {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    });
+    const json = await res.json();
+    results.push({
+      test: 'cond[주택관리번호::EQ] 필터',
+      status: res.status,
+      totalCount: json.totalCount,
+      dataLen: (json.data ?? []).length,
+    });
+  } catch (e) {
+    results.push({ test: 'cond 필터', error: String(e) });
+  }
 
-  return NextResponse.json({ working, all: results });
+  return NextResponse.json({ keyExists: !!key, results });
 }
