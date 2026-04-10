@@ -8,6 +8,7 @@ import {
 import { LAWD_CODE_MAP, recentMonths } from '@/lib/tradeApi';
 import type { TradeItem } from '@/lib/tradeApi';
 import KakaoMap from '@/app/components/KakaoMap';
+import AptPriceTrendChart from '@/app/components/AptPriceTrendChart';
 
 const SIDOS = Object.keys(LAWD_CODE_MAP) as Array<keyof typeof LAWD_CODE_MAP>;
 const MONTHS = recentMonths(12);
@@ -505,6 +506,11 @@ export default function TradeClient() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* ── 시세 추이 차트 ── */}
+          {selectedApt && (
+            <AptPriceTrendChart aptName={selectedApt} lawdCd={lawdCd} />
           )}
 
           {/* ── 선택 단지 위치 지도 (테이블 클릭 후 하단 표시) ── */}
