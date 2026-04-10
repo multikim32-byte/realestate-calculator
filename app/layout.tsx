@@ -64,7 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <footer style={{ background: '#f9fafb', borderTop: '1px solid #e5e7eb', padding: '24px 16px', marginTop: 40 }}>
           <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'space-between', alignItems: 'center' }}>
-            <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>© 2026 부동산 계산기 · 취득세·대출·중도금·중개수수료 무료 계산</p>
+            <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>© 2026 청약정보 · 전국 아파트·오피스텔 분양 청약 정보 &amp; 실거래가 | mk-land.kr</p>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <a href="/about" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>서비스 소개</a>
               <a href="/privacy" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>개인정보처리방침</a>
