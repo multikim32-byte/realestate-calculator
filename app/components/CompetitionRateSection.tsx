@@ -54,7 +54,26 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, status
       .finally(() => setLoading(false));
   }, [houseManageNo, pblancNo]);
 
-  if (!loading && !hasData) return null;
+  // 데이터 없으면 청약홈 링크 버튼으로 대체
+  if (!loading && !hasData) {
+    return (
+      <div style={{ marginTop: 16 }}>
+        <a
+          href="https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancListView.do"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            padding: '10px 20px', borderRadius: 10, fontWeight: 700, fontSize: 14,
+            background: '#fff', color: '#374151', textDecoration: 'none',
+            border: '1px solid #d1d5db',
+          }}
+        >
+          🏆 신청현황 · 경쟁률 확인 (청약홈)
+        </a>
+      </div>
+    );
+  }
 
   // 주택형 → 순위 → 지역 그룹화
   const grouped = rows.reduce<Record<string, Record<string, RatioRow[]>>>((acc, row) => {
