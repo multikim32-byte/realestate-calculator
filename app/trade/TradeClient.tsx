@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer,
@@ -33,6 +33,14 @@ export default function TradeClient() {
   const [keyword, setKeyword] = useState('');
   const [selectedApt, setSelectedApt] = useState('');
   const [selectedDong, setSelectedDong] = useState('전체');
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const sigunguList = LAWD_CODE_MAP[sido];
 
@@ -328,29 +336,48 @@ export default function TradeClient() {
                 </ScatterChart>
               </ResponsiveContainer>
 
-              {/* 거래 테이블 */}
-              <div style={{ overflowX: 'auto', marginTop: 12 }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ background: '#e0f2fe' }}>
-                      {['거래일', '전용면적', '층', '거래금액', '거래유형'].map(h => (
-                        <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600, color: '#0369a1', whiteSpace: 'nowrap' }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {aptTrades.map((t, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid #e5e7eb', background: i % 2 === 0 ? '#fff' : '#f8faff' }}>
-                        <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>{t.dealDate}</td>
-                        <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>{areaLabel(t.area)}</td>
-                        <td style={{ padding: '7px 10px' }}>{t.floor}층</td>
-                        <td style={{ padding: '7px 10px', fontWeight: 700, color: '#1d4ed8', whiteSpace: 'nowrap' }}>{fmt만원(t.price)}</td>
-                        <td style={{ padding: '7px 10px', color: '#6b7280' }}>{t.dealType}</td>
+              {/* 거래 목록 */}
+              {isMobile ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
+                  {aptTrades.map((t, i) => (
+                    <div key={i} style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      padding: '10px 14px', borderRadius: 10,
+                      background: i % 2 === 0 ? '#fff' : '#f0f9ff',
+                      border: '1px solid #e0f2fe',
+                    }}>
+                      <div>
+                        <div style={{ fontSize: 13, color: '#374151' }}>{areaLabel(t.area)} · {t.floor}층</div>
+                        <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>{t.dealDate}{t.dealType ? ` · ${t.dealType}` : ''}</div>
+                      </div>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: '#1d4ed8' }}>{fmt만원(t.price)}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto', marginTop: 12 }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                    <thead>
+                      <tr style={{ background: '#e0f2fe' }}>
+                        {['거래일', '전용면적', '층', '거래금액', '거래유형'].map(h => (
+                          <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600, color: '#0369a1', whiteSpace: 'nowrap' }}>{h}</th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {aptTrades.map((t, i) => (
+                        <tr key={i} style={{ borderBottom: '1px solid #e5e7eb', background: i % 2 === 0 ? '#fff' : '#f8faff' }}>
+                          <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>{t.dealDate}</td>
+                          <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>{areaLabel(t.area)}</td>
+                          <td style={{ padding: '7px 10px' }}>{t.floor}층</td>
+                          <td style={{ padding: '7px 10px', fontWeight: 700, color: '#1d4ed8', whiteSpace: 'nowrap' }}>{fmt만원(t.price)}</td>
+                          <td style={{ padding: '7px 10px', color: '#6b7280' }}>{t.dealType}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
             </div>
           )}
@@ -412,38 +439,73 @@ export default function TradeClient() {
           <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1e3a5f', marginBottom: 12 }}>
             전체 거래 목록 ({filtered.length}건)
           </h3>
-          <div style={{ overflowX: 'auto', border: '1px solid #e5e7eb', borderRadius: 12 }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-              <thead>
-                <tr style={{ background: '#f9fafb' }}>
-                  {['아파트명', '법정동', '전용면적', '층', '거래금액', '거래일'].map(h => (
-                    <th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, color: '#374151', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {(selectedApt ? filtered.filter(i => i.name === selectedApt) : filtered).slice(0, 100).map((t, i) => (
-                  <tr
-                    key={i}
-                    style={{ borderBottom: '1px solid #f3f4f6', background: i % 2 === 0 ? '#fff' : '#fafafa', cursor: 'pointer' }}
-                    onClick={() => setSelectedApt(selectedApt === t.name ? '' : t.name)}
-                  >
-                    <td style={{ padding: '8px 12px', fontWeight: 500, color: '#1e293b' }}>{t.name}</td>
-                    <td style={{ padding: '8px 12px', color: '#6b7280' }}>{t.dong}</td>
-                    <td style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>{areaLabel(t.area)}</td>
-                    <td style={{ padding: '8px 12px' }}>{t.floor}층</td>
-                    <td style={{ padding: '8px 12px', fontWeight: 700, color: '#1d4ed8', whiteSpace: 'nowrap' }}>{fmt만원(t.price)}</td>
-                    <td style={{ padding: '8px 12px', color: '#6b7280', whiteSpace: 'nowrap' }}>{t.dealDate}</td>
+          {isMobile ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {(selectedApt ? filtered.filter(i => i.name === selectedApt) : filtered).slice(0, 100).map((t, i) => (
+                <div
+                  key={i}
+                  onClick={() => setSelectedApt(selectedApt === t.name ? '' : t.name)}
+                  style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '12px 14px', borderRadius: 10, cursor: 'pointer',
+                    background: selectedApt === t.name ? '#eff6ff' : i % 2 === 0 ? '#fff' : '#fafafa',
+                    border: `1px solid ${selectedApt === t.name ? '#3b82f6' : '#e5e7eb'}`,
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0, marginRight: 12 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#1e293b', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {t.name}
+                    </div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>
+                      {t.dong} · {areaLabel(t.area)} · {t.floor}층
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: '#1d4ed8' }}>{fmt만원(t.price)}</div>
+                    <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{t.dealDate}</div>
+                  </div>
+                </div>
+              ))}
+              {filtered.length > 100 && (
+                <div style={{ textAlign: 'center', padding: 12, color: '#9ca3af', fontSize: 13 }}>
+                  상위 100건만 표시 (전체 {filtered.length}건) — 아파트명으로 검색하면 전체 확인 가능
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto', border: '1px solid #e5e7eb', borderRadius: 12 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: '#f9fafb' }}>
+                    {['아파트명', '법정동', '전용면적', '층', '거래금액', '거래일'].map(h => (
+                      <th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, color: '#374151', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' }}>{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {filtered.length > 100 && (
-              <div style={{ textAlign: 'center', padding: 12, color: '#9ca3af', fontSize: 13 }}>
-                상위 100건만 표시 (전체 {filtered.length}건) — 아파트명으로 검색하면 전체 확인 가능
-              </div>
-            )}
-          </div>
+                </thead>
+                <tbody>
+                  {(selectedApt ? filtered.filter(i => i.name === selectedApt) : filtered).slice(0, 100).map((t, i) => (
+                    <tr
+                      key={i}
+                      style={{ borderBottom: '1px solid #f3f4f6', background: i % 2 === 0 ? '#fff' : '#fafafa', cursor: 'pointer' }}
+                      onClick={() => setSelectedApt(selectedApt === t.name ? '' : t.name)}
+                    >
+                      <td style={{ padding: '8px 12px', fontWeight: 500, color: '#1e293b' }}>{t.name}</td>
+                      <td style={{ padding: '8px 12px', color: '#6b7280' }}>{t.dong}</td>
+                      <td style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>{areaLabel(t.area)}</td>
+                      <td style={{ padding: '8px 12px' }}>{t.floor}층</td>
+                      <td style={{ padding: '8px 12px', fontWeight: 700, color: '#1d4ed8', whiteSpace: 'nowrap' }}>{fmt만원(t.price)}</td>
+                      <td style={{ padding: '8px 12px', color: '#6b7280', whiteSpace: 'nowrap' }}>{t.dealDate}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {filtered.length > 100 && (
+                <div style={{ textAlign: 'center', padding: 12, color: '#9ca3af', fontSize: 13 }}>
+                  상위 100건만 표시 (전체 {filtered.length}건) — 아파트명으로 검색하면 전체 확인 가능
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ── 선택 단지 위치 지도 (테이블 클릭 후 하단 표시) ── */}
           {selectedApt && (() => {
