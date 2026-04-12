@@ -4,16 +4,22 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CATEGORIES, DEFAULT_SECTIONS } from '@/lib/supabase';
 import type { UnsoldListing } from '@/lib/supabase';
+import { LAWD_CODE_MAP } from '@/lib/tradeApi';
 import dynamic from 'next/dynamic';
+
+const LocationSelector = dynamic(() => import('./LocationSelector'), { ssr: false });
 
 const RichTextEditor = dynamic(() => import('./RichTextEditor'), { ssr: false });
 const SectionImageUploader = dynamic(() => import('./SectionImageUploader'), { ssr: false });
 
 type FormData = Omit<UnsoldListing, 'id' | 'created_at' | 'updated_at'>;
 
+const FIRST_SIDO = Object.keys(LAWD_CODE_MAP)[0] as keyof typeof LAWD_CODE_MAP;
+const FIRST_SIGUNGU = LAWD_CODE_MAP[FIRST_SIDO][0].name;
+
 const DEFAULT: FormData = {
   name: '',
-  location: '',
+  location: `${FIRST_SIDO} ${FIRST_SIGUNGU}`,
   category: '아파트',
   total_units: null,
   remaining_units: null,
@@ -119,7 +125,10 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={labelStyle}>위치 *</label>
-              <input style={inputStyle} value={form.location ?? ''} onChange={e => set('location', e.target.value)} placeholder="예: 서울 강남구 삼성동" required />
+              <LocationSelector
+                value={form.location ?? ''}
+                onChange={val => set('location', val)}
+              />
             </div>
             <div>
               <label style={labelStyle}>분양유형</label>
