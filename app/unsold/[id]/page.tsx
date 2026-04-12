@@ -18,8 +18,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   const priceText = data.min_price
     ? ` · ${data.min_price >= 10000 ? `${(data.min_price / 10000).toFixed(1)}억` : `${data.min_price.toLocaleString()}만`}~`
     : '';
-  const title = `${data.name} 미분양 특가${priceText} | mk-land.kr`;
-  const description = `${data.location} ${data.category} 미분양 특가 매물. ${data.benefit ?? '계약 혜택 확인하세요.'}`;
+  const title = `${data.name} 특별한 혜택${priceText} | mk-land.kr`;
+  const description = `${data.location} ${data.category} 미분양 특별한 혜택 매물. ${data.benefit ?? '계약 혜택 확인하세요.'}`;
 
   return {
     title,
