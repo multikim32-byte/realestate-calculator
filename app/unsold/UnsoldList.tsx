@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { CATEGORIES } from '@/lib/supabase';
 import type { UnsoldListing } from '@/lib/supabase';
@@ -10,39 +10,102 @@ function fmt만원(v: number) {
   return `${v.toLocaleString()}만`;
 }
 
+// location 문자열에서 시도·시군구 추출
+function parseSido(location: string) {
+  return location.trim().split(/\s+/)[0] ?? '';
+}
+function parseSigungu(location: string) {
+  return location.trim().split(/\s+/)[1] ?? '';
+}
+
+const selectStyle: React.CSSProperties = {
+  padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb',
+  fontSize: 14, background: '#fff', color: '#374151', cursor: 'pointer',
+  appearance: 'auto',
+};
+
 export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) {
   const [category, setCategory] = useState('전체');
+  const [sido, setSido] = useState('전체');
+  const [sigungu, setSigungu] = useState('전체');
   const [page, setPage] = useState(1);
   const PER_PAGE = 12;
 
-  const filtered = category === '전체'
-    ? listings
-    : listings.filter(l => l.category === category);
+  // 시도 목록 (location 첫 단어)
+  const sidoList = useMemo(() => {
+    const set = new Set(listings.map(l => parseSido(l.location)).filter(Boolean));
+    return ['전체', ...Array.from(set).sort()];
+  }, [listings]);
+
+  // 시군구 목록 (선택된 시도 내 두 번째 단어)
+  const sigunguList = useMemo(() => {
+    const base = sido === '전체' ? listings : listings.filter(l => parseSido(l.location) === sido);
+    const set = new Set(base.map(l => parseSigungu(l.location)).filter(Boolean));
+    return ['전체', ...Array.from(set).sort()];
+  }, [listings, sido]);
+
+  const handleSidoChange = (val: string) => {
+    setSido(val);
+    setSigungu('전체');
+    setPage(1);
+  };
+
+  const filtered = useMemo(() => {
+    return listings.filter(l => {
+      if (category !== '전체' && l.category !== category) return false;
+      if (sido !== '전체' && parseSido(l.location) !== sido) return false;
+      if (sigungu !== '전체' && parseSigungu(l.location) !== sigungu) return false;
+      return true;
+    });
+  }, [listings, category, sido, sigungu]);
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   return (
     <>
-      {/* 카테고리 필터 */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
-        {CATEGORIES.map(cat => (
-          <button
-            key={cat}
-            onClick={() => { setCategory(cat); setPage(1); }}
-            style={{
-              padding: '8px 18px', borderRadius: 24, border: 'none', fontSize: 14,
-              fontWeight: category === cat ? 700 : 400,
-              background: category === cat ? '#1d4ed8' : '#fff',
-              color: category === cat ? '#fff' : '#374151',
-              cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', transition: 'all 0.15s',
-            }}
-          >
-            {cat}
-          </button>
-        ))}
-        <span style={{ marginLeft: 'auto', fontSize: 13, color: '#6b7280', alignSelf: 'center' }}>
-          총 {filtered.length}건
+      {/* 필터 바 */}
+      <div style={{ background: '#fff', borderRadius: 12, padding: '16px 20px', marginBottom: 20, boxShadow: '0 1px 6px rgba(0,0,0,0.06)', display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+
+        {/* 지역 필터 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#374151', whiteSpace: 'nowrap' }}>지역</span>
+          <select value={sido} onChange={e => handleSidoChange(e.target.value)} style={selectStyle}>
+            {sidoList.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          {sigunguList.length > 2 && (
+            <select value={sigungu} onChange={e => { setSigungu(e.target.value); setPage(1); }} style={selectStyle}>
+              {sigunguList.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
+        </div>
+
+        <div style={{ width: 1, height: 24, background: '#e5e7eb' }} />
+
+        {/* 카테고리 필터 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#374151', whiteSpace: 'nowrap' }}>유형</span>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                onClick={() => { setCategory(cat); setPage(1); }}
+                style={{
+                  padding: '6px 14px', borderRadius: 20, border: 'none', fontSize: 13,
+                  fontWeight: category === cat ? 700 : 400,
+                  background: category === cat ? '#1d4ed8' : '#f1f5f9',
+                  color: category === cat ? '#fff' : '#374151',
+                  cursor: 'pointer', transition: 'all 0.15s',
+                }}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <span style={{ marginLeft: 'auto', fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap' }}>
+          총 <strong>{filtered.length}</strong>건
         </span>
       </div>
 
@@ -50,7 +113,7 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
       {paged.length === 0 && (
         <div style={{ textAlign: 'center', padding: 60, color: '#9ca3af' }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
-          <p>등록된 매물이 없습니다.</p>
+          <p>조건에 맞는 매물이 없습니다.</p>
         </div>
       )}
 
@@ -130,7 +193,7 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
             style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', cursor: page === 1 ? 'not-allowed' : 'pointer', color: page === 1 ? '#9ca3af' : '#374151' }}>
             이전
           </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+          {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => i + 1).map(p => (
             <button key={p} onClick={() => setPage(p)}
               style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: page === p ? '#1d4ed8' : '#fff', color: page === p ? '#fff' : '#374151', fontWeight: page === p ? 700 : 400, cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
               {p}
