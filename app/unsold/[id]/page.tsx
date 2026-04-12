@@ -1,8 +1,37 @@
 import GlobalNav from '@/app/components/GlobalNav';
 import { supabase } from '@/lib/supabase';
 import type { UnsoldListing } from '@/lib/supabase';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const { data } = await supabase
+    .from('unsold_listings')
+    .select('name, location, category, benefit, min_price, max_price, thumbnail_url')
+    .eq('id', params.id)
+    .single();
+
+  if (!data) return { title: '매물 정보 | mk-land.kr' };
+
+  const priceText = data.min_price
+    ? ` · ${data.min_price >= 10000 ? `${(data.min_price / 10000).toFixed(1)}억` : `${data.min_price.toLocaleString()}만`}~`
+    : '';
+  const title = `${data.name} 미분양 특가${priceText} | mk-land.kr`;
+  const description = `${data.location} ${data.category} 미분양 특가 매물. ${data.benefit ?? '계약 혜택 확인하세요.'}`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: `https://www.mk-land.kr/unsold/${params.id}` },
+    openGraph: {
+      title,
+      description,
+      url: `https://www.mk-land.kr/unsold/${params.id}`,
+      images: data.thumbnail_url ? [{ url: data.thumbnail_url }] : [],
+    },
+  };
+}
 
 function fmt만원(v: number) {
   if (v >= 10000) return `${(v / 10000).toFixed(1)}억`;
