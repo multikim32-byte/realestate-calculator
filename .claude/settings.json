@@ -86,11 +86,17 @@
       "Bash(node -e \"const {execSync} = require\\('child_process'\\); console.log\\(execSync\\('npm list sharp 2>/dev/null || echo not found'\\).toString\\(\\)\\)\")",
       "Bash(node scripts/generate-icons.mjs)",
       "Bash(node scripts/generate-cards.mjs)",
-      "WebFetch(domain:infuser.odcloud.kr)"
+      "WebFetch(domain:infuser.odcloud.kr)",
+      "WebFetch(domain:xn--9i1b2bt70a5on58ko0f.com)",
+      "Bash(ls c:/Users/김경래소장/realestate-calculator/.env*)"
     ],
     "additionalDirectories": [
       "c:\\Users\\김경래소장\\realestate-calculator\\app\\sale\\[id]",
-      "c:\\Users\\김경래소장\\realestate-calculator\\public"
+      "c:\\Users\\김경래소장\\realestate-calculator\\public",
+      "c:\\Users\\김경래소장\\realestate-calculator",
+      "c:\\Users\\김경래소장\\realestate-calculator\\app\\api\\admin\\unsold",
+      "c:\\Users\\김경래소장\\realestate-calculator\\app\\unsold",
+      "c:\\Users\\김경래소장\\realestate-calculator\\app\\admin\\unsold\\[id]"
     ]
   }
 }
