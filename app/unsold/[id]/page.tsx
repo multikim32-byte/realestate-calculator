@@ -123,7 +123,26 @@ export default async function UnsoldDetailPage({ params }: { params: { id: strin
             {item.description && (
               <div style={{ marginBottom: 24 }}>
                 <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 10 }}>상세 설명</h2>
-                <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.9, whiteSpace: 'pre-wrap' }}>{item.description}</div>
+                <div
+                  className="unsold-content"
+                  dangerouslySetInnerHTML={{ __html: item.description }}
+                  style={{ fontSize: 14, color: '#374151', lineHeight: 1.9 }}
+                />
+                <style>{`
+                  .unsold-content h2 { font-size: 18px; font-weight: 800; margin: 20px 0 10px; color: #1e293b; }
+                  .unsold-content h3 { font-size: 16px; font-weight: 700; margin: 16px 0 8px; color: #1e293b; }
+                  .unsold-content p { margin: 0 0 10px; }
+                  .unsold-content ul { padding-left: 20px; margin: 8px 0; }
+                  .unsold-content ol { padding-left: 20px; margin: 8px 0; }
+                  .unsold-content li { margin-bottom: 4px; }
+                  .unsold-content hr { border: none; border-top: 1px solid #e5e7eb; margin: 20px 0; }
+                  .unsold-content img { max-width: 100%; border-radius: 10px; margin: 14px 0; display: block; }
+                  .unsold-content strong { font-weight: 700; }
+                  .unsold-content em { font-style: italic; }
+                  .unsold-content u { text-decoration: underline; }
+                  .unsold-content [style*="text-align: center"] { text-align: center; }
+                  .unsold-content [style*="text-align: right"] { text-align: right; }
+                `}</style>
               </div>
             )}
 

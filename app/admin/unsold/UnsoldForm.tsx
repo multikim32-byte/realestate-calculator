@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CATEGORIES } from '@/lib/supabase';
+import dynamic from 'next/dynamic';
+
+const RichTextEditor = dynamic(() => import('./RichTextEditor'), { ssr: false });
 import type { UnsoldListing } from '@/lib/supabase';
 
 type FormData = Omit<UnsoldListing, 'id' | 'created_at' | 'updated_at'>;
@@ -172,13 +175,10 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
 
           {/* 상세 설명 */}
           <div>
-            <label style={labelStyle}>상세 설명</label>
-            <textarea
+            <label style={labelStyle}>상세 설명 (이미지·서식 지원)</label>
+            <RichTextEditor
               value={form.description ?? ''}
-              onChange={e => set('description', e.target.value)}
-              rows={6}
-              placeholder="단지 상세 설명을 입력하세요..."
-              style={{ ...inputStyle, resize: 'vertical' }}
+              onChange={val => set('description', val)}
             />
           </div>
 
