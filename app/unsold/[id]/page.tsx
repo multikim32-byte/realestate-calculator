@@ -4,6 +4,7 @@ import type { UnsoldListing } from '@/lib/supabase';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import SectionTabs from './SectionTabs';
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const { data } = await supabase
@@ -152,6 +153,11 @@ export default async function UnsoldDetailPage({ params }: { params: { id: strin
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#1d4ed8', color: '#fff', padding: '12px 24px', borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
                 🔗 공식 홈페이지 바로가기
               </a>
+            )}
+
+            {/* 섹션별 이미지 탭 */}
+            {item.sections?.length > 0 && (
+              <SectionTabs sections={item.sections} />
             )}
           </div>
         </div>

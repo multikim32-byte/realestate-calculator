@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CATEGORIES } from '@/lib/supabase';
+import { CATEGORIES, DEFAULT_SECTIONS } from '@/lib/supabase';
+import type { UnsoldListing } from '@/lib/supabase';
 import dynamic from 'next/dynamic';
 
 const RichTextEditor = dynamic(() => import('./RichTextEditor'), { ssr: false });
-import type { UnsoldListing } from '@/lib/supabase';
+const SectionImageUploader = dynamic(() => import('./SectionImageUploader'), { ssr: false });
 
 type FormData = Omit<UnsoldListing, 'id' | 'created_at' | 'updated_at'>;
 
@@ -23,12 +24,20 @@ const DEFAULT: FormData = {
   official_url: null,
   thumbnail_url: null,
   description: null,
+  sections: DEFAULT_SECTIONS,
   highlight: false,
   is_active: true,
 };
 
 export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData>; id?: string }) {
-  const [form, setForm] = useState<FormData>({ ...DEFAULT, ...initial });
+  const [form, setForm] = useState<FormData>({
+    ...DEFAULT,
+    ...initial,
+    // 기존 섹션이 없거나 빈 배열이면 기본 섹션으로
+    sections: (initial?.sections && initial.sections.length > 0)
+      ? initial.sections
+      : DEFAULT_SECTIONS,
+  });
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -175,10 +184,24 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
 
           {/* 상세 설명 */}
           <div>
-            <label style={labelStyle}>상세 설명 (이미지·서식 지원)</label>
+            <label style={labelStyle}>상세 설명 (선택 · 이미지·서식 지원)</label>
             <RichTextEditor
               value={form.description ?? ''}
               onChange={val => set('description', val)}
+            />
+          </div>
+
+          {/* 섹션별 이미지 */}
+          <div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ ...labelStyle, fontSize: 15 }}>섹션별 이미지</label>
+              <p style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
+                분양일정·공급안내·사업개요·입지환경·프리미엄·평면도 순서로 이미지를 올려주세요. 여러 장 한 번에 선택 가능합니다.
+              </p>
+            </div>
+            <SectionImageUploader
+              sections={form.sections}
+              onChange={sections => set('sections', sections)}
             />
           </div>
 
