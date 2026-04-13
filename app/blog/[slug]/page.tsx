@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: post.title,
       description: post.description,
       publishedTime: post.date,
-      siteName: '부동산 계산기',
+      siteName: 'mk-land.kr',
       images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
     },
     twitter: {

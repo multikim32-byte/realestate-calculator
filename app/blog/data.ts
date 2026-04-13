@@ -1061,7 +1061,7 @@ A. 아닙니다. 하나의 주택에 하나의 정책 주담대만 선택할 수
     `,
   },
   {
-    slug: "dsr-calculation-guide",
+    slug: "dsr-ratio-loan-limit-strategy",
     title: "DSR 계산 방법과 대출 한도 늘리는 실전 전략",
     description: "DSR(총부채원리금상환비율)이 무엇인지, 어떻게 계산하는지, 그리고 합법적으로 한도를 늘리는 방법까지 구체적인 사례와 함께 설명합니다.",
     date: "2026-03-19",
@@ -1676,7 +1676,7 @@ A. 전세가율은 하나의 기준일 뿐입니다. 해당 지역의 전세 수
     `,
   },
   {
-    slug: "apartment-management-fee-guide",
+    slug: "apartment-management-fee-saving-tips",
     title: "아파트 관리비 절약 완전 가이드 — 항목별 분석",
     description: "아파트 관리비 구성 항목을 낱낱이 분석하고 합리적으로 절약하는 방법을 알아봅니다. 관리비 과다 청구 대처법도 포함.",
     date: "2026-03-22",

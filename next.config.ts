@@ -15,6 +15,16 @@ const nextConfig: NextConfig = {
         destination: '/apt/mortgage-loan-complete-guide',
         permanent: true,
       },
+      {
+        source: '/blog/dsr-calculation-guide',
+        destination: '/blog/dsr-ratio-loan-limit-strategy',
+        permanent: true,
+      },
+      {
+        source: '/blog/apartment-management-fee-guide',
+        destination: '/blog/apartment-management-fee-saving-tips',
+        permanent: true,
+      },
     ];
   },
 };
