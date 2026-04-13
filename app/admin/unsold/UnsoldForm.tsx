@@ -48,6 +48,8 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
 
   // URL 불러오기 상태
   const [scrapeUrl, setScrapeUrl] = useState('');
+  const [scrapeHtml, setScrapeHtml] = useState('');
+  const [scrapeTab, setScrapeTab] = useState<'paste' | 'url'>('paste');
   const [scraping, setScraping] = useState(false);
   const [scrapeError, setScrapeError] = useState('');
   const [extractedImages, setExtractedImages] = useState<string[]>([]);
@@ -55,64 +57,72 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
   const set = (key: keyof FormData, value: unknown) =>
     setForm(prev => ({ ...prev, [key]: value === '' ? null : value }));
 
-  // URL에서 자동 불러오기
-  const handleScrape = async () => {
-    if (!scrapeUrl) return;
+  // 공통: HTML + URL 받아서 서버 API 호출
+  const runScrape = async (html: string, targetUrl: string) => {
     setScraping(true);
     setScrapeError('');
     setExtractedImages([]);
     try {
-      // 1단계: 브라우저에서 CORS 프록시로 HTML 가져오기 (서버 IP 차단 우회)
-      let html = '';
-      const proxies = [
-        `https://api.allorigins.win/get?url=${encodeURIComponent(scrapeUrl)}`,
-        `https://corsproxy.io/?${encodeURIComponent(scrapeUrl)}`,
-      ];
-
-      for (const proxyUrl of proxies) {
-        try {
-          const proxyRes = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) });
-          if (!proxyRes.ok) continue;
-          const proxyData = await proxyRes.json();
-          // allorigins: { contents: "..." }, corsproxy: text
-          html = proxyData.contents ?? proxyData ?? '';
-          if (typeof html !== 'string') html = '';
-          if (html.length > 100) break;
-        } catch {}
-      }
-
-      if (!html || html.length < 100) {
-        setScrapeError('페이지를 가져올 수 없습니다. 사이트가 접근을 차단하고 있을 수 있습니다.');
-        return;
-      }
-
-      // 2단계: HTML을 서버로 전달해 AI 추출 + 이미지 업로드
       const res = await fetch('/api/admin/unsold/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: scrapeUrl, html }),
+        body: JSON.stringify({ url: targetUrl, html }),
       });
       const data = await res.json();
-      if (!res.ok) { setScrapeError(data.error || '불러오기 실패'); return; }
+      if (!res.ok) { setScrapeError(data.error || '분석 실패'); return; }
 
-      // 폼 자동 채우기
-      if (data.name)        set('name', data.name);
-      if (data.category)    set('category', data.category);
-      if (data.min_price)   set('min_price', data.min_price);
-      if (data.benefit)     set('benefit', data.benefit);
-      if (data.description) set('description', data.description);
+      if (data.name)          set('name', data.name);
+      if (data.category)      set('category', data.category);
+      if (data.min_price)     set('min_price', data.min_price);
+      if (data.benefit)       set('benefit', data.benefit);
+      if (data.description)   set('description', data.description);
       if (data.thumbnail_url) set('thumbnail_url', data.thumbnail_url);
-      if (!form.official_url) set('official_url', scrapeUrl);
-
-      // location 파싱 시도 (LocationSelector는 "시도 시군구" 형식 필요)
-      if (data.location) set('location', data.location);
-
+      if (data.location)      set('location', data.location);
+      if (!form.official_url) set('official_url', targetUrl);
       setExtractedImages(data.extracted_images ?? []);
     } catch (e) {
       setScrapeError(String(e));
     } finally {
       setScraping(false);
     }
+  };
+
+  // 탭 1: HTML 직접 붙여넣기
+  const handlePasteScrape = () => {
+    if (!scrapeHtml.trim() || !scrapeUrl.trim()) {
+      setScrapeError('URL과 HTML 소스 모두 입력해 주세요.');
+      return;
+    }
+    runScrape(scrapeHtml, scrapeUrl);
+  };
+
+  // 탭 2: URL 자동 (CORS 프록시 시도)
+  const handleUrlScrape = async () => {
+    if (!scrapeUrl.trim()) return;
+    setScraping(true);
+    setScrapeError('');
+    let html = '';
+    const proxies = [
+      `https://api.allorigins.win/get?url=${encodeURIComponent(scrapeUrl)}`,
+      `https://corsproxy.io/?${encodeURIComponent(scrapeUrl)}`,
+    ];
+    for (const p of proxies) {
+      try {
+        const r = await fetch(p, { signal: AbortSignal.timeout(15000) });
+        if (!r.ok) continue;
+        const d = await r.json();
+        html = typeof d.contents === 'string' ? d.contents : '';
+        if (html.length > 500) break;
+      } catch {}
+    }
+    setScraping(false);
+    if (html.length < 500) {
+      // 프록시 실패 → 붙여넣기 탭으로 안내
+      setScrapeTab('paste');
+      setScrapeError('자동 가져오기가 차단되었습니다. 아래 방법으로 HTML 소스를 직접 붙여넣어 주세요.');
+      return;
+    }
+    runScrape(html, scrapeUrl);
   };
 
   // 추출된 이미지를 특정 섹션에 추가
@@ -194,41 +204,94 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
 
         <form onSubmit={handleSubmit} style={{ background: '#fff', borderRadius: 16, padding: '28px 28px', boxShadow: '0 2px 12px rgba(0,0,0,0.07)', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-          {/* ── URL 자동 불러오기 ── */}
-          <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 12, padding: '16px 20px' }}>
-            <label style={{ ...labelStyle, fontSize: 14, color: '#0369a1', marginBottom: 10 }}>
-              🔗 분양 사이트 URL에서 자동 입력
-            </label>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input
-                style={{ ...inputStyle, flex: 1, background: '#fff' }}
-                value={scrapeUrl}
-                onChange={e => setScrapeUrl(e.target.value)}
-                placeholder="https://분양사이트.com/"
-                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleScrape())}
-              />
-              <button
-                type="button"
-                onClick={handleScrape}
-                disabled={scraping || !scrapeUrl.trim()}
-                style={{
-                  padding: '9px 20px', background: scraping ? '#7dd3fc' : '#0284c7',
-                  color: '#fff', border: 'none', borderRadius: 8, fontSize: 14,
-                  fontWeight: 700, cursor: (scraping || !scrapeUrl.trim()) ? 'not-allowed' : 'pointer',
-                  whiteSpace: 'nowrap', minWidth: 100,
-                }}
-              >
-                {scraping ? '분석 중…' : '불러오기'}
-              </button>
+          {/* ── 사이트 자동 입력 ── */}
+          <div style={{ border: '1px solid #bae6fd', borderRadius: 12, overflow: 'hidden' }}>
+            {/* 탭 헤더 */}
+            <div style={{ display: 'flex', background: '#f0f9ff' }}>
+              {(['paste', 'url'] as const).map(tab => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => { setScrapeTab(tab); setScrapeError(''); }}
+                  style={{
+                    flex: 1, padding: '10px 0', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                    background: scrapeTab === tab ? '#0284c7' : 'transparent',
+                    color: scrapeTab === tab ? '#fff' : '#0369a1',
+                  }}
+                >
+                  {tab === 'paste' ? '📋 HTML 소스 붙여넣기 (권장)' : '🔗 URL 자동 (시도)'}
+                </button>
+              ))}
             </div>
-            {scrapeError && (
-              <p style={{ fontSize: 12, color: '#dc2626', marginTop: 8, margin: '8px 0 0' }}>{scrapeError}</p>
-            )}
-            {scraping && (
-              <p style={{ fontSize: 12, color: '#0369a1', marginTop: 8 }}>
-                사이트를 분석하고 이미지를 다운로드 중입니다. 잠시만 기다려 주세요…
-              </p>
-            )}
+
+            <div style={{ padding: '16px 20px', background: '#fff' }}>
+              {/* 공통: URL 입력 */}
+              <div style={{ marginBottom: 10 }}>
+                <label style={{ ...labelStyle, marginBottom: 4 }}>분양 사이트 URL</label>
+                <input
+                  style={{ ...inputStyle }}
+                  value={scrapeUrl}
+                  onChange={e => setScrapeUrl(e.target.value)}
+                  placeholder="https://분양사이트.com/"
+                />
+              </div>
+
+              {/* 탭 1: HTML 붙여넣기 */}
+              {scrapeTab === 'paste' && (
+                <>
+                  <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: '10px 14px', marginBottom: 10, fontSize: 12, color: '#92400e', lineHeight: 1.8 }}>
+                    <strong>사용 방법:</strong><br />
+                    1. 위 URL을 새 탭에서 열기<br />
+                    2. 키보드 <strong>Ctrl+U</strong> (맥: Cmd+U) → 페이지 소스 창 열림<br />
+                    3. <strong>Ctrl+A</strong> 전체 선택 → <strong>Ctrl+C</strong> 복사<br />
+                    4. 아래 입력란에 <strong>Ctrl+V</strong> 붙여넣기
+                  </div>
+                  <textarea
+                    style={{ ...inputStyle, height: 120, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 }}
+                    value={scrapeHtml}
+                    onChange={e => setScrapeHtml(e.target.value)}
+                    placeholder="여기에 Ctrl+V로 HTML 소스를 붙여넣으세요..."
+                  />
+                  <button
+                    type="button"
+                    onClick={handlePasteScrape}
+                    disabled={scraping || !scrapeHtml.trim() || !scrapeUrl.trim()}
+                    style={{
+                      marginTop: 10, width: '100%', padding: '10px 0', background: scraping ? '#9ca3af' : '#0284c7',
+                      color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700,
+                      cursor: scraping ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {scraping ? '분석 중… (이미지 업로드 포함, 30초 소요)' : 'AI 분석 시작'}
+                  </button>
+                </>
+              )}
+
+              {/* 탭 2: URL 자동 */}
+              {scrapeTab === 'url' && (
+                <>
+                  <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 10 }}>
+                    CORS 프록시로 자동 시도합니다. 차단된 사이트는 HTML 소스 붙여넣기 탭을 이용하세요.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleUrlScrape}
+                    disabled={scraping || !scrapeUrl.trim()}
+                    style={{
+                      width: '100%', padding: '10px 0', background: scraping ? '#9ca3af' : '#0284c7',
+                      color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700,
+                      cursor: scraping ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {scraping ? '가져오는 중…' : '자동 불러오기'}
+                  </button>
+                </>
+              )}
+
+              {scrapeError && (
+                <p style={{ fontSize: 12, color: '#dc2626', marginTop: 8 }}>{scrapeError}</p>
+              )}
+            </div>
           </div>
 
           {/* ── 추출된 이미지 갤러리 ── */}
