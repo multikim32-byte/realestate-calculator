@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   if (!data) return { title: '매물 정보 | mk-land.kr' };
 
   const priceText = data.min_price
-    ? ` · ${data.min_price >= 10000 ? `${(data.min_price / 10000).toFixed(1)}억` : `${data.min_price.toLocaleString()}만`}~`
+    ? ` · ${data.min_price >= 100000000 ? `${(data.min_price / 100000000).toFixed(1)}억` : `${Math.floor(data.min_price / 10000).toLocaleString()}만`}~`
     : '';
   const title = `${data.name} 특별한 혜택${priceText} | mk-land.kr`;
   const description = `${data.location} ${data.category} 미분양 특별한 혜택 매물. ${data.benefit ?? '계약 혜택 확인하세요.'}`;
@@ -35,8 +35,9 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 function fmt만원(v: number) {
-  if (v >= 10000) return `${(v / 10000).toFixed(1)}억`;
-  return `${v.toLocaleString()}만`;
+  if (v >= 100000000) return `${(v / 100000000).toFixed(1)}억`;
+  if (v >= 10000) return `${Math.floor(v / 10000).toLocaleString()}만`;
+  return `${v.toLocaleString()}원`;
 }
 
 export default async function UnsoldDetailPage({ params }: { params: { id: string } }) {

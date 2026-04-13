@@ -6,8 +6,9 @@ import { CATEGORIES } from '@/lib/supabase';
 import type { UnsoldListing } from '@/lib/supabase';
 
 function fmt만원(v: number) {
-  if (v >= 10000) return `${(v / 10000).toFixed(1)}억`;
-  return `${v.toLocaleString()}만`;
+  if (v >= 100000000) return `${(v / 100000000).toFixed(1)}억`;
+  if (v >= 10000) return `${Math.floor(v / 10000).toLocaleString()}만`;
+  return `${v.toLocaleString()}원`;
 }
 
 // location 문자열에서 시도·시군구 추출
