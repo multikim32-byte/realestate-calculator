@@ -31,7 +31,7 @@ export type UnsoldListing = {
   updated_at: string;
 };
 
-export const CATEGORIES = ['전체', '아파트', '오피스텔', '도시형생활주택', '상가', '지식산업센터'];
+export const CATEGORIES = ['전체', '아파트', '오피스텔', '상가'];
 
 export const DEFAULT_SECTIONS: UnsoldSection[] = [
   { name: '분양일정', images: [] },
