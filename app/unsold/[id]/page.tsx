@@ -6,11 +6,12 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import SectionTabs from './SectionTabs';
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
   const { data } = await supabase
     .from('unsold_listings')
     .select('name, location, category, benefit, min_price, max_price, thumbnail_url')
-    .eq('id', params.id)
+    .eq('id', id)
     .single();
 
   if (!data) return { title: '매물 정보 | mk-land.kr' };
@@ -24,11 +25,11 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   return {
     title,
     description,
-    alternates: { canonical: `https://www.mk-land.kr/unsold/${params.id}` },
+    alternates: { canonical: `https://www.mk-land.kr/unsold/${id}` },
     openGraph: {
       title,
       description,
-      url: `https://www.mk-land.kr/unsold/${params.id}`,
+      url: `https://www.mk-land.kr/unsold/${id}`,
       images: data.thumbnail_url ? [{ url: data.thumbnail_url }] : [],
     },
   };
@@ -40,11 +41,12 @@ function fmt만원(v: number) {
   return `${v.toLocaleString()}원`;
 }
 
-export default async function UnsoldDetailPage({ params }: { params: { id: string } }) {
+export default async function UnsoldDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const { data: item } = await supabase
     .from('unsold_listings')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('is_active', true)
     .single() as { data: UnsoldListing | null };
 
