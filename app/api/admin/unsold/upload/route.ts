@@ -2,13 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabaseAdmin';
 import { cookies } from 'next/headers';
 
-function isAdmin() {
-  const token = cookies().get('admin_token')?.value;
-  return token === process.env.ADMIN_SECRET;
-}
-
 export async function POST(req: NextRequest) {
-  if (!isAdmin()) return NextResponse.json({ error: '권한 없음' }, { status: 401 });
+  const cookieStore = await cookies();
+  const token = cookieStore.get('admin_token')?.value;
+  if (token !== process.env.ADMIN_SECRET) return NextResponse.json({ error: '권한 없음' }, { status: 401 });
 
   const formData = await req.formData();
   const file = formData.get('file') as File;
