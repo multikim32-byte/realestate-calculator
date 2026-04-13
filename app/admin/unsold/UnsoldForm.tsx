@@ -49,32 +49,12 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
   const set = (key: keyof FormData, value: unknown) =>
     setForm(prev => ({ ...prev, [key]: value === '' ? null : value }));
 
-  // 이미지를 최대 1200px로 리사이즈 후 JPEG 압축
-  const compressImage = (file: File, maxWidth = 1200): Promise<Blob> =>
-    new Promise((resolve) => {
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.onload = () => {
-        const scale = Math.min(1, maxWidth / img.width);
-        const w = Math.round(img.width * scale);
-        const h = Math.round(img.height * scale);
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
-        URL.revokeObjectURL(url);
-        canvas.toBlob(b => resolve(b!), 'image/jpeg', 0.82);
-      };
-      img.src = url;
-    });
-
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const compressed = await compressImage(file);
     const fd = new FormData();
-    fd.append('file', new File([compressed], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
+    fd.append('file', file);
     const res = await fetch('/api/admin/unsold/upload', { method: 'POST', body: fd });
     const data = await res.json();
     if (data.url) set('thumbnail_url', data.url);

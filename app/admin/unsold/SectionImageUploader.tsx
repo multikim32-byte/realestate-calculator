@@ -12,29 +12,10 @@ export default function SectionImageUploader({ sections, onChange }: Props) {
   const [uploadingSection, setUploadingSection] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const compressImage = (file: File, maxWidth = 1400): Promise<Blob> =>
-    new Promise((resolve) => {
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.onload = () => {
-        const scale = Math.min(1, maxWidth / img.width);
-        const w = Math.round(img.width * scale);
-        const h = Math.round(img.height * scale);
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
-        URL.revokeObjectURL(url);
-        canvas.toBlob(b => resolve(b!), 'image/jpeg', 0.82);
-      };
-      img.src = url;
-    });
-
   const uploadImage = async (file: File, sectionName: string) => {
     setUploadingSection(sectionName);
-    const compressed = await compressImage(file);
     const fd = new FormData();
-    fd.append('file', new File([compressed], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
+    fd.append('file', file);
     const res = await fetch('/api/admin/unsold/upload', { method: 'POST', body: fd });
     const data = await res.json();
     setUploadingSection(null);
