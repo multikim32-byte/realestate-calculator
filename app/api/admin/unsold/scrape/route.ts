@@ -1,6 +1,92 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabaseAdmin';
 import Anthropic from '@anthropic-ai/sdk';
+import https from 'node:https';
+import http from 'node:http';
+
+// SSL 검증 무시 + 리다이렉트 최대 5회 따라가는 HTML fetcher
+function fetchHtml(targetUrl: string, maxRedirects = 5): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(targetUrl);
+    const client = parsed.protocol === 'https:' ? https : http;
+    const options = {
+      hostname: parsed.hostname,
+      port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
+      path: parsed.pathname + parsed.search,
+      method: 'GET',
+      rejectUnauthorized: false, // 자체 서명 인증서 허용
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
+        'Accept-Encoding': 'identity',
+        'Connection': 'close',
+      },
+      timeout: 15000,
+    };
+
+    const req = client.request(options, (res) => {
+      // 리다이렉트 처리
+      if ((res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 307 || res.statusCode === 308)
+          && res.headers.location && maxRedirects > 0) {
+        const redirectUrl = new URL(res.headers.location, targetUrl).href;
+        res.resume();
+        fetchHtml(redirectUrl, maxRedirects - 1).then(resolve).catch(reject);
+        return;
+      }
+      if (res.statusCode && res.statusCode >= 400) {
+        reject(new Error(`HTTP ${res.statusCode}`));
+        return;
+      }
+      const chunks: Buffer[] = [];
+      res.on('data', (chunk: Buffer) => chunks.push(chunk));
+      res.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
+      res.on('error', reject);
+    });
+
+    req.on('timeout', () => { req.destroy(); reject(new Error('요청 시간 초과')); });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+// 이미지 buffer 다운로드 (SSL 무시)
+function fetchImageBuffer(imgUrl: string): Promise<{ buf: Buffer; ct: string }> {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(imgUrl);
+    const client = parsed.protocol === 'https:' ? https : http;
+    const options = {
+      hostname: parsed.hostname,
+      port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
+      path: parsed.pathname + parsed.search,
+      method: 'GET',
+      rejectUnauthorized: false,
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': 'image/*',
+      },
+      timeout: 10000,
+    };
+
+    const req = client.request(options, (res) => {
+      if (res.statusCode && res.statusCode >= 400) { reject(new Error(`HTTP ${res.statusCode}`)); return; }
+      // 리다이렉트
+      if ((res.statusCode === 301 || res.statusCode === 302) && res.headers.location) {
+        res.resume();
+        fetchImageBuffer(new URL(res.headers.location, imgUrl).href).then(resolve).catch(reject);
+        return;
+      }
+      const ct = res.headers['content-type'] ?? '';
+      const chunks: Buffer[] = [];
+      res.on('data', (c: Buffer) => chunks.push(c));
+      res.on('end', () => resolve({ buf: Buffer.concat(chunks), ct }));
+      res.on('error', reject);
+    });
+    req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+    req.on('error', reject);
+    req.end();
+  });
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,16 +96,7 @@ export async function POST(req: NextRequest) {
     // 1. HTML 가져오기
     let html = '';
     try {
-      const res = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
-        },
-        signal: AbortSignal.timeout(15000),
-      });
-      if (!res.ok) return NextResponse.json({ error: `페이지를 가져올 수 없습니다. (${res.status})` }, { status: 400 });
-      html = await res.text();
+      html = await fetchHtml(url);
     } catch (e) {
       return NextResponse.json({ error: `사이트 접속 실패: ${String(e)}` }, { status: 400 });
     }
@@ -44,11 +121,11 @@ export async function POST(req: NextRequest) {
     }).filter(Boolean) as string[];
 
     const imageUrls = [...new Set([
-      ...(ogImage ? [new URL(ogImage, url).href] : []),
+      ...(ogImage ? [(() => { try { return new URL(ogImage, url).href; } catch { return null; } })()] : []),
       ...rawImgUrls.filter(u =>
-        !u.match(/icon|logo|btn|button|arrow|close|kakao|naver|facebook|sns|share|blank|1x1|pixel/i)
+        !u.match(/icon|logo|btn|button|arrow|close|kakao|naver|facebook|sns|share|blank|1x1|pixel|spinner|loading/i)
       ),
-    ])].slice(0, 40);
+    ])].filter(Boolean).slice(0, 40) as string[];
 
     // 4. 본문 텍스트 추출
     const bodyText = html
@@ -101,16 +178,9 @@ URL: ${url}
     await Promise.allSettled(
       imageUrls.map(async (imgUrl) => {
         try {
-          const imgRes = await fetch(imgUrl, {
-            headers: { Referer: url, 'User-Agent': 'Mozilla/5.0' },
-            signal: AbortSignal.timeout(10000),
-          });
-          if (!imgRes.ok) return;
-          const ct = imgRes.headers.get('content-type') ?? '';
+          const { buf, ct } = await fetchImageBuffer(imgUrl);
           if (!ct.startsWith('image/')) return;
-
-          const buf = Buffer.from(await imgRes.arrayBuffer());
-          if (buf.length < 8000) return; // 8KB 미만 스킵 (아이콘·픽셀 제외)
+          if (buf.length < 5000) return; // 5KB 미만 스킵
 
           const ext = ct.includes('png') ? 'png' : ct.includes('webp') ? 'webp' : 'jpg';
           const path = `scraped/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
