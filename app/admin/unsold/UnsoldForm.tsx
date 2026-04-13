@@ -62,10 +62,35 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
     setScrapeError('');
     setExtractedImages([]);
     try {
+      // 1단계: 브라우저에서 CORS 프록시로 HTML 가져오기 (서버 IP 차단 우회)
+      let html = '';
+      const proxies = [
+        `https://api.allorigins.win/get?url=${encodeURIComponent(scrapeUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(scrapeUrl)}`,
+      ];
+
+      for (const proxyUrl of proxies) {
+        try {
+          const proxyRes = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) });
+          if (!proxyRes.ok) continue;
+          const proxyData = await proxyRes.json();
+          // allorigins: { contents: "..." }, corsproxy: text
+          html = proxyData.contents ?? proxyData ?? '';
+          if (typeof html !== 'string') html = '';
+          if (html.length > 100) break;
+        } catch {}
+      }
+
+      if (!html || html.length < 100) {
+        setScrapeError('페이지를 가져올 수 없습니다. 사이트가 접근을 차단하고 있을 수 있습니다.');
+        return;
+      }
+
+      // 2단계: HTML을 서버로 전달해 AI 추출 + 이미지 업로드
       const res = await fetch('/api/admin/unsold/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: scrapeUrl }),
+        body: JSON.stringify({ url: scrapeUrl, html }),
       });
       const data = await res.json();
       if (!res.ok) { setScrapeError(data.error || '불러오기 실패'); return; }

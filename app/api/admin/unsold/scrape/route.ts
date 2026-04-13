@@ -4,76 +4,25 @@ import Anthropic from '@anthropic-ai/sdk';
 import https from 'node:https';
 import http from 'node:http';
 
-// SSL 검증 무시 + 리다이렉트 최대 5회 따라가는 HTML fetcher
-function fetchHtml(targetUrl: string, maxRedirects = 5): Promise<string> {
+// 이미지 buffer 다운로드 (SSL 무시 + 리다이렉트)
+function fetchImageBuffer(imgUrl: string, redirects = 4): Promise<{ buf: Buffer; ct: string }> {
   return new Promise((resolve, reject) => {
-    const parsed = new URL(targetUrl);
+    let parsed: URL;
+    try { parsed = new URL(imgUrl); } catch { reject(new Error('invalid url')); return; }
+
     const client = parsed.protocol === 'https:' ? https : http;
-    const options = {
-      hostname: parsed.hostname,
-      port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
-      path: parsed.pathname + parsed.search,
-      method: 'GET',
-      rejectUnauthorized: false, // 자체 서명 인증서 허용
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
-        'Accept-Encoding': 'identity',
-        'Connection': 'close',
-      },
-      timeout: 15000,
-    };
-
-    const req = client.request(options, (res) => {
-      // 리다이렉트 처리
-      if ((res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 307 || res.statusCode === 308)
-          && res.headers.location && maxRedirects > 0) {
-        const redirectUrl = new URL(res.headers.location, targetUrl).href;
-        res.resume();
-        fetchHtml(redirectUrl, maxRedirects - 1).then(resolve).catch(reject);
-        return;
-      }
-      if (res.statusCode && res.statusCode >= 400) {
-        reject(new Error(`HTTP ${res.statusCode}`));
-        return;
-      }
-      const chunks: Buffer[] = [];
-      res.on('data', (chunk: Buffer) => chunks.push(chunk));
-      res.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
-      res.on('error', reject);
-    });
-
-    req.on('timeout', () => { req.destroy(); reject(new Error('요청 시간 초과')); });
-    req.on('error', reject);
-    req.end();
-  });
-}
-
-// 이미지 buffer 다운로드 (SSL 무시)
-function fetchImageBuffer(imgUrl: string): Promise<{ buf: Buffer; ct: string }> {
-  return new Promise((resolve, reject) => {
-    const parsed = new URL(imgUrl);
-    const client = parsed.protocol === 'https:' ? https : http;
-    const options = {
+    const req = client.request({
       hostname: parsed.hostname,
       port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
       path: parsed.pathname + parsed.search,
       method: 'GET',
       rejectUnauthorized: false,
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Accept': 'image/*',
-      },
       timeout: 10000,
-    };
-
-    const req = client.request(options, (res) => {
-      if (res.statusCode && res.statusCode >= 400) { reject(new Error(`HTTP ${res.statusCode}`)); return; }
-      // 리다이렉트
-      if ((res.statusCode === 301 || res.statusCode === 302) && res.headers.location) {
+      headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'image/*' },
+    }, (res) => {
+      if ((res.statusCode === 301 || res.statusCode === 302) && res.headers.location && redirects > 0) {
         res.resume();
-        fetchImageBuffer(new URL(res.headers.location, imgUrl).href).then(resolve).catch(reject);
+        fetchImageBuffer(new URL(res.headers.location, imgUrl).href, redirects - 1).then(resolve).catch(reject);
         return;
       }
       const ct = res.headers['content-type'] ?? '';
@@ -90,18 +39,16 @@ function fetchImageBuffer(imgUrl: string): Promise<{ buf: Buffer; ct: string }> 
 
 export async function POST(req: NextRequest) {
   try {
-    const { url } = await req.json();
+    // html 은 클라이언트가 CORS 프록시로 미리 가져온 내용 (없으면 서버에서 시도)
+    const { url, html: clientHtml } = await req.json();
     if (!url) return NextResponse.json({ error: 'URL이 필요합니다.' }, { status: 400 });
 
-    // 1. HTML 가져오기
-    let html = '';
-    try {
-      html = await fetchHtml(url);
-    } catch (e) {
-      return NextResponse.json({ error: `사이트 접속 실패: ${String(e)}` }, { status: 400 });
+    const html = clientHtml as string;
+    if (!html || html.length < 100) {
+      return NextResponse.json({ error: '페이지 내용을 가져오지 못했습니다.' }, { status: 400 });
     }
 
-    // 2. 메타 태그 추출
+    // 1. 메타 태그 추출
     const getMeta = (prop: string) => {
       const r1 = html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${prop}["'][^>]+content=["']([^"']{1,500})["']`, 'i'));
       const r2 = html.match(new RegExp(`<meta[^>]+content=["']([^"']{1,500})["'][^>]+(?:property|name)=["']${prop}["']`, 'i'));
@@ -112,10 +59,8 @@ export async function POST(req: NextRequest) {
     const ogDesc  = getMeta('og:description') || getMeta('description');
     const ogImage = getMeta('og:image');
 
-    // 3. 이미지 URL 수집
-    const imgMatches = [
-      ...html.matchAll(/(?:src|data-src|data-original|data-lazy-src)=["']([^"']+\.(?:jpe?g|png|webp|gif)(?:\?[^"']*)?)["']/gi),
-    ];
+    // 2. 이미지 URL 수집
+    const imgMatches = [...html.matchAll(/(?:src|data-src|data-original|data-lazy-src)=["']([^"']+\.(?:jpe?g|png|webp|gif)(?:\?[^"']*)?)["']/gi)];
     const rawImgUrls = imgMatches.map(m => {
       try { return new URL(m[1], url).href; } catch { return null; }
     }).filter(Boolean) as string[];
@@ -127,7 +72,7 @@ export async function POST(req: NextRequest) {
       ),
     ])].filter(Boolean).slice(0, 40) as string[];
 
-    // 4. 본문 텍스트 추출
+    // 3. 본문 텍스트 추출
     const bodyText = html
       .replace(/<script[\s\S]*?<\/script>/gi, '')
       .replace(/<style[\s\S]*?<\/style>/gi, '')
@@ -137,7 +82,7 @@ export async function POST(req: NextRequest) {
       .trim()
       .slice(0, 5000);
 
-    // 5. Claude AI 로 정보 추출
+    // 4. Claude AI 로 정보 추출
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     let extracted: Record<string, unknown> = {};
     try {
@@ -171,7 +116,7 @@ URL: ${url}
       console.error('Claude 추출 실패:', e);
     }
 
-    // 6. 이미지 Supabase Storage 업로드
+    // 5. 이미지 Supabase Storage 업로드
     const supabase = createAdminClient();
     const uploadedImages: string[] = [];
 
@@ -180,7 +125,7 @@ URL: ${url}
         try {
           const { buf, ct } = await fetchImageBuffer(imgUrl);
           if (!ct.startsWith('image/')) return;
-          if (buf.length < 5000) return; // 5KB 미만 스킵
+          if (buf.length < 5000) return;
 
           const ext = ct.includes('png') ? 'png' : ct.includes('webp') ? 'webp' : 'jpg';
           const path = `scraped/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
@@ -198,11 +143,11 @@ URL: ${url}
     );
 
     return NextResponse.json({
-      name:        (extracted.name       as string)  || ogTitle || '',
-      location:    (extracted.location   as string)  || '',
-      category:    (extracted.category   as string)  || '아파트',
-      min_price:   (extracted.min_price  as number)  || null,
-      benefit:     (extracted.benefit    as string)  || null,
+      name:        (extracted.name       as string) || ogTitle || '',
+      location:    (extracted.location   as string) || '',
+      category:    (extracted.category   as string) || '아파트',
+      min_price:   (extracted.min_price  as number) || null,
+      benefit:     (extracted.benefit    as string) || null,
       description: extracted.description
         ? `<p>${(extracted.description as string).replace(/\n/g, '</p><p>')}</p>`
         : null,
