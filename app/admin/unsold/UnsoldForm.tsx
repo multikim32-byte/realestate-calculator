@@ -239,12 +239,15 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
               {/* 탭 1: HTML 붙여넣기 */}
               {scrapeTab === 'paste' && (
                 <>
-                  <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: '10px 14px', marginBottom: 10, fontSize: 12, color: '#92400e', lineHeight: 1.8 }}>
-                    <strong>사용 방법:</strong><br />
-                    1. 위 URL을 새 탭에서 열기<br />
-                    2. 키보드 <strong>Ctrl+U</strong> (맥: Cmd+U) → 페이지 소스 창 열림<br />
-                    3. <strong>Ctrl+A</strong> 전체 선택 → <strong>Ctrl+C</strong> 복사<br />
-                    4. 아래 입력란에 <strong>Ctrl+V</strong> 붙여넣기
+                  <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: '10px 14px', marginBottom: 10, fontSize: 12, color: '#92400e', lineHeight: 1.9 }}>
+                    <strong>사용 방법 (모든 사이트 작동):</strong><br />
+                    1. URL을 새 탭에서 열고 페이지가 완전히 로딩될 때까지 기다리기<br />
+                    2. 키보드 <strong>F12</strong> → 상단 <strong>Console</strong> 탭 클릭<br />
+                    3. 아래 명령어를 콘솔에 입력 후 <strong>Enter</strong><br />
+                    <code style={{ display: 'block', background: '#1e293b', color: '#86efac', padding: '6px 10px', borderRadius: 6, margin: '6px 0', fontFamily: 'monospace', fontSize: 12, userSelect: 'all' }}>
+                      copy(document.documentElement.outerHTML)
+                    </code>
+                    4. 클립보드에 자동 복사됨 → 아래 입력란에 <strong>Ctrl+V</strong>
                   </div>
                   <textarea
                     style={{ ...inputStyle, height: 120, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 }}
