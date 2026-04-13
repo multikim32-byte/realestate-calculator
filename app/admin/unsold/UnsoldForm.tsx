@@ -136,34 +136,18 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
                 {CATEGORIES.filter(c => c !== '전체').map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-            <div>
-              <label style={labelStyle}>전용면적</label>
-              <input style={inputStyle} value={form.area ?? ''} onChange={e => set('area', e.target.value)} placeholder="예: 59㎡ ~ 84㎡" />
-            </div>
           </div>
 
           {/* 세대 정보 */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div>
-              <label style={labelStyle}>총 세대수</label>
-              <input style={inputStyle} type="number" value={form.total_units ?? ''} onChange={e => set('total_units', e.target.value)} placeholder="예: 500" />
-            </div>
-            <div>
-              <label style={labelStyle}>잔여 세대수</label>
-              <input style={inputStyle} type="number" value={form.remaining_units ?? ''} onChange={e => set('remaining_units', e.target.value)} placeholder="예: 120" />
-            </div>
+          <div>
+            <label style={labelStyle}>총 세대수</label>
+            <input style={inputStyle} type="number" value={form.total_units ?? ''} onChange={e => set('total_units', e.target.value)} placeholder="예: 500" />
           </div>
 
           {/* 가격 */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div>
-              <label style={labelStyle}>최저가 (만원)</label>
-              <input style={inputStyle} type="number" value={form.min_price ?? ''} onChange={e => set('min_price', e.target.value)} placeholder="예: 30000" />
-            </div>
-            <div>
-              <label style={labelStyle}>최고가 (만원)</label>
-              <input style={inputStyle} type="number" value={form.max_price ?? ''} onChange={e => set('max_price', e.target.value)} placeholder="예: 50000" />
-            </div>
+          <div>
+            <label style={labelStyle}>최저가 (만원)</label>
+            <input style={inputStyle} type="number" value={form.min_price ?? ''} onChange={e => set('min_price', e.target.value)} placeholder="예: 30000" />
           </div>
 
           {/* 혜택 */}
