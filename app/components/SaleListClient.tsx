@@ -81,7 +81,7 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
       if (v === '전체' || v === 'all') next.delete(k);
       else next.set(k, v);
     });
-    router.replace(`/sale?${next.toString()}`, { scroll: false });
+    router.replace(`/?${next.toString()}`, { scroll: false });
   }
 
   function setRegion(v: Region) { setRegionState(v); updateUrl({ region: v }); setOpenDrop(null); }
