@@ -40,6 +40,10 @@ const DEFAULT: FormData = {
   highlight: false,
   is_active: true,
   house_manage_no: null,
+  contact: null,
+  receipt_start: null,
+  receipt_end: null,
+  move_in_date: null,
 };
 
 export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData>; id?: string }) {
@@ -93,25 +97,29 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
     setImportResults([]);
     setImportKeyword('');
 
-    // 상세 API 호출해서 단위별 가격으로 최저가/최고가 계산
+    // 상세 API 호출해서 청약 일정 + 가격 자동 입력
     const houseManageNo = item.houseManageNo || item.id;
     if (!houseManageNo) return;
     try {
       const res = await fetch(`/api/sale/detail?id=${houseManageNo}`);
       const data = await res.json();
-      if (data.item?.units?.length > 0) {
-        const prices = data.item.units.map((u: any) => u.price).filter((p: number) => p > 0);
-        if (prices.length > 0) {
-          const minP = Math.min(...prices) * 10000; // 만원 → 원
-          const maxP = Math.max(...prices) * 10000;
-          setForm(prev => ({
-            ...prev,
-            min_price: prev.min_price ?? minP,
-            max_price: prev.max_price ?? maxP,
-          }));
-        }
-      }
-    } catch { /* 가격 조회 실패 시 무시 */ }
+      const detail = data.item;
+      if (!detail) return;
+
+      const prices = (detail.units ?? []).map((u: any) => u.price).filter((p: number) => p > 0);
+      setForm(prev => ({
+        ...prev,
+        // 가격 (만원 → 원)
+        min_price: prev.min_price ?? (prices.length > 0 ? Math.min(...prices) * 10000 : null),
+        max_price: prev.max_price ?? (prices.length > 0 ? Math.max(...prices) * 10000 : null),
+        // 청약 일정
+        receipt_start: prev.receipt_start ?? detail.receiptStart ?? null,
+        receipt_end:   prev.receipt_end   ?? detail.receiptEnd   ?? null,
+        move_in_date:  prev.move_in_date  ?? detail.moveInDate   ?? null,
+        // 문의전화
+        contact: prev.contact ?? detail.contact ?? null,
+      }));
+    } catch { /* 상세 조회 실패 시 무시 */ }
   };
 
   const set = (key: keyof FormData, value: unknown) =>
@@ -270,6 +278,31 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
           <div>
             <label style={labelStyle}>최저가 (원)</label>
             <input style={inputStyle} type="number" value={form.min_price ?? ''} onChange={e => set('min_price', e.target.value)} placeholder="예: 300000000" />
+          </div>
+
+          {/* 문의전화 */}
+          <div>
+            <label style={labelStyle}>문의전화</label>
+            <input style={inputStyle} value={form.contact ?? ''} onChange={e => set('contact', e.target.value)} placeholder="예: 1588-0000" />
+          </div>
+
+          {/* 청약 일정 */}
+          <div>
+            <label style={{ ...labelStyle, marginBottom: 10 }}>청약 일정</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={{ ...labelStyle, fontSize: 12, color: '#6b7280' }}>청약접수 시작</label>
+                <input style={inputStyle} type="date" value={form.receipt_start ?? ''} onChange={e => set('receipt_start', e.target.value)} />
+              </div>
+              <div>
+                <label style={{ ...labelStyle, fontSize: 12, color: '#6b7280' }}>청약접수 종료</label>
+                <input style={inputStyle} type="date" value={form.receipt_end ?? ''} onChange={e => set('receipt_end', e.target.value)} />
+              </div>
+              <div>
+                <label style={{ ...labelStyle, fontSize: 12, color: '#6b7280' }}>입주 예정</label>
+                <input style={inputStyle} type="date" value={form.move_in_date ?? ''} onChange={e => set('move_in_date', e.target.value)} />
+              </div>
+            </div>
           </div>
 
           {/* 혜택 */}

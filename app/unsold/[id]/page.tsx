@@ -5,6 +5,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import SectionTabs from './SectionTabs';
+import UnitTable from './UnitTable';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -115,6 +116,22 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
               )}
             </div>
 
+            {/* 청약 일정 + 문의 */}
+            {(item.receipt_start || item.move_in_date || item.contact) && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 0, marginBottom: 20, border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
+                {[
+                  item.receipt_start && { label: '청약접수', value: item.receipt_end ? `${item.receipt_start} ~ ${item.receipt_end}` : item.receipt_start },
+                  item.move_in_date && { label: '입주 예정', value: item.move_in_date },
+                  item.contact && { label: '문의전화', value: item.contact },
+                ].filter(Boolean).map((row: any, i) => (
+                  <div key={i} style={{ padding: '12px 16px', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 600 }}>{row.label}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* 계약 혜택 */}
             {item.benefit && (
               <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '14px 18px', marginBottom: 20 }}>
@@ -153,6 +170,9 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
                 `}</style>
               </div>
             )}
+
+            {/* 주택형별 공급정보 (청약 API 연동) */}
+            {item.house_manage_no && <UnitTable houseManageNo={item.house_manage_no} />}
 
             {/* 공식 사이트 */}
             {item.official_url && (
