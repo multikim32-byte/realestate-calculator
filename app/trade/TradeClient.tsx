@@ -19,17 +19,22 @@ function areaLabel(area: number) {
   return `${area.toFixed(1)}㎡(${py.toFixed(0)}평)`;
 }
 
-export default function TradeClient() {
+interface TradeClientProps {
+  initialItems?: TradeItem[];
+  initialDong?: string;
+}
+
+export default function TradeClient({ initialItems = [], initialDong = '개포동' }: TradeClientProps) {
   const [sido, setSido] = useState<keyof typeof LAWD_CODE_MAP>('서울');
   const [lawdCd, setLawdCd] = useState('11680'); // 강남구 기본
   const [dealYmd, setDealYmd] = useState(MONTHS[1].value); // 전달 기본
-  const [items, setItems] = useState<TradeItem[]>([]);
+  const [items, setItems] = useState<TradeItem[]>(initialItems);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [searched, setSearched] = useState(false);
+  const [searched, setSearched] = useState(initialItems.length > 0);
   const [keyword, setKeyword] = useState('');
   const [selectedApt, setSelectedApt] = useState('');
-  const [selectedDong, setSelectedDong] = useState('전체');
+  const [selectedDong, setSelectedDong] = useState(initialItems.length > 0 ? initialDong : '전체');
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -39,9 +44,9 @@ export default function TradeClient() {
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  // 초기 진입 시 자동 조회
+  // 초기 데이터가 없을 때만 자동 조회
   useEffect(() => {
-    handleSearch();
+    if (initialItems.length === 0) handleSearch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

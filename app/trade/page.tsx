@@ -1,6 +1,7 @@
 import GlobalNav from '../components/GlobalNav';
 import TradeClient from './TradeClient';
 import type { Metadata } from 'next';
+import { fetchTradeList, recentMonths } from '@/lib/tradeApi';
 
 export const metadata: Metadata = {
   title: '아파트 실거래가 조회 — 지역별 최신 매매 거래가 | 부동산 계산기',
@@ -13,7 +14,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function TradePage() {
+export default async function TradePage() {
+  // 서울 강남구(11680) 전월 데이터 SSR 프리로드
+  const dealYmd = recentMonths(2)[1].value; // 전달
+  let initialItems: import('@/lib/tradeApi').TradeItem[] = [];
+  try {
+    const result = await fetchTradeList('11680', dealYmd, 1, 200);
+    initialItems = result.items ?? [];
+  } catch {}
+
   return (
     <div>
       <GlobalNav />
@@ -28,7 +37,7 @@ export default function TradePage() {
           </p>
         </div>
 
-        <TradeClient />
+        <TradeClient initialItems={initialItems} initialDong="개포동" />
 
         {/* SEO 안내 섹션 */}
         <div style={{ marginTop: 60, borderTop: '1px solid #e5e7eb', paddingTop: 40 }}>
