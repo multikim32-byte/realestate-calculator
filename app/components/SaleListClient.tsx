@@ -76,12 +76,12 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   function updateUrl(params: Record<string, string>) {
-    const next = new URLSearchParams(searchParams.toString());
+    const next = new URLSearchParams(window.location.search);
     Object.entries(params).forEach(([k, v]) => {
       if (v === '전체' || v === 'all') next.delete(k);
       else next.set(k, v);
     });
-    router.replace(`/?${next.toString()}`, { scroll: false });
+    window.history.replaceState(null, '', `/?${next.toString()}`);
   }
 
   function setRegion(v: Region) { setRegionState(v); updateUrl({ region: v }); setOpenDrop(null); }
