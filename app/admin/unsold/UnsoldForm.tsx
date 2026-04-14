@@ -90,7 +90,10 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
       location,
       category: CATEGORY_MAP[item.buildingType] || '아파트',
       total_units: item.totalUnits || prev.total_units,
-      official_url: item.pblancUrl || prev.official_url,
+      official_url: item.pblancUrl
+        || (item.houseManageNo
+            ? `https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancDetail.do?houseManageNo=${item.houseManageNo}&pblancNo=${item.pblancNo ?? ''}`
+            : prev.official_url),
       house_manage_no: item.houseManageNo || item.id || prev.house_manage_no,
     }));
     setShowImport(false);
@@ -107,8 +110,15 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
       if (!detail) return;
 
       const prices = (detail.units ?? []).map((u: any) => u.price).filter((p: number) => p > 0);
+      // 청약홈 URL: pblancUrl 있으면 그대로, 없으면 houseManageNo+pblancNo로 구성
+      const applyhomeUrl = detail.pblancUrl
+        || (detail.houseManageNo
+            ? `https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancDetail.do?houseManageNo=${detail.houseManageNo}&pblancNo=${detail.pblancNo ?? ''}`
+            : null);
       setForm(prev => ({
         ...prev,
+        // 청약홈 공식 URL (상세에서 정확한 URL로 덮어쓰기)
+        official_url: applyhomeUrl || prev.official_url,
         // 가격 (만원 → 원)
         min_price: prev.min_price ?? (prices.length > 0 ? Math.min(...prices) * 10000 : null),
         max_price: prev.max_price ?? (prices.length > 0 ? Math.max(...prices) * 10000 : null),
