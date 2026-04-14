@@ -276,25 +276,6 @@ export default function SaleDetailPage() {
           </div>
         )}
 
-        {/* 경쟁률 */}
-        {item.houseManageNo && item.pblancNo && (
-          <CompetitionRateSection
-            houseManageNo={item.houseManageNo}
-            pblancNo={item.pblancNo}
-            status={item.status}
-          />
-        )}
-
-        {/* 카카오 지도 */}
-        {item.location && <KakaoMap address={item.location} name={item.name} />}
-
-        {/* 인근 실거래가 */}
-        <NearbyTradeSection
-          location={item.location}
-          aptName={item.name}
-          units={item.units ?? []}
-        />
-
         {/* 연결된 미분양 매물 */}
         {unsoldLink && (
           <Link href={`/unsold/${unsoldLink.id}`} style={{ textDecoration: 'none' }}>
@@ -317,6 +298,25 @@ export default function SaleDetailPage() {
             </div>
           </Link>
         )}
+
+        {/* 경쟁률 */}
+        {item.houseManageNo && item.pblancNo && (
+          <CompetitionRateSection
+            houseManageNo={item.houseManageNo}
+            pblancNo={item.pblancNo}
+            status={item.status}
+          />
+        )}
+
+        {/* 카카오 지도 */}
+        {item.location && <KakaoMap address={item.location} name={item.name} />}
+
+        {/* 인근 실거래가 */}
+        <NearbyTradeSection
+          location={item.location}
+          aptName={item.name}
+          units={item.units ?? []}
+        />
 
         {/* 계산기 유도 */}
         <div style={{ marginTop: 16, background: '#1e3a5f', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
