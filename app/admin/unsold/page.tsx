@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { UnsoldListing } from '@/lib/supabase';
@@ -8,7 +8,22 @@ import type { UnsoldListing } from '@/lib/supabase';
 export default function AdminUnsoldListPage() {
   const [listings, setListings] = useState<UnsoldListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sido, setSido] = useState('전체');
+  const [search, setSearch] = useState('');
   const router = useRouter();
+
+  const sidoList = useMemo(() => {
+    const set = new Set(listings.map(l => l.location.trim().split(/\s+/)[0]).filter(Boolean));
+    return ['전체', ...Array.from(set).sort()];
+  }, [listings]);
+
+  const filtered = useMemo(() => {
+    return listings.filter(l => {
+      if (sido !== '전체' && l.location.trim().split(/\s+/)[0] !== sido) return false;
+      if (search && !l.name.includes(search) && !l.location.includes(search)) return false;
+      return true;
+    });
+  }, [listings, sido, search]);
 
   async function load() {
     const res = await fetch('/api/admin/unsold');
@@ -56,7 +71,7 @@ export default function AdminUnsoldListPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 800, color: '#1e293b', margin: 0 }}>미분양 매물 관리</h1>
-            <p style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>총 {listings.length}건</p>
+            <p style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>총 {listings.length}건 · 검색결과 {filtered.length}건</p>
           </div>
           <Link href="/admin/unsold/new"
             style={{ padding: '10px 20px', background: '#1d4ed8', color: '#fff', borderRadius: 8, textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>
@@ -64,11 +79,35 @@ export default function AdminUnsoldListPage() {
           </Link>
         </div>
 
+        {/* 검색/필터 */}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="단지명 검색"
+            style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, width: 200 }}
+          />
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {sidoList.map(s => (
+              <button key={s} onClick={() => setSido(s)}
+                style={{
+                  padding: '7px 14px', borderRadius: 20, border: 'none', fontSize: 13, cursor: 'pointer',
+                  background: sido === s ? '#1d4ed8' : '#f1f5f9',
+                  color: sido === s ? '#fff' : '#374151',
+                  fontWeight: sido === s ? 700 : 400,
+                }}>
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {loading ? (
           <div style={{ textAlign: 'center', padding: 60, color: '#9ca3af' }}>불러오는 중...</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {listings.map(item => (
+            {filtered.map(item => (
               <div key={item.id} style={{
                 background: '#fff', borderRadius: 12, padding: '16px 20px',
                 border: `1px solid ${item.is_active ? '#e5e7eb' : '#fca5a5'}`,
