@@ -159,13 +159,13 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
               <div style={{ padding: 16 }}>
                 <h2 style={{ fontSize: 15, fontWeight: 800, color: '#1e293b', margin: '0 0 4px', lineHeight: 1.4 }}>{item.name}</h2>
                 <p style={{ fontSize: 13, color: '#6b7280', margin: '0 0 10px' }}>📍 {item.location}</p>
-                {(item.min_price || item.max_price) && (
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#1d4ed8', marginBottom: 6 }}>
-                    {item.min_price && item.max_price
-                      ? `${fmt만원(item.min_price)} ~ ${fmt만원(item.max_price)}`
-                      : item.min_price ? fmt만원(item.min_price) : fmt만원(item.max_price!)}
-                  </div>
-                )}
+                <div style={{ fontSize: 14, fontWeight: 700, color: item.min_price || item.max_price ? '#1d4ed8' : '#6b7280', marginBottom: 6 }}>
+                  {item.min_price || item.max_price
+                    ? (item.min_price && item.max_price
+                        ? `${fmt만원(item.min_price)} ~ ${fmt만원(item.max_price)}`
+                        : item.min_price ? fmt만원(item.min_price) : fmt만원(item.max_price!))
+                    : '분양가 문의'}
+                </div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 12 }}>
                   {item.remaining_units != null && (
                     <span style={{ background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: 8, fontWeight: 600 }}>

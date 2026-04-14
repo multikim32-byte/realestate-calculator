@@ -86,16 +86,16 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
 
             {/* 핵심 정보 카드 */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
-              {(item.min_price || item.max_price) && (
-                <div style={{ background: '#eff6ff', borderRadius: 10, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>분양가</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#1d4ed8' }}>
-                    {item.min_price && item.max_price
-                      ? `${fmt만원(item.min_price)} ~ ${fmt만원(item.max_price)}`
-                      : item.min_price ? fmt만원(item.min_price) : fmt만원(item.max_price!)}
-                  </div>
+              <div style={{ background: '#eff6ff', borderRadius: 10, padding: '14px 16px' }}>
+                <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>분양가</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: '#1d4ed8' }}>
+                  {item.min_price || item.max_price
+                    ? (item.min_price && item.max_price
+                        ? `${fmt만원(item.min_price)} ~ ${fmt만원(item.max_price)}`
+                        : item.min_price ? fmt만원(item.min_price) : fmt만원(item.max_price!))
+                    : '분양가 문의'}
                 </div>
-              )}
+              </div>
               {item.total_units != null && (
                 <div style={{ background: '#f0fdf4', borderRadius: 10, padding: '14px 16px' }}>
                   <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>총 세대수</div>

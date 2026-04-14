@@ -274,12 +274,6 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
             <input style={inputStyle} type="number" value={form.total_units ?? ''} onChange={e => set('total_units', e.target.value)} placeholder="예: 500" />
           </div>
 
-          {/* 가격 */}
-          <div>
-            <label style={labelStyle}>최저가 (원)</label>
-            <input style={inputStyle} type="number" value={form.min_price ?? ''} onChange={e => set('min_price', e.target.value)} placeholder="예: 300000000" />
-          </div>
-
           {/* 문의전화 */}
           <div>
             <label style={labelStyle}>문의전화</label>
