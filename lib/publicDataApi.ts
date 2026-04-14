@@ -189,6 +189,14 @@ function parseDetail(raw: any, recruitType: '신규공급' | '선착순', supply
   const receiptEnd = fmtDate(
     raw.RCEPT_ENDDE || raw.GNRL_RCEPT_ENDDE || raw.SPSPLY_RCEPT_ENDDE
   );
+
+  // 날짜가 비어 있으면 어떤 필드들이 있는지 서버 로그로 확인
+  if (!receiptStart) {
+    const dateFields = Object.keys(raw).filter(k =>
+      k.includes('RCEPT') || k.includes('BGNDE') || k.includes('ENDDE') || k.includes('DE')
+    );
+    console.log(`[parseDetail] receiptStart empty for ${raw.HOUSE_NM ?? raw.HOUSE_MANAGE_NO}. Date fields:`, dateFields.map(k => `${k}=${raw[k]}`));
+  }
   const winnerDate   = fmtDate(raw.PRZWNER_PRESNATN_DE);
   const location     = raw.HSSPLY_ADRES ?? '';
   const secdNm       = raw.HOUSE_SECD_NM ?? '';

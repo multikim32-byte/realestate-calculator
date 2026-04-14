@@ -74,25 +74,22 @@ export default function SaleDetailPage() {
   useEffect(() => {
     if (!id) return;
 
-    // 세션스토리지에 캐시된 데이터 먼저 확인
+    // 세션스토리지 캐시는 즉시 표시용으로만 사용 (스켈레톤 대체)
+    let fallback: SaleDetail | null = null;
     try {
       const cached = sessionStorage.getItem(`sale_item_${id}`);
       if (cached) {
-        const parsed = JSON.parse(cached);
-        setItem(parsed);
+        fallback = JSON.parse(cached);
+        setItem(fallback);   // 즉시 화면에 표시
         setLoading(false);
-        // 유닛 정보가 없으면 API로 보강
-        if (!parsed.units || parsed.units.length === 0) {
-          fetchDetail(id, parsed);
-        }
-        return;
       }
     } catch { /* 무시 */ }
 
-    fetchDetail(id, null);
+    // 항상 API에서 최신 데이터를 가져와 갱신
+    fetchDetail(id, fallback);
   }, [id]);
 
-  async function fetchDetail(houseManageNo: string, existing: SaleDetail | null) {
+  async function fetchDetail(houseManageNo: string, fallback: SaleDetail | null) {
     try {
       // API route에서 상세 조회
       const res = await fetch(`/api/sale/detail?id=${houseManageNo}`);
@@ -100,17 +97,13 @@ export default function SaleDetailPage() {
       const data = await res.json();
       if (data.item) {
         setItem(data.item);
-      } else if (existing) {
-        setItem(existing);
+      } else if (fallback) {
+        // API에서 못 찾은 경우 캐시 유지 (이미 setItem 완료)
       } else {
         setError(true);
       }
     } catch {
-      if (existing) {
-        setItem(existing);
-      } else {
-        setError(true);
-      }
+      if (!fallback) setError(true);
     } finally {
       setLoading(false);
     }
