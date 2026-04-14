@@ -90,7 +90,7 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
       location,
       category: CATEGORY_MAP[item.buildingType] || '아파트',
       total_units: item.totalUnits || prev.total_units,
-      official_url: item.pblancUrl || prev.official_url,
+      official_url: item.hmpgUrl || item.pblancUrl || prev.official_url,
       house_manage_no: item.houseManageNo || item.id || prev.house_manage_no,
     }));
     setShowImport(false);
@@ -109,8 +109,8 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
       const prices = (detail.units ?? []).map((u: any) => u.price).filter((p: number) => p > 0);
       setForm(prev => ({
         ...prev,
-        // 시행사 홈페이지 URL (상세 API에서 더 정확한 값으로 덮어쓰기)
-        official_url: detail.pblancUrl || prev.official_url,
+        // 시행사 홈페이지 URL (HMPG_ADRES 우선, 없으면 PBLANC_URL)
+        official_url: detail.hmpgUrl || detail.pblancUrl || prev.official_url,
         // 가격 (만원 → 원)
         min_price: prev.min_price ?? (prices.length > 0 ? Math.min(...prices) * 10000 : null),
         max_price: prev.max_price ?? (prices.length > 0 ? Math.max(...prices) * 10000 : null),

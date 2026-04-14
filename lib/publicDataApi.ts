@@ -46,6 +46,7 @@ export interface PublicSaleItem {
   contact: string;
   units: UnitDetail[];
   pblancUrl: string;
+  hmpgUrl: string;
 }
 
 export interface UnitDetail {
@@ -222,6 +223,7 @@ function parseDetail(raw: any, recruitType: '신규공급' | '선착순', supply
     contact:         raw.MDHS_TELNO ?? '',
     units:           [],
     pblancUrl:       raw.PBLANC_URL ?? '',
+    hmpgUrl:         raw.HMPG_ADRES ?? '',
   };
 }
 
