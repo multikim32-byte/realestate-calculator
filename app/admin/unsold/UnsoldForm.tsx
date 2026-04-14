@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { CATEGORIES, DEFAULT_SECTIONS } from '@/lib/supabase';
 import type { UnsoldListing } from '@/lib/supabase';
@@ -67,19 +67,23 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
   const [importResults, setImportResults] = useState<any[]>([]);
   const [importLoading, setImportLoading] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const searchSaleItems = async (keyword: string) => {
+  const searchSaleItems = (keyword: string) => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     if (keyword.length < 2) { setImportResults([]); return; }
-    setImportLoading(true);
-    try {
-      const res = await fetch('/api/sale?type=all&perPage=100');
-      const data = await res.json();
-      const kw = keyword.trim();
-      const filtered = (data.items ?? []).filter((item: any) =>
-        item.name.includes(kw) || item.location.includes(kw)
-      );
-      setImportResults(filtered.slice(0, 8));
-    } catch { setImportResults([]); } finally { setImportLoading(false); }
+    searchTimerRef.current = setTimeout(async () => {
+      setImportLoading(true);
+      try {
+        const res = await fetch('/api/sale?type=all&perPage=100');
+        const data = await res.json();
+        const kw = keyword.trim();
+        const filtered = (data.items ?? []).filter((item: any) =>
+          item.name.includes(kw) || item.location.includes(kw)
+        );
+        setImportResults(filtered.slice(0, 8));
+      } catch { setImportResults([]); } finally { setImportLoading(false); }
+    }, 400);
   };
 
   const applyImport = async (item: any) => {

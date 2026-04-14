@@ -57,7 +57,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
   // 외부 value 변경 시 동기화 (수정 페이지 초기 로드)
   useEffect(() => {
     if (editor && value && editor.getHTML() !== value) {
-      editor.commands.setContent(value, false);
+      editor.commands.setContent(value);
     }
   }, [editor, value]);
 
