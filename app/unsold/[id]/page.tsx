@@ -140,12 +140,16 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
                   .unsold-content ol { padding-left: 20px; margin: 8px 0; }
                   .unsold-content li { margin-bottom: 4px; }
                   .unsold-content hr { border: none; border-top: 1px solid #e5e7eb; margin: 20px 0; }
-                  .unsold-content img { max-width: 100%; border-radius: 10px; margin: 14px 0; display: block; }
+                  .unsold-content img { max-width: 100%; height: auto; border-radius: 10px; margin: 14px 0; display: block; }
                   .unsold-content strong { font-weight: 700; }
                   .unsold-content em { font-style: italic; }
                   .unsold-content u { text-decoration: underline; }
                   .unsold-content [style*="text-align: center"] { text-align: center; }
                   .unsold-content [style*="text-align: right"] { text-align: right; }
+                  .unsold-content table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+                  .unsold-content td, .unsold-content th { padding: 8px 12px; border: 1px solid #e5e7eb; white-space: nowrap; min-width: 80px; }
+                  .unsold-content th { background: #f8f9fa; font-weight: 700; }
+                  .unsold-content * { max-width: 100%; box-sizing: border-box; }
                 `}</style>
               </div>
             )}

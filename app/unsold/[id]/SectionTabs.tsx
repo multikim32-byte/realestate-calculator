@@ -41,13 +41,20 @@ export default function SectionTabs({ sections }: { sections: UnsoldSection[] })
       {current && (
         <div style={{ paddingTop: 24 }}>
           {current.images.map((url, i) => (
-            <img
+            <div
               key={i}
-              src={url}
-              alt={`${current.name} ${i + 1}`}
-              style={{ width: '100%', display: 'block', marginBottom: 8, borderRadius: 8 }}
-            />
+              style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', marginBottom: 8 }}
+            >
+              <img
+                src={url}
+                alt={`${current.name} ${i + 1}`}
+                style={{ display: 'block', minWidth: 560, width: '100%', borderRadius: 8 }}
+              />
+            </div>
           ))}
+          <p style={{ fontSize: 11, color: '#9ca3af', textAlign: 'center', marginTop: 4 }}>
+            ← 좌우로 스크롤하여 크게 볼 수 있습니다
+          </p>
         </div>
       )}
     </div>
