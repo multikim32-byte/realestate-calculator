@@ -180,8 +180,15 @@ async function callApiWithLatest(
 // ─── 파서: 상세조회 ──────────────────────────────────────────────────────────
 
 function parseDetail(raw: any, recruitType: '신규공급' | '선착순', supplyTypeOverride?: PublicSaleItem['supplyType']): PublicSaleItem {
-  const receiptStart = fmtDate(raw.RCEPT_BGNDE);
-  const receiptEnd   = fmtDate(raw.RCEPT_ENDDE);
+  // 청약홈 API 엔드포인트마다 필드명이 다를 수 있어 폴백 처리
+  // 잔여세대(getRemndrLttotPblancDetail) / 임의공급(getOPTLttotPblancDetail) 은
+  // GNRL_RCEPT_BGNDE / SPSPLY_RCEPT_BGNDE 를 사용하는 경우가 있음
+  const receiptStart = fmtDate(
+    raw.RCEPT_BGNDE || raw.GNRL_RCEPT_BGNDE || raw.SPSPLY_RCEPT_BGNDE
+  );
+  const receiptEnd = fmtDate(
+    raw.RCEPT_ENDDE || raw.GNRL_RCEPT_ENDDE || raw.SPSPLY_RCEPT_ENDDE
+  );
   const winnerDate   = fmtDate(raw.PRZWNER_PRESNATN_DE);
   const location     = raw.HSSPLY_ADRES ?? '';
   const secdNm       = raw.HOUSE_SECD_NM ?? '';
@@ -202,8 +209,8 @@ function parseDetail(raw: any, recruitType: '신규공급' | '선착순', supply
     receiptEnd,
     announcementDate: fmtDate(raw.RCRIT_PBLANC_DE),
     winnerDate,
-    contractStart:   fmtDate(raw.CNTRCT_CNCLS_BGNDE),
-    contractEnd:     fmtDate(raw.CNTRCT_CNCLS_ENDDE),
+    contractStart:   fmtDate(raw.CNTRCT_CNCLS_BGNDE || raw.CNTRCT_BGNDE),
+    contractEnd:     fmtDate(raw.CNTRCT_CNCLS_ENDDE || raw.CNTRCT_ENDDE),
     moveInDate:      fmtYearMonth(raw.MVN_PREARNGE_YM),
     status:          calcStatus(receiptStart, receiptEnd, winnerDate, recruitType),
     minPrice:        0,
