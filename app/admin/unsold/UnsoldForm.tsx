@@ -16,6 +16,13 @@ type FormData = Omit<UnsoldListing, 'id' | 'created_at' | 'updated_at'>;
 const FIRST_SIDO = Object.keys(LAWD_CODE_MAP)[0] as keyof typeof LAWD_CODE_MAP;
 const FIRST_SIGUNGU = LAWD_CODE_MAP[FIRST_SIDO][0].name;
 
+const CATEGORY_MAP: Record<string, string> = {
+  '아파트': '아파트',
+  '오피스텔': '오피스텔',
+  '도시형생활주택': '아파트',
+  '상업시설': '상가',
+};
+
 const DEFAULT: FormData = {
   name: '',
   location: `${FIRST_SIDO} ${FIRST_SIGUNGU}`,
@@ -32,6 +39,7 @@ const DEFAULT: FormData = {
   sections: DEFAULT_SECTIONS,
   highlight: false,
   is_active: true,
+  house_manage_no: null,
 };
 
 export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData>; id?: string }) {
@@ -45,6 +53,44 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
   const [error, setError] = useState('');
   const router = useRouter();
   const isEdit = !!id;
+
+  // 청약정보 불러오기
+  const [importKeyword, setImportKeyword] = useState('');
+  const [importResults, setImportResults] = useState<any[]>([]);
+  const [importLoading, setImportLoading] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+
+  const searchSaleItems = async (keyword: string) => {
+    if (keyword.length < 2) { setImportResults([]); return; }
+    setImportLoading(true);
+    try {
+      const res = await fetch('/api/sale?type=all&perPage=100');
+      const data = await res.json();
+      const kw = keyword.trim();
+      const filtered = (data.items ?? []).filter((item: any) =>
+        item.name.includes(kw) || item.location.includes(kw)
+      );
+      setImportResults(filtered.slice(0, 8));
+    } catch { setImportResults([]); } finally { setImportLoading(false); }
+  };
+
+  const applyImport = (item: any) => {
+    const location = item.region && item.district
+      ? `${item.region} ${item.district}`
+      : item.region || form.location;
+    setForm(prev => ({
+      ...prev,
+      name: item.name || prev.name,
+      location,
+      category: CATEGORY_MAP[item.buildingType] || '아파트',
+      total_units: item.totalUnits || prev.total_units,
+      official_url: item.pblancUrl || prev.official_url,
+      house_manage_no: item.houseManageNo || item.id || prev.house_manage_no,
+    }));
+    setShowImport(false);
+    setImportResults([]);
+    setImportKeyword('');
+  };
 
   const set = (key: keyof FormData, value: unknown) =>
     setForm(prev => ({ ...prev, [key]: value === '' ? null : value }));
@@ -114,6 +160,65 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
         </div>
 
         <form onSubmit={handleSubmit} style={{ background: '#fff', borderRadius: 16, padding: '28px 28px', boxShadow: '0 2px 12px rgba(0,0,0,0.07)', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+          {/* 청약정보에서 불러오기 */}
+          <div style={{ background: '#eff6ff', borderRadius: 10, padding: '14px 16px', border: '1px solid #bfdbfe' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showImport ? 12 : 0 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#1d4ed8' }}>📋 청약정보에서 기본정보 불러오기</span>
+              <button
+                type="button"
+                onClick={() => setShowImport(v => !v)}
+                style={{ fontSize: 12, padding: '4px 12px', borderRadius: 6, border: '1px solid #1d4ed8', background: showImport ? '#1d4ed8' : '#fff', color: showImport ? '#fff' : '#1d4ed8', cursor: 'pointer', fontWeight: 600 }}
+              >
+                {showImport ? '닫기' : '검색'}
+              </button>
+            </div>
+            {showImport && (
+              <div>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                  <input
+                    type="text"
+                    value={importKeyword}
+                    onChange={e => { setImportKeyword(e.target.value); searchSaleItems(e.target.value); }}
+                    placeholder="단지명 또는 지역 검색 (2자 이상)"
+                    style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 13 }}
+                  />
+                  {importLoading && <span style={{ fontSize: 12, color: '#6b7280', alignSelf: 'center' }}>검색 중...</span>}
+                </div>
+                {importResults.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 280, overflowY: 'auto' }}>
+                    {importResults.map((item: any) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => applyImport(item)}
+                        style={{
+                          textAlign: 'left', padding: '10px 12px', borderRadius: 8,
+                          border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer',
+                          transition: 'background 0.1s',
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#f0f9ff')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '#fff')}
+                      >
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 2 }}>{item.name}</div>
+                        <div style={{ fontSize: 11, color: '#6b7280' }}>
+                          {item.buildingType} · {item.location} · {item.totalUnits ? `${item.totalUnits.toLocaleString()}세대` : '세대수 미상'}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {importKeyword.length >= 2 && !importLoading && importResults.length === 0 && (
+                  <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>검색 결과가 없습니다.</p>
+                )}
+                {form.house_manage_no && (
+                  <p style={{ fontSize: 11, color: '#059669', marginTop: 8, marginBottom: 0 }}>
+                    ✅ 연결됨: {form.house_manage_no}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* 기본 정보 */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>

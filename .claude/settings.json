@@ -89,7 +89,10 @@
       "WebFetch(domain:infuser.odcloud.kr)",
       "WebFetch(domain:xn--9i1b2bt70a5on58ko0f.com)",
       "Bash(ls c:/Users/김경래소장/realestate-calculator/.env*)",
-      "Bash(ls c:/Users/김경래소장/realestate-calculator/app/sitemap*)"
+      "Bash(ls c:/Users/김경래소장/realestate-calculator/app/sitemap*)",
+      "Bash(cat next.config.ts)",
+      "Bash(cat next.config.js)",
+      "Bash(npm uninstall:*)"
     ],
     "additionalDirectories": [
       "c:\\Users\\김경래소장\\realestate-calculator\\app\\sale\\[id]",

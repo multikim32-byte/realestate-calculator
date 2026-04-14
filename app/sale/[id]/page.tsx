@@ -65,11 +65,14 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
+type UnsoldLink = { id: string; name: string; thumbnail_url: string | null; benefit: string | null; min_price: number | null };
+
 export default function SaleDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [item, setItem] = useState<SaleDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [unsoldLink, setUnsoldLink] = useState<UnsoldLink | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -87,6 +90,12 @@ export default function SaleDetailPage() {
 
     // 항상 API에서 최신 데이터를 가져와 갱신
     fetchDetail(id, fallback);
+
+    // 연결된 미분양 매물 조회
+    fetch(`/api/unsold/by-sale?id=${id}`)
+      .then(r => r.json())
+      .then(data => { if (data.item) setUnsoldLink(data.item); })
+      .catch(() => {});
   }, [id]);
 
   async function fetchDetail(houseManageNo: string, fallback: SaleDetail | null) {
@@ -285,6 +294,29 @@ export default function SaleDetailPage() {
           aptName={item.name}
           units={item.units ?? []}
         />
+
+        {/* 연결된 미분양 매물 */}
+        {unsoldLink && (
+          <Link href={`/unsold/${unsoldLink.id}`} style={{ textDecoration: 'none' }}>
+            <div style={{
+              marginTop: 16, background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+              borderRadius: 16, padding: '18px 24px', border: '1px solid #f59e0b',
+              display: 'flex', alignItems: 'center', gap: 16,
+              boxShadow: '0 2px 12px rgba(245,158,11,0.2)',
+            }}>
+              {unsoldLink.thumbnail_url && (
+                <img src={unsoldLink.thumbnail_url} alt={unsoldLink.name}
+                  style={{ width: 72, height: 56, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#92400e', marginBottom: 4 }}>🎁 특별 혜택 매물 등록됨</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#1e293b', marginBottom: 2 }}>{unsoldLink.name}</div>
+                {unsoldLink.benefit && <div style={{ fontSize: 12, color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{unsoldLink.benefit}</div>}
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#92400e', whiteSpace: 'nowrap' }}>혜택 보기 →</div>
+            </div>
+          </Link>
+        )}
 
         {/* 계산기 유도 */}
         <div style={{ marginTop: 16, background: '#1e3a5f', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>

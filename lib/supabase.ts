@@ -27,6 +27,7 @@ export type UnsoldListing = {
   sections: UnsoldSection[];
   highlight: boolean;
   is_active: boolean;
+  house_manage_no: string | null;
   created_at: string;
   updated_at: string;
 };
