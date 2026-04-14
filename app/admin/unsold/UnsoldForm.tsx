@@ -74,10 +74,12 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
     } catch { setImportResults([]); } finally { setImportLoading(false); }
   };
 
-  const applyImport = (item: any) => {
+  const applyImport = async (item: any) => {
     const location = item.region && item.district
       ? `${item.region} ${item.district}`
       : item.region || form.location;
+
+    // 기본 정보 즉시 반영
     setForm(prev => ({
       ...prev,
       name: item.name || prev.name,
@@ -90,6 +92,26 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
     setShowImport(false);
     setImportResults([]);
     setImportKeyword('');
+
+    // 상세 API 호출해서 단위별 가격으로 최저가/최고가 계산
+    const houseManageNo = item.houseManageNo || item.id;
+    if (!houseManageNo) return;
+    try {
+      const res = await fetch(`/api/sale/detail?id=${houseManageNo}`);
+      const data = await res.json();
+      if (data.item?.units?.length > 0) {
+        const prices = data.item.units.map((u: any) => u.price).filter((p: number) => p > 0);
+        if (prices.length > 0) {
+          const minP = Math.min(...prices) * 10000; // 만원 → 원
+          const maxP = Math.max(...prices) * 10000;
+          setForm(prev => ({
+            ...prev,
+            min_price: prev.min_price ?? minP,
+            max_price: prev.max_price ?? maxP,
+          }));
+        }
+      }
+    } catch { /* 가격 조회 실패 시 무시 */ }
   };
 
   const set = (key: keyof FormData, value: unknown) =>

@@ -34,16 +34,16 @@ export default function LocationSelector({ value, onChange }: Props) {
     onChange(`${sido} ${sg}`);
   };
 
-  // 외부 value 변경 동기화 (수정 페이지)
+  // 외부 value 변경 동기화 (수정 페이지 + 청약정보 불러오기)
   useEffect(() => {
     const p = value.trim().split(/\s+/);
     const s = SIDOS.find(x => x === p[0]);
-    if (s && s !== sido) {
+    if (s) {
       setSido(s);
       setSigungu(p.slice(1).join(' '));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // value가 바뀔 때마다 드롭다운 동기화
+  }, [value]);
 
   const selectStyle: React.CSSProperties = {
     padding: '9px 12px', borderRadius: 8, border: '1px solid #d1d5db',
