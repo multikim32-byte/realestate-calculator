@@ -184,19 +184,11 @@ function parseDetail(raw: any, recruitType: '신규공급' | '선착순', supply
   // 잔여세대(getRemndrLttotPblancDetail) / 임의공급(getOPTLttotPblancDetail) 은
   // GNRL_RCEPT_BGNDE / SPSPLY_RCEPT_BGNDE 를 사용하는 경우가 있음
   const receiptStart = fmtDate(
-    raw.RCEPT_BGNDE || raw.GNRL_RCEPT_BGNDE || raw.SPSPLY_RCEPT_BGNDE
+    raw.RCEPT_BGNDE || raw.SUBSCRPT_RCEPT_BGNDE || raw.GNRL_RCEPT_BGNDE || raw.SPSPLY_RCEPT_BGNDE
   );
   const receiptEnd = fmtDate(
-    raw.RCEPT_ENDDE || raw.GNRL_RCEPT_ENDDE || raw.SPSPLY_RCEPT_ENDDE
+    raw.RCEPT_ENDDE || raw.SUBSCRPT_RCEPT_ENDDE || raw.GNRL_RCEPT_ENDDE || raw.SPSPLY_RCEPT_ENDDE
   );
-
-  // 날짜가 비어 있으면 어떤 필드들이 있는지 서버 로그로 확인
-  if (!receiptStart) {
-    const dateFields = Object.keys(raw).filter(k =>
-      k.includes('RCEPT') || k.includes('BGNDE') || k.includes('ENDDE') || k.includes('DE')
-    );
-    console.log(`[parseDetail] receiptStart empty for ${raw.HOUSE_NM ?? raw.HOUSE_MANAGE_NO}. Date fields:`, dateFields.map(k => `${k}=${raw[k]}`));
-  }
   const winnerDate   = fmtDate(raw.PRZWNER_PRESNATN_DE);
   const location     = raw.HSSPLY_ADRES ?? '';
   const secdNm       = raw.HOUSE_SECD_NM ?? '';
