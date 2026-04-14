@@ -74,6 +74,12 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 72 }}>🏢</div>
             )}
             <div style={{ position: 'absolute', top: 16, left: 16, display: 'flex', gap: 8 }}>
+              <span style={{
+                background: item.listing_type === '청약중' ? '#059669' : '#d97706',
+                color: '#fff', fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 16,
+              }}>
+                {item.listing_type === '청약중' ? '🟢 청약중' : '🟡 잔여세대'}
+              </span>
               <span style={{ background: '#1d4ed8', color: '#fff', fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 16 }}>{item.category}</span>
               {item.highlight && <span style={{ background: '#f59e0b', color: '#fff', fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 16 }}>⭐ 주목 단지</span>}
             </div>

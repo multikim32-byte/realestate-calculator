@@ -95,7 +95,24 @@ function calcStatus(
   return '당첨발표';
 }
 
+// 전체 행정구역명 → LAWD_CODE_MAP 키(약칭) 매핑
+const FULL_NAME_MAP: Record<string, string> = {
+  '서울특별시': '서울', '경기도': '경기', '인천광역시': '인천',
+  '부산광역시': '부산', '대구광역시': '대구', '광주광역시': '광주',
+  '대전광역시': '대전', '울산광역시': '울산', '세종특별자치시': '세종',
+  '강원특별자치도': '강원', '강원도': '강원',
+  '충청북도': '충북', '충청남도': '충남',
+  '전라북도': '전북', '전북특별자치도': '전북', '전라남도': '전남',
+  '경상북도': '경북', '경상남도': '경남',
+  '제주특별자치도': '제주',
+};
+
 function extractRegion(address: string): string {
+  // 전체 행정구역명 먼저 시도
+  for (const [full, abbr] of Object.entries(FULL_NAME_MAP)) {
+    if (address.startsWith(full) || address.includes(full)) return abbr;
+  }
+  // 약칭으로 폴백
   const regions = [
     '서울', '경기', '인천', '부산', '대구', '광주', '대전',
     '울산', '세종', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주',
@@ -107,8 +124,24 @@ function extractRegion(address: string): string {
 }
 
 function extractDistrict(address: string): string {
-  const match = address.match(/(?:특별시|광역시|특별자치시|도)\s+(\S+[시군구])/);
-  return match ? match[1] : '';
+  // 도 단위 지역에서 "시 + 구" 패턴 추출 (예: "전라북도 전주시 덕진구" → "전주 덕진구")
+  // LAWD_CODE_MAP은 "전주 덕진구" 형태로 저장함 (시명에서 '시' 접미사 제거)
+  const cityGuMatch = address.match(
+    /(?:특별자치도|도)\s+(\S+)시\s+(\S+구)/
+  );
+  if (cityGuMatch) return `${cityGuMatch[1]} ${cityGuMatch[2]}`;
+
+  // 광역시/특별시 내 구 추출 (예: "인천광역시 남동구" → "남동구")
+  const metroGuMatch = address.match(/(?:특별시|광역시|특별자치시)\s+(\S+구)/);
+  if (metroGuMatch) return metroGuMatch[1];
+
+  // 도 단위 지역에서 시/군 추출 (예: "경상북도 안동시" → "안동시")
+  const doMatch = address.match(/(?:특별자치도|도)\s+(\S+[시군])/);
+  if (doMatch) return doMatch[1];
+
+  // 약칭 뒤의 시/군/구 추출 (예: "경북 안동시 ..." or "경기 수원시 ...")
+  const abbr = address.match(/^(?:서울|경기|인천|부산|대구|광주|대전|울산|세종|강원|충북|충남|전북|전남|경북|경남|제주)\s+(\S+[시군구])/);
+  return abbr ? abbr[1] : '';
 }
 
 function mapBuildingType(secd: string): '아파트' | '오피스텔' | '도시형생활주택' | '상업시설' {

@@ -17,12 +17,19 @@ export const metadata: Metadata = {
 export const revalidate = 60; // 60초마다 재검증
 
 export default async function UnsoldPage() {
-  const { data: listings } = await supabase
+  const { data: raw } = await supabase
     .from('unsold_listings')
     .select('*')
     .eq('is_active', true)
     .order('highlight', { ascending: false })
     .order('created_at', { ascending: false });
+
+  // 청약중 → 잔여세대 순 정렬 (그 안에서 highlight, 최신순 유지)
+  const listings = (raw ?? []).sort((a, b) => {
+    if (a.listing_type === '청약중' && b.listing_type !== '청약중') return -1;
+    if (a.listing_type !== '청약중' && b.listing_type === '청약중') return 1;
+    return 0;
+  });
 
   return (
     <div style={{ minHeight: '100vh', background: '#f0f4f9' }}>

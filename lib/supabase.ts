@@ -15,6 +15,7 @@ export type UnsoldListing = {
   name: string;
   location: string;
   category: string;
+  listing_type: '청약중' | '잔여세대';
   total_units: number | null;
   remaining_units: number | null;
   min_price: number | null;
@@ -37,6 +38,8 @@ export type UnsoldListing = {
 };
 
 export const CATEGORIES = ['전체', '아파트', '오피스텔', '상가'];
+export const LISTING_TYPES = ['전체', '청약중', '잔여세대'] as const;
+export type ListingType = typeof LISTING_TYPES[number];
 
 export const DEFAULT_SECTIONS: UnsoldSection[] = [
   { name: '분양일정', images: [] },

@@ -27,6 +27,7 @@ const DEFAULT: FormData = {
   name: '',
   location: `${FIRST_SIDO} ${FIRST_SIGUNGU}`,
   category: '아파트',
+  listing_type: '잔여세대',
   total_units: null,
   remaining_units: null,
   min_price: null,
@@ -57,6 +58,9 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
   const [error, setError] = useState('');
   const router = useRouter();
   const isEdit = !!id;
+
+  // 공식 홈페이지 미등록 여부 (체크하면 URL null 처리)
+  const [noOfficialUrl, setNoOfficialUrl] = useState(initial?.official_url === null && !!id);
 
   // 청약정보 불러오기
   const [importKeyword, setImportKeyword] = useState('');
@@ -253,20 +257,44 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
           </div>
 
           {/* 기본 정보 */}
+          <div>
+            <label style={labelStyle}>단지명 *</label>
+            <input style={inputStyle} value={form.name} onChange={e => set('name', e.target.value)} placeholder="예: 강남 더샵 리버파크" required />
+          </div>
+
+          <div>
+            <label style={labelStyle}>위치 *</label>
+            <LocationSelector value={form.location ?? ''} onChange={val => set('location', val)} />
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={labelStyle}>단지명 *</label>
-              <input style={inputStyle} value={form.name} onChange={e => set('name', e.target.value)} placeholder="예: 강남 더샵 리버파크" required />
-            </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={labelStyle}>위치 *</label>
-              <LocationSelector value={form.location ?? ''} onChange={val => set('location', val)} />
-            </div>
             <div>
               <label style={labelStyle}>분양유형</label>
               <select style={inputStyle} value={form.category} onChange={e => set('category', e.target.value)}>
                 {CATEGORIES.filter(c => c !== '전체').map(c => <option key={c} value={c}>{c}</option>)}
               </select>
+            </div>
+            <div>
+              <label style={labelStyle}>매물 구분</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {(['청약중', '잔여세대'] as const).map(t => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => set('listing_type', t)}
+                    style={{
+                      flex: 1, padding: '9px 0', borderRadius: 8, border: '2px solid',
+                      borderColor: form.listing_type === t ? (t === '청약중' ? '#059669' : '#d97706') : '#e5e7eb',
+                      background: form.listing_type === t ? (t === '청약중' ? '#ecfdf5' : '#fffbeb') : '#fff',
+                      color: form.listing_type === t ? (t === '청약중' ? '#059669' : '#d97706') : '#6b7280',
+                      fontWeight: form.listing_type === t ? 700 : 400,
+                      fontSize: 14, cursor: 'pointer', transition: 'all 0.15s',
+                    }}
+                  >
+                    {t === '청약중' ? '🟢 청약중' : '🟡 잔여세대'}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -309,8 +337,28 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
 
           {/* 공식 URL */}
           <div>
-            <label style={labelStyle}>공식 홈페이지 URL</label>
-            <input style={inputStyle} value={form.official_url ?? ''} onChange={e => set('official_url', e.target.value)} placeholder="https://..." />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+              <label style={{ ...labelStyle, marginBottom: 0 }}>공식 홈페이지 URL</label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#6b7280', cursor: 'pointer', fontWeight: 500 }}>
+                <input
+                  type="checkbox"
+                  checked={noOfficialUrl}
+                  onChange={e => {
+                    setNoOfficialUrl(e.target.checked);
+                    if (e.target.checked) set('official_url', null);
+                  }}
+                />
+                미등록 (공식 홈페이지 없음)
+              </label>
+            </div>
+            {!noOfficialUrl && (
+              <input style={inputStyle} value={form.official_url ?? ''} onChange={e => set('official_url', e.target.value)} placeholder="https://..." />
+            )}
+            {noOfficialUrl && (
+              <div style={{ padding: '9px 12px', borderRadius: 8, border: '1px dashed #d1d5db', fontSize: 13, color: '#9ca3af', background: '#f9fafb' }}>
+                공식 홈페이지 미등록 상태입니다.
+              </div>
+            )}
           </div>
 
           {/* 썸네일 이미지 */}

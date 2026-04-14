@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { CATEGORIES } from '@/lib/supabase';
+import { CATEGORIES, LISTING_TYPES } from '@/lib/supabase';
 import type { UnsoldListing } from '@/lib/supabase';
 
 function fmt만원(v: number) {
@@ -26,6 +26,7 @@ const selectStyle: React.CSSProperties = {
 };
 
 export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) {
+  const [listingType, setListingType] = useState('전체');
   const [category, setCategory] = useState('전체');
   const [sido, setSido] = useState('전체');
   const [sigungu, setSigungu] = useState('전체');
@@ -53,12 +54,13 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
 
   const filtered = useMemo(() => {
     return listings.filter(l => {
+      if (listingType !== '전체' && l.listing_type !== listingType) return false;
       if (category !== '전체' && l.category !== category) return false;
       if (sido !== '전체' && parseSido(l.location) !== sido) return false;
       if (sigungu !== '전체' && parseSigungu(l.location) !== sigungu) return false;
       return true;
     });
-  }, [listings, category, sido, sigungu]);
+  }, [listings, listingType, category, sido, sigungu]);
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -67,6 +69,34 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
     <>
       {/* 필터 바 */}
       <div style={{ background: '#fff', borderRadius: 12, padding: '16px 20px', marginBottom: 20, boxShadow: '0 1px 6px rgba(0,0,0,0.06)', display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+
+        {/* 매물 구분 필터 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#374151', whiteSpace: 'nowrap' }}>구분</span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {LISTING_TYPES.map(t => {
+              const isActive = listingType === t;
+              const color = t === '청약중' ? '#059669' : t === '잔여세대' ? '#d97706' : '#1d4ed8';
+              return (
+                <button
+                  key={t}
+                  onClick={() => { setListingType(t); setPage(1); }}
+                  style={{
+                    padding: '6px 14px', borderRadius: 20, border: 'none', fontSize: 13,
+                    fontWeight: isActive ? 700 : 400,
+                    background: isActive ? color : '#f1f5f9',
+                    color: isActive ? '#fff' : '#374151',
+                    cursor: 'pointer', transition: 'all 0.15s',
+                  }}
+                >
+                  {t === '청약중' ? '🟢 청약중' : t === '잔여세대' ? '🟡 잔여세대' : t}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div style={{ width: 1, height: 24, background: '#e5e7eb' }} />
 
         {/* 지역 필터 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -145,11 +175,19 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 48 }}>🏢</div>
                 )}
-                {item.highlight && (
-                  <div style={{ position: 'absolute', top: 10, left: 10, background: '#f59e0b', color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12 }}>
-                    ⭐ 주목 단지
+                <div style={{ position: 'absolute', top: 10, left: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <div style={{
+                    background: item.listing_type === '청약중' ? '#059669' : '#d97706',
+                    color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12,
+                  }}>
+                    {item.listing_type === '청약중' ? '🟢 청약중' : '🟡 잔여세대'}
                   </div>
-                )}
+                  {item.highlight && (
+                    <div style={{ background: '#f59e0b', color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12 }}>
+                      ⭐ 주목 단지
+                    </div>
+                  )}
+                </div>
                 <div style={{ position: 'absolute', top: 10, right: 10, background: '#1d4ed8', color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12 }}>
                   {item.category}
                 </div>
