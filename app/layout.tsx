@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 
 const BASE_URL = 'https://www.mk-land.kr';
 
@@ -45,11 +46,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ko">
       <head>
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6751517797498225"
-          crossOrigin="anonymous"
-        />
         <meta name="google-adsense-account" content="ca-pub-6751517797498225" />
         <meta name="theme-color" content="#1d4ed8" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -61,6 +57,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         }} />
       </head>
       <body>
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6751517797498225"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
         {children}
         <footer style={{ background: '#f9fafb', borderTop: '1px solid #e5e7eb', padding: '24px 16px', marginTop: 40 }}>
           <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'space-between', alignItems: 'center' }}>
