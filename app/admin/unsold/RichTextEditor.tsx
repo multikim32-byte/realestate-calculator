@@ -13,6 +13,20 @@ interface Props {
   onChange: (html: string) => void;
 }
 
+// 이미지 정렬을 위해 style 속성을 지원하도록 Image 확장
+const AlignableImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      style: {
+        default: 'display:block;margin:12px 0;max-width:100%;border-radius:8px;',
+        parseHTML: (el) => el.getAttribute('style'),
+        renderHTML: ({ style }) => (style ? { style } : {}),
+      },
+    };
+  },
+});
+
 const btn = (active: boolean): React.CSSProperties => ({
   padding: '5px 10px',
   borderRadius: 6,
@@ -32,7 +46,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
     extensions: [
       StarterKit,
       Underline,
-      Image.configure({ inline: false, allowBase64: false }),
+      AlignableImage.configure({ inline: false, allowBase64: false }),
       Link.configure({ openOnClick: false }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
     ],
@@ -57,9 +71,38 @@ export default function RichTextEditor({ value, onChange }: Props) {
     const res = await fetch('/api/admin/unsold/upload', { method: 'POST', body: fd });
     const data = await res.json();
     if (data.url) {
-      editor.chain().focus().setImage({ src: data.url, alt: file.name }).run();
+      editor.chain().focus().setImage({
+        src: data.url,
+        alt: file.name,
+        // @ts-ignore
+        style: 'display:block;margin:12px 0;max-width:100%;border-radius:8px;',
+      }).run();
     }
     e.target.value = '';
+  };
+
+  // 정렬 버튼: 이미지 선택 시 이미지 정렬, 아니면 텍스트 정렬
+  const handleAlign = (align: 'left' | 'center' | 'right') => {
+    if (editor.isActive('image')) {
+      const styleMap = {
+        left:   'display:block;margin:12px 0;max-width:100%;border-radius:8px;',
+        center: 'display:block;margin:12px auto;max-width:100%;border-radius:8px;',
+        right:  'display:block;margin:12px 0 12px auto;max-width:100%;border-radius:8px;',
+      };
+      editor.chain().focus().updateAttributes('image', { style: styleMap[align] }).run();
+    } else {
+      editor.chain().focus().setTextAlign(align).run();
+    }
+  };
+
+  const isAlignActive = (align: 'left' | 'center' | 'right') => {
+    if (editor.isActive('image')) {
+      const attrs = editor.getAttributes('image');
+      if (align === 'center') return (attrs.style ?? '').includes('margin:12px auto');
+      if (align === 'right') return (attrs.style ?? '').includes('margin:12px 0 12px auto');
+      return !((attrs.style ?? '').includes('auto'));
+    }
+    return editor.isActive({ textAlign: align });
   };
 
   return (
@@ -77,10 +120,10 @@ export default function RichTextEditor({ value, onChange }: Props) {
         <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} style={btn(editor.isActive('heading', { level: 3 }))}>H3</button>
         <div style={{ width: 1, background: '#e5e7eb', margin: '0 4px' }} />
 
-        {/* 정렬 */}
-        <button type="button" onClick={() => editor.chain().focus().setTextAlign('left').run()} style={btn(editor.isActive({ textAlign: 'left' }))}>≡</button>
-        <button type="button" onClick={() => editor.chain().focus().setTextAlign('center').run()} style={btn(editor.isActive({ textAlign: 'center' }))}>≡</button>
-        <button type="button" onClick={() => editor.chain().focus().setTextAlign('right').run()} style={btn(editor.isActive({ textAlign: 'right' }))}>≡</button>
+        {/* 정렬 (텍스트 + 이미지 공용) */}
+        <button type="button" onClick={() => handleAlign('left')}   style={btn(isAlignActive('left'))}  title="왼쪽 정렬">◀≡</button>
+        <button type="button" onClick={() => handleAlign('center')} style={btn(isAlignActive('center'))} title="가운데 정렬">≡</button>
+        <button type="button" onClick={() => handleAlign('right')}  style={btn(isAlignActive('right'))}  title="오른쪽 정렬">≡▶</button>
         <div style={{ width: 1, background: '#e5e7eb', margin: '0 4px' }} />
 
         {/* 목록 */}
@@ -103,6 +146,13 @@ export default function RichTextEditor({ value, onChange }: Props) {
         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
       </div>
 
+      {/* 이미지 선택 시 정렬 힌트 */}
+      {editor.isActive('image') && (
+        <div style={{ padding: '6px 12px', background: '#fffbeb', borderBottom: '1px solid #fde68a', fontSize: 12, color: '#92400e' }}>
+          💡 이미지가 선택됨 — 위 정렬 버튼(◀≡ / ≡ / ≡▶)으로 이미지 위치를 조정하세요
+        </div>
+      )}
+
       {/* 에디터 본문 */}
       <EditorContent
         editor={editor}
@@ -119,7 +169,8 @@ export default function RichTextEditor({ value, onChange }: Props) {
         .ProseMirror ol { padding-left: 20px; margin: 8px 0; }
         .ProseMirror li { margin-bottom: 4px; }
         .ProseMirror hr { border: none; border-top: 1px solid #e5e7eb; margin: 16px 0; }
-        .ProseMirror img { max-width: 100%; border-radius: 8px; margin: 12px 0; display: block; }
+        .ProseMirror img { max-width: 100%; border-radius: 8px; margin: 12px 0; display: block; cursor: pointer; }
+        .ProseMirror img.ProseMirror-selectednode { outline: 3px solid #1d4ed8; border-radius: 8px; }
         .ProseMirror p.is-editor-empty:first-child::before {
           content: attr(data-placeholder);
           color: #9ca3af;
