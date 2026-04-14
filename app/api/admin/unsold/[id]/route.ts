@@ -9,14 +9,15 @@ async function isAdmin() {
 }
 
 // PUT: 매물 수정
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!await isAdmin()) return NextResponse.json({ error: '권한 없음' }, { status: 401 });
+  const { id } = await params;
   const body = await req.json();
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('unsold_listings')
     .update({ ...body, updated_at: new Date().toISOString() })
-    .eq('id', params.id)
+    .eq('id', id)
     .select()
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -24,10 +25,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 // DELETE: 매물 삭제
-export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!await isAdmin()) return NextResponse.json({ error: '권한 없음' }, { status: 401 });
+  const { id } = await params;
   const supabase = createAdminClient();
-  const { error } = await supabase.from('unsold_listings').delete().eq('id', params.id);
+  const { error } = await supabase.from('unsold_listings').delete().eq('id', id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
