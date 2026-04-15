@@ -10,6 +10,30 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://www.mk-land.kr' },
 };
 
+const orgJsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      name: 'mk-land.kr',
+      url: 'https://www.mk-land.kr',
+      description: '전국 아파트·오피스텔 청약 정보, 실거래가 조회, 부동산 계산기를 무료로 제공합니다.',
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: { '@type': 'EntryPoint', urlTemplate: 'https://www.mk-land.kr/?q={search_term_string}' },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+    {
+      '@type': 'Organization',
+      name: 'mk-land.kr',
+      url: 'https://www.mk-land.kr',
+      logo: 'https://www.mk-land.kr/icon-192.png',
+      contactPoint: { '@type': 'ContactPoint', contactType: 'customer support', email: 'multikim@naver.com' },
+    },
+  ],
+};
+
 export default function Home({ searchParams }: { searchParams: Record<string, string> }) {
   // 구버전 공유 링크 /?tab=loan&... → /calculator?tab=loan&... 로 redirect
   if (searchParams.tab) {
@@ -18,6 +42,7 @@ export default function Home({ searchParams }: { searchParams: Record<string, st
   }
   return (
     <div>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
       <GlobalNav />
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
@@ -43,6 +68,27 @@ export default function Home({ searchParams }: { searchParams: Record<string, st
                 <a key={r} href={`/region/${encodeURIComponent(r)}`}
                   style={{ padding: "6px 14px", background: "#fff", border: "1px solid #e5e7eb", borderRadius: 20, textDecoration: "none", fontSize: 13, color: "#374151", fontWeight: 500, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
                   {r}
+                </a>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        {/* 인기 가이드 */}
+        <div style={{ maxWidth: 860, margin: "0 auto", padding: "0 16px 0" }}>
+          <section style={{ marginBottom: 40 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: "#1e293b", marginBottom: 12 }}>📚 인기 부동산 가이드</h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
+              {[
+                { href: "/apt/apartment-subscription-guide-2026", label: "2026 청약 완벽 가이드" },
+                { href: "/apt/acquisition-tax-guide", label: "취득세 계산 가이드" },
+                { href: "/apt/mortgage-loan-guide", label: "주택담보대출 가이드" },
+                { href: "/apt/new-apartment-subscription-score", label: "청약 가점 높이는 법" },
+                { href: "/apt/fixed-vs-variable-rate-2026", label: "고정 vs 변동금리" },
+                { href: "/apt/didimdol-loan-guide", label: "디딤돌대출 가이드" },
+              ].map(({ href, label }) => (
+                <a key={href} href={href} style={{ padding: "10px 14px", background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, textDecoration: "none", fontSize: 13, color: "#374151", fontWeight: 500, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+                  {label} →
                 </a>
               ))}
             </div>

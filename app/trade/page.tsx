@@ -73,13 +73,33 @@ export default async function TradePage() {
             </div>
           </section>
 
-          <section style={{ padding: 20, background: '#f9fafb', borderRadius: 12, border: '1px solid #e5e7eb' }}>
+          <section style={{ padding: 20, background: '#f9fafb', borderRadius: 12, border: '1px solid #e5e7eb', marginBottom: 24 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1e3a5f', marginBottom: 10 }}>유의사항</h2>
             <p style={{ fontSize: 13, lineHeight: 1.8, color: '#6b7280' }}>
               본 데이터는 국토교통부 실거래가 공개시스템 API를 통해 제공되며, 신고 기한(계약 후 30일) 관계로
               최신 거래 일부가 반영되지 않을 수 있습니다. 거래 취소 건은 제외 처리됩니다.
               투자 판단의 참고 자료로만 활용하시고, 최종 결정은 전문가와 상담하세요.
             </p>
+          </section>
+
+          {/* 관련 도구 & 가이드 */}
+          <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+            <a href="/calculator?tab=loan" style={{ padding: '16px 20px', background: '#eff6ff', borderRadius: 12, textDecoration: 'none', border: '1px solid #bfdbfe' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#1d4ed8', marginBottom: 4 }}>🏦 대출 상환 계산기</div>
+              <div style={{ fontSize: 12, color: '#6b7280' }}>월 납입금·총 이자 바로 계산</div>
+            </a>
+            <a href="/calculator?tab=acquisition" style={{ padding: '16px 20px', background: '#fffbeb', borderRadius: 12, textDecoration: 'none', border: '1px solid #fde68a' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#92400e', marginBottom: 4 }}>🧾 취득세 계산기</div>
+              <div style={{ fontSize: 12, color: '#6b7280' }}>주택 수·가격별 세금 확인</div>
+            </a>
+            <a href="/apt/mortgage-loan-guide" style={{ padding: '16px 20px', background: '#f0fdf4', borderRadius: 12, textDecoration: 'none', border: '1px solid #bbf7d0' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#166534', marginBottom: 4 }}>📖 주담대 완벽 가이드</div>
+              <div style={{ fontSize: 12, color: '#6b7280' }}>LTV·DSR 한도 총정리</div>
+            </a>
+            <a href="/apt/capital-gains-tax-real-estate" style={{ padding: '16px 20px', background: '#fdf4ff', borderRadius: 12, textDecoration: 'none', border: '1px solid #e9d5ff' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#7c3aed', marginBottom: 4 }}>📊 양도소득세 가이드</div>
+              <div style={{ fontSize: 12, color: '#6b7280' }}>매도 전 세금 미리 확인</div>
+            </a>
           </section>
         </div>
       </div>
