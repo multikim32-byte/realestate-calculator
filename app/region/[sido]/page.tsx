@@ -17,7 +17,8 @@ const REGION_LABELS: Record<string, string> = {
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: Promise<{ sido: string }> }): Promise<Metadata> {
-  const { sido } = await params;
+  const { sido: rawSido } = await params;
+  const sido = decodeURIComponent(rawSido);
   const fullName = REGION_LABELS[sido];
   if (!fullName) return { title: '지역 정보 | mk-land.kr' };
   return {
@@ -39,7 +40,8 @@ function fmt만원(v: number) {
 }
 
 export default async function RegionPage({ params }: { params: Promise<{ sido: string }> }) {
-  const { sido } = await params;
+  const { sido: rawSido } = await params;
+  const sido = decodeURIComponent(rawSido);
   const fullName = REGION_LABELS[sido];
   if (!fullName) notFound();
 
