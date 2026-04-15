@@ -92,7 +92,11 @@
       "Bash(ls c:/Users/김경래소장/realestate-calculator/app/sitemap*)",
       "Bash(cat next.config.ts)",
       "Bash(cat next.config.js)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(xargs wc:*)",
+      "WebFetch(domain:www.mk-land.kr)",
+      "Bash(cat next.config.mjs)",
+      "Bash(npx vercel:*)"
     ],
     "additionalDirectories": [
       "c:\\Users\\김경래소장\\realestate-calculator\\app\\sale\\[id]",
@@ -100,7 +104,8 @@
       "c:\\Users\\김경래소장\\realestate-calculator",
       "c:\\Users\\김경래소장\\realestate-calculator\\app\\api\\admin\\unsold",
       "c:\\Users\\김경래소장\\realestate-calculator\\app\\unsold",
-      "c:\\Users\\김경래소장\\realestate-calculator\\app\\admin\\unsold\\[id]"
+      "c:\\Users\\김경래소장\\realestate-calculator\\app\\admin\\unsold\\[id]",
+      "c:\\Users\\김경래소장\\realestate-calculator\\app\\region"
     ]
   }
 }

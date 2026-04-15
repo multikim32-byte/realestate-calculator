@@ -2,4 +2,3 @@ User-agent: *
 Allow: /
 
 Sitemap: https://www.mk-land.kr/sitemap.xml
-Sitemap: https://www.mk-land.kr/unsold/sitemap.xml
