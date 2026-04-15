@@ -10,8 +10,8 @@ export default function GlobalNav() {
         <Link href="/calendar" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>📅 청약달력</Link>
         <Link href="/trade" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>📊 실거래가</Link>
         <Link href="/calculator" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>🏠 계산기</Link>
-        {/* 미분양특가 — 준비 중 (테스트: /unsold) */}
-<Link href="/apt" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>📰 부동산정보</Link>
+        <Link href="/unsold" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>🏷️ 분양정보</Link>
+        <Link href="/apt" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>📰 부동산정보</Link>
         <Link href="/contact" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>📬 문의</Link>
         <ShareButton />
         <InstallButton />
