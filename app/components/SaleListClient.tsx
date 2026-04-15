@@ -74,6 +74,25 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
   const [search, setSearch] = useState('');
   const [displayCount, setDisplayCount] = useState(20);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [favIds, setFavIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    try {
+      const favs = JSON.parse(localStorage.getItem('mk_favorites') || '[]');
+      setFavIds(new Set(favs.filter((f: any) => f.type === 'sale').map((f: any) => f.id)));
+    } catch {}
+  }, []);
+
+  function toggleFav(e: React.MouseEvent, item: SaleItem) {
+    e.stopPropagation();
+    const favs: any[] = JSON.parse(localStorage.getItem('mk_favorites') || '[]');
+    const exists = favs.some(f => f.id === item.id && f.type === 'sale');
+    const next = exists
+      ? favs.filter(f => !(f.id === item.id && f.type === 'sale'))
+      : [...favs, { id: item.id, type: 'sale', name: item.name, location: item.location || item.region, savedAt: new Date().toISOString() }];
+    try { localStorage.setItem('mk_favorites', JSON.stringify(next)); } catch {}
+    setFavIds(prev => { const s = new Set(prev); exists ? s.delete(item.id) : s.add(item.id); return s; });
+  }
 
   function updateUrl(params: Record<string, string>) {
     const next = new URLSearchParams(window.location.search);
@@ -317,6 +336,13 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
                         {item.recruitType === '선착순' && (
                           <span style={{ fontSize: 11, background: '#fff0f6', color: '#c026d3', padding: '2px 7px', borderRadius: 6, border: '1px solid #f9a8d4' }}>선착순</span>
                         )}
+                        <button
+                          onClick={e => toggleFav(e, item)}
+                          title={favIds.has(item.id) ? '관심 단지 해제' : '관심 단지 저장'}
+                          style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: favIds.has(item.id) ? '#f59e0b' : '#d1d5db', padding: '0 2px', lineHeight: 1, flexShrink: 0 }}
+                        >
+                          {favIds.has(item.id) ? '★' : '☆'}
+                        </button>
                       </div>
 
                       <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>
