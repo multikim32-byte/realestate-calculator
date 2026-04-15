@@ -34,6 +34,21 @@ export default function Home({ searchParams }: { searchParams: Record<string, st
           />
         </Suspense>
 
+        {/* 지역별 모아보기 */}
+        <div style={{ maxWidth: 860, margin: "0 auto", padding: "0 16px 0" }}>
+          <section style={{ marginBottom: 40 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: "#1e293b", marginBottom: 12 }}>🗺 지역별 청약·분양 모아보기</h2>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {['서울','경기','인천','부산','대구','광주','대전','울산','세종','강원','충북','충남','전북','전남','경북','경남','제주'].map(r => (
+                <a key={r} href={`/region/${encodeURIComponent(r)}`}
+                  style={{ padding: "6px 14px", background: "#fff", border: "1px solid #e5e7eb", borderRadius: 20, textDecoration: "none", fontSize: 13, color: "#374151", fontWeight: 500, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                  {r}
+                </a>
+              ))}
+            </div>
+          </section>
+        </div>
+
         {/* 청약정보 안내 */}
         <div style={{ maxWidth: 860, margin: "0 auto", padding: "0 16px 60px" }}>
           <section style={{ marginTop: 48, marginBottom: 40 }}>

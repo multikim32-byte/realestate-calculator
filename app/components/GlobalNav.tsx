@@ -11,6 +11,7 @@ export default function GlobalNav() {
         <Link href="/trade" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>📊 실거래가</Link>
         <Link href="/calculator" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>🏠 계산기</Link>
         <Link href="/unsold" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>🏷️ 분양정보</Link>
+        <Link href="/region/서울" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>🗺 지역별</Link>
         <Link href="/apt" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>📰 부동산정보</Link>
         <Link href="/favorites" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>⭐ 관심단지</Link>
         <Link href="/contact" style={{ fontSize: 13, color: '#374151', textDecoration: 'none', fontWeight: 600 }}>📬 문의</Link>
