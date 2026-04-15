@@ -15,31 +15,23 @@ interface Props {
 
 // ── 주소 → LAWD_CD 추출 ────────────────────────────────────────────────────
 
-function findLawdCd(location: string): { code: string; areaName: string } | null {
+function findLawdCd(location: string): { code: string; areaName: string; sido: string } | null {
   const loc = location.replace(/\s/g, '');
-  // 행정 구분자 (시도군구 뒤에 오는 글자는 경계로 허용)
   const adminSuffix = new Set(['시', '도', '군', '구', '읍', '면', '동', '리']);
 
-  // 긴 이름부터 매칭 → "북구"보다 "천안 서북구" 먼저 검사
-  const entries = Object.values(LAWD_CODE_MAP)
-    .flat()
-    .map(e => ({ ...e, bare: e.name.replace(/\s/g, '') }))
+  const entries = (Object.entries(LAWD_CODE_MAP) as [string, { name: string; code: string }[]][])
+    .flatMap(([sido, list]) => list.map(e => ({ ...e, sido, bare: e.name.replace(/\s/g, '') })))
     .sort((a, b) => b.bare.length - a.bare.length);
 
-  for (const { name, code, bare } of entries) {
-    // 1차: 직접 포함 검사 (앞 글자가 행정 구분자이거나 없어야 진짜 매칭)
-    // → "북구"가 "서북구" 안에서 오매칭되는 것 방지 (앞 글자 "서"는 행정 구분자 아님)
+  for (const { name, code, bare, sido } of entries) {
     const idx = loc.indexOf(bare);
     if (idx !== -1) {
       const prev = loc[idx - 1] ?? '';
-      if (prev === '' || adminSuffix.has(prev)) return { code, areaName: name };
+      if (prev === '' || adminSuffix.has(prev)) return { code, areaName: name, sido };
     }
-
-    // 2차: 공백 포함 이름 ("용인 처인구", "천안 서북구") → 각 단어 개별 포함 확인
-    // 직접 매칭이 "시" 때문에 실패하는 경우를 커버
     if (name.includes(' ')) {
       const parts = name.split(' ');
-      if (parts.every(p => loc.includes(p))) return { code, areaName: name };
+      if (parts.every(p => loc.includes(p))) return { code, areaName: name, sido };
     }
   }
   return null;
@@ -93,6 +85,7 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
   const [trades, setTrades] = useState<TradeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [areaName, setAreaName] = useState('');
+  const [sido, setSido] = useState('');
   const [noKey, setNoKey] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
@@ -104,6 +97,7 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
       return;
     }
     setAreaName(found.areaName);
+    setSido(found.sido);
     loadTrades(found.code);
   }, [location]);
 
@@ -174,7 +168,7 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span style={{ fontSize: 12, color: '#9ca3af' }}>{areaName} · 최근 3개월</span>
           <Link
-            href="/trade"
+            href={sido && areaName ? `/trade?sido=${encodeURIComponent(sido)}&sigungu=${encodeURIComponent(areaName)}` : '/trade'}
             style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '1px solid #e5e7eb', color: '#1d4ed8', textDecoration: 'none' }}
           >
             실거래가 상세 →
