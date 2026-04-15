@@ -306,6 +306,7 @@ export default function SaleDetailClient() {
             pblancNo={item.pblancNo}
             status={item.status}
             buildingType={item.buildingType}
+            recruitType={item.recruitType}
           />
         )}
 
