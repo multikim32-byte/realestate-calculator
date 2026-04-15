@@ -1,9 +1,39 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { CATEGORIES, LISTING_TYPES } from '@/lib/supabase';
 import type { UnsoldListing } from '@/lib/supabase';
+
+const FAV_KEY = 'mk_favorites';
+function loadFavs() {
+  try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); } catch { return []; }
+}
+function toggleFavStorage(item: UnsoldListing) {
+  const favs = loadFavs();
+  const exists = favs.some((f: any) => f.id === item.id && f.type === 'unsold');
+  const next = exists
+    ? favs.filter((f: any) => !(f.id === item.id && f.type === 'unsold'))
+    : [...favs, { id: item.id, type: 'unsold', name: item.name, location: item.location, savedAt: new Date().toISOString() }];
+  try { localStorage.setItem(FAV_KEY, JSON.stringify(next)); } catch {}
+  return !exists;
+}
+
+function FavBtn({ item }: { item: UnsoldListing }) {
+  const [fav, setFav] = useState(false);
+  useEffect(() => {
+    setFav(loadFavs().some((f: any) => f.id === item.id && f.type === 'unsold'));
+  }, [item.id]);
+  return (
+    <button
+      onClick={e => { e.preventDefault(); e.stopPropagation(); setFav(toggleFavStorage(item)); }}
+      title={fav ? '관심 단지 해제' : '관심 단지 저장'}
+      style={{ position: 'absolute', top: 10, right: 46, zIndex: 2, background: 'rgba(0,0,0,0.35)', border: 'none', borderRadius: 20, padding: '3px 8px', cursor: 'pointer', fontSize: 16, color: fav ? '#f59e0b' : '#fff', lineHeight: 1 }}
+    >
+      {fav ? '★' : '☆'}
+    </button>
+  );
+}
 
 function fmt만원(v: number) {
   if (v >= 100000000) return `${(v / 100000000).toFixed(1)}억`;
@@ -151,7 +181,9 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
       {/* 카드 그리드 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
         {paged.map(item => (
-          <Link key={item.id} href={`/unsold/${item.id}`} style={{ textDecoration: 'none' }}>
+          <div key={item.id} style={{ position: 'relative' }}>
+            <FavBtn item={item} />
+          <Link href={`/unsold/${item.id}`} style={{ textDecoration: 'none' }}>
             <div
               style={{
                 background: '#fff', borderRadius: 14, overflow: 'hidden',
@@ -222,6 +254,7 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
               </div>
             </div>
           </Link>
+          </div>
         ))}
       </div>
 

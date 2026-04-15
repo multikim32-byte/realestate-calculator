@@ -3,6 +3,12 @@
 import { SaleItem } from '@/lib/types';
 import { MapPin, Calendar, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+
+const FAV_KEY = 'mk_favorites';
+function loadFavs() {
+  try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); } catch { return []; }
+}
 
 interface SaleCardProps {
   item: SaleItem;
@@ -31,14 +37,28 @@ function formatPrice(price: number) {
 export default function SaleCard({ item }: SaleCardProps) {
   const floors = (item as any).floors;
   const router = useRouter();
+  const [fav, setFav] = useState(false);
+
+  useEffect(() => {
+    setFav(loadFavs().some((f: any) => f.id === item.id && f.type === 'sale'));
+  }, [item.id]);
 
   function handleClick() {
     try {
       sessionStorage.setItem(`sale_item_${item.id}`, JSON.stringify(item));
-    } catch {
-      // sessionStorage 실패 시 무시
-    }
+    } catch {}
     router.push(`/sale/${item.id}`);
+  }
+
+  function toggleFav(e: React.MouseEvent) {
+    e.stopPropagation();
+    const favs = loadFavs();
+    const exists = favs.some((f: any) => f.id === item.id && f.type === 'sale');
+    const next = exists
+      ? favs.filter((f: any) => !(f.id === item.id && f.type === 'sale'))
+      : [...favs, { id: item.id, type: 'sale', name: item.name, location: item.location || item.region, savedAt: new Date().toISOString() }];
+    try { localStorage.setItem(FAV_KEY, JSON.stringify(next)); } catch {}
+    setFav(!exists);
   }
 
   return (
@@ -55,6 +75,13 @@ export default function SaleCard({ item }: SaleCardProps) {
           <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
             {item.buildingType}
           </span>
+          <button
+            onClick={toggleFav}
+            title={fav ? '관심 단지 해제' : '관심 단지 저장'}
+            style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, lineHeight: 1, color: fav ? '#f59e0b' : '#d1d5db', padding: '0 2px' }}
+          >
+            {fav ? '★' : '☆'}
+          </button>
         </div>
         <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-2 line-clamp-2">
           {item.name}
