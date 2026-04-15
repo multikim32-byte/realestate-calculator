@@ -28,7 +28,7 @@ function FavBtn({ item }: { item: UnsoldListing }) {
     <button
       onClick={e => { e.preventDefault(); e.stopPropagation(); setFav(toggleFavStorage(item)); }}
       title={fav ? '관심 단지 해제' : '관심 단지 저장'}
-      style={{ position: 'absolute', top: 10, right: 46, zIndex: 2, background: 'rgba(0,0,0,0.35)', border: 'none', borderRadius: 20, padding: '3px 8px', cursor: 'pointer', fontSize: 16, color: fav ? '#f59e0b' : '#fff', lineHeight: 1 }}
+      style={{ position: 'absolute', bottom: 14, right: 14, zIndex: 2, background: 'none', border: 'none', padding: '2px 4px', cursor: 'pointer', fontSize: 22, color: fav ? '#f59e0b' : '#cbd5e1', lineHeight: 1 }}
     >
       {fav ? '★' : '☆'}
     </button>
