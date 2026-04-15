@@ -86,8 +86,29 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
 
   const allRegions = Object.keys(REGION_LABELS);
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: '홈', item: 'https://www.mk-land.kr' },
+          { '@type': 'ListItem', position: 2, name: `${sido} 청약·분양 모아보기`, item: `https://www.mk-land.kr/region/${encodeURIComponent(sido)}` },
+        ],
+      },
+      {
+        '@type': 'CollectionPage',
+        name: `${sido} 청약·분양 모아보기`,
+        description: `${fullName} 아파트 청약 일정, 미분양 분양 매물, 실거래가를 한 페이지에서 확인하세요.`,
+        url: `https://www.mk-land.kr/region/${encodeURIComponent(sido)}`,
+        isPartOf: { '@type': 'WebSite', url: 'https://www.mk-land.kr', name: 'mk-land.kr' },
+      },
+    ],
+  };
+
   return (
     <div style={{ minHeight: '100vh', background: '#f0f4f9' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <GlobalNav />
 
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 16px 64px' }}>

@@ -53,8 +53,46 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
 
   if (!item) notFound();
 
+  const priceFrom = item.min_price ?? item.max_price;
+  const priceTo = item.max_price ?? item.min_price;
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: '홈', item: 'https://www.mk-land.kr' },
+          { '@type': 'ListItem', position: 2, name: '분양정보', item: 'https://www.mk-land.kr/unsold' },
+          { '@type': 'ListItem', position: 3, name: item.name, item: `https://www.mk-land.kr/unsold/${id}` },
+        ],
+      },
+      {
+        '@type': 'Residence',
+        name: item.name,
+        description: item.benefit ?? `${item.location} ${item.category} 분양 매물`,
+        url: `https://www.mk-land.kr/unsold/${id}`,
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: item.location,
+          addressCountry: 'KR',
+        },
+        ...(item.thumbnail_url ? { image: item.thumbnail_url } : {}),
+        ...(priceFrom ? {
+          offers: {
+            '@type': 'Offer',
+            priceCurrency: 'KRW',
+            price: priceFrom,
+            ...(priceTo && priceTo !== priceFrom ? { highPrice: priceTo, lowPrice: priceFrom, '@type': 'AggregateOffer' } : {}),
+          },
+        } : {}),
+        ...(item.total_units ? { numberOfRooms: item.total_units } : {}),
+      },
+    ],
+  };
+
   return (
     <div style={{ minHeight: '100vh', background: '#f0f4f9' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <GlobalNav />
 
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px 16px 64px' }}>
