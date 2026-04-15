@@ -305,6 +305,7 @@ export default function SaleDetailPage() {
             houseManageNo={item.houseManageNo}
             pblancNo={item.pblancNo}
             status={item.status}
+            buildingType={item.buildingType}
           />
         )}
 

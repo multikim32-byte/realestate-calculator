@@ -19,6 +19,7 @@ interface Props {
   houseManageNo: string;
   pblancNo: string;
   status: string;
+  buildingType?: string;
 }
 
 function RatioBar({ ratio }: { ratio: string }) {
@@ -34,7 +35,19 @@ function RatioBar({ ratio }: { ratio: string }) {
   );
 }
 
-export default function CompetitionRateSection({ houseManageNo, pblancNo, status }: Props) {
+function getApplyhomeUrl(buildingType?: string) {
+  if (!buildingType) return 'https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancListView.do';
+  const t = buildingType.trim();
+  if (t.includes('잔여') || t.includes('잔여세대')) {
+    return 'https://www.applyhome.co.kr/ai/aia/selectAPTRemndrLttotPblancListView.do';
+  }
+  if (t.includes('오피스텔') || t.includes('도시형') || t.includes('민간임대') || t.includes('생활주택')) {
+    return 'https://www.applyhome.co.kr/ai/aia/selectOtherLttotPblancListView.do';
+  }
+  return 'https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancListView.do';
+}
+
+export default function CompetitionRateSection({ houseManageNo, pblancNo, status, buildingType }: Props) {
   const [rows, setRows]       = useState<RatioRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasData, setHasData] = useState(false);
@@ -59,7 +72,7 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, status
     return (
       <div style={{ marginTop: 16 }}>
         <a
-          href="https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancListView.do"
+          href={getApplyhomeUrl(buildingType)}
           target="_blank"
           rel="noopener noreferrer"
           style={{
