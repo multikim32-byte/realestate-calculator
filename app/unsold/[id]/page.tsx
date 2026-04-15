@@ -197,12 +197,10 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
                 <div style={{ marginTop: 28, padding: '20px', background: '#f8fafc', borderRadius: 12, border: '1px solid #e2e8f0' }}>
                   <p style={{ fontSize: 12, color: '#6b7280', margin: '0 0 12px', fontWeight: 600 }}>🔗 관련 도구 바로가기</p>
                   <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                    {item.min_price && (
-                      <Link href={`/calculator?tab=loan&amt=${item.min_price}`}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 18px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#1d4ed8', textDecoration: 'none' }}>
-                        🏦 대출 계산하기
-                      </Link>
-                    )}
+                    <Link href="/calculator?tab=loan"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 18px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#1d4ed8', textDecoration: 'none' }}>
+                      🏦 대출 계산하기
+                    </Link>
                     {item.min_price && (
                       <Link href={`/calculator?tab=acquisition&price=${item.min_price}`}
                         style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 18px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#92400e', textDecoration: 'none' }}>
