@@ -13,7 +13,7 @@ export default function PrivacyPage() {
       <GlobalNav />
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px', lineHeight: 1.8, color: '#374151' }}>
         <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>개인정보처리방침</h1>
-        <p style={{ color: '#6b7280', marginBottom: 32 }}>최종 수정일: 2026년 4월 10일</p>
+        <p style={{ color: '#6b7280', marginBottom: 32 }}>최종 수정일: 2026년 4월 15일</p>
 
         <p>청약정보 mk-land.kr(이하 "서비스")는 이용자의 개인정보를 소중히 여기며, 「개인정보 보호법」 및 관련 법령을 준수합니다. 본 방침은 서비스가 수집하는 정보의 종류와 이용 목적, 제3자 공유 여부 등을 안내합니다.</p>
 
@@ -36,13 +36,43 @@ export default function PrivacyPage() {
         </ul>
         <p style={{ marginTop: 8 }}>브라우저 설정을 통해 쿠키 저장을 거부할 수 있으나, 일부 기능이 제한될 수 있습니다.</p>
 
-        <h2 style={{ fontSize: 18, fontWeight: 700, marginTop: 32, marginBottom: 12 }}>3. Google AdSense 및 광고</h2>
-        <p>본 서비스는 Google AdSense를 통해 광고를 게재합니다. Google은 쿠키를 사용하여 이용자의 사이트 방문 기록을 바탕으로 맞춤 광고를 표시할 수 있습니다.</p>
-        <ul style={{ paddingLeft: 20, marginTop: 8 }}>
-          <li>Google의 광고 개인정보 보호 정책: <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer" style={{ color: '#1d4ed8' }}>policies.google.com/technologies/ads</a></li>
-          <li>Google 개인정보 보호 센터: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#1d4ed8' }}>policies.google.com/privacy</a></li>
+        <h2 style={{ fontSize: 18, fontWeight: 700, marginTop: 32, marginBottom: 12 }}>3. Google AdSense 및 맞춤 광고</h2>
+        <p>본 서비스는 Google AdSense를 통해 광고를 게재합니다. Google AdSense는 <strong>DART 쿠키</strong>를 사용하여 이용자가 본 서비스 및 인터넷 상의 다른 사이트를 방문한 기록을 바탕으로 관심 기반(맞춤형) 광고를 표시합니다.</p>
+        <ul style={{ paddingLeft: 20, marginTop: 8, lineHeight: 2 }}>
+          <li>Google은 광고 파트너사로서 본 서비스에 광고를 게재하며, 이 과정에서 쿠키를 사용합니다.</li>
+          <li>DART 쿠키는 이용자의 IP 주소, 브라우저 정보, 방문 페이지 정보 등을 수집할 수 있습니다.</li>
+          <li>수집된 정보는 광고 노출 최적화 목적으로만 사용되며, 이용자를 직접 식별하는 데 사용되지 않습니다.</li>
         </ul>
-        <p style={{ marginTop: 8 }}>이용자는 <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer" style={{ color: '#1d4ed8' }}>Google 광고 설정</a>에서 관심 기반 광고를 비활성화할 수 있습니다.</p>
+
+        <p style={{ marginTop: 16, fontWeight: 600 }}>맞춤 광고 비활성화 방법</p>
+        <ul style={{ paddingLeft: 20, marginTop: 8, lineHeight: 2 }}>
+          <li>
+            <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer" style={{ color: '#1d4ed8' }}>
+              aboutads.info/choices
+            </a>
+            {' '}— 광고주 자율 규제 프로그램(DAA)을 통한 맞춤 광고 거부
+          </li>
+          <li>
+            <a href="https://www.networkadvertising.org/choices/" target="_blank" rel="noopener noreferrer" style={{ color: '#1d4ed8' }}>
+              networkadvertising.org/choices
+            </a>
+            {' '}— 네트워크 광고 이니셔티브(NAI)를 통한 광고 거부
+          </li>
+          <li>
+            <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer" style={{ color: '#1d4ed8' }}>
+              Google 광고 설정
+            </a>
+            {' '}— Google 계정을 통한 맞춤 광고 직접 관리
+          </li>
+        </ul>
+
+        <p style={{ marginTop: 12 }}>
+          Google의 광고 및 개인정보 보호 정책에 대한 자세한 내용은{' '}
+          <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer" style={{ color: '#1d4ed8' }}>
+            policies.google.com/technologies/ads
+          </a>
+          에서 확인하실 수 있습니다.
+        </p>
 
         <h2 style={{ fontSize: 18, fontWeight: 700, marginTop: 32, marginBottom: 12 }}>4. 제3자 정보 제공</h2>
         <p>본 서비스는 이용자의 개인정보를 제3자에게 판매하거나 임의로 제공하지 않습니다. 단, 법령에 의한 요구가 있는 경우 관련 기관에 제공할 수 있습니다.</p>
@@ -61,7 +91,7 @@ export default function PrivacyPage() {
         <p style={{ marginTop: 8 }}>이메일: <a href="mailto:multikim@naver.com" style={{ color: '#1d4ed8' }}>multikim@naver.com</a></p>
 
         <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid #e5e7eb', color: '#9ca3af', fontSize: 13 }}>
-          <p>본 방침은 2026년 4월 10일부터 시행됩니다.</p>
+          <p>본 방침은 2026년 4월 15일부터 시행됩니다.</p>
         </div>
       </div>
     </div>
