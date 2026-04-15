@@ -14,9 +14,7 @@ const REGION_LABELS: Record<string, string> = {
   '경남': '경상남도', '제주': '제주특별자치도',
 };
 
-export async function generateStaticParams() {
-  return Object.keys(REGION_LABELS).map(sido => ({ sido }));
-}
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: Promise<{ sido: string }> }): Promise<Metadata> {
   const { sido } = await params;
@@ -53,16 +51,7 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
     .ilike('location', `${sido} %`)
     .order('created_at', { ascending: false });
 
-  // 청약정보 (Public API - 목 데이터 fallback)
-  let saleItems: any[] = [];
-  try {
-    const base = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.mk-land.kr';
-    const res = await fetch(`${base}/api/sale?region=${encodeURIComponent(sido)}&perPage=8`, { next: { revalidate: 300 } });
-    if (res.ok) {
-      const data = await res.json();
-      saleItems = data.items ?? [];
-    }
-  } catch {}
+  // 청약정보는 실시간 API라 별도 링크로 안내
 
   // 실거래가 링크: 첫 번째 시군구 자동 선택
   const firstDistrict = (LAWD_CODE_MAP as any)[sido]?.[0];
@@ -98,9 +87,9 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
             style={{ padding: '8px 16px', background: '#059669', color: '#fff', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 700 }}>
             🏷️ 분양정보 {unsoldListings?.length ? `(${unsoldListings.length})` : ''}
           </Link>
-          <Link href={`/region/${sido}#sale`}
+          <Link href={`/#sale`}
             style={{ padding: '8px 16px', background: '#1d4ed8', color: '#fff', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 700 }}>
-            📋 청약정보 {saleItems.length ? `(${saleItems.length})` : ''}
+            📋 청약정보 보기
           </Link>
           <Link href={tradeUrl}
             style={{ padding: '8px 16px', background: '#7c3aed', color: '#fff', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 700 }}>
@@ -167,36 +156,16 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
             <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1e293b', margin: 0 }}>📋 {sido} 청약정보</h2>
             <Link href="/" style={{ fontSize: 13, color: '#1d4ed8', textDecoration: 'none' }}>전체보기 →</Link>
           </div>
-
-          {saleItems.length === 0 ? (
-            <div style={{ background: '#fff', borderRadius: 12, padding: '32px', textAlign: 'center', color: '#9ca3af' }}>
-              현재 진행 중인 {sido} 청약정보가 없습니다.
-              <br /><Link href="/" style={{ fontSize: 13, color: '#1d4ed8', marginTop: 8, display: 'inline-block' }}>전국 청약정보 보기 →</Link>
+          <div style={{ background: '#fff', borderRadius: 12, padding: '28px 32px', boxShadow: '0 1px 6px rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+            <div>
+              <p style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', margin: '0 0 6px' }}>📋 전국 청약정보에서 {sido} 청약을 확인하세요</p>
+              <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>청약홈 실시간 데이터 기반 · 접수중·예정 단지 모두 포함</p>
             </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {saleItems.map((item: any) => (
-                <Link key={item.id} href={`/sale/${item.id}`} style={{ textDecoration: 'none' }}>
-                  <div style={{ background: '#fff', borderRadius: 12, padding: '16px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 11, background: '#dbeafe', color: '#1d4ed8', padding: '2px 8px', borderRadius: 8, fontWeight: 600 }}>{item.status}</span>
-                        <span style={{ fontSize: 11, background: '#f3f4f6', color: '#6b7280', padding: '2px 8px', borderRadius: 8 }}>{item.buildingType}</span>
-                      </div>
-                      <p style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', margin: '0 0 3px' }}>{item.name}</p>
-                      <p style={{ fontSize: 12, color: '#6b7280', margin: 0 }}>📍 {item.location} · {item.totalUnits?.toLocaleString()}세대</p>
-                    </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      {item.receiptStart && <p style={{ fontSize: 12, color: '#6b7280', margin: '0 0 2px' }}>접수 {item.receiptStart}</p>}
-                      {item.minPrice > 0 && <p style={{ fontSize: 13, fontWeight: 700, color: '#1d4ed8', margin: 0 }}>
-                        {Math.floor(item.minPrice / 10000)}억~
-                      </p>}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
+            <Link href="/"
+              style={{ padding: '12px 24px', background: '#1d4ed8', color: '#fff', borderRadius: 10, textDecoration: 'none', fontWeight: 700, fontSize: 14, whiteSpace: 'nowrap' }}>
+              청약정보 보기 →
+            </Link>
+          </div>
         </section>
 
         {/* ── 실거래가 바로가기 ── */}
