@@ -853,11 +853,12 @@ const COMPS: Record<string, React.ComponentType> = {
 };
 
 export default function Calculator() {
-  const [active, setActive] = useState(() => {
-    if (typeof window === 'undefined') return 'loan';
+  const [active, setActive] = useState('loan');
+
+  useEffect(() => {
     const tab = new URLSearchParams(window.location.search).get('tab');
-    return tab && COMPS[tab] ? tab : 'loan';
-  });
+    if (tab && COMPS[tab]) setActive(tab);
+  }, []);
   const Comp = COMPS[active];
   return (
     <div style={{ minHeight: "100vh", background: "#f0f4f9", fontFamily: "'Apple SD Gothic Neo', sans-serif" }}>
