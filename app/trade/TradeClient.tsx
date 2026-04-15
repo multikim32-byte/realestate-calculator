@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { LAWD_CODE_MAP, recentMonths } from '@/lib/tradeApi';
 import type { TradeItem } from '@/lib/tradeApi';
 import KakaoMap from '@/app/components/KakaoMap';
@@ -36,6 +36,7 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
   const [selectedApt, setSelectedApt] = useState('');
   const [selectedDong, setSelectedDong] = useState(initialItems.length > 0 ? initialDong : '전체');
   const [isMobile, setIsMobile] = useState(false);
+  const pendingDongRef = useRef<string | null>(null);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
@@ -44,11 +45,24 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  // URL 파라미터로 지역 pre-select (분양정보에서 연결 시)
+  // items 로드 완료 후 pending dong 자동 적용
+  useEffect(() => {
+    if (pendingDongRef.current && items.length > 0) {
+      const dong = pendingDongRef.current;
+      pendingDongRef.current = null;
+      // 해당 dong이 실제로 존재할 때만 적용
+      const exists = items.some(i => i.dong === dong);
+      if (exists) setSelectedDong(dong);
+    }
+  }, [items]);
+
+  // URL 파라미터로 지역 pre-select (분양정보/지역페이지에서 연결 시)
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
     const sidoParam = sp.get('sido');
     const sigunguParam = sp.get('sigungu');
+    const dongParam = sp.get('dong');
+    if (dongParam) pendingDongRef.current = dongParam;
     if (sidoParam && sigunguParam && sidoParam in LAWD_CODE_MAP) {
       const districts = LAWD_CODE_MAP[sidoParam as keyof typeof LAWD_CODE_MAP];
       const found = districts.find(d => d.name === sigunguParam);

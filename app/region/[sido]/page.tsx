@@ -55,10 +55,33 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
 
   // 청약정보는 실시간 API라 별도 링크로 안내
 
-  // 실거래가 링크: 첫 번째 시군구 자동 선택
-  const firstDistrict = (LAWD_CODE_MAP as any)[sido]?.[0];
+  // 실거래가 링크: 시도별 대표 시군구 + 동 선택
+  const DEFAULT_SIGUNGU_DONG: Record<string, { sigungu: string; dong: string }> = {
+    '서울': { sigungu: '마포구', dong: '아현동' },
+    '경기': { sigungu: '수원시 영통구', dong: '영통동' },
+    '인천': { sigungu: '부평구', dong: '부평동' },
+    '부산': { sigungu: '해운대구', dong: '우동' },
+    '대구': { sigungu: '수성구', dong: '범어동' },
+    '광주': { sigungu: '서구', dong: '치평동' },
+    '대전': { sigungu: '서구', dong: '둔산동' },
+    '울산': { sigungu: '남구', dong: '삼산동' },
+    '세종': { sigungu: '세종시', dong: '어진동' },
+    '강원': { sigungu: '춘천시', dong: '퇴계동' },
+    '충북': { sigungu: '청주시 흥덕구', dong: '가경동' },
+    '충남': { sigungu: '천안시 서북구', dong: '불당동' },
+    '전북': { sigungu: '전주시 완산구', dong: '효자동' },
+    '전남': { sigungu: '여수시', dong: '학동' },
+    '경북': { sigungu: '포항시 남구', dong: '대잠동' },
+    '경남': { sigungu: '창원시 성산구', dong: '사파동' },
+    '제주': { sigungu: '제주시', dong: '노형동' },
+  };
+  const defaultArea = DEFAULT_SIGUNGU_DONG[sido];
+  const firstDistrict = defaultArea
+    ? (LAWD_CODE_MAP as any)[sido]?.find((d: any) => d.name === defaultArea.sigungu)
+      ?? (LAWD_CODE_MAP as any)[sido]?.[0]
+    : (LAWD_CODE_MAP as any)[sido]?.[0];
   const tradeUrl = firstDistrict
-    ? `/trade?sido=${encodeURIComponent(sido)}&sigungu=${encodeURIComponent(firstDistrict.name)}`
+    ? `/trade?sido=${encodeURIComponent(sido)}&sigungu=${encodeURIComponent(firstDistrict.name)}${defaultArea ? `&dong=${encodeURIComponent(defaultArea.dong)}` : ''}`
     : '/trade';
 
   const allRegions = Object.keys(REGION_LABELS);
