@@ -112,7 +112,7 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
             style={{ padding: '8px 16px', background: '#059669', color: '#fff', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 700 }}>
             🏷️ 분양정보 {unsoldListings?.length ? `(${unsoldListings.length})` : ''}
           </Link>
-          <Link href={`/#sale`}
+          <Link href={`/?region=${encodeURIComponent(sido)}`}
             style={{ padding: '8px 16px', background: '#1d4ed8', color: '#fff', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 700 }}>
             📋 청약정보 보기
           </Link>
@@ -183,12 +183,12 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
           </div>
           <div style={{ background: '#fff', borderRadius: 12, padding: '28px 32px', boxShadow: '0 1px 6px rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
             <div>
-              <p style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', margin: '0 0 6px' }}>📋 전국 청약정보에서 {sido} 청약을 확인하세요</p>
+              <p style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', margin: '0 0 6px' }}>📋 {sido} 청약 일정을 확인하세요</p>
               <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>청약홈 실시간 데이터 기반 · 접수중·예정 단지 모두 포함</p>
             </div>
-            <Link href="/"
+            <Link href={`/?region=${encodeURIComponent(sido)}`}
               style={{ padding: '12px 24px', background: '#1d4ed8', color: '#fff', borderRadius: 10, textDecoration: 'none', fontWeight: 700, fontSize: 14, whiteSpace: 'nowrap' }}>
-              청약정보 보기 →
+              {sido} 청약정보 보기 →
             </Link>
           </div>
         </section>
