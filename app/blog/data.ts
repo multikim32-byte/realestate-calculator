@@ -2179,4 +2179,480 @@ A. 네, 스마트폰·태블릿에서도 동일하게 이용할 수 있습니다
 <p>부동산 거래 전 청약·실거래가·세금·대출을 한 번에 파악하고 싶다면 mk-land.kr 북마크를 추천합니다.</p>
     `,
   },
+
+  {
+    slug: "unsold-apartment-benefits-guide-2026",
+    title: "미분양 아파트 특별 혜택 완전 정리 2026 — 계약금 정액제·중도금 무이자·발코니 확장까지",
+    description: "2026년 미분양 아파트 특별 혜택의 모든 것을 정리했습니다. 계약금 정액제, 중도금 무이자, 발코니 무료 확장, 이사비 지원까지 실제 혜택 사례와 주의사항을 확인하세요.",
+    date: "2026-04-10",
+    content: `
+<p>분양가 대비 20~30% 저렴하게 아파트를 살 수 있다면 어떨까요? 미분양 아파트 특별 혜택을 잘 활용하면 실제로 가능한 이야기입니다. 2026년 현재 전국 미분양 아파트는 수만 세대에 달하며, 건설사들은 재고를 빠르게 소진하기 위해 파격적인 혜택을 내걸고 있습니다. 이 글에서는 미분양 아파트 특별 혜택의 종류와 주의사항, 실제 매물 확인 방법까지 상세히 안내합니다.</p>
+
+<h2>미분양 아파트란?</h2>
+<p>미분양 아파트는 청약 공고 후 일반 분양에서 계약자를 찾지 못한 세대를 말합니다. 크게 두 가지로 나뉩니다.</p>
+<ul>
+  <li><strong>준공 전 미분양:</strong> 공사 중인 상태에서 청약·분양에 실패한 물량. 선착순으로 계약 가능합니다.</li>
+  <li><strong>준공 후 미분양(악성 미분양):</strong> 완공됐음에도 팔리지 않은 세대. 즉시 입주 가능하나 그만큼 조건이 까다롭거나 입지에 단점이 있을 수 있습니다.</li>
+</ul>
+<p>2026년 4월 기준 국토교통부 통계에 따르면 전국 미분양 물량은 약 6만 세대 이상이며, 특히 지방 광역시와 수도권 외곽 지역에 집중되어 있습니다. 이 중 상당수 단지가 <a href="https://www.mk-land.kr/unsold" style="color:#1d4ed8;font-weight:600;">mk-land.kr 분양정보</a>에서 특별 혜택 매물로 등록되어 있습니다.</p>
+
+<h2>미분양 아파트 특별 혜택 5가지</h2>
+
+<h3>1. 계약금 정액제 (5~10%)</h3>
+<p>일반 분양에서는 분양가의 10~20%를 계약금으로 내야 합니다. 미분양 특별 분양에서는 계약금을 <strong>1,000만~3,000만 원 정액</strong>으로 낮춰주는 경우가 많습니다. 5억짜리 아파트 기준, 일반 분양 계약금이 5,000만~1억 원인 것에 비해 1,000만 원이면 진입 장벽이 크게 낮아집니다.</p>
+
+<h3>2. 중도금 무이자 또는 이자 후불제</h3>
+<p>아파트 분양 대금은 계약금(10~20%) → 중도금(60%) → 잔금(20~30%) 순으로 납부합니다. 중도금은 보통 6회로 나눠 내는데, 미분양 특별 혜택으로 <strong>중도금 전액 무이자</strong>를 제공하는 사례가 늘고 있습니다. 5억 아파트 기준 중도금 3억에 대해 2년간 연 5% 이자를 건설사가 부담하면 약 3,000만 원의 이자를 절약할 수 있습니다.</p>
+
+<h3>3. 발코니 무료 확장</h3>
+<p>일반 분양에서는 발코니 확장 비용이 별도로 청구됩니다. 전용 84㎡ 기준 보통 800만~1,500만 원 수준입니다. 미분양 특별 분양에서는 이를 무료로 제공하는 사례가 많습니다. 서비스 면적이 늘어나 실사용 면적이 약 10~15㎡ 확대되는 효과가 있습니다.</p>
+
+<h3>4. 가격 할인 (분양가 대비 최대 20%)</h3>
+<p>준공 후 미분양의 경우 건설사가 직접 분양가를 낮추기도 합니다. 특히 입주가 시작됐음에도 빈 세대가 많을 경우, 초기 분양가 대비 10~20% 할인된 가격에 계약이 가능합니다. 다만 분양가 할인은 공식 공고가 아닌 개별 협상으로 이뤄지는 경우가 많아 직접 문의가 필요합니다.</p>
+
+<h3>5. 이사비·가전·가구 지원</h3>
+<p>일부 단지에서는 이사비 100만~300만 원 지원, 에어컨·냉장고 등 가전제품 제공, 특정 가구 브랜드 쿠폰 제공 등 부가 혜택을 내걸기도 합니다. 금액은 작아 보여도 실질적인 초기 비용 절감에 도움이 됩니다.</p>
+
+<h2>미분양 특별 혜택 계산 사례</h2>
+<p>경기도 A 아파트, 전용 84㎡, 분양가 5억 원 기준으로 일반 분양과 미분양 특별 분양을 비교해 보겠습니다.</p>
+
+<table style="border-collapse:collapse;width:100%;font-size:14px;margin:12px 0;">
+  <thead>
+    <tr style="background:#eff6ff;">
+      <th style="border:1px solid #e5e7eb;padding:10px 14px;text-align:left;">항목</th>
+      <th style="border:1px solid #e5e7eb;padding:10px 14px;text-align:right;">일반 분양</th>
+      <th style="border:1px solid #e5e7eb;padding:10px 14px;text-align:right;">미분양 특별 혜택</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="border:1px solid #e5e7eb;padding:10px 14px;">계약금</td><td style="border:1px solid #e5e7eb;padding:10px 14px;text-align:right;">5,000만 원 (10%)</td><td style="border:1px solid #e5e7eb;padding:10px 14px;text-align:right;color:#059669;font-weight:700;">1,000만 원 (정액)</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:10px 14px;">중도금 이자(2년)</td><td style="border:1px solid #e5e7eb;padding:10px 14px;text-align:right;">약 3,000만 원</td><td style="border:1px solid #e5e7eb;padding:10px 14px;text-align:right;color:#059669;font-weight:700;">0원 (무이자)</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:10px 14px;">발코니 확장</td><td style="border:1px solid #e5e7eb;padding:10px 14px;text-align:right;">1,200만 원</td><td style="border:1px solid #e5e7eb;padding:10px 14px;text-align:right;color:#059669;font-weight:700;">0원 (무료)</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:10px 14px;font-weight:700;">총 절약액</td><td style="border:1px solid #e5e7eb;padding:10px 14px;text-align:right;">—</td><td style="border:1px solid #e5e7eb;padding:10px 14px;text-align:right;color:#1d4ed8;font-weight:700;">약 8,200만 원</td></tr>
+  </tbody>
+</table>
+
+<p>위 사례에서 미분양 특별 혜택만으로 8,200만 원 이상을 아낄 수 있습니다. 분양가 5억 기준으로 사실상 16% 할인 효과입니다.</p>
+
+<h2>미분양 아파트 계약 전 반드시 확인할 것</h2>
+
+<h3>1. 미분양 이유 파악</h3>
+<p>미분양이 발생한 원인을 먼저 파악해야 합니다. 분양가가 주변 시세보다 높아서인지, 입지(교통·학군·편의시설)가 부족해서인지, 단순 청약 열기가 식어서인지에 따라 투자 가치가 달라집니다. 입지 문제가 아닌 시장 분위기나 분양가 문제라면 오히려 기회가 될 수 있습니다.</p>
+
+<h3>2. 실거래가와 분양가 비교</h3>
+<p>같은 지역·비슷한 연식의 아파트 실거래가와 분양가를 비교해 보세요. <a href="https://www.mk-land.kr/trade" style="color:#1d4ed8;font-weight:600;">mk-land.kr 실거래가 조회</a>를 이용하면 지역별 최근 거래 내역을 무료로 확인할 수 있습니다. 분양가가 인근 실거래가보다 지나치게 높다면 특별 혜택을 받아도 손해일 수 있습니다.</p>
+
+<h3>3. 건설사 재무 상태 확인</h3>
+<p>2024~2025년 부동산 PF(프로젝트파이낸싱) 위기로 일부 건설사의 재무 건전성이 악화됐습니다. 특별 혜택을 제공하는 단지의 시공사가 워크아웃이나 법정관리 위기에 있다면 입주 지연·하자 처리 등 리스크가 커집니다. 금융감독원 공시시스템에서 시공사 재무제표를 꼭 확인하세요.</p>
+
+<h3>4. 취득세·대출 조건 사전 계산</h3>
+<p>미분양 아파트라도 취득세는 그대로 납부해야 합니다. 분양가 기준으로 취득세를 계산해 두고, 중도금 대출 가능 여부와 잔금 대출 한도도 미리 확인하세요. <a href="https://www.mk-land.kr/calculator" style="color:#1d4ed8;font-weight:600;">mk-land.kr 부동산 계산기</a>에서 취득세·중도금 이자·대출 원리금을 한 번에 계산할 수 있습니다.</p>
+
+<h2>2026년 미분양 특별 혜택 매물 확인하는 방법</h2>
+<p>미분양 특별 혜택 매물을 효율적으로 찾으려면 여러 채널을 병행하는 것이 좋습니다.</p>
+<ul>
+  <li><strong>mk-land.kr 분양정보:</strong> <a href="https://www.mk-land.kr/unsold" style="color:#1d4ed8;font-weight:600;">분양정보 페이지</a>에서 전국 미분양 특별 혜택 단지를 지역·유형별로 필터링할 수 있습니다. 청약중·잔여세대 구분, 계약금·중도금 혜택 내용도 함께 확인 가능합니다.</li>
+  <li><strong>청약홈(applyhome.co.kr):</strong> 잔여 세대 선착순 분양 공고를 확인할 수 있습니다.</li>
+  <li><strong>국토교통부 미분양 통계:</strong> 시도별 미분양 현황을 매월 발표합니다. 미분양이 많은 지역을 중심으로 탐색하는 전략이 효과적입니다.</li>
+  <li><strong>모델하우스 직접 방문:</strong> 온라인에 공개되지 않은 추가 혜택을 제안받을 수 있습니다.</li>
+</ul>
+
+<h2>자주 묻는 질문</h2>
+<p><strong>Q. 미분양 아파트를 사면 나중에 팔 때 불이익이 있나요?</strong><br>
+A. 미분양 이력 자체는 매도 시 법적 불이익이 없습니다. 다만 입지나 단지 경쟁력이 낮아 미분양이 된 경우라면 시세 상승이 더딜 수 있습니다. 실거래가와 인근 개발 호재를 꼼꼼히 확인하세요.</p>
+
+<p><strong>Q. 중도금 무이자 혜택을 받으면 나중에 세금이 더 나오나요?</strong><br>
+A. 건설사가 부담하는 중도금 이자는 구매자의 소득으로 보지 않아 세금 추가 발생이 없습니다.</p>
+
+<p><strong>Q. 청약 통장이 없어도 미분양 계약이 가능한가요?</strong><br>
+A. 준공 전·후 미분양 선착순 계약은 청약 통장과 무관합니다. 별도 자격 제한이 없으며, 먼저 계약하는 사람이 우선입니다.</p>
+
+<p>현재 전국 미분양 특별 혜택 단지 목록은 <a href="https://www.mk-land.kr/unsold" style="color:#1d4ed8;font-weight:600;">mk-land.kr 분양정보</a>에서 무료로 확인하실 수 있습니다.</p>
+    `,
+  },
+
+  {
+    slug: "subscription-score-guide-2026",
+    title: "2026년 청약 가점 계산법 완벽 가이드 — 무주택기간·부양가족·청약통장 총정리",
+    description: "2026년 청약 가점 최대 84점 구조를 완벽 정리했습니다. 무주택기간(최대 32점), 부양가족수(최대 35점), 청약통장 가입기간(최대 17점) 계산 방법과 실전 전략을 알아보세요.",
+    date: "2026-04-08",
+    content: `
+<p>청약에 도전할 때 가장 먼저 확인해야 할 것이 바로 내 가점입니다. 서울 인기 단지의 당첨 가점이 60점을 넘는 경우도 많아, 정확한 가점 계산 없이 무작정 청약에 뛰어드는 것은 시간 낭비일 수 있습니다. 이 글에서는 2026년 기준 청약 가점 계산 방법을 세부 항목별로 완벽하게 정리합니다.</p>
+
+<h2>청약 가점제란?</h2>
+<p>가점제는 무주택 기간이 길고 부양가족이 많으며 청약통장을 오래 유지한 실수요자에게 우선권을 주는 청약 제도입니다. 전용면적 85㎡ 이하 민영주택에서 가점제 물량 비율이 높으며, 특히 투기과열지구에서는 가점제 100%가 적용됩니다. 가점 총점은 최대 84점입니다.</p>
+
+<h2>가점 항목 3가지</h2>
+
+<h3>1. 무주택 기간 — 최대 32점</h3>
+<p>세대 전원(신청자 본인 + 세대원 전체)이 무주택이어야 가점을 받을 수 있습니다.</p>
+
+<table style="border-collapse:collapse;width:100%;font-size:14px;margin:12px 0;">
+  <thead>
+    <tr style="background:#eff6ff;">
+      <th style="border:1px solid #e5e7eb;padding:9px 12px;text-align:left;">무주택 기간</th>
+      <th style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">점수</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">1년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">2점</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">1년 이상 ~ 2년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">4점</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">2년 이상 ~ 3년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">6점</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">3년 이상 ~ 4년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">8점</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">4년 이상 ~ 5년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">10점</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">5년 이상 ~ 6년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">12점</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">6년 이상 ~ 7년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">14점</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">7년 이상 ~ 8년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">16점</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">8년 이상 ~ 9년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">18점</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">9년 이상 ~ 10년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">20점</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">10년 이상 ~ 11년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">22점</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">11년 이상 ~ 12년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">24점</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">12년 이상 ~ 13년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">26점</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">13년 이상 ~ 14년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">28점</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">14년 이상 ~ 15년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">30점</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;font-weight:700;">15년 이상</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;font-weight:700;color:#1d4ed8;">32점 (최대)</td></tr>
+  </tbody>
+</table>
+
+<p><strong>무주택 기간 기산일 주의사항:</strong> 만 30세가 되는 날, 또는 결혼한 날 중 빠른 날부터 계산합니다. 30세 미만 미혼자는 무주택 기간이 0점으로 처리됩니다. 과거에 주택을 소유했다가 처분한 경우, 처분일부터 다시 기산합니다.</p>
+
+<h3>2. 부양가족 수 — 최대 35점</h3>
+<p>청약 신청자의 주민등록등본에 함께 등재된 세대원 중 일정 조건을 갖춘 사람이 부양가족으로 인정됩니다.</p>
+
+<table style="border-collapse:collapse;width:100%;font-size:14px;margin:12px 0;">
+  <thead>
+    <tr style="background:#eff6ff;">
+      <th style="border:1px solid #e5e7eb;padding:9px 12px;text-align:left;">부양가족 수</th>
+      <th style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">점수</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">0명 (본인만)</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">5점</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">1명</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">10점</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">2명</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">15점</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">3명</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">20점</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">4명</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">25점</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">5명</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">30점</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;font-weight:700;">6명 이상</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;font-weight:700;color:#1d4ed8;">35점 (최대)</td></tr>
+  </tbody>
+</table>
+
+<p><strong>부양가족 인정 조건:</strong></p>
+<ul>
+  <li>배우자: 세대 분리 여부 무관하게 항상 부양가족으로 인정</li>
+  <li>직계존속(부모·조부모): 3년 이상 같은 주민등록에 등재, 무주택이어야 함</li>
+  <li>직계비속(자녀·손자녀): 미혼이고 주민등록상 함께 등재되어 있어야 함</li>
+  <li>형제·자매·처남·처제 등: 부양가족으로 인정 안 됨</li>
+</ul>
+
+<h3>3. 청약통장 가입 기간 — 최대 17점</h3>
+<table style="border-collapse:collapse;width:100%;font-size:14px;margin:12px 0;">
+  <thead>
+    <tr style="background:#eff6ff;">
+      <th style="border:1px solid #e5e7eb;padding:9px 12px;text-align:left;">가입 기간</th>
+      <th style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">점수</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">6개월 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">1점</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">6개월 이상 ~ 1년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">2점</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">1년 이상 ~ 2년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">3점</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">2년 이상 ~ 3년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">4점</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">3년 이상 ~ 4년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">5점</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">4년 이상 ~ 5년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">6점</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">5년 이상 ~ 6년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">7점</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">6년 이상 ~ 7년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">8점</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">7년 이상 ~ 8년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">9점</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">8년 이상 ~ 9년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">10점</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">9년 이상 ~ 10년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">11점</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">10년 이상 ~ 11년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">12점</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">11년 이상 ~ 12년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">13점</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">12년 이상 ~ 13년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">14점</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">13년 이상 ~ 14년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">15점</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">14년 이상 ~ 15년 미만</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">16점</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;font-weight:700;">15년 이상</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;font-weight:700;color:#1d4ed8;">17점 (최대)</td></tr>
+  </tbody>
+</table>
+
+<h2>실전 가점 계산 사례</h2>
+<p><strong>사례: 38세 직장인 A씨 (기혼, 자녀 1명, 청약통장 9년 가입)</strong></p>
+<ul>
+  <li>무주택 기간 8년: <strong>18점</strong></li>
+  <li>부양가족 2명 (배우자+자녀): <strong>15점</strong></li>
+  <li>청약통장 9년 이상: <strong>10점</strong></li>
+  <li><strong>총 가점: 43점</strong></li>
+</ul>
+<p>43점은 수도권 인기 단지 당첨이 어렵지만, 지방 광역시나 수도권 외곽 비인기 단지에서는 충분히 당첨 가능한 점수입니다. 자녀가 한 명 더 늘면 20점으로 올라 총 48점이 됩니다.</p>
+
+<h2>가점을 높이는 전략 3가지</h2>
+
+<h3>1. 무주택 기간을 늘려라</h3>
+<p>시간이 가장 확실한 전략입니다. 과거 주택을 보유했다면 처분 후 무주택 상태를 유지하는 기간을 최대한 확보하세요. 30세 이전 청약통장을 개설해두면 나이가 되는 순간부터 무주택 기간이 자동으로 쌓입니다.</p>
+
+<h3>2. 부양가족 등재를 점검하라</h3>
+<p>부모님을 내 주민등록에 올리면 부양가족이 늘어납니다. 단, 3년 이상 같은 주소에 등재되어 있어야 하고 부모님이 무주택이어야 합니다. 조기에 준비할수록 유리합니다.</p>
+
+<h3>3. 가점이 낮다면 추첨제 단지를 노려라</h3>
+<p>전용 85㎡ 초과 민영 아파트나 85㎡ 이하라도 추첨제 비율이 높은 지역을 선택하면 가점이 낮아도 당첨 기회가 있습니다. <a href="https://www.mk-land.kr/" style="color:#1d4ed8;font-weight:600;">mk-land.kr 청약정보</a>에서 분양 단지별 공급 유형(가점제·추첨제 비율)을 확인해 전략적으로 접근하세요.</p>
+
+<h2>자주 묻는 질문</h2>
+<p><strong>Q. 무주택자인데 분양권을 가지고 있으면 가점이 줄어드나요?</strong><br>
+A. 2021년 이후 취득한 분양권은 주택 수에 포함됩니다. 분양권을 보유하면 무주택자로 인정받지 못해 무주택 기간 가점이 0점이 됩니다.</p>
+
+<p><strong>Q. 결혼 예정인데 혼인신고 전에 청약하는 게 유리한가요?</strong><br>
+A. 혼인신고 전에는 배우자의 주택 보유 여부가 영향을 미치지 않지만, 부양가족 수도 적습니다. 결혼 후 1~2년이 지나면 배우자를 포함해 부양가족 가점이 올라 장기적으로 유리합니다.</p>
+
+<p><strong>Q. 청약에 낙첨되면 통장이 소멸되나요?</strong><br>
+A. 아닙니다. 낙첨 시 통장은 유지됩니다. 당첨 후 계약을 포기하거나 당첨돼 계약을 체결한 경우에만 통장 효력이 상실됩니다.</p>
+
+<p>전국 청약 단지 일정과 공급 물량은 <a href="https://www.mk-land.kr/" style="color:#1d4ed8;font-weight:600;">mk-land.kr 청약정보</a>에서 실시간으로 확인하세요.</p>
+    `,
+  },
+
+  {
+    slug: "apartment-real-price-lookup-guide-2026",
+    title: "아파트 실거래가 조회 완벽 가이드 2026 — 국토부 데이터로 정확한 시세 파악하기",
+    description: "아파트 실거래가를 정확하게 조회하는 방법을 단계별로 설명합니다. 국토교통부 실거래가 데이터 활용법, 단지별 시세 추이 분석, 매매·전세 가격 비교까지 완벽 정리했습니다.",
+    date: "2026-04-05",
+    content: `
+<p>부동산 거래에서 가장 중요한 정보 중 하나는 실거래가입니다. 호가(집주인이 원하는 가격)와 실제 거래 가격은 수천만 원 이상 차이 나는 경우가 흔합니다. 실거래가를 정확히 알아야 협상력이 생기고, 적정 가격에 매수·매도할 수 있습니다. 이 글에서는 아파트 실거래가 조회 방법과 시세 분석 활용법을 상세히 안내합니다.</p>
+
+<h2>실거래가란 무엇인가?</h2>
+<p>실거래가는 실제로 계약이 체결되고 신고된 매매·전세·월세 금액입니다. 부동산 거래 신고 등에 관한 법률에 따라 매매는 계약 체결일로부터 30일 이내, 전월세는 계약일로부터 30일 이내 반드시 신고해야 합니다. 국토교통부는 이 신고 데이터를 취합해 공개 API로 제공하며, <a href="https://www.mk-land.kr/trade" style="color:#1d4ed8;font-weight:600;">mk-land.kr 실거래가 조회</a>는 이 데이터를 기반으로 단지별·면적별 거래 내역을 즉시 확인할 수 있도록 제공합니다.</p>
+
+<h2>실거래가 조회가 중요한 이유 3가지</h2>
+
+<h3>1. 호가와 실거래가의 차이를 파악하기 위해</h3>
+<p>부동산 앱이나 공인중개사가 제시하는 가격은 대부분 호가입니다. 실거래가는 이보다 5~15% 낮은 경우가 많습니다. 특히 하락장에서 호가 기준으로 집을 사면 손해를 볼 수 있습니다.</p>
+
+<h3>2. 대출 한도 파악을 위해</h3>
+<p>주택담보대출은 KB시세 또는 감정가를 기준으로 LTV(담보인정비율)를 적용합니다. 실거래가가 KB시세보다 낮게 형성된 지역이라면 대출 한도가 생각보다 낮게 나올 수 있습니다. 사전에 실거래가와 KB시세를 비교해 대출 가능 금액을 예측하는 것이 중요합니다.</p>
+
+<h3>3. 시세 추이로 투자 타이밍을 잡기 위해</h3>
+<p>최근 3~5년간 실거래가 추이를 보면 해당 단지가 상승 중인지, 하락 중인지, 횡보 중인지 파악할 수 있습니다. 특정 구간에서 거래량이 급증하거나 급감하는 패턴도 가격 변곡점의 신호가 됩니다.</p>
+
+<h2>아파트 실거래가 조회 방법</h2>
+
+<h3>방법 1: mk-land.kr 실거래가 조회 (추천)</h3>
+<p><a href="https://www.mk-land.kr/trade" style="color:#1d4ed8;font-weight:600;">mk-land.kr 실거래가 조회</a>는 국토교통부 공공데이터 API를 직접 연동해 실시간으로 최신 거래 내역을 제공합니다. 별도 회원가입 없이 무료로 이용할 수 있으며 다음 기능을 제공합니다.</p>
+<ul>
+  <li>시도·시군구·읍면동별 필터링</li>
+  <li>단지별 최저·최고·평균 실거래가 요약</li>
+  <li>면적(전용㎡)별 거래 내역 필터</li>
+  <li>최근 3년 월별 평균 실거래가 추이 차트</li>
+  <li>카카오맵 연동 단지 위치 확인</li>
+</ul>
+
+<h3>방법 2: 국토교통부 실거래가 공개시스템</h3>
+<p>rt.molit.go.kr에서 직접 조회할 수 있습니다. 주소 기반으로 검색하며, 단지명 검색은 불가합니다. 데이터는 동일하게 국토부 출처이지만, UI가 복잡해 처음 사용자에게는 어렵습니다.</p>
+
+<h3>방법 3: 부동산 플랫폼 (네이버·카카오·직방)</h3>
+<p>사용이 편리하지만 일부 플랫폼은 과거 데이터 조회에 제약이 있거나 광고 매물과 실거래가가 혼재해 혼란을 줄 수 있습니다. 시세 확인 후 반드시 국토부 원본 데이터와 교차 확인하는 것이 좋습니다.</p>
+
+<h2>실거래가 분석 실전 활용법</h2>
+
+<h3>1. 직전 거래가 확인하기</h3>
+<p>내가 관심 있는 단지의 같은 면적대에서 가장 최근에 거래된 가격이 현재 시세의 기준점이 됩니다. 최근 3~6개월 내 거래가 없다면 거래가 드문 단지로, 급매 시 가격 변동성이 클 수 있습니다.</p>
+
+<h3>2. 계절별 패턴 읽기</h3>
+<p>아파트 거래량은 봄(3~5월)과 가을(9~11월) 이사철에 집중됩니다. 이 시기 거래가가 연중 최고점을 형성하는 경우가 많습니다. 반대로 1~2월 겨울철과 7~8월 여름에는 거래량이 감소하며 가격이 소폭 조정되는 경향이 있습니다.</p>
+
+<h3>3. 면적별 가격 비교</h3>
+<p>같은 단지라도 전용 59㎡과 84㎡의 가격 차이를 분석하면 면적당 단가(㎡당 가격)를 비교할 수 있습니다. 보통 소형이 단가가 높고 대형이 단가가 낮습니다. 이를 주변 단지와 비교하면 상대적 고평가·저평가 여부를 파악할 수 있습니다.</p>
+
+<h2>실거래가 해석 시 주의사항</h2>
+<ul>
+  <li><strong>직거래 거래가 포함:</strong> 가족 간 거래나 특수 관계자 간 거래가 시세보다 낮거나 높게 신고된 경우가 있습니다.</li>
+  <li><strong>층수·향 미반영:</strong> 국토부 공개 데이터에는 동·층수·향 정보가 포함되지 않아, 같은 면적이라도 거래가 차이가 클 수 있습니다.</li>
+  <li><strong>신고 지연:</strong> 거래 체결 후 30일 이내 신고하므로, 최근 1개월 이내 거래는 누락 건이 있을 수 있습니다.</li>
+</ul>
+
+<h2>실거래가와 연계해서 봐야 할 지표</h2>
+<p>실거래가만으로 부동산 의사결정을 하면 중요한 맥락을 놓칠 수 있습니다. 다음 지표와 함께 분석하세요.</p>
+<ul>
+  <li><strong>전세가율:</strong> 전세가/매매가 비율이 높을수록 갭 투자 위험이 크고, 낮을수록 안전 마진이 있습니다.</li>
+  <li><strong>미분양 현황:</strong> 주변에 미분양 단지가 많으면 기존 아파트 시세에 하방 압력이 됩니다. <a href="https://www.mk-land.kr/unsold" style="color:#1d4ed8;font-weight:600;">mk-land.kr 분양정보</a>에서 인근 미분양 현황을 확인하세요.</li>
+  <li><strong>청약 경쟁률:</strong> 인근 신규 분양 청약 경쟁률이 높으면 그 지역 기존 아파트 수요도 탄탄하다는 신호입니다. <a href="https://www.mk-land.kr/" style="color:#1d4ed8;font-weight:600;">mk-land.kr 청약정보</a>에서 최신 청약 현황을 확인할 수 있습니다.</li>
+  <li><strong>취득세·대출 비용:</strong> 실거래가를 확인했다면 <a href="https://www.mk-land.kr/calculator" style="color:#1d4ed8;font-weight:600;">부동산 계산기</a>로 취득세, 대출 원리금, 중개수수료까지 한 번에 계산해 실제 초기 비용을 파악하세요.</li>
+</ul>
+
+<h2>자주 묻는 질문</h2>
+<p><strong>Q. 실거래가 신고 후 취소·해제된 경우 데이터가 삭제되나요?</strong><br>
+A. 네, 계약 해제 신고가 되면 해당 거래 데이터는 국토부 시스템에서 삭제됩니다. 일부 플랫폼에서는 삭제 전 데이터가 남아있는 경우가 있어 교차 확인이 필요합니다.</p>
+
+<p><strong>Q. 전세·월세 실거래가도 조회할 수 있나요?</strong><br>
+A. 국토부는 전월세 확정일자 신고 데이터도 공개합니다. 국토부 실거래가 시스템과 일부 플랫폼에서 조회 가능합니다.</p>
+
+<p>아파트 실거래가 무료 조회는 <a href="https://www.mk-land.kr/trade" style="color:#1d4ed8;font-weight:600;">mk-land.kr 실거래가 조회</a>에서 지금 바로 확인하세요.</p>
+    `,
+  },
+
+  {
+    slug: "unsold-apartment-investment-strategy-2026",
+    title: "2026년 미분양 아파트 투자 전략 — 지역별 분석과 리스크 관리법",
+    description: "2026년 미분양 아파트 투자 시 고려해야 할 지역별 특성, 리스크 요인, 수익성 분석 방법을 정리했습니다. 수도권·지방별 미분양 현황과 투자 접근법을 알아보세요.",
+    date: "2026-04-03",
+    content: `
+<p>2024~2025년 부동산 시장 침체로 전국 미분양 아파트가 급증했습니다. 일부 전문가들은 이 시기를 '10년에 한 번 오는 기회'라고 부르기도 합니다. 하지만 모든 미분양이 투자 기회는 아닙니다. 이 글에서는 2026년 미분양 아파트 투자 시 반드시 알아야 할 지역별 현황, 수익성 분석법, 리스크 관리 전략을 상세히 정리합니다.</p>
+
+<h2>2026년 미분양 현황 개요</h2>
+<p>국토교통부 통계에 따르면 2026년 초 기준 전국 미분양 아파트는 약 6~7만 세대 수준입니다. 이 중 지방이 약 75%, 수도권이 약 25%를 차지합니다. 특히 준공 후 미분양(악성 미분양)이 증가하는 추세로, 건설사들이 분양가 할인과 파격적인 혜택을 내걸고 있습니다.</p>
+
+<p><a href="https://www.mk-land.kr/unsold" style="color:#1d4ed8;font-weight:600;">mk-land.kr 분양정보</a>에서는 지역별·유형별(청약중·잔여세대) 미분양 특별 혜택 매물을 실시간으로 확인할 수 있습니다.</p>
+
+<h2>지역별 미분양 투자 분석</h2>
+
+<h3>수도권 외곽 (경기 동부·남부)</h3>
+<p>수도권 광역급행철도(GTX) 개통 예정 지역 주변 미분양이 주목받고 있습니다. 교통 인프라가 개선되면 서울 접근성이 높아져 실수요와 투자 수요 모두 유입될 가능성이 있습니다. 다만 분양가 수준이 높아 실거래가 대비 할인폭이 크지 않은 경우도 있으니, <a href="https://www.mk-land.kr/trade" style="color:#1d4ed8;font-weight:600;">실거래가 조회</a>로 사전 비교가 필수입니다.</p>
+
+<h3>지방 광역시 (대구·부산·광주·대전)</h3>
+<p>지방 광역시 미분양은 물량이 많은 만큼 혜택도 큽니다. 중도금 무이자·발코니 무상 확장·계약금 정액제가 기본이고, 일부 단지는 분양가 대비 10~15% 직접 할인도 제공합니다. 단, 인구 감소 추세인 지역은 장기 보유 시 시세 상승을 기대하기 어렵습니다. 해당 지역의 인구 증감, 산업 기반, 일자리 현황을 반드시 확인하세요.</p>
+
+<h3>지방 중소도시 및 비수도권</h3>
+<p>경북·전남·강원 등 비수도권 중소도시 미분양은 가격이 매력적이지만 유동성 리스크가 높습니다. 매도 시 수요 자체가 없어 장기간 처분하지 못할 수 있습니다. 실거주 목적이거나 해당 지역과 밀접한 연관이 있는 경우가 아니라면 신중하게 접근해야 합니다.</p>
+
+<h2>미분양 아파트 수익성 분석 5단계</h2>
+
+<h3>1단계: 분양가 vs 인근 실거래가 비교</h3>
+<p>가장 먼저 해야 할 작업입니다. 특별 혜택을 받은 실질 분양가와 인근 동일 연식·면적 아파트의 실거래가를 비교합니다. 실거래가가 분양가보다 낮다면 투자 가치가 떨어집니다. <a href="https://www.mk-land.kr/trade" style="color:#1d4ed8;font-weight:600;">mk-land.kr 실거래가 조회</a>로 지역·면적별 거래 내역을 바로 확인하세요.</p>
+
+<h3>2단계: 총 투자 비용 계산</h3>
+<p>분양가 외에 취득세, 중개수수료(직접 계약 시 없음), 발코니 확장비, 옵션 비용, 인테리어 비용까지 합산한 총 투자 비용을 계산해야 합니다. <a href="https://www.mk-land.kr/calculator" style="color:#1d4ed8;font-weight:600;">mk-land.kr 부동산 계산기</a>를 활용하면 취득세와 대출 원리금을 빠르게 산출할 수 있습니다.</p>
+
+<h3>3단계: 전세가율 확인</h3>
+<p>전세가율(전세가/매매가)이 높을수록 갭 투자 시 초기 자본이 적게 들지만, 역전세 리스크도 커집니다. 2026년 현재 지방 미분양이 많은 지역의 전세가율은 50~70% 수준으로, 갭 투자 시 자기자본 비율을 넉넉히 확보해야 합니다.</p>
+
+<h3>4단계: 임대 수익률 계산</h3>
+<p>월세로 운영 시 연간 임대 수익을 총 투자 비용으로 나눈 임대 수익률을 계산합니다. 지방 아파트 기준 연 4~6% 수익률이 나오면 비교적 양호한 수준입니다. 단, 공실 기간과 수선비, 재산세 등을 차감한 실질 수익률로 계산해야 합니다.</p>
+
+<h3>5단계: 출구 전략 수립</h3>
+<p>미분양 아파트는 입주 후 단기 매도 시 분양권 전매 제한이나 시세 하락 리스크가 있습니다. 최소 3~5년 이상 보유할 계획을 세우고, 전세 또는 월세 임대로 수익을 창출하는 전략이 일반적입니다.</p>
+
+<h2>리스크 관리 체크리스트</h2>
+<ul>
+  <li>✅ 시공사 재무 상태 확인 (금융감독원 공시시스템)</li>
+  <li>✅ 분양가 HUG(주택도시보증공사) 보증 여부 확인</li>
+  <li>✅ 하자보수 보증 기간 및 보증 기관 확인</li>
+  <li>✅ 인근 입주 예정 물량 확인 (공급 과잉 여부)</li>
+  <li>✅ 지역 인구 증감 추이 5년치 확인</li>
+  <li>✅ 주변 일자리·산업단지·대학교 등 수요 기반 확인</li>
+  <li>✅ 대출 규제(DSR·LTV) 적용 후 실제 대출 가능액 확인</li>
+</ul>
+
+<h2>미분양 아파트 세금 혜택</h2>
+<p>정부는 미분양 해소를 위해 한시적 세금 혜택을 제공하는 경우가 있습니다. 대표적으로:</p>
+<ul>
+  <li><strong>취득세 감면:</strong> 일부 미분양 단지에 한해 취득세 50~75% 감면 혜택이 한시적으로 적용된 바 있습니다. 현재 시행 여부와 대상 단지를 개별 확인해야 합니다.</li>
+  <li><strong>양도소득세 특례:</strong> 특정 기간·지역 미분양을 최초 구입 시 양도소득세 감면 혜택이 주어진 사례가 있습니다.</li>
+</ul>
+<p>세금 혜택은 조건과 기한이 자주 바뀌므로, 계약 전 관할 세무서나 세무사에게 최신 혜택 여부를 반드시 확인하세요.</p>
+
+<h2>자주 묻는 질문</h2>
+<p><strong>Q. 미분양 아파트는 청약 통장 없이도 살 수 있나요?</strong><br>
+A. 잔여 세대 선착순 분양은 청약 통장이 불필요합니다. 계약 의사가 있으면 먼저 계약하는 것이 유리합니다.</p>
+
+<p><strong>Q. 분양권 상태의 미분양을 매수하면 나중에 양도세가 어떻게 되나요?</strong><br>
+A. 분양권을 취득한 날부터 보유 기간을 계산하며, 준공 후 아파트로 전환 시 취득일은 잔금일(등기일)입니다. 1년 미만 보유 분양권은 양도차익의 70%를 세금으로 내야 하므로 장기 보유 전략이 유리합니다.</p>
+
+<p>현재 특별 혜택 미분양 매물은 <a href="https://www.mk-land.kr/unsold" style="color:#1d4ed8;font-weight:600;">mk-land.kr 분양정보</a>에서 지역·유형별로 무료 확인하세요.</p>
+    `,
+  },
+
+  {
+    slug: "first-home-subscription-complete-guide-2026",
+    title: "생애최초 청약 완벽 가이드 2026 — 특별공급 조건·소득 기준·당첨 전략",
+    description: "생애최초 주택 구입자를 위한 청약 특별공급 완벽 가이드입니다. 2026년 기준 소득 요건, 자산 기준, 공공·민영 차이, 실전 당첨 전략까지 모두 정리했습니다.",
+    date: "2026-04-01",
+    content: `
+<p>평생 처음 집을 사는 사람에게 정부가 청약 특별공급 기회를 줍니다. 바로 '생애최초 특별공급'입니다. 일반 청약 경쟁 없이 별도 물량에서 우선권을 받을 수 있어, 청약 가점이 낮은 사회 초년생과 신혼부부에게 사실상 유일한 청약 당첨 루트입니다. 이 글에서는 2026년 기준 생애최초 특별공급의 모든 것을 정리합니다.</p>
+
+<h2>생애최초 특별공급이란?</h2>
+<p>본인과 배우자가 과거에 주택을 소유한 적이 없는 세대를 대상으로, 신규 분양 아파트의 일정 물량을 우선 배분하는 제도입니다. 국민주택(공공 분양)과 민영주택 모두에서 적용되며, 공급 비율과 소득 기준이 다릅니다.</p>
+
+<h2>공공 vs 민영 생애최초 특별공급 비교</h2>
+
+<table style="border-collapse:collapse;width:100%;font-size:14px;margin:12px 0;">
+  <thead>
+    <tr style="background:#eff6ff;">
+      <th style="border:1px solid #e5e7eb;padding:9px 12px;text-align:left;">구분</th>
+      <th style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">국민주택(공공)</th>
+      <th style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">민영주택</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">공급 비율</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">전체 물량의 20%</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">전체 물량의 15%</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">소득 기준</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">도시근로자 월평균 소득 100% 이하</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">160% 이하</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">자산 기준</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">적용 있음</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">없음</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">청약통장</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">주택청약종합저축</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">주택청약종합저축</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">당첨자 선정</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">납입 횟수·금액 순</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">추첨</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">대상 면적</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">전용 85㎡ 이하</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:center;">면적 제한 없음</td></tr>
+  </tbody>
+</table>
+
+<h2>2026년 소득 기준 (도시근로자 월평균)</h2>
+<p>소득 기준은 매년 국토부가 고시하는 도시근로자 가구원수별 월평균 소득을 기준으로 합니다. 2026년 기준 대략적인 수치는 다음과 같습니다(공식 고시 확인 필수).</p>
+
+<table style="border-collapse:collapse;width:100%;font-size:14px;margin:12px 0;">
+  <thead>
+    <tr style="background:#eff6ff;">
+      <th style="border:1px solid #e5e7eb;padding:9px 12px;text-align:left;">가구원 수</th>
+      <th style="border:1px solid #e5e7eb;padding:9px 12px;text-align:right;">100% 기준 (공공)</th>
+      <th style="border:1px solid #e5e7eb;padding:9px 12px;text-align:right;">160% 기준 (민영)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">2인</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:right;">약 369만 원</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:right;">약 591만 원</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">3인</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:right;">약 487만 원</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:right;">약 779만 원</td></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:9px 12px;">4인</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:right;">약 573만 원</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:right;">약 917만 원</td></tr>
+    <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:9px 12px;">5인</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:right;">약 607만 원</td><td style="border:1px solid #e5e7eb;padding:9px 12px;text-align:right;">약 971만 원</td></tr>
+  </tbody>
+</table>
+<p style="font-size:12px;color:#6b7280;">※ 위 수치는 참고용이며, 실제 적용 기준은 청약 공고문의 기준중위소득 고시를 우선 확인하세요.</p>
+
+<h2>신청 자격 4가지 요건</h2>
+<ol>
+  <li><strong>무주택 세대 구성원:</strong> 신청자 본인 + 세대원 전원이 무주택이어야 합니다. 분양권, 입주권도 주택으로 간주합니다.</li>
+  <li><strong>생애최초:</strong> 신청자와 배우자 모두 과거에 주택(분양권 포함)을 소유한 이력이 없어야 합니다.</li>
+  <li><strong>혼인·자녀 요건(공공):</strong> 혼인 중이거나 미혼 자녀가 있어야 합니다. 일부 공고에서는 단독 세대주도 허용합니다.</li>
+  <li><strong>소득 요건:</strong> 공급 유형에 따른 소득 기준을 충족해야 합니다.</li>
+</ol>
+
+<h2>생애최초 취득세 감면</h2>
+<p>청약 당첨과 별개로, 생애최초로 주택을 취득하는 경우 취득세 감면 혜택도 받을 수 있습니다. 2026년 현재 기준으로 12억 원 이하 주택 생애최초 취득 시 취득세를 최대 200만 원 감면합니다. 감면 신청은 잔금일로부터 60일 이내 관할 구청에서 직접 해야 하며, 자동으로 적용되지 않습니다.</p>
+<p>정확한 취득세 금액은 <a href="https://www.mk-land.kr/calculator" style="color:#1d4ed8;font-weight:600;">mk-land.kr 부동산 계산기</a>에서 주택 가격과 조건을 입력해 즉시 확인하세요.</p>
+
+<h2>생애최초 특별공급 당첨 확률을 높이는 전략</h2>
+
+<h3>1. 민영 아파트 추첨제 적극 활용</h3>
+<p>민영 생애최초 특별공급은 추첨제로 당첨자를 선정합니다. 가점 없이도 순전히 운으로 당첨될 수 있어, 인기 단지에 도전하는 것도 전략입니다. 다만 경쟁이 치열하므로 비인기 지역·단지부터 경험을 쌓는 것도 방법입니다.</p>
+
+<h3>2. 공공 청약은 납입 횟수·금액이 핵심</h3>
+<p>국민주택 생애최초 특별공급은 청약통장 납입 횟수가 많고 납입 금액이 클수록 유리합니다. 지역별 1순위 조건을 충족한 이후 납입 횟수를 최대한 쌓아두세요.</p>
+
+<h3>3. 비규제 지역 노리기</h3>
+<p>투기과열지구·조정대상지역은 청약 조건이 까다롭습니다. 비규제 지역 생애최초 특별공급은 상대적으로 경쟁이 덜하고, 중도금 대출 규제도 느슨합니다.</p>
+
+<h3>4. 청약 일정 놓치지 말기</h3>
+<p>생애최초 특별공급 청약일은 일반 청약과 다른 날 진행됩니다. <a href="https://www.mk-land.kr/" style="color:#1d4ed8;font-weight:600;">mk-land.kr 청약정보</a>에서 분양 일정 캘린더를 확인해 청약 접수일을 놓치지 마세요.</p>
+
+<h2>생애최초 당첨 후 주의사항</h2>
+<ul>
+  <li>당첨 후 계약 포기 시 투기과열지구는 1년, 그 외 지역은 6개월간 특별공급 신청이 제한됩니다.</li>
+  <li>당첨 이후 전매 제한 기간을 반드시 확인하세요. 투기과열지구는 소유권 이전 등기일까지 전매 불가합니다.</li>
+  <li>잔금 납부 전 주소 이전이나 세대 분리로 자격이 박탈될 수 있으니 세대 구성 변경을 신중하게 결정하세요.</li>
+</ul>
+
+<h2>자주 묻는 질문</h2>
+<p><strong>Q. 결혼 전 부모님 명의 주택에 함께 살았는데 생애최초로 인정받을 수 있나요?</strong><br>
+A. 부모님 명의 주택에서 거주한 것 자체는 주택 소유에 해당하지 않습니다. 본인·배우자 명의로 주택을 취득한 이력이 없으면 생애최초 자격이 됩니다.</p>
+
+<p><strong>Q. 이혼 후 전 배우자가 주택을 소유한 이력이 있으면 자격이 박탈되나요?</strong><br>
+A. 이혼한 배우자의 주택 소유 이력은 생애최초 판단에 영향을 미치지 않습니다. 현재 배우자(혼인 중인 배우자)의 이력만 확인합니다.</p>
+
+<p><strong>Q. 생애최초 특별공급에서 낙첨되면 같은 단지 일반 청약에 다시 신청할 수 있나요?</strong><br>
+A. 네, 같은 단지 같은 주택형에 특별공급과 일반 청약을 동시에 신청할 수 없지만, 특별공급 낙첨 후 일반 청약에 재신청하는 것은 가능합니다.</p>
+
+<p>최신 생애최초 특별공급 가능 단지 청약 일정은 <a href="https://www.mk-land.kr/" style="color:#1d4ed8;font-weight:600;">mk-land.kr 청약정보</a>에서 확인하세요.</p>
+    `,
+  },
 ];
