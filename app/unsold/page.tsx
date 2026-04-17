@@ -22,7 +22,7 @@ export default async function UnsoldPage() {
     .select('*')
     .eq('is_active', true)
     .order('highlight', { ascending: false })
-    .order('receipt_start', { ascending: true, nullsFirst: false })
+    .order('receipt_start', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
 
   const listings = raw ?? [];
