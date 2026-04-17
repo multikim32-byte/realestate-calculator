@@ -20,12 +20,10 @@ export async function GET(req: NextRequest) {
     const result = await fetchTradeList(lawdCd, dealYmd, page, numOfRows);
     return NextResponse.json({ ...result, source: 'api' });
   } catch (err) {
-    const msg = String(err);
-    console.error('실거래가 API 오류:', msg);
-    // 클라이언트에 상세 오류 메시지 전달 (디버그용)
+    console.error('실거래가 API 오류:', err);
     return NextResponse.json(
-      { items: [], total: 0, source: 'error', error: msg },
-      { status: 200 } // 500 대신 200으로 반환해 클라이언트에서 error 필드 확인
+      { items: [], total: 0, source: 'error' },
+      { status: 200 } // 클라이언트가 source 필드로 오류 감지
     );
   }
 }

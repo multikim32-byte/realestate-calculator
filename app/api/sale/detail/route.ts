@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ item: mock, source: 'mock_fallback' });
   } catch (err) {
     const mock = mockSaleItems.find(i => i.id === id) ?? null;
-    return NextResponse.json({ item: mock, source: 'error', error: String(err) });
+    console.error('sale/detail API 오류:', err);
+    return NextResponse.json({ item: mock, source: 'error' });
   }
 }

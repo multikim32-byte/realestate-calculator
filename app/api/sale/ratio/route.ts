@@ -47,6 +47,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ source: 'api', ratio: deduped, total: deduped.length });
   } catch (err) {
     console.error('경쟁률 API 오류:', err);
-    return NextResponse.json({ source: 'error', ratio: [], error: String(err) });
+    return NextResponse.json({ source: 'error', ratio: [] });
   }
 }

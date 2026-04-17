@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
 const BASE = 'https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev';
 
@@ -21,6 +22,10 @@ async function getDongs(key: string, code: string, ym: string): Promise<string[]
 }
 
 export async function GET() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('admin_token')?.value;
+  if (token !== process.env.ADMIN_SECRET) return NextResponse.json({ error: '권한 없음' }, { status: 401 });
+
   const key = process.env.MOLIT_API_KEY?.trim();
   if (!key) return NextResponse.json({ error: 'NO_KEY' });
 
