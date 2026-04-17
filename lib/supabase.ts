@@ -30,6 +30,7 @@ export type UnsoldListing = {
   is_active: boolean;
   house_manage_no: string | null;
   contact: string | null;
+  announcement_date: string | null;
   receipt_start: string | null;
   receipt_end: string | null;
   move_in_date: string | null;

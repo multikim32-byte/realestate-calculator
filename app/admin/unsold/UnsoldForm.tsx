@@ -42,6 +42,7 @@ const DEFAULT: FormData = {
   is_active: true,
   house_manage_no: null,
   contact: null,
+  announcement_date: null,
   receipt_start: null,
   receipt_end: null,
   move_in_date: null,
@@ -123,6 +124,7 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
         min_price: prev.min_price ?? (prices.length > 0 ? Math.min(...prices) * 10000 : null),
         max_price: prev.max_price ?? (prices.length > 0 ? Math.max(...prices) * 10000 : null),
         // 청약 일정
+        announcement_date: prev.announcement_date ?? detail.announcementDate ?? null,
         receipt_start: prev.receipt_start ?? detail.receiptStart ?? null,
         receipt_end:   prev.receipt_end   ?? detail.receiptEnd   ?? null,
         move_in_date:  prev.move_in_date  ?? detail.moveInDate   ?? null,
@@ -318,6 +320,11 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
           <div>
             <label style={{ ...labelStyle, marginBottom: 10 }}>청약 일정</label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={{ ...labelStyle, fontSize: 12, color: '#6b7280' }}>입주자모집공고일</label>
+                <input style={inputStyle} type="date" value={form.announcement_date ?? ''} onChange={e => set('announcement_date', e.target.value)} />
+              </div>
+              <div />
               <div>
                 <label style={{ ...labelStyle, fontSize: 12, color: '#6b7280' }}>청약접수 시작</label>
                 <input style={inputStyle} type="date" value={form.receipt_start ?? ''} onChange={e => set('receipt_start', e.target.value)} />
