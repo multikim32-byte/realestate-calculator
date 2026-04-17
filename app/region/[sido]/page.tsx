@@ -14,7 +14,7 @@ const REGION_LABELS: Record<string, string> = {
   '경남': '경상남도', '제주': '제주특별자치도',
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // 1시간 캐시 후 재검증
 
 export async function generateMetadata({ params }: { params: Promise<{ sido: string }> }): Promise<Metadata> {
   const { sido: rawSido } = await params;

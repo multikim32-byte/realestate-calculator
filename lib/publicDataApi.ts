@@ -268,7 +268,7 @@ function parseUnit(raw: any): UnitDetail {
   const priceRaw = (raw.LTTOT_TOP_AMOUNT ?? raw.SUPLY_AMOUNT ?? '0').toString().replace(/,/g, '');
   return {
     type:  raw.HOUSE_TY ?? raw.TP ?? '',
-    area:  parseFloat(raw.EXCLUSE_AR ?? raw.HOUSE_TY ?? raw.TP ?? '0') || 0,
+    area:  parseFloat(raw.EXCLUSE_AR ?? raw.SUPLY_AR ?? '0') || 0,
     count: parseInt(raw.SUPLY_HSHLDCO ?? '0') || 0,
     price: parseInt(priceRaw) || 0,
   };

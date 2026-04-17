@@ -29,7 +29,8 @@ export async function POST(req: NextRequest) {
     .from('unsold_listings')
     .insert([{ ...body, updated_at: new Date().toISOString() }])
     .select()
-    .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    .maybeSingle();
+  if (error) return NextResponse.json({ error: '매물 등록에 실패했습니다.' }, { status: 500 });
+  if (!data) return NextResponse.json({ error: '등록 후 데이터를 찾을 수 없습니다.' }, { status: 500 });
   return NextResponse.json(data);
 }
