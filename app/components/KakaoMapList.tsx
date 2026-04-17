@@ -6,7 +6,7 @@ import { SaleItem } from '@/lib/types';
 
 interface Props { items: SaleItem[] }
 
-declare global { interface Window { kakao: any } }
+interface KakaoGeocoderResult { y: string; x: string }
 
 export default function KakaoMapList({ items }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -31,7 +31,7 @@ export default function KakaoMapList({ items }: Props) {
       // 최대 30개만 지오코딩 (API 부하 방지)
       items.slice(0, 30).forEach((item) => {
         const addr = item.location.split(',')[0].trim();
-        geocoder.addressSearch(addr, (result: any, status: any) => {
+        geocoder.addressSearch(addr, (result: KakaoGeocoderResult[], status: string) => {
           if (status !== window.kakao.maps.services.Status.OK) return;
           const pos = new window.kakao.maps.LatLng(result[0].y, result[0].x);
           bounds.extend(pos);

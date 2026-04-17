@@ -17,6 +17,9 @@
 
 const BASE_URL = 'https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1';
 
+// 청약홈 API 응답의 개별 데이터 행 타입 (필드명이 API마다 다름)
+type RawApiData = Record<string, string | undefined>;
+
 export interface PublicSaleItem {
   id: string;
   houseManageNo: string;
@@ -165,7 +168,7 @@ async function callApi(
   page: number,
   perPage: number,
   extra?: Record<string, string>
-): Promise<{ data: any[]; totalCount: number }> {
+): Promise<{ data: RawApiData[]; totalCount: number }> {
   // cond[...] 파라미터는 URLSearchParams가 대괄호/콜론을 인코딩하므로
   // 수동으로 쿼리스트링을 구성해야 API가 필터를 인식함
   let qs = `serviceKey=${encodeURIComponent(serviceKey)}&page=${page}&perPage=${perPage}`;
@@ -198,22 +201,22 @@ async function callApiWithLatest(
   serviceKey: string,
   perPage: number,
   extra?: Record<string, string>
-): Promise<{ data: any[]; totalCount: number }> {
+): Promise<{ data: RawApiData[]; totalCount: number }> {
   const first = await callApi(endpoint, serviceKey, 1, perPage, extra);
   if (first.totalCount <= perPage) return first;
 
   const lastPage = Math.ceil(first.totalCount / perPage);
   const last = await callApi(endpoint, serviceKey, lastPage, perPage, extra);
 
-  const seen = new Set(first.data.map((d: any) => d.HOUSE_MANAGE_NO ?? d.PBLANC_NO));
-  const newItems = last.data.filter((d: any) => !seen.has(d.HOUSE_MANAGE_NO ?? d.PBLANC_NO));
+  const seen = new Set(first.data.map((d) => d.HOUSE_MANAGE_NO ?? d.PBLANC_NO));
+  const newItems = last.data.filter((d) => !seen.has(d.HOUSE_MANAGE_NO ?? d.PBLANC_NO));
 
   return { data: [...first.data, ...newItems], totalCount: first.totalCount };
 }
 
 // ─── 파서: 상세조회 ──────────────────────────────────────────────────────────
 
-function parseDetail(raw: any, recruitType: '신규공급' | '선착순', supplyTypeOverride?: PublicSaleItem['supplyType']): PublicSaleItem {
+function parseDetail(raw: RawApiData, recruitType: '신규공급' | '선착순', supplyTypeOverride?: PublicSaleItem['supplyType']): PublicSaleItem {
   // 청약홈 API 엔드포인트마다 필드명이 다를 수 있어 폴백 처리
   // 잔여세대(getRemndrLttotPblancDetail) / 임의공급(getOPTLttotPblancDetail) 은
   // GNRL_RCEPT_BGNDE / SPSPLY_RCEPT_BGNDE 를 사용하는 경우가 있음
@@ -262,7 +265,7 @@ function parseDetail(raw: any, recruitType: '신규공급' | '선착순', supply
 
 // ─── 파서: 주택형별 ───────────────────────────────────────────────────────────
 
-function parseUnit(raw: any): UnitDetail {
+function parseUnit(raw: RawApiData): UnitDetail {
   // APT API: HOUSE_TY, SUPLY_AR, LTTOT_TOP_AMOUNT
   // 오피스텔 API: TP, EXCLUSE_AR, SUPLY_AMOUNT
   const priceRaw = (raw.LTTOT_TOP_AMOUNT ?? raw.SUPLY_AMOUNT ?? '0').toString().replace(/,/g, '');

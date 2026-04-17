@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import ShareButton from './ShareButton';
 import InstallButton from './InstallButton';

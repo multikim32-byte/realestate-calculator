@@ -110,6 +110,8 @@ function ShareResultBtn({ params }: { params: Record<string, string> }) {
 
 // 월별 상환 테이블
 type ScheduleRow = { month: number; payment: number; principal: number; interest: number; balance: number };
+type YearRow = { month: number; label: string; payment: number; principal: number; interest: number; balance: number };
+type IntermPaymentRow = { round: number; amount: number; date: string; days: number | null; interest: number | null; loan: boolean };
 
 function AmortizationTable({ schedule }: { schedule: ScheduleRow[] }) {
   const [page, setPage] = useState(1);
@@ -118,7 +120,7 @@ function AmortizationTable({ schedule }: { schedule: ScheduleRow[] }) {
 
   const display = useMemo(() => {
     if (!yearOnly) return schedule;
-    const years: Record<number, any> = {};
+    const years: Record<number, YearRow> = {};
     schedule.forEach(r => {
       const y = Math.ceil(r.month / 12);
       if (!years[y]) years[y] = { month: y, label: `${y}년차`, principal: 0, interest: 0, payment: 0, balance: r.balance };
@@ -154,9 +156,9 @@ function AmortizationTable({ schedule }: { schedule: ScheduleRow[] }) {
             </tr>
           </thead>
           <tbody>
-            {slice.map((r: any, i: number) => (
+            {(slice as (ScheduleRow | YearRow)[]).map((r, i) => (
               <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#fafbfd" }}>
-                <td style={td}>{yearOnly ? r.label : `${r.month}회`}</td>
+                <td style={td}>{yearOnly ? (r as YearRow).label : `${r.month}회`}</td>
                 <td style={td}>{fmt(r.payment)}</td>
                 <td style={{ ...td, color: "#2563eb", fontWeight: 600 }}>{fmt(r.principal)}</td>
                 <td style={{ ...td, color: "#e25c3a" }}>{fmt(r.interest)}</td>
@@ -390,7 +392,7 @@ function IntermediateCalc() {
                 </tr>
               </thead>
               <tbody>
-                {result.payments.map((p: any, i: number) => (
+                {(result.payments as IntermPaymentRow[]).map((p, i) => (
                   <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#fafbfd" }}>
                     <td style={{ ...tableCellStyle, fontWeight: 700, color: "#1e3a5f" }}>{p.round}</td>
                     <td style={tableCellStyle}>{fmt(p.amount)}원</td>
