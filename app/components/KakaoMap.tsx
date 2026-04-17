@@ -27,13 +27,32 @@ export default function KakaoMap({ address, name }: Props) {
     setError(false);
     setLoadingMap(true);
 
-    // 주소 클리닝: 괄호 내용 제거, 개발구역 코드 제거, 번지 이하 제거
-    const cleanAddress = address
-      .replace(/\(.*?\)/g, '')          // 괄호 내용 제거
-      .replace(/[A-Z]{1,3}\d+[A-Z]{0,2}BL/g, '') // AA36BL 같은 블록 코드 제거
-      .replace(/\d+번지.*$/g, '')       // "번지 일원" 이하 제거
-      .replace(/일원.*$/g, '')          // "일원" 이하 제거
-      .trim();
+    // 괄호 안 내용 추출 — 번지/동+숫자 패턴이면 실제 주소로 우선 사용
+    const parenContent = address.match(/\(([^)]+)\)/)?.[1]?.trim() ?? '';
+    const looksLikeAddress = (s: string) =>
+      /번지|번길|\d+로\s|\d+길|[가-힣]{1,5}\s*\d{2,}/.test(s);
+
+    let cleanAddress: string;
+    if (parenContent && looksLikeAddress(parenContent)) {
+      // 괄호 안 주소에 시/도가 없으면 앞 주소에서 prefix 추출해 붙임
+      const hasCityInParen = /특별시|광역시|특별자치시|경기|강원|충북|충남|전북|전남|경북|경남|제주/.test(parenContent);
+      if (hasCityInParen) {
+        cleanAddress = parenContent;
+      } else {
+        const prefix = address.match(/^([가-힣]+(특별시|광역시|특별자치시)\s*[가-힣]+(구|군)|[가-힣]+도\s+[가-힣]+(시|군|특례시))/)?.[0] ?? '';
+        cleanAddress = prefix ? `${prefix} ${parenContent}` : parenContent;
+      }
+    } else {
+      // 괄호 안에 주소 없으면 기존 클리닝 로직
+      cleanAddress = address
+        .replace(/\(.*?\)/g, '')
+        .replace(/[A-Z]{1,3}\d+[A-Z]{0,2}BL/g, '')
+        .replace(/\d+번지.*$/g, '')
+        .replace(/일원.*$/g, '')
+        .trim();
+    }
+    // 공통: 일원 이하 제거
+    cleanAddress = cleanAddress.replace(/일원.*$/g, '').trim();
 
     function placeMarker(coords: { y: string; x: string }) {
       try {
