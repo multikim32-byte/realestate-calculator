@@ -268,10 +268,12 @@ function parseDetail(raw: RawApiData, recruitType: '신규공급' | '선착순',
 function parseUnit(raw: RawApiData): UnitDetail {
   // APT API: HOUSE_TY, SUPLY_AR, LTTOT_TOP_AMOUNT
   // 오피스텔 API: TP, EXCLUSE_AR, SUPLY_AMOUNT
+  // 잔여세대 API: EXCLUSE_AR/SUPLY_AR 없음 → HOUSE_TY 자체가 "038.9104" 같은 면적값
   const priceRaw = (raw.LTTOT_TOP_AMOUNT ?? raw.SUPLY_AMOUNT ?? '0').toString().replace(/,/g, '');
+  const areaFromType = parseFloat(raw.HOUSE_TY ?? raw.TP ?? '0') || 0;
   return {
     type:  raw.HOUSE_TY ?? raw.TP ?? '',
-    area:  parseFloat(raw.EXCLUSE_AR ?? raw.SUPLY_AR ?? '0') || 0,
+    area:  parseFloat(raw.EXCLUSE_AR ?? raw.SUPLY_AR ?? '0') || areaFromType,
     count: parseInt(raw.SUPLY_HSHLDCO ?? '0') || 0,
     price: parseInt(priceRaw) || 0,
   };
