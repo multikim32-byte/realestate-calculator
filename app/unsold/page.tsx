@@ -22,14 +22,10 @@ export default async function UnsoldPage() {
     .select('*')
     .eq('is_active', true)
     .order('highlight', { ascending: false })
+    .order('receipt_start', { ascending: true, nullsFirst: false })
     .order('created_at', { ascending: false });
 
-  // 청약중 → 잔여세대 순 정렬 (그 안에서 highlight, 최신순 유지)
-  const listings = (raw ?? []).sort((a, b) => {
-    if (a.listing_type === '청약중' && b.listing_type !== '청약중') return -1;
-    if (a.listing_type !== '청약중' && b.listing_type === '청약중') return 1;
-    return 0;
-  });
+  const listings = raw ?? [];
 
   return (
     <div style={{ minHeight: '100vh', background: '#f0f4f9' }}>
