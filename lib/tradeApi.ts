@@ -144,6 +144,7 @@ export const LAWD_CODE_MAP = {
     { name: '용인 수지구', code: '41465' }, { name: '파주시', code: '41480' },
     { name: '이천시', code: '41500' }, { name: '안성시', code: '41550' },
     { name: '김포시', code: '41570' },
+    { name: '화성특례시', code: '41590' },
     { name: '화성 남양·향남권', code: '41591' }, { name: '화성 봉담권', code: '41593' },
     { name: '화성 병점·반월권', code: '41595' },
     { name: '광주시', code: '41610' }, { name: '양주시', code: '41630' },

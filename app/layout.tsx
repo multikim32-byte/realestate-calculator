@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "ko_KR",
     url: BASE_URL,
-    siteName: "청약정보 & 실거래가",
+    siteName: "엠케이랜드",
     title: "청약정보 & 실거래가 — 전국 아파트·오피스텔 분양 청약 정보",
     description: "전국 아파트·오피스텔 청약 일정과 인근 실거래가를 한눈에 확인하세요. 청약달력, 실거래가 조회, 부동산 계산기 무료 제공.",
     images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: '부동산 계산기' }],
@@ -78,7 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <footer style={{ background: '#f9fafb', borderTop: '1px solid #e5e7eb', padding: '24px 16px', marginTop: 40 }}>
           <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'space-between', alignItems: 'center' }}>
-            <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>© 2026 청약정보 · 전국 아파트·오피스텔 분양 청약 정보 &amp; 실거래가 | mk-land.kr</p>
+            <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>© 2026 엠케이랜드 · 전국 아파트·오피스텔 분양 청약 정보 &amp; 실거래가 | mk-land.kr</p>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <a href="/about" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>서비스 소개</a>
               <a href="/terms" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>이용약관</a>

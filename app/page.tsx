@@ -15,7 +15,7 @@ const orgJsonLd = {
   '@graph': [
     {
       '@type': 'WebSite',
-      name: 'mk-land.kr',
+      name: '엠케이랜드',
       url: 'https://www.mk-land.kr',
       description: '전국 아파트·오피스텔 청약 정보, 실거래가 조회, 부동산 계산기를 무료로 제공합니다.',
       potentialAction: {
@@ -26,7 +26,7 @@ const orgJsonLd = {
     },
     {
       '@type': 'Organization',
-      name: 'mk-land.kr',
+      name: '엠케이랜드',
       url: 'https://www.mk-land.kr',
       logo: 'https://www.mk-land.kr/icon-192.png',
       contactPoint: { '@type': 'ContactPoint', contactType: 'customer support', email: 'multikim@naver.com' },
