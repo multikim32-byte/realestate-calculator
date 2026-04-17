@@ -248,6 +248,11 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
                     </span>
                   )}
                 </div>
+                {item.listing_type === '청약중' && item.announcement_date && (
+                  <p style={{ fontSize: 12, color: '#6b7280', marginTop: 8 }}>
+                    📋 모집공고일: <span style={{ fontWeight: 600, color: '#1e293b' }}>{item.announcement_date}</span>
+                  </p>
+                )}
                 {item.benefit && (
                   <p style={{ fontSize: 12, color: '#059669', marginTop: 8, fontWeight: 600 }}>🎁 {item.benefit}</p>
                 )}

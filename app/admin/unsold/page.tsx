@@ -160,6 +160,7 @@ export default function AdminUnsoldListPage() {
                     {!item.is_active && <span style={{ fontSize: 11, background: '#fef2f2', color: '#dc2626', padding: '2px 8px', borderRadius: 8 }}>비활성</span>}
                   </div>
                   <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>{item.location}</div>
+                  <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>등록일: {item.created_at.slice(0, 10)}</div>
                 </div>
 
                 {/* 액션 버튼 */}
