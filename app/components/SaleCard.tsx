@@ -20,7 +20,7 @@ const statusColors: Record<string, string> = {
   '당첨발표': 'bg-orange-100 text-orange-700',
   '선착순분양': 'bg-red-100 text-red-700',
   '완료': 'bg-gray-100 text-gray-400',
-  '완판': 'bg-gray-100 text-gray-400',
+  '청약마감': 'bg-gray-100 text-gray-400',
 };
 
 

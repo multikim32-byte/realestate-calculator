@@ -44,7 +44,7 @@ const statusStyle: Record<string, { bg: string; color: string }> = {
   '청약중':     { bg: '#d1fae5', color: '#065f46' },
   '당첨발표':   { bg: '#fef3c7', color: '#92400e' },
   '선착순분양': { bg: '#fce7f3', color: '#9d174d' },
-  '완판':       { bg: '#f3f4f6', color: '#6b7280' },
+  '청약마감':   { bg: '#f3f4f6', color: '#6b7280' },
 };
 
 function formatPrice(p: number) {
@@ -145,7 +145,7 @@ export default function SaleDetailClient() {
     );
   }
 
-  const ss = statusStyle[item.status] || statusStyle['완판'];
+  const ss = statusStyle[item.status] || statusStyle['청약마감'];
 
   return (
     <div style={{ background: '#f8f9fa', minHeight: '100vh', fontFamily: "'Apple SD Gothic Neo', sans-serif" }}>

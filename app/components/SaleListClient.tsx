@@ -20,7 +20,7 @@ const statusStyle: Record<string, { bg: string; color: string; border: string }>
   '청약중':    { bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' },
   '당첨발표':  { bg: '#fef3c7', color: '#92400e', border: '#fcd34d' },
   '선착순분양':{ bg: '#fce7f3', color: '#9d174d', border: '#f9a8d4' },
-  '완판':      { bg: '#f3f4f6', color: '#6b7280', border: '#d1d5db' },
+  '청약마감':  { bg: '#f3f4f6', color: '#6b7280', border: '#d1d5db' },
   '완료':      { bg: '#f3f4f6', color: '#6b7280', border: '#d1d5db' },
 };
 

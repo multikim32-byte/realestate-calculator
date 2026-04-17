@@ -93,7 +93,7 @@ function calcStatus(
   if (!s) return '청약예정';
   if (today < s) return '청약예정';
   if (today >= s && today <= e) return '청약중';
-  if (today > e && w && today > w) return '완판';
+  if (today > e && w && today > w) return '청약마감';
   if (today > e && today <= w) return '당첨발표';
   return '당첨발표';
 }
