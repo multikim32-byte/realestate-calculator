@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     .select('id, name, thumbnail_url, benefit, min_price')
     .eq('house_manage_no', id)
     .eq('is_active', true)
-    .single();
+    .maybeSingle();
 
   return NextResponse.json({ item: data ?? null });
 }

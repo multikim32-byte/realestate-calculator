@@ -22,9 +22,11 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const { data: { publicUrl } } = supabase.storage
+  const { data: urlData } = supabase.storage
     .from('unsold-images')
     .getPublicUrl(fileName);
 
-  return NextResponse.json({ url: publicUrl });
+  if (!urlData?.publicUrl) return NextResponse.json({ error: 'URL 생성 실패' }, { status: 500 });
+
+  return NextResponse.json({ url: urlData.publicUrl });
 }

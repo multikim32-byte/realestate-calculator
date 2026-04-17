@@ -9,13 +9,13 @@ import UnitTable from './UnitTable';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('unsold_listings')
     .select('name, location, category, benefit, min_price, max_price, thumbnail_url')
     .eq('id', id)
-    .single();
+    .maybeSingle();
 
-  if (!data) return { title: '매물 정보 | mk-land.kr' };
+  if (error || !data) return { title: '매물 정보 | mk-land.kr' };
 
   const priceText = data.min_price
     ? ` · ${data.min_price >= 100000000 ? `${(data.min_price / 100000000).toFixed(1)}억` : `${Math.floor(data.min_price / 10000).toLocaleString()}만`}~`
@@ -49,7 +49,7 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
     .select('*')
     .eq('id', id)
     .eq('is_active', true)
-    .single() as { data: UnsoldListing | null };
+    .maybeSingle() as { data: UnsoldListing | null };
 
   if (!item) notFound();
 
