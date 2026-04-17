@@ -5,6 +5,13 @@ const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true },
   async redirects() {
     return [
+      // non-www → www 리다이렉트 (canonical 통일)
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'mk-land.kr' }],
+        destination: 'https://www.mk-land.kr/:path*',
+        permanent: true,
+      },
       {
         source: '/apt/acquisition-tax-guide-2025',
         destination: '/apt/acquisition-tax-guide',
