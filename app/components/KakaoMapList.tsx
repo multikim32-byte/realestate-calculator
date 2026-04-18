@@ -59,7 +59,7 @@ export default function KakaoMapList({ items }: Props) {
 
     const scriptId = 'kakao-map-sdk';
     if (document.getElementById(scriptId)) {
-      if (window.kakao?.maps) initMap();
+      if (window.kakao?.maps?.Map) initMap();
       else window.kakao?.maps?.load?.(initMap);
       return;
     }

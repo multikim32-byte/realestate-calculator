@@ -19,7 +19,7 @@ function findLawdCd(location: string): { code: string; areaName: string; sido: s
   const loc = location.replace(/\s/g, '');
   const adminSuffix = new Set(['시', '도', '군', '구', '읍', '면', '동', '리']);
 
-  const entries = (Object.entries(LAWD_CODE_MAP) as [string, { name: string; code: string }[]][])
+  const entries = (Object.entries(LAWD_CODE_MAP) as unknown as [string, { name: string; code: string }[]][])
     .flatMap(([sido, list]) => list.map(e => ({ ...e, sido, bare: e.name.replace(/\s/g, '') })))
     .sort((a, b) => b.bare.length - a.bare.length);
 

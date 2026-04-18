@@ -141,13 +141,18 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const fd = new FormData();
-    fd.append('file', file);
-    const res = await fetch('/api/admin/unsold/upload', { method: 'POST', body: fd });
-    const data = await res.json();
-    if (data.url) set('thumbnail_url', data.url);
-    else setError('이미지 업로드 실패');
-    setUploading(false);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/admin/unsold/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.url) set('thumbnail_url', data.url);
+      else setError(data.error || '이미지 업로드 실패');
+    } catch {
+      setError('이미지 업로드 중 오류가 발생했습니다.');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -164,19 +169,24 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
       max_price: form.max_price ? Number(form.max_price) : null,
     };
 
-    const res = await fetch(isEdit ? `/api/admin/unsold/${id}` : '/api/admin/unsold', {
-      method: isEdit ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    try {
+      const res = await fetch(isEdit ? `/api/admin/unsold/${id}` : '/api/admin/unsold', {
+        method: isEdit ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
 
-    if (res.ok) {
-      router.push('/admin/unsold');
-    } else {
-      const data = await res.json();
-      setError(data.error || '저장 실패');
+      if (res.ok) {
+        router.push('/admin/unsold');
+      } else {
+        const data = await res.json();
+        setError(data.error || '저장 실패');
+      }
+    } catch {
+      setError('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const inputStyle = {
