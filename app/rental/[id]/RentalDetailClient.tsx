@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import GlobalNav from '../../components/GlobalNav';
-import { LhRentalItem, LhAttachment } from '@/lib/lhApi';
+import { LhRentalItem, LhAttachment, LhSupplyUnit } from '@/lib/lhApi';
 
 const RENTAL_TYPE_COLORS: Record<string, { bg: string; color: string }> = {
   '행복주택':     { bg: '#e0f2fe', color: '#0369a1' },
@@ -36,6 +36,7 @@ export default function RentalDetailClient() {
   const { id } = useParams<{ id: string }>();
   const [item, setItem] = useState<LhRentalItem | null>(null);
   const [attachments, setAttachments] = useState<LhAttachment[]>([]);
+  const [supplyUnits, setSupplyUnits] = useState<LhSupplyUnit[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -54,6 +55,11 @@ export default function RentalDetailClient() {
         fetch(`/api/rental/attachments?${qs}`)
           .then(r => r.json())
           .then(d => setAttachments(d.attachments ?? []))
+          .catch(() => {});
+
+        fetch(`/api/rental/supply?ccrCnt=${encodeURIComponent(parsed.ccrCnt)}`)
+          .then(r => r.json())
+          .then(d => setSupplyUnits(d.units ?? []))
           .catch(() => {});
       }
     } catch {}
@@ -115,6 +121,35 @@ export default function RentalDetailClient() {
             {item.moveInDate    && <Row label="입주 예정"  value={item.moveInDate.slice(0, 7)} />}
           </dl>
         </div>
+
+        {/* 주택형별 공급정보 */}
+        {supplyUnits.length > 0 && (
+          <div style={{ background: '#fff', borderRadius: 16, padding: '20px 24px', marginBottom: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+            <h2 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: '#1e3a5f' }}>주택형별 공급정보</h2>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: '#f8fafc' }}>
+                    {['주택형', '공급유형', '세대수', '보증금', '월임대료'].map(h => (
+                      <th key={h} style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 700, color: '#374151', borderBottom: '2px solid #e5e7eb', whiteSpace: 'nowrap' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {supplyUnits.map((u, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                      <td style={{ padding: '9px 12px', textAlign: 'center', fontWeight: 600, color: '#1e293b' }}>{u.houseType || '-'}</td>
+                      <td style={{ padding: '9px 12px', textAlign: 'center', color: '#6b7280' }}>{u.supplyType || '-'}</td>
+                      <td style={{ padding: '9px 12px', textAlign: 'center', color: '#1e293b' }}>{u.count > 0 ? `${u.count.toLocaleString()}세대` : '-'}</td>
+                      <td style={{ padding: '9px 12px', textAlign: 'center', color: '#1e293b' }}>{u.deposit > 0 ? `${(u.deposit / 10000).toFixed(0)}만원` : '-'}</td>
+                      <td style={{ padding: '9px 12px', textAlign: 'center', color: '#1e293b' }}>{u.monthlyRent > 0 ? `${(u.monthlyRent / 10000).toFixed(1)}만원` : '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* 공고 기본 정보 */}
         <div style={{ background: '#fff', borderRadius: 16, padding: '20px 24px', marginBottom: 20, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
