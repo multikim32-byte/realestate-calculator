@@ -455,16 +455,6 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
             return (
               <div style={{ marginTop: 16 }}>
                 <KakaoMap address={mapAddress} name={selectedApt} />
-                <div style={{ textAlign: 'center', marginTop: 8 }}>
-                  <a
-                    href={kakaoSearchUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ fontSize: 13, color: '#1d4ed8', textDecoration: 'none' }}
-                  >
-                    카카오맵에서 &quot;{selectedApt}&quot; 정확한 위치 보기 →
-                  </a>
-                </div>
                 {sido && (
                   <div style={{ marginTop: 12, background: '#1e3a5f', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                     <p style={{ margin: 0, color: '#fff', fontWeight: 700, fontSize: 15 }}>📋 {sido} 청약·분양 매물 모아보기</p>
