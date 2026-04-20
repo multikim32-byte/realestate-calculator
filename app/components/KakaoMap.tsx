@@ -101,7 +101,7 @@ export default function KakaoMap({ address, name }: Props) {
 
       const searchName = (name ?? '').replace(/\s*\([^)]*\)\s*/g, '').trim();
 
-      // center 좌표 기반 아파트명 키워드 검색 → 실패 시 center 그대로 표시
+      // 아파트명 키워드 검색 → 실패 시 center 근처 검색 → 실패 시 center 그대로
       function searchByNameNearCenter(center: { y: string; x: string }) {
         if (!searchName) { geocodeCache.set(cacheKey, center); placeMarker(center); return; }
         const latLng = new window.kakao.maps.LatLng(center.y, center.x);
@@ -118,7 +118,7 @@ export default function KakaoMap({ address, name }: Props) {
           });
         }
 
-        // 1차: 아파트 카테고리 + 1.5km
+        // 1차: 아파트명 전국 직접 검색 (카테고리 없음 — 단지명이 고유하면 가장 정확)
         ps.keywordSearch(searchName, (places: any, st: any) => {
           if (st === window.kakao.maps.services.Status.OK && places.length > 0) {
             const best = bestMatch(places);
@@ -127,15 +127,15 @@ export default function KakaoMap({ address, name }: Props) {
             placeMarker(coords);
             return;
           }
-          // 2차: 카테고리 없이 1.5km
+          // 2차: center 근처 2km 검색 (전국 검색 실패 시)
           ps.keywordSearch(searchName, (p2: any, s2: any) => {
             const coords = (s2 === window.kakao.maps.services.Status.OK && p2.length > 0)
               ? { y: bestMatch(p2).y, x: bestMatch(p2).x }
               : center;
             geocodeCache.set(cacheKey, coords);
             placeMarker(coords);
-          }, { location: latLng, radius: 1500 });
-        }, { category_group_code: 'AG2', location: latLng, radius: 1500, sort: window.kakao.maps.services.SortBy?.DISTANCE });
+          }, { location: latLng, radius: 2000 });
+        });
       }
 
       // 주소 목록을 순서대로 geocoding, 첫 성공 시 callback 호출
