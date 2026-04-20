@@ -331,14 +331,6 @@ export default function SaleDetailClient() {
           units={item.units ?? []}
         />
 
-        {/* 지역별 분양 모아보기 유도 */}
-        <div style={{ marginTop: 16, background: '#1e3a5f', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <p style={{ margin: 0, color: '#fff', fontWeight: 700, fontSize: 15 }}>📋 {item.region} 청약·분양 매물 모아보기</p>
-          <Link href={`/region/${encodeURIComponent(item.region)}`} style={{
-            display: 'inline-block', padding: '10px 22px', borderRadius: 10,
-            background: '#fff', color: '#1e3a5f', fontWeight: 700, fontSize: 14, textDecoration: 'none',
-          }}>{item.region} 분양 모아보기 →</Link>
-        </div>
       </div>
     </div>
   );

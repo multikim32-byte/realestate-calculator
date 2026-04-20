@@ -455,6 +455,15 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
             return (
               <div style={{ marginTop: 16 }}>
                 <KakaoMap address={mapAddress} name={selectedApt} />
+                {sido && (
+                  <div style={{ marginTop: 12, background: '#1e3a5f', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                    <p style={{ margin: 0, color: '#fff', fontWeight: 700, fontSize: 15 }}>📋 {sido} 청약·분양 매물 모아보기</p>
+                    <a href={`/region/${encodeURIComponent(sido)}`} style={{
+                      display: 'inline-block', padding: '10px 22px', borderRadius: 10,
+                      background: '#fff', color: '#1e3a5f', fontWeight: 700, fontSize: 14, textDecoration: 'none',
+                    }}>{sido} 분양 모아보기 →</a>
+                  </div>
+                )}
               </div>
             );
           })()}
