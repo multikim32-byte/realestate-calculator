@@ -57,15 +57,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // apt 포스트
+  // dsr-calculation-guide, prepayment-penalty-guide → blog로 301 리디렉션 처리됨 (중복 제거)
   const APT_SLUGS = [
     'apartment-subscription-guide-2026','presale-price-ceiling-guide','new-apartment-subscription-score',
     'presale-rights-transfer','pre-sale-vs-resale-apartment','acquisition-tax-guide','mortgage-loan-guide',
     'jeonse-vs-monthly-rent','capital-gains-tax-real-estate','reconstruction-redevelopment-guide',
     'real-estate-brokerage-fee','officetel-investment-guide','lease-contract-renewal-law',
     'real-estate-tax-overview','small-commercial-investment','mortgage-ltv-limit-guide',
-    'dsr-calculation-guide','fixed-vs-variable-rate-2026','didimdol-loan-guide','bogeumjari-loan-vs-bank',
+    'fixed-vs-variable-rate-2026','didimdol-loan-guide','bogeumjari-loan-vs-bank',
     'mortgage-refinancing-guide','repayment-method-comparison','newborn-special-loan-guide',
-    'prepayment-penalty-guide','first-home-buyer-loan-support','apartment-lottery-strategy',
+    'first-home-buyer-loan-support','apartment-lottery-strategy',
     'mortgage-stress-dsr-guide','mortgage-jeonse-loan-guide','jeonse-fraud-prevention-guide',
   ];
 
@@ -86,7 +87,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     'bogeumjari-vs-didimdol-2025','dsr-ratio-loan-limit-strategy','mortgage-interest-rate-negotiation',
     'mortgage-prepayment-strategy','mortgage-types-comparison','ltv-dtidsr-deep-dive',
     'mortgage-fixed-vs-variable-2025','mortgage-application-documents','mortgage-loan-repayment-early-payoff',
-    'apartment-management-fee-saving-tips',
+    'apartment-management-fee-saving-tips','real-estate-auction-guide','housing-subscription-savings-guide',
+    'move-in-checklist-guide','apartment-registration-tax-guide','real-estate-gap-investment-risk',
+    'real-estate-calculator-guide','apartment-subscription-info-guide','mk-land-real-estate-tools-guide',
+    'unsold-apartment-benefits-guide-2026','subscription-score-guide-2026','apartment-real-price-lookup-guide-2026',
+    'unsold-apartment-investment-strategy-2026','first-home-subscription-complete-guide-2026',
+    'mk-land-unsold-listing-launch-2026','apartment-transfer-income-tax-guide-2026',
+    'real-estate-market-outlook-2026','jeonse-fraud-prevention-complete-guide-2026',
   ];
 
   const blogEntries: MetadataRoute.Sitemap = BLOG_SLUGS.map(slug => ({

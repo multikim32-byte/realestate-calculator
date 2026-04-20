@@ -30,6 +30,17 @@ const nextConfig: NextConfig = {
         destination: '/blog/apartment-management-fee-saving-tips',
         permanent: true,
       },
+      // 중복 페이지 해소 — apt → blog 정본으로 통합
+      {
+        source: '/apt/dsr-calculation-guide',
+        destination: '/blog/dsr-ratio-loan-limit-strategy',
+        permanent: true,
+      },
+      {
+        source: '/apt/prepayment-penalty-guide',
+        destination: '/blog/mortgage-prepayment-strategy',
+        permanent: true,
+      },
     ];
   },
 };
