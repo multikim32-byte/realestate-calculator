@@ -313,6 +313,17 @@ export default function SaleDetailClient() {
         {/* 카카오 지도 */}
         {item.location && <KakaoMap address={item.location} name={item.name} />}
 
+        {/* 지역 분양 모아보기 배너 */}
+        {item.region && (
+          <div style={{ marginTop: 12, background: '#1e3a5f', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <p style={{ margin: 0, color: '#fff', fontWeight: 700, fontSize: 15 }}>📋 {item.region} 청약·분양 매물 모아보기</p>
+            <a href={`/region/${encodeURIComponent(item.region)}`} style={{
+              display: 'inline-block', padding: '10px 22px', borderRadius: 10,
+              background: '#fff', color: '#1e3a5f', fontWeight: 700, fontSize: 14, textDecoration: 'none',
+            }}>{item.region} 분양 모아보기 →</a>
+          </div>
+        )}
+
         {/* 인근 실거래가 */}
         <NearbyTradeSection
           location={item.location}
