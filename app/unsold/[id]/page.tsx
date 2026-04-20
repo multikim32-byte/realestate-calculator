@@ -225,22 +225,26 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
               const sigungu = parts.slice(1).join(' ');
               return (
                 <div style={{ marginTop: 28, padding: '20px', background: '#f8fafc', borderRadius: 12, border: '1px solid #e2e8f0' }}>
-                  <p style={{ fontSize: 12, color: '#6b7280', margin: '0 0 12px', fontWeight: 600 }}>🔗 관련 도구 바로가기</p>
+                  <p style={{ fontSize: 12, color: '#6b7280', margin: '0 0 12px', fontWeight: 600 }}>🔗 관련 정보 바로가기</p>
                   <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                    <Link href="/calculator?tab=loan"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 18px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#1d4ed8', textDecoration: 'none' }}>
-                      🏦 대출 계산하기
-                    </Link>
-                    <Link href="/calculator?tab=acquisition"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 18px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#92400e', textDecoration: 'none' }}>
-                      🧾 취득세 계산하기
-                    </Link>
                     {sigungu && (
                       <Link href={`/trade?sido=${encodeURIComponent(sido)}&sigungu=${encodeURIComponent(sigungu)}`}
                         style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 18px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#166534', textDecoration: 'none' }}>
                         📊 같은 지역 실거래가
                       </Link>
                     )}
+                    <Link href={`/region/${encodeURIComponent(sido)}`}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 18px', background: '#f5f3ff', border: '1px solid #ddd6fe', borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#5b21b6', textDecoration: 'none' }}>
+                      📋 지역별 청약·분양 매물 보기
+                    </Link>
+                    <Link href="/calculator?tab=loan"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 18px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#1d4ed8', textDecoration: 'none' }}>
+                      🏦 대출 계산기
+                    </Link>
+                    <Link href="/calculator?tab=acquisition"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 18px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#92400e', textDecoration: 'none' }}>
+                      🧾 취득세 계산기
+                    </Link>
                   </div>
                 </div>
               );
