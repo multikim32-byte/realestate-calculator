@@ -218,14 +218,6 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
             {/* 주택형별 공급정보 (청약 API 연동) */}
             {item.house_manage_no && <UnitTable houseManageNo={item.house_manage_no} />}
 
-            {/* 공식 사이트 */}
-            {item.official_url && (
-              <a href={item.official_url} target="_blank" rel="noopener noreferrer"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#1d4ed8', color: '#fff', padding: '12px 24px', borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
-                🔗 공식 홈페이지 바로가기
-              </a>
-            )}
-
             {/* 관련 도구 */}
             {(() => {
               const parts = item.location.trim().split(/\s+/);
@@ -265,6 +257,16 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
         <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '14px 18px', marginTop: 20, fontSize: 13, color: '#92400e' }}>
           본 정보는 참고용이며 실제 분양 조건은 반드시 공식 사이트에서 확인하시기 바랍니다.
         </div>
+
+        {/* 공식 사이트 */}
+        {item.official_url && (
+          <div style={{ marginTop: 12, textAlign: 'center' }}>
+            <a href={item.official_url} target="_blank" rel="noopener noreferrer"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#1d4ed8', color: '#fff', padding: '12px 24px', borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+              🔗 공식 홈페이지 바로가기
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );
