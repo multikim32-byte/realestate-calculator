@@ -133,7 +133,7 @@ export default function AboutPage() {
         </div>
 
         {/* 주요 기능 */}
-        <h2 style={{ fontSize: 19, fontWeight: 800, marginBottom: 16, color: '#1e293b' }}>주요 기능</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 16, color: '#1e293b' }}>주요 기능</h2>
         <div style={{ display: 'grid', gap: 12, marginBottom: 48 }}>
           {features.map(f => {
             const Icon = f.icon;
@@ -167,7 +167,7 @@ export default function AboutPage() {
         </div>
 
         {/* 데이터 출처 */}
-        <h2 style={{ fontSize: 19, fontWeight: 800, marginBottom: 16, color: '#1e293b' }}>데이터 출처</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 16, color: '#1e293b' }}>데이터 출처</h2>
         <div style={{ border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden', marginBottom: 48 }}>
           {dataSources.map((d, i) => (
             <div key={d.label} style={{
@@ -182,7 +182,7 @@ export default function AboutPage() {
         </div>
 
         {/* 운영자 */}
-        <h2 style={{ fontSize: 19, fontWeight: 800, marginBottom: 16, color: '#1e293b' }}>운영자</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 16, color: '#1e293b' }}>운영자</h2>
         <div style={{ background: '#fff', padding: '24px', borderRadius: 12, border: '1px solid #e5e7eb', marginBottom: 48 }}>
           <p style={{ fontWeight: 800, fontSize: 16, marginBottom: 4, color: '#1e293b', margin: '0 0 4px' }}>김경래 공인중개사</p>
           <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 8, margin: '0 0 8px' }}>부동산 정보 제공 · 청약정보 & 실거래가 서비스 운영</p>

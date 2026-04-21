@@ -51,19 +51,19 @@ export default async function TradePage() {
 
           <section style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', marginBottom: 32 }}>
             <div style={{ padding: 20, background: '#eff6ff', borderRadius: 12 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1e40af', marginBottom: 6 }}>단지별 요약</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1e40af', marginBottom: 6 }}>단지별 요약</h3>
               <p style={{ fontSize: 13, lineHeight: 1.7, color: '#374151' }}>
                 단지 카드를 클릭하면 해당 단지의 거래 내역과 면적별 가격 분포를 확인할 수 있습니다.
               </p>
             </div>
             <div style={{ padding: 20, background: '#f0fdf4', borderRadius: 12 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#166534', marginBottom: 6 }}>면적별 분포 차트</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#166534', marginBottom: 6 }}>면적별 분포 차트</h3>
               <p style={{ fontSize: 13, lineHeight: 1.7, color: '#374151' }}>
                 전용면적 대비 거래금액 산점도 차트로 해당 지역 아파트 가격 분포를 한눈에 파악하세요.
               </p>
             </div>
             <div style={{ padding: 20, background: '#fdf4ff', borderRadius: 12 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#6b21a8', marginBottom: 6 }}>최근 3년 시세 추이</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#6b21a8', marginBottom: 6 }}>최근 3년 시세 추이</h3>
               <p style={{ fontSize: 13, lineHeight: 1.7, color: '#374151' }}>
                 최근 3년 월별 실거래가 추이를 단지별로 확인할 수 있습니다.
               </p>
@@ -71,7 +71,7 @@ export default async function TradePage() {
           </section>
 
           <section style={{ padding: 20, background: '#f9fafb', borderRadius: 12, border: '1px solid #e5e7eb', marginBottom: 24 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1e3a5f', marginBottom: 10 }}>유의사항</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1e3a5f', marginBottom: 10 }}>유의사항</h2>
             <p style={{ fontSize: 13, lineHeight: 1.8, color: '#6b7280' }}>
               본 데이터는 국토교통부 실거래가 공개시스템 API를 통해 제공되며, 신고 기한(계약 후 30일) 관계로
               최신 거래 일부가 반영되지 않을 수 있습니다. 거래 취소 건은 제외 처리됩니다.

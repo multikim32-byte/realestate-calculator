@@ -144,7 +144,7 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
         {/* ── 분양정보 ── */}
         <section id="unsold" style={{ marginBottom: 40 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1e293b', margin: 0 }}>🏷️ {sido} 분양 매물</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1e3a5f', margin: 0 }}>🏷️ {sido} 분양 매물</h2>
             <Link href="/unsold" style={{ fontSize: 13, color: '#059669', textDecoration: 'none' }}>전체보기 →</Link>
           </div>
 
@@ -197,7 +197,7 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
         {/* ── 청약정보 ── */}
         <section id="sale" style={{ marginBottom: 40 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1e293b', margin: 0 }}>📋 {sido} 청약정보</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1e3a5f', margin: 0 }}>📋 {sido} 청약정보</h2>
             <Link href="/" style={{ fontSize: 13, color: '#1d4ed8', textDecoration: 'none' }}>전체보기 →</Link>
           </div>
           <div style={{ background: '#fff', borderRadius: 12, padding: '28px 32px', boxShadow: '0 1px 6px rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
@@ -226,7 +226,7 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
 
         {/* ── 다른 지역 ── */}
         <section>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>다른 지역 보기</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1e3a5f', marginBottom: 12 }}>다른 지역 보기</h2>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {allRegions.filter(r => r !== sido).map(r => (
               <Link key={r} href={`/region/${r}`}

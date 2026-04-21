@@ -14,10 +14,10 @@ export default function NotFound() {
       <GlobalNav />
       <div style={{ maxWidth: 600, margin: '0 auto', padding: '80px 16px 60px', textAlign: 'center' }}>
         <div style={{ fontSize: 72, fontWeight: 900, color: '#1d4ed8', lineHeight: 1 }}>404</div>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1e3a5f', margin: '20px 0 10px' }}>
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1e3a5f', margin: '20px 0 10px' }}>
           페이지를 찾을 수 없습니다
         </h1>
-        <p style={{ fontSize: 15, color: '#6b7280', lineHeight: 1.7, marginBottom: 36 }}>
+        <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.8, marginBottom: 36 }}>
           요청하신 페이지가 존재하지 않거나 이동되었습니다.<br />
           주소를 다시 확인하거나 아래 링크를 이용해주세요.
         </p>

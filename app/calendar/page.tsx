@@ -42,19 +42,19 @@ export default function CalendarPage() {
 
           <section style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', marginBottom: 32 }}>
             <div style={{ padding: 20, background: '#eff6ff', borderRadius: 12 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1e40af', marginBottom: 6 }}>청약 시작일 기준</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1e40af', marginBottom: 6 }}>청약 시작일 기준</h3>
               <p style={{ fontSize: 13, lineHeight: 1.7, color: '#374151' }}>
                 달력의 각 날짜는 청약 접수 시작일 기준입니다. 날짜를 클릭하면 해당 일에 시작하는 청약 상세 정보를 볼 수 있습니다.
               </p>
             </div>
             <div style={{ padding: 20, background: '#f0fdf4', borderRadius: 12 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#166534', marginBottom: 6 }}>진행 중인 청약</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#166534', marginBottom: 6 }}>진행 중인 청약</h3>
               <p style={{ fontSize: 13, lineHeight: 1.7, color: '#374151' }}>
                 이전 달에 시작해 현재 접수 중인 청약은 달력 하단 "진행 중인 청약" 섹션에서 확인할 수 있습니다.
               </p>
             </div>
             <div style={{ padding: 20, background: '#fdf4ff', borderRadius: 12 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#6b21a8', marginBottom: 6 }}>청약홈 바로가기</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#6b21a8', marginBottom: 6 }}>청약홈 바로가기</h3>
               <p style={{ fontSize: 13, lineHeight: 1.7, color: '#374151' }}>
                 각 청약 항목에서 청약홈 공식 모집공고 링크를 바로 열 수 있습니다. 최종 청약은 청약홈에서 진행하세요.
               </p>
@@ -62,7 +62,7 @@ export default function CalendarPage() {
           </section>
 
           <section style={{ padding: 20, background: '#f9fafb', borderRadius: 12, border: '1px solid #e5e7eb' }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1e3a5f', marginBottom: 10 }}>유의사항</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1e3a5f', marginBottom: 10 }}>유의사항</h2>
             <p style={{ fontSize: 13, lineHeight: 1.8, color: '#6b7280' }}>
               본 달력의 청약 일정은 국토교통부 공공데이터포털 API를 통해 제공되며, 실제 공고와 다를 수 있습니다.
               청약 신청 전 반드시 <strong>청약홈(applyhome.co.kr)</strong> 공식 입주자 모집공고를 확인하시기 바랍니다.

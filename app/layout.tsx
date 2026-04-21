@@ -54,7 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`
         }} />
       </head>
-      <body>
+      <body style={{ fontFamily: "'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif" }}>
         {/* Google Analytics GA4 */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-RMGGDLYPB7"

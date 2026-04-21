@@ -127,7 +127,7 @@ export default function Home({ searchParams }: { searchParams: Record<string, st
         {/* 지역별 모아보기 */}
         <div style={{ maxWidth: 860, margin: '0 auto', padding: '0 0 0' }}>
           <section style={{ marginBottom: 40 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>지역별 청약·분양 모아보기</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1e3a5f', marginBottom: 12 }}>지역별 청약·분양 모아보기</h2>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {REGIONS.map(r => (
                 <Link key={r} href={`/region/${encodeURIComponent(r)}`} style={{
@@ -146,7 +146,7 @@ export default function Home({ searchParams }: { searchParams: Record<string, st
         {/* 인기 가이드 */}
         <div style={{ maxWidth: 860, margin: '0 auto' }}>
           <section style={{ marginBottom: 40 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>인기 부동산 가이드</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1e3a5f', marginBottom: 12 }}>인기 부동산 가이드</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
               {[
                 { href: '/apt/apartment-subscription-guide-2026', label: '2026 청약 완벽 가이드' },
@@ -174,7 +174,7 @@ export default function Home({ searchParams }: { searchParams: Record<string, st
         <div style={{ maxWidth: 860, margin: '0 auto', paddingBottom: 60 }}>
           <section style={{ marginBottom: 40 }}>
             <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1e3a5f', marginBottom: 12 }}>청약정보 이용 안내</h2>
-            <p style={{ lineHeight: 1.8, color: '#374151', fontSize: 15 }}>
+            <p style={{ lineHeight: 1.8, color: '#374151', fontSize: 14 }}>
               국토교통부 공공데이터 청약홈 API를 활용해 전국 아파트·오피스텔·도시형 생활주택·(공공지원)민간임대 주택의
               분양 공고 정보를 실시간으로 제공합니다. 청약 상세 페이지에서 인근 실거래가도 함께 확인할 수 있습니다.
             </p>
