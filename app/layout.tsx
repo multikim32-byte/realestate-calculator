@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     siteName: "엠케이랜드",
     title: "청약정보 & 실거래가 — 전국 아파트·오피스텔 분양 청약 정보",
     description: "전국 아파트·오피스텔 청약 일정과 인근 실거래가를 한눈에 확인하세요. 청약달력, 실거래가 조회, 부동산 계산기 무료 제공.",
-    images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: '부동산 계산기' }],
+    images: [{ url: '/opengraph-image?v=2', width: 1200, height: 630, alt: '전국 부동산 정보' }],
   },
   twitter: {
     card: "summary_large_image",
