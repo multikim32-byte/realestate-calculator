@@ -7,7 +7,7 @@ import type { Metadata } from 'next';
 import { Calendar, BarChart2, Calculator, Tag, Map, Building2 } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: '청약정보 — 전국 부동산 정보 | mk-land',
+  title: '청약정보 — 전국 아파트·오피스텔 분양 청약 정보 & 실거래가',
   description: '전국 아파트·오피스텔 청약 일정과 인근 실거래가를 한눈에 확인하세요. 국토교통부 공공데이터 기반, 지역별 필터·청약달력·실거래가 조회 지원.',
   alternates: { canonical: 'https://www.mk-land.kr' },
 };
