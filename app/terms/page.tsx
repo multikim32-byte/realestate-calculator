@@ -2,7 +2,7 @@ import GlobalNav from '../components/GlobalNav';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: '이용약관 | 청약정보 mk-land.kr',
+  title: '이용약관 | 엠케이랜드',
   description: 'mk-land.kr 서비스 이용약관입니다. 서비스 이용 조건, 책임 한계, 면책 조항 등을 안내합니다.',
   alternates: { canonical: 'https://www.mk-land.kr/terms' },
 };
@@ -10,15 +10,20 @@ export const metadata: Metadata = {
 const sections = [
   {
     title: '제1조 (목적)',
-    content: `본 약관은 청약정보 mk-land.kr(이하 "서비스")이 제공하는 모든 서비스의 이용 조건 및 절차, 운영자와 이용자의 권리·의무·책임사항을 규정함을 목적으로 합니다.`,
+    content: `본 약관은 엠케이랜드 mk-land.kr(이하 "서비스")이 제공하는 모든 서비스의 이용 조건 및 절차, 운영자와 이용자의 권리·의무·책임사항을 규정함을 목적으로 합니다.`,
   },
   {
     title: '제2조 (서비스 정의)',
     content: `서비스는 다음 기능을 무료로 제공합니다.`,
     list: [
       '전국 아파트·오피스텔 청약 정보 및 청약 경쟁률 조회',
+      '월별 청약 일정 달력',
       '아파트 실거래가 조회 및 시세 추이 차트',
-      '부동산 계산기 (취득세·대출 원리금·중도금 이자·중개수수료)',
+      '전국 분양정보 (미분양·특별 혜택 단지)',
+      'LH 임대공고 (행복주택·국민임대·통합공공임대·장기전세 등)',
+      '지역별 청약·분양·실거래가 모아보기',
+      '부동산 계산기 (취득세·대출 원리금·중도금 이자·중개수수료·수익률)',
+      '관심단지 저장 기능',
       '부동산 관련 정보 및 블로그 콘텐츠',
     ],
   },
@@ -58,12 +63,13 @@ const sections = [
 
 export default function TermsPage() {
   return (
-    <div>
+    <div style={{ minHeight: '100vh', background: '#f0f4f9' }}>
       <GlobalNav />
+      <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)', padding: '36px 16px 32px', textAlign: 'center' }}>
+        <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: '0 0 8px' }}>이용약관</h1>
+        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0 }}>시행일: 2026년 4월 10일</p>
+      </div>
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px', lineHeight: 1.8, color: '#374151' }}>
-
-        <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8, color: '#1e293b' }}>이용약관</h1>
-        <p style={{ color: '#6b7280', marginBottom: 32 }}>시행일: 2026년 4월 10일</p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
           {sections.map((s, i) => (
@@ -87,7 +93,7 @@ export default function TermsPage() {
 
         <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid #e5e7eb', color: '#9ca3af', fontSize: 13 }}>
           <p>본 약관은 2026년 4월 10일부터 시행됩니다.</p>
-          <p style={{ marginTop: 4 }}>운영: 청약정보 mk-land.kr · <a href="mailto:multikim@naver.com" style={{ color: '#6b7280' }}>multikim@naver.com</a></p>
+          <p style={{ marginTop: 4 }}>운영: 엠케이랜드 mk-land.kr · <a href="mailto:multikim@naver.com" style={{ color: '#6b7280' }}>multikim@naver.com</a></p>
         </div>
 
         <div style={{ marginTop: 24, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
