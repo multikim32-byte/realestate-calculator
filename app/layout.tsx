@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import BookmarkToast from "./components/BookmarkToast";
 
 const BASE_URL = 'https://www.mk-land.kr';
 
@@ -74,6 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           strategy="afterInteractive"
         />
         {children}
+        <BookmarkToast />
         <footer style={{ background: '#f9fafb', borderTop: '1px solid #e5e7eb', padding: '24px 16px', marginTop: 40 }}>
           <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'space-between', alignItems: 'center' }}>
             <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>© 2026 엠케이랜드 · 전국 아파트·오피스텔 분양 청약 정보 &amp; 실거래가 | mk-land.kr</p>

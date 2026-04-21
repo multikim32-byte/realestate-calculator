@@ -47,9 +47,10 @@ const QUICK_LINKS = [
 
 const REGIONS = ['서울','경기','인천','부산','대구','광주','대전','울산','세종','강원','충북','충남','전북','전남','경북','경남','제주'];
 
-export default function Home({ searchParams }: { searchParams: Record<string, string> }) {
-  if (searchParams.tab) {
-    const qs = new URLSearchParams(searchParams as Record<string, string>).toString();
+export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
+  const params = await searchParams;
+  if (params.tab) {
+    const qs = new URLSearchParams(params).toString();
     redirect(`/calculator?${qs}`);
   }
 
