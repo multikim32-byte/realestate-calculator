@@ -2,29 +2,32 @@ import GlobalNav from '../components/GlobalNav';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: '개인정보처리방침 | 청약정보 mk-land.kr',
+  title: '개인정보처리방침 | 엠케이랜드',
   description: 'mk-land.kr 서비스의 개인정보처리방침입니다. 수집하는 정보, 이용 목적, 광고 및 쿠키 사용에 대해 안내합니다.',
   alternates: { canonical: 'https://www.mk-land.kr/privacy' },
 };
 
 export default function PrivacyPage() {
   return (
-    <div>
+    <div style={{ minHeight: '100vh', background: '#f0f4f9' }}>
       <GlobalNav />
-      <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px', lineHeight: 1.8, color: '#374151' }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>개인정보처리방침</h1>
-        <p style={{ color: '#6b7280', marginBottom: 32 }}>최종 수정일: 2026년 4월 15일</p>
+      <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)', padding: '36px 16px 32px', textAlign: 'center' }}>
+        <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: '0 0 8px' }}>개인정보처리방침</h1>
+        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0 }}>최종 수정일: 2026년 4월 15일</p>
+      </div>
+      <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px 80px', lineHeight: 1.8, color: '#374151' }}>
 
-        <p>청약정보 mk-land.kr(이하 "서비스")는 이용자의 개인정보를 소중히 여기며, 「개인정보 보호법」 및 관련 법령을 준수합니다. 본 방침은 서비스가 수집하는 정보의 종류와 이용 목적, 제3자 공유 여부 등을 안내합니다.</p>
+        <p>엠케이랜드 mk-land.kr(이하 "서비스")는 이용자의 개인정보를 소중히 여기며, 「개인정보 보호법」 및 관련 법령을 준수합니다. 본 방침은 서비스가 수집하는 정보의 종류와 이용 목적, 제3자 공유 여부 등을 안내합니다.</p>
 
         <h2 style={{ fontSize: 18, fontWeight: 700, marginTop: 32, marginBottom: 12 }}>1. 수집하는 정보</h2>
-        <p>본 서비스는 청약정보 조회, 아파트 실거래가 조회, 부동산 계산기 이용 시 별도의 개인정보(이름, 연락처, 이메일 등)를 직접 수집하지 않습니다. 다만 서비스 이용 과정에서 다음 정보가 자동으로 수집될 수 있습니다.</p>
+        <p>본 서비스는 청약정보 조회, 아파트 실거래가 조회, LH 임대공고, 부동산 계산기 이용 시 별도의 개인정보(이름, 연락처, 이메일 등)를 직접 수집하지 않습니다. 다만 서비스 이용 과정에서 다음 정보가 자동으로 수집될 수 있습니다.</p>
         <ul style={{ paddingLeft: 20, marginTop: 8 }}>
           <li>브라우저 종류 및 버전</li>
           <li>운영체제 종류</li>
           <li>접속 IP 주소 (익명화 처리)</li>
           <li>방문 페이지 및 체류 시간</li>
           <li>유입 경로 (검색엔진, 링크 등)</li>
+          <li>관심단지 저장 정보 (브라우저 로컬스토리지에만 저장, 서버 전송 없음)</li>
         </ul>
 
         <h2 style={{ fontSize: 18, fontWeight: 700, marginTop: 32, marginBottom: 12 }}>2. 쿠키(Cookie) 사용</h2>
@@ -78,7 +81,7 @@ export default function PrivacyPage() {
         <p>본 서비스는 이용자의 개인정보를 제3자에게 판매하거나 임의로 제공하지 않습니다. 단, 법령에 의한 요구가 있는 경우 관련 기관에 제공할 수 있습니다.</p>
 
         <h2 style={{ fontSize: 18, fontWeight: 700, marginTop: 32, marginBottom: 12 }}>5. 외부 링크</h2>
-        <p>본 서비스는 공공데이터포털, 청약홈 등 외부 사이트로 연결되는 링크를 포함할 수 있습니다. 외부 사이트의 개인정보처리방침은 해당 사이트의 정책을 따르며, 본 서비스는 이에 대한 책임을 지지 않습니다.</p>
+        <p>본 서비스는 공공데이터포털, 청약홈, LH 한국토지주택공사 등 외부 사이트로 연결되는 링크를 포함할 수 있습니다. 외부 사이트의 개인정보처리방침은 해당 사이트의 정책을 따르며, 본 서비스는 이에 대한 책임을 지지 않습니다.</p>
 
         <h2 style={{ fontSize: 18, fontWeight: 700, marginTop: 32, marginBottom: 12 }}>6. 정보 보안</h2>
         <p>본 서비스는 이용자 정보를 보호하기 위해 HTTPS 암호화 통신을 사용하며, 수집된 로그 데이터는 익명화하여 처리합니다.</p>
