@@ -61,6 +61,7 @@ export default function RentalListClient({ initialItems, initialTotal, dataSourc
   const [total, setTotal] = useState(initialTotal);
   const [loading, setLoading] = useState(false);
   const [region, setRegion] = useState(searchParams.get('region') || '전체');
+  const [openDrop, setOpenDrop] = useState(false);
   const [page, setPage] = useState(1);
   const perPage = 12;
 
@@ -103,27 +104,35 @@ export default function RentalListClient({ initialItems, initialTotal, dataSourc
       )}
 
       {/* 지역 필터 */}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
-        {REGIONS.map((r) => (
-          <button
-            key={r}
-            onClick={() => handleRegion(r)}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 20,
-              border: '1px solid',
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-              background: region === r ? '#1d4ed8' : '#fff',
-              color: region === r ? '#fff' : '#374151',
-              borderColor: region === r ? '#1d4ed8' : '#e5e7eb',
-              transition: 'all 0.15s',
-            }}
-          >
-            {r}
-          </button>
-        ))}
+      <div style={{ position: 'relative', display: 'inline-block', marginBottom: 20 }}>
+        <button
+          onClick={() => setOpenDrop(v => !v)}
+          style={{
+            padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+            border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer',
+            color: region !== '전체' ? '#1d4ed8' : '#374151',
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}
+        >
+          지역: {region} <span style={{ fontSize: 10 }}>▼</span>
+        </button>
+        {openDrop && (
+          <div style={{
+            position: 'absolute', top: '110%', left: 0, background: '#fff',
+            border: '1px solid #e5e7eb', borderRadius: 10, padding: 12,
+            zIndex: 100, boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, minWidth: 260,
+          }}>
+            {REGIONS.map(r => (
+              <button key={r} onClick={() => { handleRegion(r); setOpenDrop(false); }} style={{
+                padding: '5px 8px', borderRadius: 6, fontSize: 12, fontWeight: 600,
+                border: 'none', cursor: 'pointer',
+                background: region === r ? '#1d4ed8' : '#f3f4f6',
+                color: region === r ? '#fff' : '#374151',
+              }}>{r}</button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 결과 수 */}

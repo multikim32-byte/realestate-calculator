@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Download } from 'lucide-react';
 
 export default function InstallButton() {
   const [prompt, setPrompt] = useState<any>(null);
@@ -25,9 +26,15 @@ export default function InstallButton() {
   return (
     <button
       onClick={handleInstall}
-      style={{ fontSize: 13, color: '#374151', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 4,
+        fontSize: 13, color: '#4b5563', background: 'none',
+        border: 'none', cursor: 'pointer', fontWeight: 600,
+        padding: '6px 9px', borderRadius: 8,
+      }}
     >
-      📲 앱설치
+      <Download size={13} strokeWidth={2.2} />
+      앱설치
     </button>
   );
 }

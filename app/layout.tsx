@@ -37,9 +37,7 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
   },
-  alternates: {
-    canonical: BASE_URL,
-  },
+  alternates: {},
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

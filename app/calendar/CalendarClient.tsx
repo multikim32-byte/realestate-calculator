@@ -50,9 +50,10 @@ export default function CalendarClient() {
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [openDrop, setOpenDrop] = useState(false);
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 700);
+    const check = () => setIsMobile(window.innerWidth < 768);
     check();
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
@@ -115,23 +116,35 @@ export default function CalendarClient() {
   return (
     <>
       {/* 지역 필터 */}
-      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 4, marginBottom: 20 }}>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'nowrap', minWidth: 'max-content' }}>
-          {REGIONS.map(r => (
-            <button
-              key={r}
-              onClick={() => { setRegion(r); setSelectedDay(null); }}
-              style={{
-                padding: '5px 13px', borderRadius: 20,
-                border: `1px solid ${region === r ? '#1d4ed8' : '#e5e7eb'}`,
-                background: region === r ? '#1d4ed8' : '#fff',
+      <div style={{ position: 'relative', display: 'inline-block', marginBottom: 20 }}>
+        <button
+          onClick={() => setOpenDrop(v => !v)}
+          style={{
+            padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+            border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer',
+            color: region !== '전체' ? '#1d4ed8' : '#374151',
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}
+        >
+          지역: {region} <span style={{ fontSize: 10 }}>▼</span>
+        </button>
+        {openDrop && (
+          <div style={{
+            position: 'absolute', top: '110%', left: 0, background: '#fff',
+            border: '1px solid #e5e7eb', borderRadius: 10, padding: 12,
+            zIndex: 100, boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, minWidth: 260,
+          }}>
+            {REGIONS.map(r => (
+              <button key={r} onClick={() => { setRegion(r); setSelectedDay(null); setOpenDrop(false); }} style={{
+                padding: '5px 8px', borderRadius: 6, fontSize: 12, fontWeight: 600,
+                border: 'none', cursor: 'pointer',
+                background: region === r ? '#1d4ed8' : '#f3f4f6',
                 color: region === r ? '#fff' : '#374151',
-                fontSize: 13, cursor: 'pointer',
-                fontWeight: region === r ? 600 : 400, whiteSpace: 'nowrap',
-              }}
-            >{r}</button>
-          ))}
-        </div>
+              }}>{r}</button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 월 탐색 */}

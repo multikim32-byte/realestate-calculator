@@ -39,7 +39,7 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
   const pendingDongRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 640);
+    const check = () => setIsMobile(window.innerWidth < 768);
     check();
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);

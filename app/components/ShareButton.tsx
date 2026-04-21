@@ -1,5 +1,7 @@
 'use client';
 
+import { Share2 } from 'lucide-react';
+
 export default function ShareButton() {
   function handleShare() {
     if (typeof navigator === 'undefined') return;
@@ -12,9 +14,15 @@ export default function ShareButton() {
   return (
     <button
       onClick={handleShare}
-      style={{ fontSize: 13, color: '#374151', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 4,
+        fontSize: 13, color: '#4b5563', background: 'none',
+        border: 'none', cursor: 'pointer', fontWeight: 600,
+        padding: '6px 9px', borderRadius: 8,
+      }}
     >
-      🔗 공유
+      <Share2 size={13} strokeWidth={2.2} />
+      공유
     </button>
   );
 }
