@@ -37,17 +37,13 @@ export default async function RentalPage({
   return (
     <div style={{ minHeight: '100vh', background: '#f0f4f9', fontFamily: "'Apple SD Gothic Neo', sans-serif" }}>
       <GlobalNav />
+      <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)', padding: '36px 16px 32px', textAlign: 'center' }}>
+        <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: '0 0 8px' }}>LH 임대공고</h1>
+        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0 }}>
+          행복주택 · 국민임대 · 통합공공임대 · 장기전세 · 영구임대 입주자 모집공고
+        </p>
+      </div>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px 60px' }}>
-
-        {/* 헤더 */}
-        <div style={{ marginBottom: 24 }}>
-          <h1 style={{ margin: '0 0 6px', fontSize: 24, fontWeight: 800, color: '#1e3a5f' }}>
-            🏘 LH 임대공고
-          </h1>
-          <p style={{ margin: 0, fontSize: 14, color: '#6b7280' }}>
-            행복주택 · 국민임대 · 통합공공임대 · 장기전세 · 영구임대 입주자 모집공고
-          </p>
-        </div>
 
         {/* 안내 박스 */}
         <div style={{

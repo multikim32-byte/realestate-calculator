@@ -26,16 +26,13 @@ export default async function TradePage() {
   return (
     <div>
       <GlobalNav />
+      <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)', padding: '36px 16px 32px', textAlign: 'center' }}>
+        <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: '0 0 8px' }}>아파트 실거래가 조회</h1>
+        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0 }}>
+          국토교통부 실거래가 공개시스템 · 지역·월 선택 후 조회
+        </p>
+      </div>
       <div className="max-w-5xl mx-auto px-4 py-8">
-        {/* 헤더 */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1e3a5f', marginBottom: 8 }}>
-            아파트 실거래가 조회
-          </h1>
-          <p style={{ fontSize: 14, color: '#6b7280' }}>
-            국토교통부 실거래가 공개시스템 · 지역·월 선택 후 조회
-          </p>
-        </div>
 
         <TradeClient initialItems={initialItems} initialDong="개포동" />
 

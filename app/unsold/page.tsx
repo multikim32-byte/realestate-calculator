@@ -33,7 +33,6 @@ export default async function UnsoldPage() {
 
       {/* 헤더 */}
       <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)', padding: '36px 16px 32px', textAlign: 'center' }}>
-        <div style={{ fontSize: 36, marginBottom: 8 }}>🏷️</div>
         <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: '0 0 8px' }}>분양정보</h1>
         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0 }}>
           전국 아파트·오피스텔 분양 및 미분양 특별한 혜택 단지 모음

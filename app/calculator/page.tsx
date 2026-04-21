@@ -46,9 +46,9 @@ export default function CalculatorPage() {
     <main>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <GlobalNav />
-      <div style={{ textAlign: 'center', padding: '28px 16px 0' }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1e293b', margin: '0 0 6px' }}>부동산 계산기</h1>
-        <p style={{ fontSize: 14, color: '#6b7280', margin: 0 }}>취득세 · 대출 상환 · 중도금 이자 · 중개수수료 · 수익률</p>
+      <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)', padding: '36px 16px 32px', textAlign: 'center' }}>
+        <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: '0 0 8px' }}>부동산 계산기</h1>
+        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0 }}>취득세 · 대출 상환 · 중도금 이자 · 중개수수료 · 수익률</p>
       </div>
       <Calculator />
 

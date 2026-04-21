@@ -110,22 +110,20 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
     <div style={{ minHeight: '100vh', background: '#f0f4f9' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <GlobalNav />
+      <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)', padding: '36px 16px 32px', textAlign: 'center' }}>
+        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, margin: '0 0 6px' }}>
+          <Link href="/" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>홈</Link>
+          {' › '}{sido}
+        </p>
+        <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: '0 0 8px' }}>
+          {sido} 청약 · 분양 모아보기
+        </h1>
+        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0 }}>
+          {fullName} 청약 일정, 분양 매물, 실거래가를 한 페이지에서 확인하세요
+        </p>
+      </div>
 
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 16px 64px' }}>
-
-        {/* 헤더 */}
-        <div style={{ marginBottom: 28 }}>
-          <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>
-            <Link href="/" style={{ color: '#1d4ed8', textDecoration: 'none' }}>홈</Link>
-            {' › '}<span>{sido}</span>
-          </div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1e293b', margin: '0 0 6px' }}>
-            {sido} 청약 · 분양 모아보기
-          </h1>
-          <p style={{ fontSize: 14, color: '#6b7280', margin: 0 }}>
-            {fullName} 청약 일정, 분양 매물, 실거래가를 한 페이지에서 확인하세요
-          </p>
-        </div>
 
         {/* 빠른 이동 버튼 */}
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 28 }}>

@@ -17,16 +17,13 @@ export default function CalendarPage() {
   return (
     <div>
       <GlobalNav />
+      <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)', padding: '36px 16px 32px', textAlign: 'center' }}>
+        <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: '0 0 8px' }}>청약 달력</h1>
+        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0 }}>
+          이번 달·다음 달 청약 일정을 한눈에 확인하세요 · 청약홈 공식 링크 제공
+        </p>
+      </div>
       <div className="max-w-5xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1e3a5f', marginBottom: 8 }}>
-            청약 달력
-          </h1>
-          <p style={{ fontSize: 14, color: '#6b7280' }}>
-            이번 달·다음 달 청약 일정을 한눈에 확인하세요 · 청약홈 공식 링크 제공
-          </p>
-        </div>
 
         <CalendarClient />
 
