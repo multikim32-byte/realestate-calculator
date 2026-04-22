@@ -2,7 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { aptPosts } from "../data";
 import GlobalNav from "../../components/GlobalNav";
+import AdUnit from "../../components/AdUnit";
 import type { Metadata } from "next";
+
+// AdSense 대시보드 > 광고 > 광고 단위에서 발급받은 슬롯 ID로 교체하세요
+const AD_SLOT = "XXXXXXXXXX";
 
 const BASE_URL = 'https://www.mk-land.kr';
 
@@ -101,6 +105,11 @@ export default async function AptPostPage({ params }: Props) {
             style={{ fontSize: 15, color: "#333", lineHeight: 1.9 }}
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
+        </div>
+
+        {/* 광고 */}
+        <div style={{ marginTop: 24 }}>
+          <AdUnit slotId={AD_SLOT} />
         </div>
 
         {/* 계산기 유도 */}
