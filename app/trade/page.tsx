@@ -3,6 +3,8 @@ import TradeClient from './TradeClient';
 import type { Metadata } from 'next';
 import { fetchTradeList, recentMonths } from '@/lib/tradeApi';
 
+export const revalidate = 3600; // 실거래가 데이터 1시간 ISR 캐싱
+
 export const metadata: Metadata = {
   title: '아파트 실거래가 조회 — 지역별 최신 매매 거래가 | 부동산 계산기',
   description: '국토교통부 실거래가 공개시스템 기반. 서울·경기·인천 등 전국 아파트 매매 실거래가를 지역·월별로 조회하세요. 단지별 거래 내역, 면적별 가격 분포 차트 제공.',

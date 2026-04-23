@@ -1,6 +1,8 @@
 import GlobalNav from '../components/GlobalNav';
 import type { Metadata } from 'next';
 
+export const dynamic = 'force-static';
+
 export const metadata: Metadata = {
   title: '문의하기 | 엠케이랜드',
   description: '엠케이랜드 서비스 이용 중 궁금한 점이나 오류 제보, 개선 의견을 보내주세요.',

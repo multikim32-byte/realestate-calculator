@@ -1,6 +1,16 @@
 import type { Metadata } from "next";
+import { Noto_Sans_KR } from 'next/font/google';
 import Script from "next/script";
 import BookmarkToast from "./components/BookmarkToast";
+import WebVitals from "./components/WebVitals";
+
+const notoSansKr = Noto_Sans_KR({
+  weight: ['400', '700', '800'],
+  subsets: ['latin'],
+  display: 'swap',
+  preload: false,
+  variable: '--font-kr',
+});
 
 const BASE_URL = 'https://www.mk-land.kr';
 
@@ -55,7 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`
         }} />
       </head>
-      <body style={{ fontFamily: "'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif" }}>
+      <body className={notoSansKr.variable} style={{ fontFamily: "'Apple SD Gothic Neo', var(--font-kr), sans-serif" }}>
         {/* Google Analytics GA4 */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-RMGGDLYPB7"
@@ -72,9 +82,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6751517797498225"
           crossOrigin="anonymous"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
         {children}
+        <WebVitals />
         <BookmarkToast />
         <footer style={{ background: '#f9fafb', borderTop: '1px solid #e5e7eb', padding: '24px 16px', marginTop: 40 }}>
           <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'space-between', alignItems: 'center' }}>

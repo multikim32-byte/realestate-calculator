@@ -33,7 +33,9 @@ export async function GET(req: NextRequest) {
 
   try {
     const result = await fetchLhRentalList(key, { page, perPage, region });
-    return NextResponse.json({ ...result, source: 'api' });
+    const res = NextResponse.json({ ...result, source: 'api' });
+    res.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+    return res;
   } catch (err) {
     console.error('LH API 오류:', err);
     let items = mockRentalItems;

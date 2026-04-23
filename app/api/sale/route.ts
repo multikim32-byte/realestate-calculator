@@ -45,7 +45,9 @@ export async function GET(req: NextRequest) {
       items = items.filter(i => i.region === region);
     }
 
-    return NextResponse.json({ items, total: result.total, source: 'api', type });
+    const res = NextResponse.json({ items, total: result.total, source: 'api', type });
+    res.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+    return res;
   } catch (err) {
     console.error('청약홈 API 오류:', err);
     let items = mockSaleItems;

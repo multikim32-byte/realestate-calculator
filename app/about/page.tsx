@@ -6,6 +6,8 @@ import {
   Calculator, BookOpen, Tag, Building2, Map, Star, Trophy,
 } from 'lucide-react';
 
+export const dynamic = 'force-static';
+
 export const metadata: Metadata = {
   title: '서비스 소개 | 엠케이랜드',
   description: '전국 아파트·오피스텔 청약 정보, 실거래가 조회, LH 임대공고, 부동산 계산기(취득세·대출·중도금·중개수수료)를 무료로 제공합니다.',

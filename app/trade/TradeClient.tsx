@@ -1,10 +1,15 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { LAWD_CODE_MAP, recentMonths } from '@/lib/tradeApi';
 import type { TradeItem } from '@/lib/tradeApi';
 import KakaoMap from '@/app/components/KakaoMap';
-import AptPriceTrendChart from '@/app/components/AptPriceTrendChart';
+
+const AptPriceTrendChart = dynamic(() => import('@/app/components/AptPriceTrendChart'), {
+  ssr: false,
+  loading: () => <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: 13 }}>차트 로딩 중...</div>,
+});
 
 const SIDOS = Object.keys(LAWD_CODE_MAP) as Array<keyof typeof LAWD_CODE_MAP>;
 const MONTHS = recentMonths(12);

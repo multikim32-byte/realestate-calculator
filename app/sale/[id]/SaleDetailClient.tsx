@@ -287,6 +287,7 @@ export default function SaleDetailClient() {
             }}>
               {unsoldLink.thumbnail_url && (
                 <img src={unsoldLink.thumbnail_url} alt={unsoldLink.name}
+                  loading="lazy" decoding="async"
                   style={{ width: 72, height: 56, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
               )}
               <div style={{ flex: 1, minWidth: 0 }}>

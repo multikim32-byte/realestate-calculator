@@ -5,6 +5,8 @@ import { fetchLhRentalList } from '@/lib/lhApi';
 import { mockRentalItems } from '@/lib/mockRentalData';
 import type { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'LH 임대공고 — 행복주택·국민임대·장기전세 입주자 모집공고',
   description: '한국토지주택공사(LH) 행복주택, 국민임대, 통합공공임대, 장기전세 등 임대공고를 한눈에 확인하세요. 지역별 모집 일정과 공급세대수를 빠르게 조회.',
