@@ -257,7 +257,7 @@ export default function SaleDetailClient() {
                   {/* 3개 정보 */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
                     {[
-                      { label: '전용면적(㎡)', value: u.area ? u.area.toFixed(2) : '-' },
+                      { label: '전용면적(㎡)', value: parseFloat(u.type) ? parseFloat(u.type).toFixed(2) : (u.area ? u.area.toFixed(2) : '-') },
                       { label: '공급세대수', value: u.count ? `${u.count.toLocaleString()}세대` : '-' },
                       { label: '분양가', value: u.price ? formatPrice(u.price) : '미정' },
                     ].map(({ label, value }, j) => (
