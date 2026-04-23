@@ -6,6 +6,7 @@ export interface Favorite {
   name: string;
   location: string;
   savedAt: string;
+  receiptStart?: string;
 }
 
 const KEY = 'mk_favorites';

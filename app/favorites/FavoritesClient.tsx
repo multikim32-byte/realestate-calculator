@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import GlobalNav from '@/app/components/GlobalNav';
+import PushNotificationButton from '@/app/components/PushNotificationButton';
 import type { Favorite } from '@/lib/useFavorites';
 
 const FAV_KEY = 'mk_favorites';
@@ -60,10 +61,11 @@ export default function FavoritesClient() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <Link href={`/sale/${f.id}`} style={{ textDecoration: 'none' }}>
                           <p style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', margin: '0 0 4px' }}>{f.name}</p>
-                          <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>📍 {f.location}</p>
+                          <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>📍 {f.location}{f.receiptStart ? ` · 청약 ${f.receiptStart}` : ''}</p>
                         </Link>
                       </div>
-                      <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                      <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                        <PushNotificationButton item={{ id: f.id, type: 'sale', name: f.name, location: f.location, receiptStart: f.receiptStart }} />
                         <Link href={`/sale/${f.id}`} style={{ padding: '6px 14px', background: '#eff6ff', color: '#1d4ed8', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>보기</Link>
                         <button onClick={() => remove(f.id, f.type)} style={{ padding: '6px 14px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>삭제</button>
                       </div>

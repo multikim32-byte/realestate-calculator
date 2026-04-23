@@ -89,7 +89,7 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
     const exists = favs.some(f => f.id === item.id && f.type === 'sale');
     const next = exists
       ? favs.filter(f => !(f.id === item.id && f.type === 'sale'))
-      : [...favs, { id: item.id, type: 'sale', name: item.name, location: item.location || item.region, savedAt: new Date().toISOString() }];
+      : [...favs, { id: item.id, type: 'sale', name: item.name, location: item.location || item.region, savedAt: new Date().toISOString(), receiptStart: item.receiptStart }];
     try { localStorage.setItem('mk_favorites', JSON.stringify(next)); } catch {}
     setFavIds(prev => { const s = new Set(prev); exists ? s.delete(item.id) : s.add(item.id); return s; });
   }

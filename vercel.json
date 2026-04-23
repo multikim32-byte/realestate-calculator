@@ -1,5 +1,11 @@
 {
   "regions": ["hnd1"],
+  "crons": [
+    {
+      "path": "/api/push/send",
+      "schedule": "0 0 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/sitemap.xml",
