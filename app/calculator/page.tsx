@@ -6,8 +6,8 @@ import type { Metadata } from "next";
 export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
-  title: "부동산 계산기 — 취득세·대출·중도금·중개수수료 무료 계산 (2026년)",
-  description: "2026년 최신 기준 취득세, 주택담보대출 원리금, 중도금 이자, 중개수수료, 수익률을 한 번에 무료로 계산하세요. 생애최초 감면, 원리금균등·원금균등 비교 지원.",
+  title: "부동산 계산기 — 취득세·대출·중도금·전월세전환율 무료 계산 (2026년)",
+  description: "2026년 최신 기준 취득세, 주택담보대출 원리금, 중도금 이자, 중개수수료, 수익률, 전월세 전환율을 한 번에 무료로 계산하세요. 생애최초 감면, 원리금균등·원금균등 비교 지원.",
   alternates: { canonical: 'https://www.mk-land.kr/calculator' },
 };
 
@@ -50,7 +50,7 @@ export default function CalculatorPage() {
       <GlobalNav />
       <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)', padding: '36px 16px 32px', textAlign: 'center' }}>
         <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: '0 0 8px' }}>부동산 계산기</h1>
-        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0 }}>취득세 · 대출 상환 · 중도금 이자 · 중개수수료 · 수익률</p>
+        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0 }}>취득세 · 대출 상환 · 중도금 이자 · 중개수수료 · 수익률 · 전월세전환율</p>
       </div>
       <Calculator />
 
@@ -225,6 +225,27 @@ export default function CalculatorPage() {
               계약 전 수수료를 사전에 협의하고, 중개보수 영수증을 반드시 발급받으세요.
             </p>
           </div>
+        </section>
+
+        {/* 전월세 전환율 계산기 */}
+        <section style={{ marginBottom: 48, padding: "28px", background: "#f0f9ff", borderRadius: 12, border: "1px solid #bae6fd" }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: "#0c4a6e", marginBottom: 8 }}>전월세 전환율 계산기 사용법</h2>
+          <p style={{ lineHeight: 1.8, color: "#374151", fontSize: 14, marginBottom: 16 }}>
+            전세를 월세로, 월세를 전세로 전환할 때의 임대료를 계산하거나, 현재 계약의 전환율이 법정 상한을 초과하는지 확인합니다.
+          </p>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0c4a6e", marginBottom: 8 }}>전환율 계산 공식</h3>
+          <ul style={{ paddingLeft: 20, lineHeight: 2, color: "#374151", fontSize: 14 }}>
+            <li><strong>월세 계산:</strong> (전세금 − 보증금) × 전환율 ÷ 12</li>
+            <li><strong>전세금 계산:</strong> 보증금 + 월세 × 12 ÷ 전환율</li>
+            <li><strong>전환율 계산:</strong> 월세 × 12 ÷ (전세금 − 보증금) × 100</li>
+          </ul>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0c4a6e", marginTop: 16, marginBottom: 8 }}>법정 전환율 상한</h3>
+          <ul style={{ paddingLeft: 20, lineHeight: 2, color: "#374151", fontSize: 14 }}>
+            <li>주택임대차보호법 제7조의2: 기준금리 + 대통령령 이율(3.5%p)</li>
+            <li>2026년 기준 상한: 약 7% 수준 (한국은행 기준금리에 따라 변동)</li>
+            <li>법정 상한 초과 시 임차인은 초과분 반환 청구 가능</li>
+            <li>적용 대상: 주거용 건물(아파트·다세대·단독주택 등)</li>
+          </ul>
         </section>
 
         {/* 관련 글 */}

@@ -9,6 +9,7 @@ const tabs = [
   { id: "brokerage", label: "중개수수료" },
   { id: "roi", label: "수익률" },
   { id: "subscription", label: "청약 가점" },
+  { id: "conversion", label: "전월세전환율" },
 ];
 
 const fmt = (n: number) => Math.round(n).toLocaleString("ko-KR");
@@ -849,9 +850,138 @@ function SubscriptionCalc() {
   );
 }
 
+// 7. 전월세 전환율
+type ConversionMode = 'toMonthly' | 'toJeonse' | 'calcRate';
+
+function ConversionCalc() {
+  const [mode, setMode] = useState<ConversionMode>('toMonthly');
+  const [jeonse, setJeonse] = useState('');
+  const [deposit, setDeposit] = useState('');
+  const [monthly, setMonthly] = useState('');
+  const [rate, setRate] = useState('');
+  const [result, setResult] = useState<any>(null);
+
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get('tab') !== 'conversion') return;
+    const m = (sp.get('mode') || 'toMonthly') as ConversionMode;
+    const j = sp.get('jeonse') || '', d = sp.get('deposit') || '', mo = sp.get('monthly') || '', r = sp.get('rate') || '';
+    setMode(m); setJeonse(j); setDeposit(d); setMonthly(mo); setRate(r);
+  }, []);
+
+  function calc() {
+    if (mode === 'toMonthly') {
+      const j = parseWon(jeonse), d = parseWon(deposit), r = parseFloat(rate);
+      if (!j || !r) return;
+      const diff = j - d;
+      if (diff <= 0) return;
+      setResult({ mode, monthlyRent: Math.round(diff * (r / 100) / 12), diff, rate: r, j, d, r: rate });
+    } else if (mode === 'toJeonse') {
+      const d = parseWon(deposit), m = parseWon(monthly), r = parseFloat(rate);
+      if (!m || !r) return;
+      setResult({ mode, jeonseAmt: d + Math.round(m * 12 / (r / 100)), rate: r, d, m: monthly, r: rate });
+    } else {
+      const j = parseWon(jeonse), d = parseWon(deposit), m = parseWon(monthly);
+      if (!j || !m) return;
+      const diff = j - d;
+      if (diff <= 0) return;
+      setResult({ mode, calcRate: m * 12 / diff * 100, diff, j, d, m: monthly });
+    }
+  }
+
+  const LEGAL_CAP = 7.0;
+
+  return (
+    <Card title="전월세 전환율 계산기">
+      <p style={{ fontSize: 13, color: '#6b7280', marginTop: 0, marginBottom: 18, lineHeight: 1.6 }}>
+        전세를 월세로, 월세를 전세로 전환하거나 <strong>전월세 전환율</strong>을 계산합니다.
+        전환율 계산 시 법정 상한 초과 여부도 확인해드립니다.
+      </p>
+      <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '10px 14px', marginBottom: 18, fontSize: 12, color: '#1d4ed8', lineHeight: 1.8 }}>
+        📌 법정 전월세 전환율 상한: <strong>기준금리 + 3.5%p</strong> (주택임대차보호법 제7조의2)<br/>
+        · 현재 한국은행 기준금리 기준으로 상한 약 {LEGAL_CAP}% 수준<br/>
+        · 법정 상한 초과 시 임차인은 초과분 반환 청구 가능
+      </div>
+
+      <Field label="계산 방식">
+        <select style={selectStyle} value={mode} onChange={e => { setMode(e.target.value as ConversionMode); setResult(null); }}>
+          <option value="toMonthly">전세 → 월세 전환 (월세 계산)</option>
+          <option value="toJeonse">월세 → 전세 전환 (전세금 계산)</option>
+          <option value="calcRate">전환율 계산</option>
+        </select>
+      </Field>
+
+      {mode === 'toMonthly' && (<>
+        <Field label="현재 전세금"><WonInput placeholder="예: 300,000,000" value={jeonse} onChange={setJeonse} /></Field>
+        <Field label="월세 전환 시 보증금 (없으면 0)"><WonInput placeholder="예: 50,000,000" value={deposit} onChange={setDeposit} /></Field>
+        <Field label="전환율 (연, %)">
+          <input style={inputStyle} type="number" step="0.1" placeholder="예: 6.0" value={rate} onChange={e => setRate(e.target.value)} />
+          <div style={{ fontSize: 11, color: '#888', marginTop: 4 }}>※ 법정 상한 약 {LEGAL_CAP}% 이내 권장</div>
+        </Field>
+      </>)}
+
+      {mode === 'toJeonse' && (<>
+        <Field label="현재 월세 보증금"><WonInput placeholder="예: 50,000,000" value={deposit} onChange={setDeposit} /></Field>
+        <Field label="월세"><WonInput placeholder="예: 800,000" value={monthly} onChange={setMonthly} /></Field>
+        <Field label="전환율 (연, %)">
+          <input style={inputStyle} type="number" step="0.1" placeholder="예: 6.0" value={rate} onChange={e => setRate(e.target.value)} />
+          <div style={{ fontSize: 11, color: '#888', marginTop: 4 }}>※ 법정 상한 약 {LEGAL_CAP}% 이내 권장</div>
+        </Field>
+      </>)}
+
+      {mode === 'calcRate' && (<>
+        <Field label="전세금 (또는 기존 보증금)"><WonInput placeholder="예: 300,000,000" value={jeonse} onChange={setJeonse} /></Field>
+        <Field label="월세 보증금 (없으면 0)"><WonInput placeholder="예: 50,000,000" value={deposit} onChange={setDeposit} /></Field>
+        <Field label="월세"><WonInput placeholder="예: 800,000" value={monthly} onChange={setMonthly} /></Field>
+      </>)}
+
+      <CalcBtn onClick={calc} />
+
+      {result && (
+        <div style={{ marginTop: 20 }}>
+          {result.mode === 'toMonthly' && (<>
+            <ResultRow label="전환 기준 금액 (전세금 − 보증금)" value={won(result.diff)} />
+            <ResultRow label="적용 전환율" value={`연 ${result.rate}%`} />
+            <ResultRow label="전환 후 월세" value={won(result.monthlyRent)} highlight />
+            <div style={{ marginTop: 8, padding: '10px 14px', background: '#f8faff', borderRadius: 8, fontSize: 12, color: '#555', lineHeight: 1.8 }}>
+              💡 월세 외 관리비·공과금 별도 확인<br/>
+              · 전환율이 {LEGAL_CAP}% 이하인지 확인하세요
+            </div>
+          </>)}
+          {result.mode === 'toJeonse' && (<>
+            <ResultRow label="환산 전세금" value={won(result.jeonseAmt)} highlight />
+            <ResultRow label="적용 전환율" value={`연 ${result.rate}%`} />
+            <div style={{ marginTop: 8, padding: '10px 14px', background: '#f8faff', borderRadius: 8, fontSize: 12, color: '#555', lineHeight: 1.8 }}>
+              💡 실제 전세 협의 시 시세와 비교하세요<br/>
+              · 전환율이 낮을수록 전세금이 높아집니다
+            </div>
+          </>)}
+          {result.mode === 'calcRate' && (<>
+            <ResultRow label="전환 기준 금액 (전세금 − 보증금)" value={won(result.diff)} />
+            <ResultRow label="전월세 전환율" value={`연 ${result.calcRate.toFixed(2)}%`} highlight />
+            <div style={{
+              marginTop: 8, padding: '12px 14px', borderRadius: 8, fontSize: 12, lineHeight: 1.8,
+              background: result.calcRate > LEGAL_CAP ? '#fef2f2' : '#f0fdf4',
+              color: result.calcRate > LEGAL_CAP ? '#dc2626' : '#059669',
+            }}>
+              {result.calcRate > LEGAL_CAP
+                ? `⚠️ 법정 상한(약 ${LEGAL_CAP}%)을 ${(result.calcRate - LEGAL_CAP).toFixed(2)}%p 초과합니다.\n임차인은 초과 임대료 반환 청구가 가능합니다.`
+                : `✅ 법정 상한(약 ${LEGAL_CAP}%) 이내의 전환율입니다.`}
+            </div>
+          </>)}
+          <ShareResultBtn params={{
+            tab: 'conversion', mode: result.mode,
+            jeonse, deposit, monthly, rate,
+          }} />
+        </div>
+      )}
+    </Card>
+  );
+}
+
 const COMPS: Record<string, React.ComponentType> = {
   loan: LoanCalc, intermediate: IntermediateCalc, acquisition: AcquisitionCalc, brokerage: BrokerageCalc, roi: ROICalc,
-  subscription: SubscriptionCalc,
+  subscription: SubscriptionCalc, conversion: ConversionCalc,
 };
 
 export default function Calculator() {
