@@ -15,13 +15,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     .eq('id', id)
     .maybeSingle();
 
-  if (error || !data) return { title: '매물 정보 | mk-land.kr' };
+  if (error || !data) return { title: '분양정보 | mk-land.kr' };
 
   const priceText = data.min_price
-    ? ` · ${data.min_price >= 100000000 ? `${(data.min_price / 100000000).toFixed(1)}억` : `${Math.floor(data.min_price / 10000).toLocaleString()}만`}~`
+    ? `분양가 ${data.min_price >= 100000000 ? `${(data.min_price / 100000000).toFixed(1)}억` : `${Math.floor(data.min_price / 10000).toLocaleString()}만`}원~`
     : '';
-  const title = `${data.name} 특별한 혜택${priceText} | mk-land.kr`;
-  const description = `${data.location} ${data.category} 미분양 특별한 혜택 매물. ${data.benefit ?? '계약 혜택 확인하세요.'}`;
+  const title = `${data.name} 분양정보 — ${data.location} ${data.category} ${priceText ? `${priceText} ` : ''}잔여세대 확인 | mk-land.kr`;
+  const benefitText = data.benefit ? ` 계약 혜택: ${data.benefit}.` : '';
+  const description = `${data.name}(${data.location}) ${data.category} 분양정보입니다. ${priceText ? `${priceText}.` : ''} ${benefitText} 잔여 세대 및 청약 조건을 확인하세요.`.trim();
 
   return {
     title,
@@ -257,8 +258,38 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
           </div>
         </div>
 
+        {/* SEO 콘텐츠 섹션 */}
+        {(() => {
+          const parts = item.location.trim().split(/\s+/);
+          const sido = parts[0];
+          const sigungu = parts[1] ?? '';
+          return (
+            <div style={{ background: '#fff', borderRadius: 12, padding: '24px', marginTop: 20, border: '1px solid #e5e7eb' }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1e3a5f', margin: '0 0 12px' }}>
+                {item.name} 분양정보 안내
+              </h2>
+              <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.8, margin: '0 0 12px' }}>
+                {item.name}은(는) {item.location}에 위치한 {item.category}
+                {item.total_units ? ` 총 ${item.total_units.toLocaleString()}세대` : ''} 규모의 분양 단지입니다.
+                {item.area ? ` 전용면적 ${item.area} 구성으로 공급됩니다.` : ''}
+                {item.listing_type === '청약중' ? ' 현재 청약 접수 중이며,' : ' 잔여 세대 계약이 가능하며,'}
+                {item.benefit ? ` ${item.benefit} 등 특별 혜택을 제공합니다.` : ' 상세 계약 조건은 문의하시기 바랍니다.'}
+              </p>
+              <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.8, margin: '0 0 12px' }}>
+                {sigungu ? `${sido} ${sigungu} 지역` : `${sido} 지역`}의 아파트 실거래가와 함께 비교하여 적정 분양가를 판단해 보세요.
+                취득세·대출 한도 등 부동산 관련 비용은 mk-land.kr 무료 계산기를 이용하실 수 있습니다.
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                {[item.name, `${sido} ${item.category} 분양`, `${sigungu} 분양정보`, '미분양 특별혜택', '잔여세대 계약'].filter(Boolean).map((kw, i) => (
+                  <span key={i} style={{ background: '#f3f4f6', color: '#6b7280', fontSize: 12, padding: '3px 10px', borderRadius: 12 }}>{kw}</span>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* 주의사항 */}
-        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '14px 18px', marginTop: 20, fontSize: 13, color: '#92400e' }}>
+        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '14px 18px', marginTop: 16, fontSize: 13, color: '#92400e' }}>
           본 정보는 참고용이며 실제 분양 조건은 반드시 공식 사이트에서 확인하시기 바랍니다.
         </div>
 
