@@ -112,20 +112,31 @@ export default async function AptPostPage({ params }: Props) {
           <AdUnit slotId={AD_SLOT} />
         </div>
 
-        {/* 계산기 유도 */}
-        <div style={{ marginTop: 24, background: "#1e3a5f", borderRadius: 16, padding: "24px", textAlign: "center" }}>
-          <p style={{ margin: "0 0 12px", color: "#fff", fontWeight: 700, fontSize: 16 }}>
-            분양 비용 직접 계산해보기
-          </p>
-          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/" style={{
-              display: "inline-block", background: "#fff", color: "#1e3a5f",
-              fontWeight: 700, fontSize: 14, padding: "10px 20px", borderRadius: 30, textDecoration: "none",
-            }}>🏠 취득세 계산기</Link>
-            <Link href="/" style={{
-              display: "inline-block", background: "#2563eb", color: "#fff",
-              fontWeight: 700, fontSize: 14, padding: "10px 20px", borderRadius: 30, textDecoration: "none",
-            }}>💰 중도금 이자 계산기</Link>
+        {/* 관련 정보 바로가기 */}
+        <div style={{ marginTop: 24, background: "#fff", borderRadius: 16, padding: "20px 20px 18px", boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>
+          <p style={{ margin: "0 0 12px", fontSize: 13, color: "#6b7280", fontWeight: 600 }}>🔗 관련 정보 바로가기</p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {[
+              { href: "/trade",      icon: "📊", label: "실거래가 조회",  bg: "#f0fdf4", border: "#86efac", color: "#166534" },
+              { href: "/unsold",     icon: "🏗️", label: "전국 분양정보",  bg: "#f5f3ff", border: "#c4b5fd", color: "#5b21b6" },
+              { href: "/calendar",   icon: "📅", label: "청약 달력",      bg: "#eff6ff", border: "#93c5fd", color: "#1d4ed8" },
+              { href: "/calculator", icon: "🧮", label: "부동산 계산기",  bg: "#fffbeb", border: "#fcd34d", color: "#92400e" },
+              { href: "/rental",     icon: "🏢", label: "LH 임대공고",    bg: "#f0fdfa", border: "#6ee7d8", color: "#0f766e" },
+            ].map(({ href, icon, label, bg, border, color }) => (
+              <Link
+                key={href}
+                href={href}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 5,
+                  padding: "7px 13px", borderRadius: 20,
+                  background: bg, border: `1px solid ${border}`,
+                  color, fontWeight: 600, fontSize: 13, textDecoration: "none",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {icon} {label}
+              </Link>
+            ))}
           </div>
         </div>
 

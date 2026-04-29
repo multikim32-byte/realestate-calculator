@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import UnsoldList from './UnsoldList';
 
 export const metadata: Metadata = {
-  title: '전국 분양정보 2026 — 아파트·오피스텔 미분양·잔여세대·청약중 매물 | mk-land.kr',
+  title: '전국 분양정보 2026 — 미분양·잔여세대·청약중 매물',
   description: '전국 아파트·오피스텔 분양정보를 한눈에 확인하세요. 청약 중 단지, 미분양 잔여세대, 계약 혜택(중도금 무이자·발코니 확장 등) 정보를 지역별로 무료 제공합니다.',
   alternates: { canonical: 'https://www.mk-land.kr/unsold' },
   openGraph: {

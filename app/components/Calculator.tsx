@@ -996,7 +996,7 @@ export default function Calculator() {
     <div style={{ minHeight: "100vh", background: "#f0f4f9", fontFamily: "'Apple SD Gothic Neo', sans-serif" }}>
       <div style={{ maxWidth: 520, margin: "0 auto", padding: "24px 16px 48px" }}>
         <div style={{ marginBottom: 24 }}>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#1e3a5f" }}>🏠 부동산 계산기</h1>
+          <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#1e3a5f" }}>🏠 부동산 계산기</p>
           <p style={{ margin: "6px 0 0", fontSize: 13, color: "#888" }}>대출 · 중도금 · 취득세 · 중개수수료 · 수익률</p>
         </div>
         <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4 }}>

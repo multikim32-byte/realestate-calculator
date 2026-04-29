@@ -15,12 +15,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     .eq('id', id)
     .maybeSingle();
 
-  if (error || !data) return { title: '분양정보 | mk-land.kr' };
+  if (error || !data) return { title: '분양정보' };
 
   const priceText = data.min_price
     ? `분양가 ${data.min_price >= 100000000 ? `${(data.min_price / 100000000).toFixed(1)}억` : `${Math.floor(data.min_price / 10000).toLocaleString()}만`}원~`
     : '';
-  const title = `${data.name} 분양정보 — ${data.location} ${data.category} ${priceText ? `${priceText} ` : ''}잔여세대 확인 | mk-land.kr`;
+  const title = `${data.name} 분양정보 — ${data.location} ${data.category} ${priceText ? `${priceText} ` : ''}잔여세대 확인`;
   const benefitText = data.benefit ? ` 계약 혜택: ${data.benefit}.` : '';
   const description = `${data.name}(${data.location}) ${data.category} 분양정보입니다. ${priceText ? `${priceText}.` : ''} ${benefitText} 잔여 세대 및 청약 조건을 확인하세요.`.trim();
 

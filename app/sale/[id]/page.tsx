@@ -8,12 +8,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   try {
     const item = await fetchSaleDetail(id);
-    if (!item) return { title: '청약 상세정보 | mk-land.kr' };
+    if (!item) return { title: '청약 상세정보' };
 
     const priceText = item.minPrice
       ? ` · ${Math.floor(item.minPrice / 10000)}억~`
       : '';
-    const title = `${item.name} 청약정보${priceText} | mk-land.kr`;
+    const title = `${item.name} 청약정보${priceText}`;
     const description = `${item.location} ${item.buildingType} 청약정보. 총 ${item.totalUnits?.toLocaleString()}세대, 청약접수 ${item.receiptStart ?? '일정 확인'}. 분양가·경쟁률·인근 실거래가 한눈에.`;
 
     return {
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       },
     };
   } catch {
-    return { title: '청약 상세정보 | mk-land.kr' };
+    return { title: '청약 상세정보' };
   }
 }
 

@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
-  title: '개인정보처리방침 | 엠케이랜드',
+  title: '개인정보처리방침',
   description: 'mk-land.kr 서비스의 개인정보처리방침입니다. 수집하는 정보, 이용 목적, 광고 및 쿠키 사용에 대해 안내합니다.',
   alternates: { canonical: 'https://www.mk-land.kr/privacy' },
 };

@@ -139,7 +139,7 @@ export default function AdminUnsoldListPage() {
                 {/* 썸네일 */}
                 <div style={{ width: 60, height: 60, borderRadius: 8, background: '#e2e8f0', overflow: 'hidden', flexShrink: 0 }}>
                   {item.thumbnail_url
-                    ? <img src={item.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ? <img src={item.thumbnail_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 24 }}>🏢</div>
                   }
                 </div>

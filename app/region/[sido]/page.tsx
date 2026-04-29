@@ -195,9 +195,9 @@ export async function generateMetadata({ params }: { params: Promise<{ sido: str
   const { sido: rawSido } = await params;
   const sido = decodeURIComponent(rawSido);
   const fullName = REGION_LABELS[sido];
-  if (!fullName) return { title: '지역 정보 | mk-land.kr' };
+  if (!fullName) return { title: '지역 정보' };
   return {
-    title: `${sido} 청약·분양 모아보기 — ${fullName} 아파트 청약정보 & 분양 매물 | mk-land.kr`,
+    title: `${sido} 청약·분양 — ${fullName} 아파트 청약정보 & 분양 매물`,
     description: `${fullName} 아파트 청약 일정, 미분양 분양 매물, 실거래가를 한 페이지에서 확인하세요. 2026년 최신 ${sido} 청약·분양 정보.`,
     alternates: { canonical: `https://www.mk-land.kr/region/${encodeURIComponent(sido)}` },
     openGraph: {
