@@ -57,8 +57,8 @@ export default async function PostPage({ params }: Props) {
     description: post.description,
     datePublished: post.date,
     dateModified: post.date,
-    author: { '@type': 'Organization', name: '부동산 계산기', url: BASE_URL },
-    publisher: { '@type': 'Organization', name: '부동산 계산기', url: BASE_URL },
+    author: { '@type': 'Person', name: '김경래', jobTitle: '공인중개사', url: `${BASE_URL}/about` },
+    publisher: { '@type': 'Organization', name: 'mk-land.kr', url: BASE_URL },
     url: `${BASE_URL}/blog/${slug}`,
     mainEntityOfPage: { '@type': 'WebPage', '@id': `${BASE_URL}/blog/${slug}` },
   };
@@ -71,7 +71,18 @@ export default async function PostPage({ params }: Props) {
 
         {/* 본문 */}
         <div style={{ background: "#fff", borderRadius: 20, padding: "36px 28px", boxShadow: "0 2px 16px rgba(0,0,0,0.07)" }}>
-          <div style={{ fontSize: 13, color: "#aaa", marginBottom: 12 }}>{post.date}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 13, color: "#aaa" }}>{post.date}</span>
+            <span style={{ fontSize: 12, color: "#6b7280" }}>·</span>
+            <a href="/about" style={{ display: "inline-flex", alignItems: "center", gap: 5, textDecoration: "none" }}>
+              <span style={{
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                width: 22, height: 22, borderRadius: "50%", background: "#1e3a5f",
+                color: "#fff", fontSize: 11, fontWeight: 700, flexShrink: 0,
+              }}>김</span>
+              <span style={{ fontSize: 13, color: "#374151", fontWeight: 600 }}>김경래 공인중개사</span>
+            </a>
+          </div>
           <h1 style={{ margin: "0 0 20px", fontSize: 24, fontWeight: 800, color: "#1e3a5f", lineHeight: 1.4 }}>
             {post.title}
           </h1>
