@@ -99,13 +99,10 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
 
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px 16px 64px' }}>
 
-        {/* 뒤로가기 + 공유 */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <Link href="/unsold" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>
-            ← 목록으로
-          </Link>
-          <ShareButton />
-        </div>
+        {/* 뒤로가기 */}
+        <Link href="/unsold" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#6b7280', textDecoration: 'none', marginBottom: 20 }}>
+          ← 목록으로
+        </Link>
 
         <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.09)' }}>
 
@@ -291,6 +288,9 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
             </div>
           );
         })()}
+
+        {/* 공유하기 버튼 */}
+        <ShareButton large />
 
       </div>
     </div>

@@ -2,7 +2,7 @@
 
 import { Share2 } from 'lucide-react';
 
-export default function ShareButton() {
+export default function ShareButton({ large }: { large?: boolean }) {
   function handleShare() {
     if (typeof navigator === 'undefined') return;
     if (navigator.share) {
@@ -11,6 +11,27 @@ export default function ShareButton() {
       navigator.clipboard.writeText(window.location.href).then(() => alert('링크가 복사되었습니다.'));
     }
   }
+
+  if (large) {
+    return (
+      <div style={{ marginTop: 20, textAlign: 'center' }}>
+        <button
+          onClick={handleShare}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            padding: '14px 32px', borderRadius: 12, cursor: 'pointer',
+            background: '#fff', border: '1px solid #e5e7eb',
+            fontSize: 15, fontWeight: 700, color: '#374151',
+            boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
+          }}
+        >
+          <Share2 size={18} strokeWidth={2} />
+          이 매물 공유하기
+        </button>
+      </div>
+    );
+  }
+
   return (
     <button
       onClick={handleShare}
