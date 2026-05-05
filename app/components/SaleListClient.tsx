@@ -8,6 +8,7 @@ import KakaoMapList from './KakaoMapList';
 const regions: Region[] = ['전체', '서울', '경기', '인천', '부산', '대구', '광주', '대전', '울산', '세종', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'];
 
 type FetchType = 'apt' | 'remndr_opt' | 'ofcl_pblpvt';
+type ViewMode = 'card' | 'list' | 'map';
 
 interface Props {
   initialItems: SaleItem[];
@@ -23,7 +24,6 @@ const statusStyle: Record<string, { bg: string; color: string; border: string }>
   '청약마감':  { bg: '#f3f4f6', color: '#6b7280', border: '#d1d5db' },
   '완료':      { bg: '#f3f4f6', color: '#6b7280', border: '#d1d5db' },
 };
-
 
 function getDDay(receiptStart: string, receiptEnd: string, status: string): { label: string; color: string } | null {
   if (!receiptStart) return null;
@@ -48,9 +48,45 @@ function formatPrice(p: number) {
   if (!p) return '-';
   const eok = Math.floor(p / 10000);
   const rest = p % 10000;
-  if (eok > 0 && rest > 0) return `${eok}억 ${rest.toLocaleString()}만`;
+  if (eok > 0 && rest > 0) return `${eok}억 ${Math.round(rest / 100) * 100 > 0 ? `${(rest / 1000).toFixed(1)}천` : ''}만`;
   if (eok > 0) return `${eok}억`;
   return `${p.toLocaleString()}만`;
+}
+
+function formatPriceCard(p: number) {
+  if (!p) return '-';
+  const eok = Math.floor(p / 10000);
+  const rest = p % 10000;
+  const chun = Math.floor(rest / 1000);
+  const baek = Math.round((rest % 1000) / 100) * 100;
+  let s = '';
+  if (eok > 0) s += `${eok}억 `;
+  if (chun > 0) s += `${chun}천`;
+  if (baek > 0) s += `${baek}`;
+  if (s.endsWith(' ')) s = s.trim();
+  return s ? s + '만원' : '-';
+}
+
+function extractSigungu(location: string): string {
+  const parts = location.split(/\s+/);
+  for (let i = 1; i < parts.length; i++) {
+    if (/[시군구]$/.test(parts[i])) return parts[i];
+  }
+  return parts[1] || parts[0] || location;
+}
+
+function getCardStatusBadge(item: SaleItem): { label: string; bg: string; color: string } {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  if (item.status === '청약예정' && item.receiptStart) {
+    const diff = Math.ceil((new Date(item.receiptStart).getTime() - today.getTime()) / 86400000);
+    if (diff <= 7) return { label: '청약임박', bg: '#fef3c7', color: '#92400e' };
+    return { label: '예정', bg: '#dbeafe', color: '#1d4ed8' };
+  }
+  if (item.status === '청약중') return { label: '청약중', bg: '#d1fae5', color: '#065f46' };
+  if (item.status === '당첨발표') return { label: '발표', bg: '#fef3c7', color: '#92400e' };
+  if (item.status === '선착순분양') return { label: '선착순', bg: '#fce7f3', color: '#9d174d' };
+  if (item.status === '완판') return { label: '완판', bg: '#f3f4f6', color: '#6b7280' };
+  return { label: item.status, bg: '#f3f4f6', color: '#6b7280' };
 }
 
 export default function SaleListClient({ initialItems, initialTotal, dataSource }: Props) {
@@ -69,11 +105,10 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
     return (t as FetchType) || 'apt';
   });
 
-  // 드롭다운 열림 상태
   const [openDrop, setOpenDrop] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [displayCount, setDisplayCount] = useState(20);
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [viewMode, setViewMode] = useState<ViewMode>('card');
   const [favIds, setFavIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -116,7 +151,6 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
         arr.sort((a, b) => ((b.announcementDate || b.receiptStart || '') > (a.announcementDate || a.receiptStart || '') ? 1 : -1));
 
       if (ft === 'ofcl_pblpvt') {
-        // 오피스텔/도시형 + 공공지원민간임대 병합
         const [r1, r2] = await Promise.all([
           fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'officetel', perPage: '50' })}`).then(r => r.json()),
           fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'pblpvtrent', perPage: '50' })}`).then(r => r.json()),
@@ -124,7 +158,6 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
         merged = sortByDate([...(r1.items || []), ...(r2.items || [])]);
         src = r1.source || r2.source;
       } else if (ft === 'remndr_opt') {
-        // 잔여세대(선착순) + 임의공급(무순위) 병합
         const [r1, r2] = await Promise.all([
           fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'remndr', perPage: '50' })}`).then(r => r.json()),
           fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'opt', perPage: '50' })}`).then(r => r.json()),
@@ -151,44 +184,237 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
     ? items.filter(i => i.name.includes(search.trim()) || i.location.includes(search.trim()))
     : items;
 
-  const fetchTypeLabels: Record<FetchType, { full: string; short: string }> = {
-    apt:        { full: '아파트',                          short: '아파트' },
-    remndr_opt: { full: '아파트잔여세대',                  short: '잔여세대' },
-    ofcl_pblpvt:{ full: '오피스텔/도시형/(공공지원)민간임대', short: '오피스텔/민간임대' },
+  const fetchTypeLabels: Record<FetchType, string> = {
+    apt:         '아파트',
+    remndr_opt:  '아파트잔여세대',
+    ofcl_pblpvt: '오피스텔/도시형/(공공지원)민간임대',
   };
 
   const isLive = source === 'api';
+
+  function handleCardClick(item: SaleItem) {
+    try { sessionStorage.setItem(`sale_item_${item.id}`, JSON.stringify(item)); } catch {}
+    router.push(`/sale/${item.id}`);
+  }
+
+  // ── 카드 그리드 렌더 ──────────────────────────────────────────────────
+  function renderCards() {
+    if (loading) {
+      return (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 14 }}>
+          {[1,2,3,4,5,6,7,8].map(i => (
+            <div key={i} style={{ height: 210, background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', opacity: 0.5 }} />
+          ))}
+        </div>
+      );
+    }
+    if (filtered.length === 0) {
+      return (
+        <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: '60px 0', textAlign: 'center', color: '#aaa', fontSize: 14 }}>
+          조건에 맞는 분양 정보가 없습니다.
+        </div>
+      );
+    }
+    return (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 14 }}>
+        {filtered.slice(0, displayCount).map(item => {
+          const badge = getCardStatusBadge(item);
+          const sigungu = extractSigungu(item.location);
+          const isFav = favIds.has(item.id);
+          return (
+            <div
+              key={item.id}
+              onClick={() => handleCardClick(item)}
+              style={{
+                background: '#fff', border: '1px solid #e5e7eb', borderRadius: 14,
+                padding: '16px', cursor: 'pointer', display: 'flex', flexDirection: 'column',
+                gap: 0, transition: 'box-shadow 0.15s, transform 0.12s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.10)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
+            >
+              {/* 상단: 사업주체 + 배지 */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 500, lineHeight: 1.4, maxWidth: '60%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {(item as any).businessEntity || item.constructionCompany || ''}
+                </span>
+                <span style={{
+                  fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+                  background: badge.bg, color: badge.color, whiteSpace: 'nowrap', flexShrink: 0,
+                }}>
+                  {badge.label}
+                </span>
+              </div>
+
+              {/* 단지명 */}
+              <div style={{
+                fontSize: 15, fontWeight: 800, color: '#1e293b', lineHeight: 1.35,
+                marginBottom: 8, display: '-webkit-box', WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              }}>
+                {item.name}
+              </div>
+
+              {/* 지역 + 주택형 */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <span style={{ fontSize: 12, color: '#6b7280' }}>📍 {sigungu}</span>
+                <span style={{
+                  fontSize: 11, padding: '2px 7px', borderRadius: 6,
+                  background: '#f3f4f6', color: '#6b7280', fontWeight: 500,
+                }}>{item.buildingType}</span>
+              </div>
+
+              {/* 구분선 */}
+              <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 10, marginBottom: 4 }}>
+                {/* 분양가 */}
+                {item.minPrice > 0 ? (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                    <span style={{ fontSize: 12, color: '#6b7280' }}>분양가</span>
+                    <span style={{ fontSize: 12, color: '#1d4ed8', fontWeight: 700 }}>
+                      {formatPriceCard(item.minPrice)} ~ {formatPriceCard(item.maxPrice)}
+                    </span>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                    <span style={{ fontSize: 12, color: '#6b7280' }}>분양가</span>
+                    <span style={{ fontSize: 12, color: '#9ca3af' }}>미정</span>
+                  </div>
+                )}
+
+                {/* 총 세대 */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ fontSize: 12, color: '#6b7280' }}>총 세대</span>
+                  <span style={{ fontSize: 12, color: '#1d4ed8', fontWeight: 700 }}>{item.totalUnits.toLocaleString()}세대</span>
+                </div>
+              </div>
+
+              {/* 청약기간 + 즐겨찾기 */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                  {item.receiptStart ? `📅 ${item.receiptStart} ~ ${item.receiptEnd}` : '-'}
+                </span>
+                <button
+                  onClick={e => toggleFav(e, item)}
+                  title={isFav ? '관심 단지 해제' : '관심 단지 저장'}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: isFav ? '#f59e0b' : '#d1d5db', padding: '0 2px', lineHeight: 1, flexShrink: 0 }}
+                >
+                  {isFav ? '★' : '☆'}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // ── 리스트 렌더 ──────────────────────────────────────────────────────
+  function renderList() {
+    if (loading) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {[1,2,3,4,5].map(i => (
+            <div key={i} style={{ height: 96, background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', opacity: 0.6 }} />
+          ))}
+        </div>
+      );
+    }
+    if (filtered.length === 0) {
+      return (
+        <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: '60px 0', textAlign: 'center', color: '#aaa', fontSize: 14 }}>
+          조건에 맞는 분양 정보가 없습니다.
+        </div>
+      );
+    }
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {filtered.slice(0, displayCount).map((item) => {
+          const ss = statusStyle[item.status] || statusStyle['완료'];
+          return (
+            <div
+              key={item.id}
+              onClick={() => handleCardClick(item)}
+              style={{
+                background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12,
+                display: 'flex', alignItems: 'stretch', overflow: 'hidden',
+                transition: 'box-shadow 0.15s', cursor: 'pointer',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.10)')}
+              onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
+            >
+              <div style={{ flex: 1, padding: '14px 18px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
+                    color: ss.color, background: ss.bg, border: `1px solid ${ss.border}`,
+                  }}>{item.status}</span>
+                  {(() => { const d = getDDay(item.receiptStart, item.receiptEnd, item.status); return d ? (
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: d.color, color: '#fff' }}>{d.label}</span>
+                  ) : null; })()}
+                  <span style={{ fontSize: 16, fontWeight: 700, color: '#1d4ed8' }}>{item.name}</span>
+                  <span style={{ fontSize: 11, background: '#f3f4f6', color: '#6b7280', padding: '2px 7px', borderRadius: 6 }}>{item.buildingType}</span>
+                  <span style={{ fontSize: 11, background: '#f3f4f6', color: '#6b7280', padding: '2px 7px', borderRadius: 6 }}>{item.supplyType}</span>
+                  {item.recruitType === '선착순' && (
+                    <span style={{ fontSize: 11, background: '#fff0f6', color: '#c026d3', padding: '2px 7px', borderRadius: 6, border: '1px solid #f9a8d4' }}>선착순</span>
+                  )}
+                  <button
+                    onClick={e => toggleFav(e, item)}
+                    title={favIds.has(item.id) ? '관심 단지 해제' : '관심 단지 저장'}
+                    style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: favIds.has(item.id) ? '#f59e0b' : '#d1d5db', padding: '0 2px', lineHeight: 1, flexShrink: 0 }}
+                  >
+                    {favIds.has(item.id) ? '★' : '☆'}
+                  </button>
+                </div>
+                <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>📍 {item.location}</div>
+                <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', fontSize: 12, color: '#374151', alignItems: 'center' }}>
+                  <span>세대수 <strong>{item.totalUnits.toLocaleString()}세대</strong></span>
+                  {item.minPrice > 0 && (
+                    <span>분양가 <strong style={{ color: '#1d4ed8' }}>{formatPrice(item.minPrice)}~{formatPrice(item.maxPrice)}</strong></span>
+                  )}
+                  <span>접수 <strong>{item.receiptStart} ~ {item.receiptEnd}</strong></span>
+                  {item.winnerDate && <span>당첨발표 <strong>{item.winnerDate}</strong></span>}
+                </div>
+              </div>
+              <div style={{
+                width: 90, flexShrink: 0, display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center', borderLeft: '1px solid #f3f4f6',
+                padding: '12px 8px', color: '#9ca3af', fontSize: 11, textAlign: 'center',
+              }}>
+                <span>공고일</span>
+                <span style={{ fontWeight: 600, color: '#374151', marginTop: 2 }}>{item.announcementDate || '-'}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div style={{ background: '#f8f9fa', minHeight: '100vh' }}>
       {/* 상단 모집유형 탭 */}
       <div style={{ background: '#fff', borderBottom: '1px solid #e5e7eb' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 16px' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 16px' }}>
           <div style={{ display: 'flex', gap: 0, overflowX: 'auto' }}>
             {(['apt', 'remndr_opt', 'ofcl_pblpvt'] as FetchType[]).map((ft) => (
               <button
                 key={ft}
                 onClick={() => setFetchType(ft)}
                 style={{
-                  padding: '12px 16px',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  whiteSpace: 'nowrap',
-                  border: 'none',
-                  background: 'none',
-                  cursor: 'pointer',
+                  padding: '12px 16px', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap',
+                  border: 'none', background: 'none', cursor: 'pointer',
                   borderBottom: fetchType === ft ? '2px solid #1d4ed8' : '2px solid transparent',
                   color: fetchType === ft ? '#1d4ed8' : '#6b7280',
                 }}
               >
-                {fetchTypeLabels[ft].full}
+                {fetchTypeLabels[ft]}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '20px 16px' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '20px 16px' }}>
         {/* 검색 + 지역 필터 + 뷰 토글 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
           <input
@@ -232,26 +458,25 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
               </div>
             )}
           </div>
-          {/* 뷰 토글 버튼 */}
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
-            <button
-              onClick={() => setViewMode('list')}
-              style={{
-                padding: '7px 12px', borderRadius: '8px 0 0 8px', fontSize: 13, fontWeight: 600,
-                border: '1px solid #e5e7eb', cursor: 'pointer',
-                background: viewMode === 'list' ? '#1d4ed8' : '#fff',
-                color: viewMode === 'list' ? '#fff' : '#6b7280',
-              }}
-            >≡ 목록</button>
-            <button
-              onClick={() => setViewMode('map')}
-              style={{
-                padding: '7px 12px', borderRadius: '0 8px 8px 0', fontSize: 13, fontWeight: 600,
-                border: '1px solid #e5e7eb', borderLeft: 'none', cursor: 'pointer',
-                background: viewMode === 'map' ? '#1d4ed8' : '#fff',
-                color: viewMode === 'map' ? '#fff' : '#6b7280',
-              }}
-            >📍 지도</button>
+
+          {/* 뷰 토글 */}
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 0 }}>
+            {([['card', '⊞ 카드'], ['list', '≡ 목록'], ['map', '📍 지도']] as [ViewMode, string][]).map(([mode, label], idx) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                style={{
+                  padding: '7px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  border: '1px solid #e5e7eb',
+                  borderLeft: idx > 0 ? 'none' : '1px solid #e5e7eb',
+                  borderRadius: idx === 0 ? '8px 0 0 8px' : idx === 2 ? '0 8px 8px 0' : 0,
+                  background: viewMode === mode ? '#1d4ed8' : '#fff',
+                  color: viewMode === mode ? '#fff' : '#6b7280',
+                }}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -285,104 +510,20 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
         </div>
 
         {/* 지도뷰 */}
-        {viewMode === 'map' && !loading && (
-          <KakaoMapList items={filtered} />
-        )}
+        {viewMode === 'map' && !loading && <KakaoMapList items={filtered} />}
+
+        {/* 카드뷰 */}
+        {viewMode === 'card' && renderCards()}
 
         {/* 목록뷰 */}
-        {viewMode === 'list' && (
-          loading ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {[1,2,3,4,5].map(i => (
-                <div key={i} style={{ height: 96, background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', opacity: 0.6 }} />
-              ))}
-            </div>
-          ) : filtered.length === 0 ? (
-            <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', padding: '60px 0', textAlign: 'center', color: '#aaa', fontSize: 14 }}>
-              조건에 맞는 분양 정보가 없습니다.
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {filtered.slice(0, displayCount).map((item) => {
-                const ss = statusStyle[item.status] || statusStyle['완료'];
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => {
-                      try { sessionStorage.setItem(`sale_item_${item.id}`, JSON.stringify(item)); } catch {}
-                      router.push(`/sale/${item.id}`);
-                    }}
-                    style={{
-                      background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12,
-                      display: 'flex', alignItems: 'stretch', overflow: 'hidden',
-                      transition: 'box-shadow 0.15s', cursor: 'pointer',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.10)')}
-                    onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
-                  >
-                    {/* 정보 */}
-                    <div style={{ flex: 1, padding: '14px 18px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-                        <span style={{
-                          fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
-                          color: ss.color, background: ss.bg, border: `1px solid ${ss.border}`,
-                        }}>{item.status}</span>
-                        {(() => { const d = getDDay(item.receiptStart, item.receiptEnd, item.status); return d ? (
-                          <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: d.color, color: '#fff' }}>{d.label}</span>
-                        ) : null; })()}
-                        <span style={{ fontSize: 16, fontWeight: 700, color: '#1d4ed8' }}>{item.name}</span>
-                        <span style={{ fontSize: 11, background: '#f3f4f6', color: '#6b7280', padding: '2px 7px', borderRadius: 6 }}>{item.buildingType}</span>
-                        <span style={{ fontSize: 11, background: '#f3f4f6', color: '#6b7280', padding: '2px 7px', borderRadius: 6 }}>{item.supplyType}</span>
-                        {item.recruitType === '선착순' && (
-                          <span style={{ fontSize: 11, background: '#fff0f6', color: '#c026d3', padding: '2px 7px', borderRadius: 6, border: '1px solid #f9a8d4' }}>선착순</span>
-                        )}
-                        <button
-                          onClick={e => toggleFav(e, item)}
-                          title={favIds.has(item.id) ? '관심 단지 해제' : '관심 단지 저장'}
-                          style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: favIds.has(item.id) ? '#f59e0b' : '#d1d5db', padding: '0 2px', lineHeight: 1, flexShrink: 0 }}
-                        >
-                          {favIds.has(item.id) ? '★' : '☆'}
-                        </button>
-                      </div>
+        {viewMode === 'list' && renderList()}
 
-                      <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>
-                        📍 {item.location}
-                      </div>
-
-                      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', fontSize: 12, color: '#374151', alignItems: 'center' }}>
-                        <span>세대수 <strong>{item.totalUnits.toLocaleString()}세대</strong></span>
-                        {item.minPrice > 0 && (
-                          <span>분양가 <strong style={{ color: '#1d4ed8' }}>{formatPrice(item.minPrice)}~{formatPrice(item.maxPrice)}</strong></span>
-                        )}
-                        <span>접수 <strong>{item.receiptStart} ~ {item.receiptEnd}</strong></span>
-                        {item.winnerDate && <span>당첨발표 <strong>{item.winnerDate}</strong></span>}
-                      </div>
-                    </div>
-
-                    {/* 우측 공고일 */}
-                    <div style={{
-                      width: 90, flexShrink: 0, display: 'flex', flexDirection: 'column',
-                      alignItems: 'center', justifyContent: 'center', borderLeft: '1px solid #f3f4f6',
-                      padding: '12px 8px', color: '#9ca3af', fontSize: 11, textAlign: 'center',
-                    }}>
-                      <span>공고일</span>
-                      <span style={{ fontWeight: 600, color: '#374151', marginTop: 2 }}>
-                        {item.announcementDate || '-'}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )
-        )}
-
-        {/* 더보기 버튼 (목록뷰 only) */}
-        {viewMode === 'list' && !loading && filtered.length > displayCount && (
+        {/* 더보기 */}
+        {viewMode !== 'map' && !loading && filtered.length > displayCount && (
           <button
             onClick={() => setDisplayCount(c => c + 20)}
             style={{
-              marginTop: 8, width: '100%', padding: '14px', borderRadius: 12,
+              marginTop: 14, width: '100%', padding: '14px', borderRadius: 12,
               border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer',
               fontSize: 14, fontWeight: 600, color: '#1d4ed8',
             }}
@@ -392,12 +533,8 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
         )}
       </div>
 
-      {/* 드롭다운 외부 클릭 닫기 */}
       {openDrop && (
-        <div
-          style={{ position: 'fixed', inset: 0, zIndex: 90 }}
-          onClick={() => setOpenDrop(null)}
-        />
+        <div style={{ position: 'fixed', inset: 0, zIndex: 90 }} onClick={() => setOpenDrop(null)} />
       )}
     </div>
   );
