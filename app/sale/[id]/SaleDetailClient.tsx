@@ -226,14 +226,49 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
           </div>
         </div>
 
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+          {/* 상세 정보 */}
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: '24px 24px 16px' }}>
+            <h2 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 800, color: '#1e293b' }}>단지 상세정보</h2>
+            <dl style={{ margin: 0 }}>
+              <Row label="단지명" value={item.name} />
+              <Row label="주소" value={item.location} />
+              <Row label="건물유형" value={item.buildingType} />
+              <Row label="공급유형" value={item.supplyType} />
+              <Row label="모집유형" value={item.recruitType} />
+              <Row label="총 세대수" value={`${item.totalUnits.toLocaleString()}세대`} />
+              {(item.specialSupplyUnits ?? 0) > 0 && <Row label="특별공급 세대수" value={`${item.specialSupplyUnits!.toLocaleString()}세대`} />}
+              {item.subscriptionArea ? <Row label="청약신청 지역" value={item.subscriptionArea} /> : null}
+              {item.floors ? <Row label="최고층수" value={`${item.floors}층`} /> : null}
+              {item.businessEntity ? <Row label="사업주체(시행사)" value={item.businessEntity} /> : null}
+              {item.constructionCompany ? <Row label="건설사(시공사)" value={item.constructionCompany} /> : null}
+              {item.contact ? <Row label="문의전화" value={item.contact} /> : null}
+            </dl>
+          </div>
+
+          {/* 청약 일정 */}
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: '24px 24px 16px' }}>
+            <h2 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 800, color: '#1e293b' }}>청약 일정</h2>
+            <dl style={{ margin: 0 }}>
+              <Row label="모집공고일" value={item.announcementDate} />
+              <Row label="청약접수 시작" value={item.receiptStart} />
+              <Row label="청약접수 종료" value={item.receiptEnd} />
+              <Row label="당첨자 발표" value={item.winnerDate} />
+              {item.contractStart && <Row label="계약 시작" value={item.contractStart} />}
+              {item.contractEnd && <Row label="계약 종료" value={item.contractEnd} />}
+              <Row label="입주 예정" value={item.moveInDate} />
+            </dl>
+          </div>
+        </div>
+
         {/* 에디토리얼 콘텐츠 */}
         {content && (content.thumbnail_url || content.summary || content.description || (content.pros?.length ?? 0) > 0 || (content.cons?.length ?? 0) > 0 || (content.image_urls?.length ?? 0) > 0) && (
-          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: '28px', marginTop: 0, marginBottom: 16 }}>
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: '28px', marginTop: 16 }}>
             {content.thumbnail_url && (
               <img
                 src={content.thumbnail_url}
                 alt={item.name}
-                style={{ width: '100%', maxHeight: 420, objectFit: 'cover', borderRadius: 12, marginBottom: 22, display: 'block' }}
+                style={{ width: '100%', height: 'auto', borderRadius: 12, marginBottom: 22, display: 'block' }}
               />
             )}
             {content.summary && (
@@ -275,48 +310,13 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
                     src={url}
                     alt={`${item.name} 사진 ${i + 1}`}
                     loading="lazy"
-                    style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', borderRadius: 8, display: 'block' }}
+                    style={{ width: '100%', height: 'auto', borderRadius: 8, display: 'block' }}
                   />
                 ))}
               </div>
             )}
           </div>
         )}
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
-          {/* 상세 정보 */}
-          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: '24px 24px 16px' }}>
-            <h2 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 800, color: '#1e293b' }}>단지 상세정보</h2>
-            <dl style={{ margin: 0 }}>
-              <Row label="단지명" value={item.name} />
-              <Row label="주소" value={item.location} />
-              <Row label="건물유형" value={item.buildingType} />
-              <Row label="공급유형" value={item.supplyType} />
-              <Row label="모집유형" value={item.recruitType} />
-              <Row label="총 세대수" value={`${item.totalUnits.toLocaleString()}세대`} />
-              {(item.specialSupplyUnits ?? 0) > 0 && <Row label="특별공급 세대수" value={`${item.specialSupplyUnits!.toLocaleString()}세대`} />}
-              {item.subscriptionArea ? <Row label="청약신청 지역" value={item.subscriptionArea} /> : null}
-              {item.floors ? <Row label="최고층수" value={`${item.floors}층`} /> : null}
-              {item.businessEntity ? <Row label="사업주체(시행사)" value={item.businessEntity} /> : null}
-              {item.constructionCompany ? <Row label="건설사(시공사)" value={item.constructionCompany} /> : null}
-              {item.contact ? <Row label="문의전화" value={item.contact} /> : null}
-            </dl>
-          </div>
-
-          {/* 청약 일정 */}
-          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: '24px 24px 16px' }}>
-            <h2 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 800, color: '#1e293b' }}>청약 일정</h2>
-            <dl style={{ margin: 0 }}>
-              <Row label="모집공고일" value={item.announcementDate} />
-              <Row label="청약접수 시작" value={item.receiptStart} />
-              <Row label="청약접수 종료" value={item.receiptEnd} />
-              <Row label="당첨자 발표" value={item.winnerDate} />
-              {item.contractStart && <Row label="계약 시작" value={item.contractStart} />}
-              {item.contractEnd && <Row label="계약 종료" value={item.contractEnd} />}
-              <Row label="입주 예정" value={item.moveInDate} />
-            </dl>
-          </div>
-        </div>
 
         {/* 주택형별 */}
         {item.units && item.units.length > 0 && (
