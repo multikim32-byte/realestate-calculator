@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const result = await fetchPublicSaleList({ type, page, perPage, dateFrom, dateTo });
+    const result = await fetchPublicSaleList({ type, page, perPage, dateFrom, dateTo, skipEnrich: false });
 
     // 지역 필터
     let items = result.items;

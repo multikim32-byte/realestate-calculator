@@ -201,7 +201,7 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
   function renderCards() {
     if (loading) {
       return (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 14 }}>
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
           {[1,2,3,4,5,6,7,8].map(i => (
             <div key={i} style={{ height: 210, background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', opacity: 0.5 }} />
           ))}
@@ -216,7 +216,7 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
       );
     }
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 14 }}>
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
         {filtered.slice(0, displayCount).map(item => {
           const badge = getCardStatusBadge(item);
           const sigungu = extractSigungu(item.location);
