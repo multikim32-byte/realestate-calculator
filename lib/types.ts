@@ -8,6 +8,7 @@ export interface SaleItem {
   supplyType: '민간분양' | '공공분양' | '임대';
   recruitType: '신규공급' | '선착순';
   totalUnits: number;
+  specialSupplyUnits?: number;
   minPrice: number;
   maxPrice: number;
   receiptStart: string;
@@ -20,6 +21,10 @@ export interface SaleItem {
   lng: number;
   imageUrl?: string;
   floors: number;
+  businessEntity?: string;
+  constructionCompany?: string;
+  contact?: string;
+  subscriptionArea?: string;
   units: UnitType[];
   pblancUrl?: string;
   houseManageNo?: string;
@@ -29,7 +34,9 @@ export interface SaleItem {
 export interface UnitType {
   type: string;
   area: number;
+  supplyArea?: number;
   count: number;
+  specialCount?: number;
   price: number;
 }
 

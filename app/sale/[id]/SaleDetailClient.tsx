@@ -8,7 +8,7 @@ import KakaoMap from '../../components/KakaoMap';
 import NearbyTradeSection from '../../components/NearbyTradeSection';
 import CompetitionRateSection from '../../components/CompetitionRateSection';
 
-type UnitDetail = { type: string; area: number; count: number; price: number };
+type UnitDetail = { type: string; area: number; supplyArea?: number; count: number; specialCount?: number; price: number };
 
 type SaleDetail = {
   id: string;
@@ -20,6 +20,7 @@ type SaleDetail = {
   supplyType: string;
   recruitType: string;
   totalUnits: number;
+  specialSupplyUnits?: number;
   minPrice: number;
   maxPrice: number;
   receiptStart: string;
@@ -31,8 +32,10 @@ type SaleDetail = {
   moveInDate: string;
   status: string;
   floors: number;
+  businessEntity?: string;
   constructionCompany?: string;
   contact?: string;
+  subscriptionArea?: string;
   units: UnitDetail[];
   pblancUrl?: string;
   houseManageNo?: string;
@@ -234,8 +237,11 @@ export default function SaleDetailClient() {
               <Row label="공급유형" value={item.supplyType} />
               <Row label="모집유형" value={item.recruitType} />
               <Row label="총 세대수" value={`${item.totalUnits.toLocaleString()}세대`} />
+              {(item.specialSupplyUnits ?? 0) > 0 && <Row label="특별공급 세대수" value={`${item.specialSupplyUnits!.toLocaleString()}세대`} />}
+              {item.subscriptionArea ? <Row label="청약신청 지역" value={item.subscriptionArea} /> : null}
               {item.floors ? <Row label="최고층수" value={`${item.floors}층`} /> : null}
-              {item.constructionCompany ? <Row label="건설사" value={item.constructionCompany} /> : null}
+              {item.businessEntity ? <Row label="사업주체(시행사)" value={item.businessEntity} /> : null}
+              {item.constructionCompany ? <Row label="건설사(시공사)" value={item.constructionCompany} /> : null}
               {item.contact ? <Row label="문의전화" value={item.contact} /> : null}
             </dl>
           </div>
@@ -273,21 +279,27 @@ export default function SaleDetailClient() {
                     <span style={{ fontSize: 11, color: '#6b7280', fontWeight: 600 }}>주택형</span>
                     <span style={{ fontSize: 14, fontWeight: 800, color: '#1d4ed8' }}>{u.type}</span>
                   </div>
-                  {/* 3개 정보 */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                  {/* 정보 그리드 */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
                     {[
-                      { label: '전용면적(㎡)', value: parseFloat(u.type) ? parseFloat(u.type).toFixed(2) : (u.area ? u.area.toFixed(2) : '-') },
-                      { label: '공급세대수', value: u.count ? `${u.count.toLocaleString()}세대` : '-' },
-                      { label: '분양가', value: u.price ? formatPrice(u.price) : '미정' },
+                      { label: '전용면적(㎡)', value: u.area ? u.area.toFixed(2) : (parseFloat(u.type) ? parseFloat(u.type).toFixed(2) : '-') },
+                      { label: '공급면적(㎡)', value: u.supplyArea ? u.supplyArea.toFixed(2) : '-' },
+                      { label: '일반공급', value: u.count ? `${u.count.toLocaleString()}세대` : '-' },
+                      { label: '특별공급', value: u.specialCount ? `${u.specialCount.toLocaleString()}세대` : '-' },
                     ].map(({ label, value }, j) => (
                       <div key={label} style={{
-                        padding: '10px 8px', textAlign: 'center',
-                        borderRight: j < 2 ? '1px solid #e5e7eb' : 'none',
+                        padding: '10px 6px', textAlign: 'center',
+                        borderRight: j < 3 ? '1px solid #e5e7eb' : 'none',
                       }}>
                         <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600, marginBottom: 4 }}>{label}</div>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', wordBreak: 'keep-all' }}>{value}</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#1e293b', wordBreak: 'keep-all' }}>{value}</div>
                       </div>
                     ))}
+                  </div>
+                  {/* 분양가 별도 행 */}
+                  <div style={{ padding: '8px 14px', background: '#f8f9fa', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, color: '#6b7280', fontWeight: 600 }}>분양가 상한</span>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: '#1d4ed8' }}>{u.price ? formatPrice(u.price) : '미정'}</span>
                   </div>
                 </div>
               ))}

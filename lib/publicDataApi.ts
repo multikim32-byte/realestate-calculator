@@ -32,6 +32,7 @@ export interface PublicSaleItem {
   supplyType: '민간분양' | '공공분양' | '공공지원민간임대' | '임대';
   recruitType: '신규공급' | '선착순';
   totalUnits: number;
+  specialSupplyUnits: number;
   receiptStart: string;
   receiptEnd: string;
   announcementDate: string;
@@ -45,8 +46,10 @@ export interface PublicSaleItem {
   lat: number;
   lng: number;
   floors: number;
+  businessEntity: string;
   constructionCompany: string;
   contact: string;
+  subscriptionArea: string;
   units: UnitDetail[];
   pblancUrl: string;
   hmpgUrl: string;
@@ -55,7 +58,9 @@ export interface PublicSaleItem {
 export interface UnitDetail {
   type: string;
   area: number;
+  supplyArea: number;
   count: number;
+  specialCount: number;
   price: number;
 }
 
@@ -242,6 +247,7 @@ function parseDetail(raw: RawApiData, recruitType: '신규공급' | '선착순',
     supplyType:      supplyTypeOverride ?? mapSupplyType(secdNm),
     recruitType,
     totalUnits:      parseInt(raw.TOT_SUPLY_HSHLDCO ?? '0') || 0,
+    specialSupplyUnits: parseInt(raw.SPSPLY_HSHLDCO ?? '0') || 0,
     receiptStart,
     receiptEnd,
     announcementDate: fmtDate(raw.RCRIT_PBLANC_DE),
@@ -255,8 +261,10 @@ function parseDetail(raw: RawApiData, recruitType: '신규공급' | '선착순',
     lat:             37.5665,
     lng:             126.9780,
     floors:          0,
+    businessEntity:  raw.BSNS_MBY_NM ?? '',
     constructionCompany: raw.CNSTRCTN_CMPNY_NM ?? '',
     contact:         raw.MDHS_TELNO ?? '',
+    subscriptionArea: raw.SUBSCRPT_AREA_CODE_NM ?? '',
     units:           [],
     pblancUrl:       raw.PBLANC_URL ?? '',
     hmpgUrl:         raw.HMPG_ADRES ?? '',
@@ -266,16 +274,18 @@ function parseDetail(raw: RawApiData, recruitType: '신규공급' | '선착순',
 // ─── 파서: 주택형별 ───────────────────────────────────────────────────────────
 
 function parseUnit(raw: RawApiData): UnitDetail {
-  // APT API: HOUSE_TY, SUPLY_AR, LTTOT_TOP_AMOUNT
+  // APT API: HOUSE_TY, EXCLUSE_AR, SUPLY_AR, LTTOT_TOP_AMOUNT
   // 오피스텔 API: TP, EXCLUSE_AR, SUPLY_AMOUNT
   // 잔여세대 API: EXCLUSE_AR/SUPLY_AR 없음 → HOUSE_TY 자체가 "038.9104" 같은 면적값
   const priceRaw = (raw.LTTOT_TOP_AMOUNT ?? raw.SUPLY_AMOUNT ?? '0').toString().replace(/,/g, '');
   const areaFromType = parseFloat(raw.HOUSE_TY ?? raw.TP ?? '0') || 0;
   return {
-    type:  raw.HOUSE_TY ?? raw.TP ?? '',
-    area:  parseFloat(raw.EXCLUSE_AR ?? raw.SUPLY_AR ?? '0') || areaFromType,
-    count: parseInt(raw.SUPLY_HSHLDCO ?? '0') || 0,
-    price: parseInt(priceRaw) || 0,
+    type:         raw.HOUSE_TY ?? raw.TP ?? '',
+    area:         parseFloat(raw.EXCLUSE_AR ?? '0') || areaFromType,
+    supplyArea:   parseFloat(raw.SUPLY_AR ?? '0') || 0,
+    count:        parseInt(raw.SUPLY_HSHLDCO ?? '0') || 0,
+    specialCount: parseInt(raw.SPSPLY_HSHLDCO ?? '0') || 0,
+    price:        parseInt(priceRaw) || 0,
   };
 }
 
