@@ -34,7 +34,7 @@ export default async function TradePage() {
           국토교통부 실거래가 공개시스템 · 지역·월 선택 후 조회
         </p>
       </div>
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 16px' }}>
 
         <TradeClient initialItems={initialItems} initialDong="개포동" />
 

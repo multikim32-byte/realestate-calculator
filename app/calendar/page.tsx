@@ -25,7 +25,7 @@ export default function CalendarPage() {
           이번 달·다음 달 청약 일정을 한눈에 확인하세요 · 청약홈 공식 링크 제공
         </p>
       </div>
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 16px' }}>
 
         {/* 즐겨찾기 유도 배너 */}
         <div style={{
