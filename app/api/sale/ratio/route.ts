@@ -44,7 +44,9 @@ export async function GET(req: NextRequest) {
       return true;
     });
 
-    return NextResponse.json({ source: 'api', ratio: deduped, total: deduped.length });
+    const res = NextResponse.json({ source: 'api', ratio: deduped, total: deduped.length });
+    res.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+    return res;
   } catch (err) {
     console.error('경쟁률 API 오류:', err);
     return NextResponse.json({ source: 'error', ratio: [] });
