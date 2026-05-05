@@ -39,6 +39,7 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
   const [searched, setSearched] = useState(initialItems.length > 0);
   const [keyword, setKeyword] = useState('');
   const [selectedApt, setSelectedApt] = useState('');
+  const [aptCardCount, setAptCardCount] = useState(20);
   const [selectedDong, setSelectedDong] = useState(initialItems.length > 0 ? initialDong : '전체');
   const [isMobile, setIsMobile] = useState(false);
   const pendingDongRef = useRef<string | null>(null);
@@ -91,6 +92,7 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
     setSearched(true);
     setSelectedApt('');
     setSelectedDong('전체');
+    setAptCardCount(20);
     setItems([]);
     try {
       const res = await fetch(`/api/trade?lawdCd=${searchLawdCd}&dealYmd=${searchDealYmd}&numOfRows=200`);
@@ -288,8 +290,8 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
           <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1e3a5f', marginBottom: 12 }}>
             단지별 거래 요약 ({aptStats.length}개 단지)
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10, marginBottom: 24 }}>
-            {aptStats.slice(0, 20).map(apt => (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10, marginBottom: aptStats.length > aptCardCount ? 10 : 24 }}>
+            {aptStats.slice(0, aptCardCount).map(apt => (
               <div
                 key={apt.name}
                 onClick={() => setSelectedApt(selectedApt === apt.name ? '' : apt.name)}
@@ -314,6 +316,19 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
               </div>
             ))}
           </div>
+          {aptStats.length > aptCardCount && (
+            <button
+              onClick={() => setAptCardCount(c => c + 20)}
+              style={{
+                width: '100%', marginBottom: 24, padding: '11px',
+                borderRadius: 10, border: '1px solid #e5e7eb',
+                background: '#fff', cursor: 'pointer',
+                fontSize: 13, fontWeight: 600, color: '#1d4ed8',
+              }}
+            >
+              단지 더보기 ({aptCardCount}/{aptStats.length})
+            </button>
+          )}
 
           {/* ── 선택 단지 거래 내역 ── */}
           {selectedApt && aptTrades.length > 0 && (
