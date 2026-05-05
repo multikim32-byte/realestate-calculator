@@ -15,12 +15,16 @@ const TRADE_URL =
 export interface TradeItem {
   name: string;       // 아파트명
   dong: string;       // 법정동
+  aptDong: string;    // 아파트 동명
   area: number;       // 전용면적 (㎡)
   floor: number;      // 층
   price: number;      // 거래금액 (만원)
   builtYear: number;  // 건축년도
   dealDate: string;   // YYYY-MM-DD
+  rgstDate: string;   // 등기일자
   dealType: string;   // 거래유형 (중개거래 등)
+  sellerType: string; // 매도자 (개인/법인/공공기관)
+  buyerType: string;  // 매수자 (개인/법인/공공기관)
 }
 
 // ─── XML 파서 ────────────────────────────────────────────────────────────────
@@ -50,14 +54,18 @@ function parseItems(xml: string): TradeItem[] {
     const day   = xmlVal(block, 'dealDay').padStart(2, '0');
 
     items.push({
-      name:      xmlVal(block, 'aptNm'),
-      dong:      xmlVal(block, 'umdNm'),
-      area:      parseFloat(xmlVal(block, 'excluUseAr')) || 0,
-      floor:     parseInt(xmlVal(block, 'floor')) || 0,
+      name:       xmlVal(block, 'aptNm'),
+      dong:       xmlVal(block, 'umdNm'),
+      aptDong:    xmlVal(block, 'aptDong').trim(),
+      area:       parseFloat(xmlVal(block, 'excluUseAr')) || 0,
+      floor:      parseInt(xmlVal(block, 'floor')) || 0,
       price,
-      builtYear: parseInt(xmlVal(block, 'buildYear')) || 0,
-      dealDate:  year && month && day ? `${year}-${month}-${day}` : '',
-      dealType:  xmlVal(block, 'dealingGbn'),
+      builtYear:  parseInt(xmlVal(block, 'buildYear')) || 0,
+      dealDate:   year && month && day ? `${year}-${month}-${day}` : '',
+      rgstDate:   xmlVal(block, 'rgstDate').trim(),
+      dealType:   xmlVal(block, 'dealingGbn'),
+      sellerType: xmlVal(block, 'slerGbn').trim(),
+      buyerType:  xmlVal(block, 'buyerGbn').trim(),
     });
   }
 

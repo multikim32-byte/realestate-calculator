@@ -245,8 +245,12 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
                     border: '1px solid #e0f2fe',
                   }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <span style={{ fontSize: 13, color: '#374151' }}>{areaLabel(t.area)} · {t.floor}층</span>
-                      <span style={{ fontSize: 12, color: '#9ca3af' }}>{t.dealDate}</span>
+                      <span style={{ fontSize: 13, color: '#374151' }}>
+                        {areaLabel(t.area)} · {t.floor}층{t.aptDong ? ` · ${t.aptDong}동` : ''}
+                      </span>
+                      <span style={{ fontSize: 12, color: '#9ca3af' }}>
+                        {t.dealDate}{t.builtYear ? ` · ${t.builtYear}년 준공` : ''}{t.buyerType ? ` · 매수 ${t.buyerType}` : ''}
+                      </span>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: 15, fontWeight: 800, color: '#1d4ed8' }}>{fmt(t.price)}</div>
@@ -277,7 +281,7 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
                         {t.name}
                       </div>
                       <div style={{ fontSize: 12, color: '#6b7280' }}>
-                        {t.dong} · {areaLabel(t.area)} · {t.floor}층
+                        {t.dong} · {areaLabel(t.area)} · {t.floor}층{t.builtYear ? ` · ${t.builtYear}년` : ''}
                       </div>
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
