@@ -8,12 +8,10 @@ import type { TradeItem } from '@/lib/tradeApi';
 interface UnitDetail { type: string; area: number; count: number; price: number }
 
 interface Props {
-  location: string;   // 청약 단지 주소
-  aptName: string;    // 청약 단지명
-  units: UnitDetail[];// 주택형별 분양가
+  location: string;
+  aptName: string;
+  units: UnitDetail[];
 }
-
-// ── 주소 → LAWD_CD 추출 ────────────────────────────────────────────────────
 
 function findLawdCd(location: string): { code: string; areaName: string; sido: string } | null {
   const loc = location.replace(/\s/g, '');
@@ -37,10 +35,6 @@ function findLawdCd(location: string): { code: string; areaName: string; sido: s
   return null;
 }
 
-// ── 주소에서 동 추출 ────────────────────────────────────────────────────────
-// API umdNm이 "양지읍 양지리"처럼 읍+리 합쳐서 반환하는 경우 대비해
-// 연속된 읍/면/동/리를 최대 2개까지 추출해 공백으로 합침
-
 function extractDong(location: string): string {
   const parts = location.split(/\s+/);
   const result: string[] = [];
@@ -49,14 +43,11 @@ function extractDong(location: string): string {
       result.push(part);
       if (result.length === 2) break;
     } else if (result.length > 0) {
-      // 동/읍/면/리가 아닌 부분이 나오면 중단
       break;
     }
   }
   return result.join(' ');
 }
-
-// ── 최근 3개월 YYYYMM 생성 ──────────────────────────────────────────────────
 
 function recentYms(n = 3): string[] {
   const result: string[] = [];
@@ -68,8 +59,6 @@ function recentYms(n = 3): string[] {
   return result;
 }
 
-// ── 가격 포맷 ──────────────────────────────────────────────────────────────
-
 function fmt(v: number) {
   if (v >= 10000) return `${(v / 10000).toFixed(1)}억`;
   return `${v.toLocaleString()}만`;
@@ -79,8 +68,6 @@ function areaLabel(area: number) {
   return `${area.toFixed(1)}㎡(${(area / 3.305785).toFixed(0)}평)`;
 }
 
-// ── 컴포넌트 ───────────────────────────────────────────────────────────────
-
 export default function NearbyTradeSection({ location, aptName, units }: Props) {
   const [trades, setTrades] = useState<TradeItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,14 +75,18 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
   const [sido, setSido] = useState('');
   const [noKey, setNoKey] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     const found = findLawdCd(location);
-    if (!found) {
-      setNotFound(true);
-      setLoading(false);
-      return;
-    }
+    if (!found) { setNotFound(true); setLoading(false); return; }
     setAreaName(found.areaName);
     setSido(found.sido);
     loadTrades(found.code);
@@ -116,7 +107,6 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
         if (r.source === 'no_key') setNoKey(true);
         return r.items ?? [];
       });
-      // 중복 제거 (단지명+거래일+면적)
       const seen = new Set<string>();
       const deduped = all.filter(t => {
         const key = `${t.name}|${t.dealDate}|${t.area}|${t.price}`;
@@ -130,16 +120,10 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
     }
   }
 
-  // API 키 없음 또는 주소 매칭 실패
   if (noKey || notFound) return null;
 
-  // 동일 단지명 거래
   const sameApt = trades.filter(t => t.name === aptName);
-
-  // 주소에서 동 추출
   const dong = extractDong(location);
-
-  // 인근 거래: 같은 동 우선, 없으면 시/군/구 전체에서 표시 (최대 10건)
   const nearbyInDong = trades.filter(t => t.name !== aptName && dong && t.dong === dong);
   const nearby = (nearbyInDong.length > 0
     ? nearbyInDong
@@ -147,7 +131,6 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
   ).slice(0, 10);
   const nearbyLabel = nearbyInDong.length > 0 ? dong : areaName;
 
-  // 분양가 vs 실거래가 비교: units의 면적과 ±10㎡ 범위에서 매칭
   const comparisons = units
     .filter(u => u.price > 0 && u.area > 0)
     .map(u => {
@@ -159,8 +142,118 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
     })
     .filter(Boolean) as { type: string; area: number; supplyPrice: number; tradeAvg: number; diff: number; count: number }[];
 
+  // ── 모바일 카드 컴포넌트 ───────────────────────────────────────────
+  function SameAptCards() {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {sameApt.slice(0, 20).map((t, i) => (
+          <div key={i} style={{
+            background: i % 2 === 0 ? '#f8faff' : '#fff',
+            border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 14px',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{ fontSize: 16, fontWeight: 800, color: '#1d4ed8' }}>{fmt(t.price)}</span>
+              <span style={{ fontSize: 11, color: '#9ca3af' }}>{t.dealDate}</span>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', fontSize: 12, color: '#6b7280' }}>
+              <span>{areaLabel(t.area)}{t.aptDong ? ` · ${t.aptDong}동` : ''}</span>
+              <span>{t.floor}층</span>
+              {t.builtYear && <span>{t.builtYear}년</span>}
+              {t.dealType && <span>{t.dealType}</span>}
+              {t.buyerType && <span>매수 {t.buyerType}</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  function NearbyCards() {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {nearby.map((t, i) => (
+          <div key={i} style={{
+            background: i % 2 === 0 ? '#fafafa' : '#fff',
+            border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 14px',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', flex: 1, marginRight: 8, lineHeight: 1.3 }}>{t.name}</span>
+              <span style={{ fontSize: 15, fontWeight: 800, color: '#374151', whiteSpace: 'nowrap' }}>{fmt(t.price)}</span>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', fontSize: 12, color: '#6b7280' }}>
+              <span>{t.dong}</span>
+              <span>{areaLabel(t.area)}</span>
+              <span>{t.floor}층</span>
+              {t.builtYear && <span>{t.builtYear}년</span>}
+              <span style={{ marginLeft: 'auto', color: '#9ca3af' }}>{t.dealDate}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // ── 데스크탑 테이블 컴포넌트 ─────────────────────────────────────────
+  function SameAptTable() {
+    return (
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <thead>
+            <tr style={{ background: '#eff6ff' }}>
+              {['거래일', '전용면적', '층', '건축년도', '거래금액', '거래유형', '매수자'].map(h => (
+                <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600, color: '#0369a1', whiteSpace: 'nowrap' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sameApt.slice(0, 20).map((t, i) => (
+              <tr key={i} style={{ borderBottom: '1px solid #e5e7eb', background: i % 2 === 0 ? '#fff' : '#f8faff' }}>
+                <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>{t.dealDate}</td>
+                <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>{areaLabel(t.area)}{t.aptDong ? ` · ${t.aptDong}동` : ''}</td>
+                <td style={{ padding: '7px 10px' }}>{t.floor}층</td>
+                <td style={{ padding: '7px 10px', color: '#6b7280' }}>{t.builtYear || '-'}</td>
+                <td style={{ padding: '7px 10px', fontWeight: 700, color: '#1d4ed8', whiteSpace: 'nowrap' }}>{fmt(t.price)}</td>
+                <td style={{ padding: '7px 10px', color: '#6b7280' }}>{t.dealType || '-'}</td>
+                <td style={{ padding: '7px 10px', color: '#6b7280' }}>{t.buyerType || '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  function NearbyTable() {
+    return (
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <thead>
+            <tr style={{ background: '#f8f9fa' }}>
+              {['단지명', '법정동', '전용면적', '층', '건축년도', '거래금액', '거래일'].map(h => (
+                <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600, color: '#6b7280', whiteSpace: 'nowrap' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {nearby.map((t, i) => (
+              <tr key={i} style={{ borderBottom: '1px solid #e5e7eb', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
+                <td style={{ padding: '7px 10px', fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.name}</td>
+                <td style={{ padding: '7px 10px', color: '#6b7280', whiteSpace: 'nowrap' }}>{t.dong}</td>
+                <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>{areaLabel(t.area)}</td>
+                <td style={{ padding: '7px 10px' }}>{t.floor}층</td>
+                <td style={{ padding: '7px 10px', color: '#6b7280' }}>{t.builtYear || '-'}</td>
+                <td style={{ padding: '7px 10px', fontWeight: 700, color: '#374151', whiteSpace: 'nowrap' }}>{fmt(t.price)}</td>
+                <td style={{ padding: '7px 10px', color: '#9ca3af', whiteSpace: 'nowrap' }}>{t.dealDate}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 24, marginTop: 16 }}>
+    <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: isMobile ? '16px 12px' : 24, marginTop: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
         <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#1e293b' }}>
           📊 인근 실거래가
@@ -171,7 +264,7 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
             href={sido && areaName ? `/trade?sido=${encodeURIComponent(sido)}&sigungu=${encodeURIComponent(areaName)}` : '/trade'}
             style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '1px solid #e5e7eb', color: '#1d4ed8', textDecoration: 'none' }}
           >
-            실거래가 상세 →
+            {isMobile ? '상세 →' : '실거래가 상세 →'}
           </Link>
         </div>
       </div>
@@ -192,39 +285,71 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
               </h3>
               <div style={{ display: 'grid', gap: 8 }}>
                 {comparisons.map((c, i) => (
-                  <div key={i} style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'auto 1fr 1fr 1fr',
-                    gap: '0 12px',
-                    alignItems: 'center',
-                    padding: '12px 16px',
-                    background: '#f0f9ff',
-                    borderRadius: 10,
-                    border: '1px solid #bae6fd',
-                    fontSize: 13,
-                  }}>
-                    <div style={{ fontWeight: 700, color: '#1d4ed8', whiteSpace: 'nowrap' }}>{c.type}</div>
-                    <div>
-                      <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>분양가</div>
-                      <div style={{ fontWeight: 600 }}>{fmt(c.supplyPrice)}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>실거래 평균 ({c.count}건)</div>
-                      <div style={{ fontWeight: 600 }}>{fmt(c.tradeAvg)}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>차이</div>
-                      <div style={{
-                        fontWeight: 700,
-                        color: c.diff > 0 ? '#16a34a' : c.diff < 0 ? '#dc2626' : '#374151',
-                      }}>
-                        {c.diff > 0 ? '+' : ''}{fmt(c.diff)}
-                        <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 4 }}>
-                          {c.diff > 0 ? '(실거래↑)' : c.diff < 0 ? '(실거래↓)' : ''}
+                  isMobile ? (
+                    /* 모바일: 2행 레이아웃 */
+                    <div key={i} style={{
+                      padding: '12px 14px', background: '#f0f9ff',
+                      borderRadius: 10, border: '1px solid #bae6fd',
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#1d4ed8' }}>{c.type}</span>
+                        <span style={{
+                          fontSize: 14, fontWeight: 800,
+                          color: c.diff > 0 ? '#16a34a' : c.diff < 0 ? '#dc2626' : '#374151',
+                        }}>
+                          {c.diff > 0 ? '+' : ''}{fmt(c.diff)}
+                          <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 3 }}>
+                            {c.diff > 0 ? '(실거래↑)' : c.diff < 0 ? '(실거래↓)' : ''}
+                          </span>
                         </span>
                       </div>
+                      <div style={{ display: 'flex', gap: 16, fontSize: 12 }}>
+                        <div>
+                          <span style={{ color: '#9ca3af' }}>분양가 </span>
+                          <span style={{ fontWeight: 600 }}>{fmt(c.supplyPrice)}</span>
+                        </div>
+                        <div>
+                          <span style={{ color: '#9ca3af' }}>실거래({c.count}건) </span>
+                          <span style={{ fontWeight: 600 }}>{fmt(c.tradeAvg)}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    /* 데스크탑: 4열 그리드 */
+                    <div key={i} style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'auto 1fr 1fr 1fr',
+                      gap: '0 12px',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#f0f9ff',
+                      borderRadius: 10,
+                      border: '1px solid #bae6fd',
+                      fontSize: 13,
+                    }}>
+                      <div style={{ fontWeight: 700, color: '#1d4ed8', whiteSpace: 'nowrap' }}>{c.type}</div>
+                      <div>
+                        <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>분양가</div>
+                        <div style={{ fontWeight: 600 }}>{fmt(c.supplyPrice)}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>실거래 평균 ({c.count}건)</div>
+                        <div style={{ fontWeight: 600 }}>{fmt(c.tradeAvg)}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>차이</div>
+                        <div style={{
+                          fontWeight: 700,
+                          color: c.diff > 0 ? '#16a34a' : c.diff < 0 ? '#dc2626' : '#374151',
+                        }}>
+                          {c.diff > 0 ? '+' : ''}{fmt(c.diff)}
+                          <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 4 }}>
+                            {c.diff > 0 ? '(실거래↑)' : c.diff < 0 ? '(실거래↓)' : ''}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )
                 ))}
               </div>
             </div>
@@ -236,30 +361,7 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
               <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1e3a5f', marginBottom: 10 }}>
                 {aptName} 실거래 내역 ({sameApt.length}건)
               </h3>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ background: '#eff6ff' }}>
-                      {['거래일', '전용면적', '층', '건축년도', '거래금액', '거래유형', '매수자'].map(h => (
-                        <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600, color: '#0369a1', whiteSpace: 'nowrap' }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sameApt.slice(0, 20).map((t, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid #e5e7eb', background: i % 2 === 0 ? '#fff' : '#f8faff' }}>
-                        <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>{t.dealDate}</td>
-                        <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>{areaLabel(t.area)}{t.aptDong ? ` · ${t.aptDong}동` : ''}</td>
-                        <td style={{ padding: '7px 10px' }}>{t.floor}층</td>
-                        <td style={{ padding: '7px 10px', color: '#6b7280' }}>{t.builtYear || '-'}</td>
-                        <td style={{ padding: '7px 10px', fontWeight: 700, color: '#1d4ed8', whiteSpace: 'nowrap' }}>{fmt(t.price)}</td>
-                        <td style={{ padding: '7px 10px', color: '#6b7280' }}>{t.dealType || '-'}</td>
-                        <td style={{ padding: '7px 10px', color: '#6b7280' }}>{t.buyerType || '-'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {isMobile ? <SameAptCards /> : <SameAptTable />}
             </div>
           )}
 
@@ -269,30 +371,7 @@ export default function NearbyTradeSection({ location, aptName, units }: Props) 
               <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1e3a5f', marginBottom: 10 }}>
                 {nearbyLabel} 인근 최근 거래
               </h3>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ background: '#f8f9fa' }}>
-                      {['단지명', '법정동', '전용면적', '층', '건축년도', '거래금액', '거래일'].map(h => (
-                        <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600, color: '#6b7280', whiteSpace: 'nowrap' }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {nearby.map((t, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid #e5e7eb', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
-                        <td style={{ padding: '7px 10px', fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.name}</td>
-                        <td style={{ padding: '7px 10px', color: '#6b7280', whiteSpace: 'nowrap' }}>{t.dong}</td>
-                        <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>{areaLabel(t.area)}</td>
-                        <td style={{ padding: '7px 10px' }}>{t.floor}층</td>
-                        <td style={{ padding: '7px 10px', color: '#6b7280' }}>{t.builtYear || '-'}</td>
-                        <td style={{ padding: '7px 10px', fontWeight: 700, color: '#374151', whiteSpace: 'nowrap' }}>{fmt(t.price)}</td>
-                        <td style={{ padding: '7px 10px', color: '#9ca3af', whiteSpace: 'nowrap' }}>{t.dealDate}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {isMobile ? <NearbyCards /> : <NearbyTable />}
             </div>
           )}
 
