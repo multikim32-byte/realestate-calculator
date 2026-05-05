@@ -223,13 +223,8 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
             </a>
             <button
               onClick={() => {
-                const url = window.location.href;
-                const title = document.title;
-                if (navigator.share) {
-                  navigator.share({ title, url });
-                } else {
-                  navigator.clipboard.writeText(url).then(() => alert('링크가 복사되었습니다.'));
-                }
+                if (navigator.share) navigator.share({ title: document.title, url: window.location.href });
+                else navigator.clipboard.writeText(window.location.href).then(() => alert('링크가 복사되었습니다.'));
               }}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -335,6 +330,26 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
             )}
           </div>
         )}
+
+        {/* 공유하기 배너 */}
+        <button
+          onClick={() => {
+            if (navigator.share) navigator.share({ title: document.title, url: window.location.href });
+            else navigator.clipboard.writeText(window.location.href).then(() => alert('링크가 복사되었습니다.'));
+          }}
+          style={{
+            width: '100%', marginTop: 16,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            padding: '16px', borderRadius: 14,
+            background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+            border: 'none', cursor: 'pointer',
+            boxShadow: '0 2px 12px rgba(245,158,11,0.35)',
+          }}
+        >
+          <span style={{ fontSize: 20 }}>🔗</span>
+          <span style={{ fontSize: 15, fontWeight: 800, color: '#78350f' }}>이 청약정보 공유하기</span>
+          <span style={{ fontSize: 13, color: '#92400e' }}>— 카카오·문자·링크 복사</span>
+        </button>
 
         {/* 주택형별 */}
         {item.units && item.units.length > 0 && (
