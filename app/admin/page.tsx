@@ -41,6 +41,7 @@ export default async function AdminPage() {
         <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1e293b', margin: '0 0 6px' }}>관리자 대시보드</h1>
         <p style={{ fontSize: 14, color: '#6b7280', margin: '0 0 36px' }}>관리할 항목을 선택하세요.</p>
 
+        <style>{`.admin-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.1); transform: translateY(-2px); }`}</style>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
           {MENUS.map(m => (
             <Link
@@ -48,21 +49,12 @@ export default async function AdminPage() {
               href={m.href}
               style={{ textDecoration: 'none' }}
             >
-              <div style={{
+              <div className="admin-card" style={{
                 background: m.color, border: `1px solid ${m.border}`,
                 borderRadius: 16, padding: '28px 24px',
                 transition: 'box-shadow 0.15s, transform 0.15s',
                 cursor: 'pointer',
-              }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)';
-                  (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-                  (e.currentTarget as HTMLElement).style.transform = 'none';
-                }}
-              >
+              }}>
                 <div style={{ fontSize: 36, marginBottom: 14 }}>{m.emoji}</div>
                 <h2 style={{ fontSize: 17, fontWeight: 800, color: m.titleColor, margin: '0 0 8px' }}>{m.title}</h2>
                 <p style={{ fontSize: 13, color: '#6b7280', margin: 0, lineHeight: 1.7 }}>{m.desc}</p>
