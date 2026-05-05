@@ -199,9 +199,14 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
 
   // ── 카드 그리드 렌더 ──────────────────────────────────────────────────
   function renderCards() {
+    const gridStyle: React.CSSProperties = {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(4, 1fr)',
+      gap: 14,
+    };
     if (loading) {
       return (
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div style={gridStyle}>
           {[1,2,3,4,5,6,7,8].map(i => (
             <div key={i} style={{ height: 210, background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', opacity: 0.5 }} />
           ))}
@@ -216,7 +221,14 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
       );
     }
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+      <>
+        <style>{`
+          .sale-card-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+          @media (max-width: 1279px) { .sale-card-grid { grid-template-columns: repeat(3, 1fr); } }
+          @media (max-width: 767px)  { .sale-card-grid { grid-template-columns: repeat(2, 1fr); } }
+          @media (max-width: 479px)  { .sale-card-grid { grid-template-columns: repeat(1, 1fr); } }
+        `}</style>
+      <div className="sale-card-grid">
         {filtered.slice(0, displayCount).map(item => {
           const badge = getCardStatusBadge(item);
           const sigungu = extractSigungu(item.location);
@@ -305,6 +317,7 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
           );
         })}
       </div>
+      </>
     );
   }
 
