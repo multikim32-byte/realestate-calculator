@@ -6,7 +6,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import SectionTabs from './SectionTabs';
-import UnitTable from './UnitTable';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -217,8 +216,6 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
               </div>
             )}
 
-            {/* 주택형별 공급정보 (청약 API 연동) */}
-            {item.house_manage_no && <UnitTable houseManageNo={item.house_manage_no} />}
 
             {/* 관련 도구 */}
             {(() => {
