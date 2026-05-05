@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: '이용약관',
   description: 'mk-land.kr 서비스 이용약관입니다. 서비스 이용 조건, 책임 한계, 면책 조항 등을 안내합니다.',
   alternates: { canonical: 'https://www.mk-land.kr/terms' },
+  robots: { index: false, follow: false },
 };
 
 const sections = [

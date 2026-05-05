@@ -27,6 +27,27 @@ export default function CalendarPage() {
       </div>
       <div className="max-w-5xl mx-auto px-4 py-8">
 
+        {/* 즐겨찾기 유도 배너 */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10,
+          background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 12,
+          padding: '12px 18px', marginBottom: 20,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 18 }}>⭐</span>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 700, color: '#92400e', margin: 0 }}>청약 달력 즐겨찾기에 추가하세요</p>
+              <p style={{ fontSize: 12, color: '#b45309', margin: 0 }}>매달 청약 일정을 빠르게 확인할 수 있습니다</p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <kbd style={{ background: '#fff', border: '1px solid #fcd34d', borderRadius: 6, padding: '3px 8px', fontSize: 12, color: '#92400e', fontFamily: 'monospace' }}>Ctrl</kbd>
+            <span style={{ fontSize: 12, color: '#92400e' }}>+</span>
+            <kbd style={{ background: '#fff', border: '1px solid #fcd34d', borderRadius: 6, padding: '3px 8px', fontSize: 12, color: '#92400e', fontFamily: 'monospace' }}>D</kbd>
+            <span style={{ fontSize: 12, color: '#b45309' }}>눌러서 추가</span>
+          </div>
+        </div>
+
         <CalendarClient />
 
         {/* SEO 안내 섹션 */}

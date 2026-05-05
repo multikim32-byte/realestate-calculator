@@ -1,4 +1,5 @@
 import GlobalNav from '@/app/components/GlobalNav';
+import ShareButton from '@/app/components/ShareButton';
 import { supabase } from '@/lib/supabase';
 import type { UnsoldListing } from '@/lib/supabase';
 import type { Metadata } from 'next';
@@ -98,10 +99,13 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
 
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px 16px 64px' }}>
 
-        {/* 뒤로가기 */}
-        <Link href="/unsold" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#6b7280', textDecoration: 'none', marginBottom: 20 }}>
-          ← 목록으로
-        </Link>
+        {/* 뒤로가기 + 공유 */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <Link href="/unsold" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>
+            ← 목록으로
+          </Link>
+          <ShareButton />
+        </div>
 
         <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.09)' }}>
 
@@ -288,20 +292,6 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
           );
         })()}
 
-        {/* 주의사항 */}
-        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '14px 18px', marginTop: 16, fontSize: 13, color: '#92400e' }}>
-          본 정보는 참고용이며 실제 분양 조건은 반드시 공식 사이트에서 확인하시기 바랍니다.
-        </div>
-
-        {/* 공식 사이트 */}
-        {item.official_url && (
-          <div style={{ marginTop: 12, textAlign: 'center' }}>
-            <a href={item.official_url} target="_blank" rel="noopener noreferrer"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#1d4ed8', color: '#fff', padding: '12px 24px', borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
-              🔗 공식 홈페이지 바로가기
-            </a>
-          </div>
-        )}
       </div>
     </div>
   );

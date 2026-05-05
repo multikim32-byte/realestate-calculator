@@ -86,13 +86,41 @@ export default async function PostPage({ params }: Props) {
           <h1 style={{ margin: "0 0 20px", fontSize: 24, fontWeight: 800, color: "#1e3a5f", lineHeight: 1.4 }}>
             {post.title}
           </h1>
-          <p style={{ margin: "0 0 28px", fontSize: 15, color: "#666", lineHeight: 1.7, borderBottom: "1px solid #f0f4f9", paddingBottom: 24 }}>
+          <p style={{ margin: "0 0 20px", fontSize: 15, color: "#666", lineHeight: 1.7 }}>
             {post.description}
           </p>
+
+          {/* SNS 유입 사용자 이탈 방지: 핵심 도구 CTA */}
+          <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 12, padding: "14px 18px", marginBottom: 28, borderBottom: "none" }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "#1d4ed8", margin: "0 0 10px" }}>🧮 글과 함께 바로 계산해보세요 — 무료</p>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {[
+                { href: "/calculator?tab=acquisition", label: "취득세 계산기" },
+                { href: "/calculator?tab=loan",        label: "대출 계산기" },
+                { href: "/trade",                      label: "실거래가 조회" },
+                { href: "/unsold",                     label: "분양정보 보기" },
+              ].map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  style={{
+                    padding: "6px 14px", background: "#fff", border: "1px solid #bfdbfe",
+                    borderRadius: 20, fontSize: 13, fontWeight: 600, color: "#1d4ed8",
+                    textDecoration: "none", whiteSpace: "nowrap",
+                  }}
+                >
+                  {label} →
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ borderTop: "1px solid #f0f4f9", paddingTop: 24 }}>
           <div
             style={{ fontSize: 15, color: "#333", lineHeight: 1.9 }}
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
+          </div>
         </div>
 
         {/* 광고 */}

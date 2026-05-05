@@ -186,7 +186,7 @@ export default function SaleDetailClient() {
           </div>
 
           {/* 버튼 영역 */}
-          <div style={{ marginTop: 16 }}>
+          <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             <a
               href={item.pblancUrl ||
                 `https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancDetail.do?houseManageNo=${item.houseManageNo ?? item.id}&pblancNo=${item.pblancNo ?? ''}`}
@@ -201,6 +201,25 @@ export default function SaleDetailClient() {
             >
               📄 모집공고문 보기 (청약홈)
             </a>
+            <button
+              onClick={() => {
+                const url = window.location.href;
+                const title = document.title;
+                if (navigator.share) {
+                  navigator.share({ title, url });
+                } else {
+                  navigator.clipboard.writeText(url).then(() => alert('링크가 복사되었습니다.'));
+                }
+              }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '10px 18px', borderRadius: 10, fontWeight: 700, fontSize: 14,
+                background: '#fff', color: '#374151',
+                border: '1px solid #e5e7eb', cursor: 'pointer',
+              }}
+            >
+              🔗 공유하기
+            </button>
           </div>
         </div>
 

@@ -34,8 +34,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const regionEntries: MetadataRoute.Sitemap = REGIONS.map(r => ({
     url: `${BASE}/region/${encodeURIComponent(r)}`,
     lastModified: now,
-    changeFrequency: 'daily' as const,
-    priority: 0.9,
+    changeFrequency: 'weekly' as const,
+    priority: 0.85,
   }));
 
   // 분양정보 개별 매물 (Supabase)
@@ -52,8 +52,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const unsoldEntries: MetadataRoute.Sitemap = unsoldItems.map(item => ({
     url: `${BASE}/unsold/${item.id}`,
     lastModified: new Date(item.updated_at),
-    changeFrequency: 'weekly' as const,
-    priority: 0.8,
+    changeFrequency: 'daily' as const,
+    priority: 0.9,
   }));
 
   // apt 포스트

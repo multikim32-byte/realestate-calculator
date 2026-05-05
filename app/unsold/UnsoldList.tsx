@@ -28,9 +28,19 @@ function FavBtn({ item }: { item: UnsoldListing }) {
     <button
       onClick={e => { e.preventDefault(); e.stopPropagation(); setFav(toggleFavStorage(item)); }}
       title={fav ? '관심 단지 해제' : '관심 단지 저장'}
-      style={{ position: 'absolute', bottom: 14, right: 14, zIndex: 2, background: 'none', border: 'none', padding: '2px 4px', cursor: 'pointer', fontSize: 22, color: fav ? '#f59e0b' : '#cbd5e1', lineHeight: 1 }}
+      style={{
+        position: 'absolute', top: 10, right: 10, zIndex: 2,
+        background: fav ? '#fef3c7' : 'rgba(255,255,255,0.92)',
+        border: `1px solid ${fav ? '#fcd34d' : '#e5e7eb'}`,
+        borderRadius: 20, padding: '4px 10px', cursor: 'pointer',
+        display: 'flex', alignItems: 'center', gap: 4,
+        fontSize: 12, fontWeight: 700,
+        color: fav ? '#b45309' : '#6b7280',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+      }}
     >
-      {fav ? '★' : '☆'}
+      <span style={{ fontSize: 14 }}>{fav ? '★' : '☆'}</span>
+      <span>{fav ? '저장됨' : '관심'}</span>
     </button>
   );
 }
@@ -97,6 +107,23 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
 
   return (
     <>
+      {/* 관심단지 저장 안내 배너 */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
+        background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10,
+        padding: '10px 16px', marginBottom: 12,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 16 }}>☆</span>
+          <p style={{ fontSize: 13, color: '#166534', margin: 0 }}>
+            <strong>관심 단지 저장</strong>하면 다음 방문 때 바로 찾을 수 있어요
+          </p>
+        </div>
+        <a href="/favorites" style={{ fontSize: 12, fontWeight: 700, color: '#059669', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+          저장 목록 보기 →
+        </a>
+      </div>
+
       {/* 필터 바 */}
       <div style={{ background: '#fff', borderRadius: 12, padding: '16px 20px', marginBottom: 20, boxShadow: '0 1px 6px rgba(0,0,0,0.06)', display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
 

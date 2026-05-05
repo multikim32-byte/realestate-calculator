@@ -13,7 +13,7 @@ function getDevice(): DeviceType {
 }
 
 const STORAGE_KEY = 'mk_bookmark_toast_dismissed';
-const DELAY_MS = 30000; // 30초 후 표시
+const DELAY_MS = 15000; // 15초 후 표시
 
 export default function BookmarkToast() {
   const [visible, setVisible] = useState(false);
