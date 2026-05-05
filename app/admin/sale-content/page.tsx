@@ -11,7 +11,17 @@ export default function SaleContentListPage() {
   const [keyword, setKeyword] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const router = useRouter();
+
+  const handleDelete = async (houseManageNo: string) => {
+    if (!confirm('이 콘텐츠를 삭제하시겠습니까?')) return;
+    setDeleting(houseManageNo);
+    const res = await fetch(`/api/admin/sale-content/${houseManageNo}`, { method: 'DELETE' });
+    if (res.ok) setList(prev => prev.filter(c => c.house_manage_no !== houseManageNo));
+    else alert('삭제 실패');
+    setDeleting(null);
+  };
 
   useEffect(() => {
     fetch('/api/admin/sale-content')
@@ -187,6 +197,13 @@ export default function SaleContentListPage() {
                   >
                     수정
                   </Link>
+                  <button
+                    onClick={() => handleDelete(item.house_manage_no)}
+                    disabled={deleting === item.house_manage_no}
+                    style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #fca5a5', background: '#fff', fontSize: 12, color: '#dc2626', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    {deleting === item.house_manage_no ? '삭제 중...' : '삭제'}
+                  </button>
                 </div>
               </div>
             ))}
