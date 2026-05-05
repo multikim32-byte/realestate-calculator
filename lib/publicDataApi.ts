@@ -596,8 +596,13 @@ export async function fetchSaleDetail(houseManageNo: string): Promise<PublicSale
   for (const { result, recruitType } of results) {
     if (result.status === 'fulfilled' && result.value.data.length > 0) {
       const item = parseDetail(result.value.data[0], recruitType);
-      // 주택형별 상세도 함께 조회
+      // 주택형별 상세도 함께 조회 + minPrice/maxPrice 계산
       item.units = await fetchUnitDetails(item.houseManageNo, item.pblancNo, item.buildingType, item.recruitType);
+      const prices = item.units.map(u => u.price).filter(p => p > 0);
+      if (prices.length > 0) {
+        item.minPrice = Math.min(...prices);
+        item.maxPrice = Math.max(...prices);
+      }
       return item;
     }
   }
