@@ -6,6 +6,7 @@ import Link from 'next/link';
 import GlobalNav from '../../components/GlobalNav';
 import KakaoMap from '../../components/KakaoMap';
 import NearbyTradeSection from '../../components/NearbyTradeSection';
+import type { SaleContent } from '@/lib/saleContent';
 
 type UnitDetail = { type: string; area: number; supplyArea?: number; count: number; specialCount?: number; price: number };
 
@@ -69,7 +70,7 @@ function Row({ label, value }: { label: string; value: string }) {
 
 type UnsoldLink = { id: string; name: string; thumbnail_url: string | null; benefit: string | null; min_price: number | null };
 
-export default function SaleDetailClient() {
+export default function SaleDetailClient({ content }: { content: SaleContent | null }) {
   const { id } = useParams<{ id: string }>();
   const [item, setItem] = useState<SaleDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -224,6 +225,63 @@ export default function SaleDetailClient() {
             </button>
           </div>
         </div>
+
+        {/* 에디토리얼 콘텐츠 */}
+        {content && (content.thumbnail_url || content.summary || content.description || (content.pros?.length ?? 0) > 0 || (content.cons?.length ?? 0) > 0 || (content.image_urls?.length ?? 0) > 0) && (
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: '28px', marginTop: 0, marginBottom: 16 }}>
+            {content.thumbnail_url && (
+              <img
+                src={content.thumbnail_url}
+                alt={item.name}
+                style={{ width: '100%', maxHeight: 420, objectFit: 'cover', borderRadius: 12, marginBottom: 22, display: 'block' }}
+              />
+            )}
+            {content.summary && (
+              <p style={{
+                fontSize: 15, lineHeight: 1.8, color: '#1e293b', fontWeight: 500,
+                background: '#eff6ff', borderLeft: '4px solid #3b82f6',
+                padding: '14px 18px', borderRadius: '0 8px 8px 0', margin: '0 0 20px',
+              }}>
+                {content.summary}
+              </p>
+            )}
+            {content.description && (
+              <div
+                style={{ fontSize: 14, lineHeight: 1.9, color: '#374151' }}
+                dangerouslySetInnerHTML={{ __html: content.description }}
+              />
+            )}
+            {(content.pros?.length ?? 0) > 0 && (
+              <div style={{ marginTop: 20, background: '#f0fdf4', borderRadius: 10, padding: '16px 20px' }}>
+                <h2 style={{ fontSize: 15, fontWeight: 700, color: '#065f46', margin: '0 0 10px' }}>✅ 장점</h2>
+                <ul style={{ margin: 0, paddingLeft: 20, color: '#374151', fontSize: 14, lineHeight: 1.9 }}>
+                  {content.pros!.map((p, i) => <li key={i}>{p}</li>)}
+                </ul>
+              </div>
+            )}
+            {(content.cons?.length ?? 0) > 0 && (
+              <div style={{ marginTop: 12, background: '#fffbeb', borderRadius: 10, padding: '16px 20px' }}>
+                <h2 style={{ fontSize: 15, fontWeight: 700, color: '#92400e', margin: '0 0 10px' }}>⚠️ 유의사항</h2>
+                <ul style={{ margin: 0, paddingLeft: 20, color: '#374151', fontSize: 14, lineHeight: 1.9 }}>
+                  {content.cons!.map((c, i) => <li key={i}>{c}</li>)}
+                </ul>
+              </div>
+            )}
+            {(content.image_urls?.length ?? 0) > 0 && (
+              <div style={{ marginTop: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
+                {content.image_urls!.map((url, i) => (
+                  <img
+                    key={i}
+                    src={url}
+                    alt={`${item.name} 사진 ${i + 1}`}
+                    loading="lazy"
+                    style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', borderRadius: 8, display: 'block' }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
           {/* 상세 정보 */}

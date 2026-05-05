@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { supabase } from '@/lib/supabase';
+import { fetchPublicSaleList } from '@/lib/publicDataApi';
 
 const BASE = 'https://www.mk-land.kr';
 
@@ -36,6 +37,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: now,
     changeFrequency: 'weekly' as const,
     priority: 0.85,
+  }));
+
+  // 청약정보 개별 페이지 /sale/[houseManageNo]
+  let saleItems: import('@/lib/publicDataApi').PublicSaleItem[] = [];
+  try {
+    const { items } = await fetchPublicSaleList({ type: 'all', perPage: 100, skipEnrich: true });
+    saleItems = items;
+  } catch {}
+
+  const saleEntries: MetadataRoute.Sitemap = saleItems.map(item => ({
+    url: `${BASE}/sale/${item.houseManageNo}`,
+    lastModified: now,
+    changeFrequency: 'daily' as const,
+    priority: item.status === '청약중' ? 0.95 : item.status?.includes('예정') ? 0.9 : 0.85,
   }));
 
   // 분양정보 개별 매물 (Supabase)
@@ -106,6 +121,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...staticEntries,
     ...regionEntries,
+    ...saleEntries,
     ...unsoldEntries,
     ...aptEntries,
     ...blogEntries,

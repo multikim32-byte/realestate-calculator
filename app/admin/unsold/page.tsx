@@ -62,9 +62,11 @@ export default function AdminUnsoldListPage() {
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
       {/* 헤더 */}
       <div style={{ background: '#1e293b', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span style={{ color: '#fff', fontWeight: 800, fontSize: 16 }}>🏠 관리자</span>
-          <Link href="/unsold" target="_blank" style={{ fontSize: 12, color: '#94a3b8', textDecoration: 'none' }}>사이트 보기 →</Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <Link href="/admin" style={{ color: '#fff', fontWeight: 800, fontSize: 16, textDecoration: 'none' }}>🏠 관리자</Link>
+          <span style={{ color: '#60a5fa', fontSize: 14, fontWeight: 700 }}>미분양 매물</span>
+          <Link href="/admin/sale-content" style={{ color: '#94a3b8', fontSize: 14, textDecoration: 'none' }}>청약 콘텐츠</Link>
+          <Link href="/unsold" target="_blank" style={{ fontSize: 12, color: '#64748b', textDecoration: 'none' }}>사이트 →</Link>
         </div>
         <button onClick={handleLogout} style={{ fontSize: 13, color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer' }}>로그아웃</button>
       </div>
