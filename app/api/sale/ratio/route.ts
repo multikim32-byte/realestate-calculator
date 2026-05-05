@@ -50,7 +50,7 @@ async function fetchRecentPages(key: string, manageNo: number) {
 }
 
 export async function GET(req: NextRequest) {
-  const key = process.env.APT_RATIO_API_KEY;
+  const key = process.env.APT_RATIO_API_KEY || process.env.PUBLIC_DATA_API_KEY;
   if (!key) return NextResponse.json({ source: 'no_key', ratio: [] });
 
   const { searchParams } = req.nextUrl;
