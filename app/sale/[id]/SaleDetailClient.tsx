@@ -167,6 +167,7 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
   const ss = statusStyle[item.status] || statusStyle['청약마감'];
 
   return (
+    <>
     <div style={{ background: '#f8f9fa', minHeight: '100vh', fontFamily: "'Apple SD Gothic Neo', sans-serif" }}>
       <GlobalNav />
 
@@ -430,6 +431,7 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
     </div>
 
     {/* 라이트박스 */}
+
     {lightbox && (
       <div
         onClick={closeLightbox}
@@ -499,5 +501,6 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
         )}
       </div>
     )}
+    </>
   );
 }
