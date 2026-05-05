@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabaseAdmin';
 import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 
 async function isAdmin() {
   const cookieStore = await cookies();
@@ -34,6 +35,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     .select()
     .maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // 저장 즉시 해당 페이지 ISR 캐시 무효화
+  revalidatePath(`/sale/${id}`);
+
   return NextResponse.json(data);
 }
 

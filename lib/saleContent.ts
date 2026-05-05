@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { createAdminClient } from './supabaseAdmin';
 
 export type SaleContent = {
   id: string;
@@ -14,8 +14,10 @@ export type SaleContent = {
   updated_at: string;
 };
 
+// 서버 컴포넌트 전용 — service role key 사용으로 RLS 우회
 export async function fetchSaleContent(houseManageNo: string): Promise<SaleContent | null> {
   try {
+    const supabase = createAdminClient();
     const { data } = await supabase
       .from('sale_content')
       .select('*')
