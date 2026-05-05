@@ -6,7 +6,6 @@ import Link from 'next/link';
 import GlobalNav from '../../components/GlobalNav';
 import KakaoMap from '../../components/KakaoMap';
 import NearbyTradeSection from '../../components/NearbyTradeSection';
-import CompetitionRateSection from '../../components/CompetitionRateSection';
 
 type UnitDetail = { type: string; area: number; supplyArea?: number; count: number; specialCount?: number; price: number };
 
@@ -329,17 +328,6 @@ export default function SaleDetailClient() {
               <div style={{ fontSize: 13, fontWeight: 700, color: '#92400e', whiteSpace: 'nowrap' }}>혜택 보기 →</div>
             </div>
           </Link>
-        )}
-
-        {/* 경쟁률 */}
-        {item.houseManageNo && item.pblancNo && (
-          <CompetitionRateSection
-            houseManageNo={item.houseManageNo}
-            pblancNo={item.pblancNo}
-            status={item.status}
-            buildingType={item.buildingType}
-            recruitType={item.recruitType}
-          />
         )}
 
         {/* 카카오 지도 */}
