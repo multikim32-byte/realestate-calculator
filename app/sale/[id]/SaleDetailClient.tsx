@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import GlobalNav from '../../components/GlobalNav';
@@ -76,6 +76,22 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [unsoldLink, setUnsoldLink] = useState<UnsoldLink | null>(null);
+  const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null);
+
+  const closeLightbox = useCallback(() => setLightbox(null), []);
+  const prevImage = useCallback(() => setLightbox(lb => lb && lb.idx > 0 ? { ...lb, idx: lb.idx - 1 } : lb), []);
+  const nextImage = useCallback(() => setLightbox(lb => lb && lb.idx < lb.urls.length - 1 ? { ...lb, idx: lb.idx + 1 } : lb), []);
+
+  useEffect(() => {
+    if (!lightbox) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') prevImage();
+      if (e.key === 'ArrowRight') nextImage();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [lightbox, closeLightbox, prevImage, nextImage]);
 
   useEffect(() => {
     if (!id) return;
@@ -310,7 +326,8 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
                     src={url}
                     alt={`${item.name} 사진 ${i + 1}`}
                     loading="lazy"
-                    style={{ width: '100%', height: 'auto', borderRadius: 8, display: 'block' }}
+                    onClick={() => setLightbox({ urls: content.image_urls!, idx: i })}
+                    style={{ width: '100%', height: 'auto', borderRadius: 8, display: 'block', cursor: 'zoom-in' }}
                   />
                 ))}
               </div>
@@ -411,5 +428,76 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
 
       </div>
     </div>
+
+    {/* 라이트박스 */}
+    {lightbox && (
+      <div
+        onClick={closeLightbox}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.92)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}
+      >
+        {/* 이전 */}
+        {lightbox.idx > 0 && (
+          <button
+            onClick={e => { e.stopPropagation(); prevImage(); }}
+            style={{
+              position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)',
+              width: 44, height: 44, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.15)', border: 'none',
+              color: '#fff', fontSize: 22, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >‹</button>
+        )}
+
+        {/* 이미지 */}
+        <img
+          src={lightbox.urls[lightbox.idx]}
+          alt={`이미지 ${lightbox.idx + 1}`}
+          onClick={e => e.stopPropagation()}
+          style={{
+            maxWidth: '90vw', maxHeight: '88vh',
+            objectFit: 'contain', borderRadius: 10,
+            boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
+          }}
+        />
+
+        {/* 다음 */}
+        {lightbox.idx < lightbox.urls.length - 1 && (
+          <button
+            onClick={e => { e.stopPropagation(); nextImage(); }}
+            style={{
+              position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)',
+              width: 44, height: 44, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.15)', border: 'none',
+              color: '#fff', fontSize: 22, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >›</button>
+        )}
+
+        {/* 닫기 */}
+        <button
+          onClick={closeLightbox}
+          style={{
+            position: 'absolute', top: 16, right: 16,
+            width: 40, height: 40, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.15)', border: 'none',
+            color: '#fff', fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >✕</button>
+
+        {/* 페이지 표시 */}
+        {lightbox.urls.length > 1 && (
+          <div style={{
+            position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)',
+            fontSize: 13, color: 'rgba(255,255,255,0.7)',
+          }}>
+            {lightbox.idx + 1} / {lightbox.urls.length}
+          </div>
+        )}
+      </div>
+    )}
   );
 }
