@@ -110,12 +110,20 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
   const [displayCount, setDisplayCount] = useState(20);
   const [viewMode, setViewMode] = useState<ViewMode>('card');
   const [favIds, setFavIds] = useState<Set<string>>(new Set());
+  const [thumbnailMap, setThumbnailMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     try {
       const favs = JSON.parse(localStorage.getItem('mk_favorites') || '[]');
       setFavIds(new Set(favs.filter((f: any) => f.type === 'sale').map((f: any) => f.id)));
     } catch {}
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/sale-content/thumbnails')
+      .then(r => r.json())
+      .then(data => setThumbnailMap(data ?? {}))
+      .catch(() => {});
   }, []);
 
   function toggleFav(e: React.MouseEvent, item: SaleItem) {
@@ -233,18 +241,31 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
           const badge = getCardStatusBadge(item);
           const sigungu = extractSigungu(item.location);
           const isFav = favIds.has(item.id);
+          const thumbnail = thumbnailMap[item.id];
           return (
             <div
               key={item.id}
               onClick={() => handleCardClick(item)}
               style={{
                 background: '#fff', border: '1px solid #e5e7eb', borderRadius: 14,
-                padding: '16px', cursor: 'pointer', display: 'flex', flexDirection: 'column',
-                gap: 0, transition: 'box-shadow 0.15s, transform 0.12s',
+                padding: 0, cursor: 'pointer', display: 'flex', flexDirection: 'column',
+                gap: 0, transition: 'box-shadow 0.15s, transform 0.12s', overflow: 'hidden',
               }}
               onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.10)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
               onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
             >
+              {/* 썸네일 이미지 */}
+              {thumbnail && (
+                <div style={{ width: '100%', aspectRatio: '16/9', overflow: 'hidden', flexShrink: 0 }}>
+                  <img
+                    src={thumbnail}
+                    alt={item.name}
+                    loading="lazy"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                </div>
+              )}
+              <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
               {/* 상단: 사업주체 + 배지 */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                 <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 500, lineHeight: 1.4, maxWidth: '60%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -301,7 +322,7 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
               </div>
 
               {/* 청약기간 + 즐겨찾기 */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: 4 }}>
                 <span style={{ fontSize: 11, color: '#9ca3af' }}>
                   {item.receiptStart ? `📅 ${item.receiptStart} ~ ${item.receiptEnd}` : '-'}
                 </span>
@@ -313,6 +334,7 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
                   {isFav ? '★' : '☆'}
                 </button>
               </div>
+              </div>{/* padding wrapper 닫기 */}
             </div>
           );
         })}
