@@ -20,12 +20,20 @@ interface Props {
   recruitType?: string;
 }
 
-function getApplyhomeUrl(buildingType?: string, recruitType?: string) {
-  if (recruitType === '선착순') return 'https://www.applyhome.co.kr/ai/aia/selectAPTRemndrLttotPblancListView.do';
-  const t = buildingType?.trim() ?? '';
-  if (t.includes('오피스텔') || t.includes('도시형') || t.includes('민간임대') || t.includes('생활주택')) {
-    return 'https://www.applyhome.co.kr/ai/aia/selectOtherLttotPblancListView.do';
+// 해당 단지 청약홈 직접 링크 (목록 → 상세 페이지)
+function getApplyhomeUrl(buildingType?: string, recruitType?: string, houseManageNo?: string, pblancNo?: string) {
+  if (houseManageNo && pblancNo) {
+    if (recruitType === '선착순') {
+      return `https://www.applyhome.co.kr/ai/aia/selectAPTRemndrLttotPblancDetail.do?houseManageNo=${houseManageNo}&pblancNo=${pblancNo}`;
+    }
+    const t = buildingType?.trim() ?? '';
+    if (t.includes('오피스텔') || t.includes('도시형') || t.includes('민간임대') || t.includes('생활주택')) {
+      return `https://www.applyhome.co.kr/ai/aia/selectUrbtyOfctlLttotPblancDetail.do?houseManageNo=${houseManageNo}&pblancNo=${pblancNo}`;
+    }
+    return `https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancDetail.do?houseManageNo=${houseManageNo}&pblancNo=${pblancNo}`;
   }
+  // 폴백: 목록 페이지
+  if (recruitType === '선착순') return 'https://www.applyhome.co.kr/ai/aia/selectAPTRemndrLttotPblancListView.do';
   return 'https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancListView.do';
 }
 
@@ -41,7 +49,7 @@ function fmtRate(v: string | number | undefined) {
   return `${n.toFixed(2)} : 1`;
 }
 
-export default function CompetitionRateSection({ houseManageNo, buildingType, recruitType }: Props) {
+export default function CompetitionRateSection({ houseManageNo, pblancNo, buildingType, recruitType }: Props) {
   const [rows, setRows] = useState<RatioRow[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -100,7 +108,7 @@ export default function CompetitionRateSection({ houseManageNo, buildingType, re
               <p style={{ margin: '0 0 4px', fontSize: 14, color: '#6b7280' }}>아직 경쟁률 데이터가 없습니다.</p>
               <p style={{ margin: '0 0 14px', fontSize: 13, color: '#9ca3af' }}>청약 접수 후 오후 7~8시경 공개됩니다.</p>
               <a
-                href={getApplyhomeUrl(buildingType, recruitType)}
+                href={getApplyhomeUrl(buildingType, recruitType, houseManageNo, pblancNo)}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -156,7 +164,7 @@ export default function CompetitionRateSection({ houseManageNo, buildingType, re
 
               <div style={{ textAlign: 'right', marginTop: 4 }}>
                 <a
-                  href={getApplyhomeUrl(buildingType, recruitType)}
+                  href={getApplyhomeUrl(buildingType, recruitType, houseManageNo, pblancNo)}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'none' }}
