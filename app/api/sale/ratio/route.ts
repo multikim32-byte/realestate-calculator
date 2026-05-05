@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const RATIO_BASE = 'https://api.odcloud.kr/api/15101048/v1/uddi:2f83a0c5-ef17-4c1a-bee6-d53e37fd67e5';
 const PER_PAGE = 100;
-const BATCH = 5; // 동시 요청 수 제한
+const BATCH = 5;
 
 async function fetchPage(key: string, page: number): Promise<{ data: Record<string, unknown>[]; totalCount: number }> {
   const qs = `serviceKey=${encodeURIComponent(key)}&page=${page}&perPage=${PER_PAGE}`;
@@ -15,9 +15,14 @@ async function fetchPage(key: string, page: number): Promise<{ data: Record<stri
   return { data: json.data ?? [], totalCount: json.totalCount ?? 0 };
 }
 
-function matchesManageNo(r: Record<string, unknown>, manageNo: number, houseManageNo: string) {
+function matches(r: Record<string, unknown>, manageNo: number, houseManageNo: string) {
   const v = r['주택관리번호'];
   return parseInt(String(v ?? '')) === manageNo || String(v ?? '').trim() === houseManageNo;
+}
+
+async function searchBatch(key: string, pages: number[]): Promise<Record<string, unknown>[]> {
+  const results = await Promise.all(pages.map(p => fetchPage(key, p)));
+  return results.flatMap(r => r.data);
 }
 
 export async function GET(req: NextRequest) {
@@ -31,25 +36,24 @@ export async function GET(req: NextRequest) {
   const manageNo = parseInt(houseManageNo);
 
   try {
-    // 1페이지로 총 건수 확인
     const first = await fetchPage(key, 1);
     const totalCount = first.totalCount;
     const totalPages = Math.ceil(totalCount / PER_PAGE);
 
-    // 1페이지 결과에서 먼저 확인
-    let found = first.data.filter(r => matchesManageNo(r, manageNo, houseManageNo));
+    // 최신(2026)은 마지막 페이지에, 과거(2025↓)는 앞에 있으므로
+    // 뒤 30페이지 → 앞 30페이지 순서로 검색
+    const tailPages = Array.from({ length: Math.min(30, totalPages) }, (_, i) => totalPages - i).filter(p => p > 0);
+    const headPages = Array.from({ length: Math.min(30, totalPages) }, (_, i) => i + 1).filter(p => !tailPages.includes(p));
+    const searchOrder = [...tailPages, ...headPages];
 
-    // 없으면 나머지 페이지를 배치(5개씩)로 순차 검색
-    if (found.length === 0 && totalPages > 1) {
-      const remainingPages = Array.from({ length: totalPages - 1 }, (_, i) => i + 2);
-      for (let i = 0; i < remainingPages.length; i += BATCH) {
-        const batch = remainingPages.slice(i, i + BATCH);
-        const results = await Promise.all(batch.map(p => fetchPage(key, p)));
-        const combined = results.flatMap(r => r.data);
-        const matched = combined.filter(r => matchesManageNo(r, manageNo, houseManageNo));
-        found = [...found, ...matched];
-        if (found.length > 0) break; // 찾으면 즉시 중단
-      }
+    let found: Record<string, unknown>[] = [];
+
+    // 1차: 뒤 30페이지 우선 검색 (5페이지씩 배치)
+    for (let i = 0; i < searchOrder.length; i += BATCH) {
+      const batch = searchOrder.slice(i, i + BATCH);
+      const data = await searchBatch(key, batch);
+      const matched = data.filter(r => matches(r, manageNo, houseManageNo));
+      if (matched.length > 0) { found = matched; break; }
     }
 
     // 중복 제거
@@ -66,12 +70,7 @@ export async function GET(req: NextRequest) {
       ratio: deduped,
       total: deduped.length,
       _debug: deduped.length === 0
-        ? {
-            totalInDataset: totalCount,
-            totalPages,
-            sampleFields: first.data[0] ? Object.keys(first.data[0]) : [],
-            sampleValue: first.data[0] ? first.data[0]['주택관리번호'] : null,
-          }
+        ? { totalInDataset: totalCount, totalPages, sampleValue: first.data[0]?.['주택관리번호'] }
         : undefined,
     });
     response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
