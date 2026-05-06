@@ -282,7 +282,7 @@ function parseUnit(raw: RawApiData): UnitDetail {
     type:         raw.HOUSE_TY ?? raw.TP ?? '',
     area:         parseFloat(raw.EXCLUSE_AR ?? '0') || areaFromType,
     supplyArea:   parseFloat(raw.SUPLY_AR ?? '0') || 0,
-    count:        parseInt(raw.SUPLY_HSHLDCO ?? '0') || 0,
+    count:        (parseInt(raw.SUPLY_HSHLDCO ?? '0') || 0) + (parseInt(raw.SPSPLY_HSHLDCO ?? '0') || 0),
     specialCount: parseInt(raw.SPSPLY_HSHLDCO ?? '0') || 0,
     price:        parseInt(priceRaw) || 0,
   };
