@@ -267,36 +267,55 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
               </div>
 
               {/* 정보 */}
-              <div style={{ padding: 16 }}>
-                <h2 style={{ fontSize: 15, fontWeight: 800, color: '#1e293b', margin: '0 0 4px', lineHeight: 1.4 }}>{item.name}</h2>
-                <p style={{ fontSize: 13, color: '#6b7280', margin: '0 0 10px' }}>📍 {item.location}</p>
-                <div style={{ fontSize: 14, fontWeight: 700, color: item.min_price || item.max_price ? '#1d4ed8' : '#6b7280', marginBottom: 6 }}>
-                  {item.min_price || item.max_price
-                    ? (item.min_price && item.max_price
-                        ? `${fmt만원(item.min_price)} ~ ${fmt만원(item.max_price)}`
-                        : item.min_price ? fmt만원(item.min_price) : fmt만원(item.max_price!))
-                    : '분양가 문의'}
-                </div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 12 }}>
-                  {item.remaining_units != null && (
-                    <span style={{ background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: 8, fontWeight: 600 }}>
-                      잔여 {item.remaining_units}세대
+              <div style={{ padding: '14px 16px 16px' }}>
+                <h2 style={{ fontSize: 15, fontWeight: 800, color: '#1e293b', margin: '0 0 10px', lineHeight: 1.4 }}>{item.name}</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  {/* 위치 */}
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                    <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 600, minWidth: 52, flexShrink: 0 }}>위치</span>
+                    <span style={{ fontSize: 13, color: '#374151' }}>{item.location}</span>
+                  </div>
+                  {/* 공급규모 */}
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                    <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 600, minWidth: 52, flexShrink: 0 }}>공급규모</span>
+                    <span style={{ fontSize: 13, color: '#374151' }}>
+                      {item.total_units ? `${item.total_units.toLocaleString()}세대` : '-'}
+                      {item.remaining_units != null && (
+                        <span style={{ marginLeft: 6, fontSize: 12, color: '#d97706', fontWeight: 600 }}>
+                          (잔여 {item.remaining_units}세대)
+                        </span>
+                      )}
                     </span>
-                  )}
-                  {parseAreaLabel(item.area) && (
-                    <span style={{ background: '#f0f9ff', color: '#0369a1', padding: '2px 8px', borderRadius: 8 }}>
-                      {parseAreaLabel(item.area)}
+                  </div>
+                  {/* 분양가 */}
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                    <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 600, minWidth: 52, flexShrink: 0 }}>분양가</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: item.min_price || item.max_price ? '#1d4ed8' : '#9ca3af' }}>
+                      {item.min_price || item.max_price
+                        ? (item.min_price && item.max_price && item.min_price !== item.max_price
+                            ? `${fmt만원(item.min_price)} ~ ${fmt만원(item.max_price)}`
+                            : fmt만원((item.min_price ?? item.max_price)!))
+                        : '문의'}
                     </span>
+                  </div>
+                  {/* 접수일 */}
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                    <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 600, minWidth: 52, flexShrink: 0 }}>접수일</span>
+                    <span style={{ fontSize: 13, color: '#374151' }}>
+                      {item.listing_type === '잔여세대'
+                        ? '선착순 동·호지정'
+                        : item.receipt_start
+                          ? `${item.receipt_start}${item.receipt_end ? ` ~ ${item.receipt_end}` : ''}`
+                          : item.announcement_date
+                            ? `공고일 ${item.announcement_date}`
+                            : '청약 진행중'}
+                    </span>
+                  </div>
+                  {/* 혜택 */}
+                  {item.benefit && (
+                    <div style={{ marginTop: 2, fontSize: 12, color: '#059669', fontWeight: 600 }}>🎁 {item.benefit}</div>
                   )}
                 </div>
-                {item.listing_type === '청약중' && item.announcement_date && (
-                  <p style={{ fontSize: 12, color: '#6b7280', marginTop: 8 }}>
-                    📋 모집공고일: <span style={{ fontWeight: 600, color: '#1e293b' }}>{item.announcement_date}</span>
-                  </p>
-                )}
-                {item.benefit && (
-                  <p style={{ fontSize: 12, color: '#059669', marginTop: 8, fontWeight: 600 }}>🎁 {item.benefit}</p>
-                )}
               </div>
             </div>
           </Link>
