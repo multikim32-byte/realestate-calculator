@@ -206,16 +206,29 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
       const detail = data.item as SaleDetailItem;
       if (!detail) return;
 
-      // 전용면적별 분양가: API units → UnitPrice 행 생성 (최고가·공급면적·공급세대 자동 입력)
-      const newRows: UnitPrice[] = (detail.units ?? [])
-        .filter(u => u.type)
-        .map(u => ({
-          type: u.type.replace(/^0+/, '').replace(/\.0+$/, ''),
-          supplyArea: u.supplyArea > 0 ? String(u.supplyArea) : '',
-          count: u.count > 0 ? String(u.count) : '',
-          min: '',
-          max: u.price > 0 ? String(u.price * 10000) : '',
-        }));
+      // 전용면적별 분양가: API units → 타입별 그룹화 (특별공급+일반공급 합산)
+      const grouped = new Map<string, { supplyArea: number; count: number; price: number }>();
+      for (const u of (detail.units ?? [])) {
+        if (!u.type) continue;
+        const key = u.type.replace(/^0+/, '').replace(/\.0+$/, '');
+        const prev = grouped.get(key);
+        if (prev) {
+          grouped.set(key, {
+            supplyArea: prev.supplyArea || u.supplyArea,
+            count: prev.count + u.count,
+            price: Math.max(prev.price, u.price),
+          });
+        } else {
+          grouped.set(key, { supplyArea: u.supplyArea, count: u.count, price: u.price });
+        }
+      }
+      const newRows: UnitPrice[] = Array.from(grouped.entries()).map(([key, u]) => ({
+        type: key,
+        supplyArea: u.supplyArea > 0 ? String(u.supplyArea) : '',
+        count: u.count > 0 ? String(u.count) : '',
+        min: '',
+        max: u.price > 0 ? String(u.price * 10000) : '',
+      }));
 
       if (newRows.length > 0) {
         setUnitPrices(newRows);
