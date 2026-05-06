@@ -130,42 +130,19 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
             <p style={{ fontSize: 14, color: '#6b7280', margin: '0 0 24px' }}>📍 {item.location}</p>
 
             {/* 핵심 정보 카드 */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
-              <div style={{ background: '#eff6ff', borderRadius: 10, padding: '14px 16px' }}>
-                <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>분양가</div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: '#1d4ed8' }}>
-                  {item.min_price || item.max_price
-                    ? (item.min_price && item.max_price
-                        ? `${fmt만원(item.min_price)} ~ ${fmt만원(item.max_price)}`
-                        : item.min_price ? fmt만원(item.min_price) : fmt만원(item.max_price!))
-                    : '분양가 문의'}
-                </div>
-              </div>
-              {item.total_units != null && (
+            {item.total_units != null && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
                 <div style={{ background: '#f0fdf4', borderRadius: 10, padding: '14px 16px' }}>
                   <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>총 세대수</div>
                   <div style={{ fontSize: 16, fontWeight: 800, color: '#166534' }}>{item.total_units.toLocaleString()}세대</div>
                 </div>
-              )}
-              {item.remaining_units != null && (
-                <div style={{ background: '#fffbeb', borderRadius: 10, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>잔여 세대</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#92400e' }}>{item.remaining_units.toLocaleString()}세대</div>
-                </div>
-              )}
-              {item.area && (
-                <div style={{ background: '#fdf4ff', borderRadius: 10, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>전용면적</div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#7c3aed' }}>{item.area}</div>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            {/* 청약 일정 + 문의 */}
-            {(item.receipt_start || item.move_in_date || item.contact) && (
+            {/* 일정 + 문의 */}
+            {(item.move_in_date || item.contact) && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 0, marginBottom: 20, border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
                 {[
-                  item.receipt_start && { label: '청약접수', value: item.receipt_end ? `${item.receipt_start} ~ ${item.receipt_end}` : item.receipt_start },
                   item.move_in_date && { label: '입주 예정', value: item.move_in_date },
                   item.contact && { label: '문의전화', value: item.contact },
                 ].filter(Boolean).map((row: any, i) => (
