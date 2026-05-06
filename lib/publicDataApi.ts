@@ -133,14 +133,13 @@ function extractRegion(address: string): string {
 
 function extractDistrict(address: string): string {
   // 도 단위 지역에서 "시 + 구" 패턴 추출 (예: "전라북도 전주시 덕진구" → "전주 덕진구")
-  // LAWD_CODE_MAP은 "전주 덕진구" 형태로 저장함 (시명에서 '시' 접미사 제거)
-  const cityGuMatch = address.match(
-    /(?:특별자치도|도)\s+(\S+)시\s+(\S+구)/
-  );
-  if (cityGuMatch) return `${cityGuMatch[1]} ${cityGuMatch[2]}`;
+  // [가-힣]+구 : 순수 한글만 허용 → "회천2지구" 같은 숫자 포함 개발지구 제외
+  // endsWith('지구') 추가 체크: "회천지구","택지지구" 등 개발지구 명칭 제외
+  const cityGuMatch = address.match(/(?:특별자치도|도)\s+([가-힣]+)시\s+([가-힣]+구)(?=\s|$)/);
+  if (cityGuMatch && !cityGuMatch[2].endsWith('지구')) return `${cityGuMatch[1]} ${cityGuMatch[2]}`;
 
   // 광역시/특별시 내 구 추출 (예: "인천광역시 남동구" → "남동구")
-  const metroGuMatch = address.match(/(?:특별시|광역시|특별자치시)\s+(\S+구)/);
+  const metroGuMatch = address.match(/(?:특별시|광역시|특별자치시)\s+([가-힣]+구)(?=\s|$)/);
   if (metroGuMatch) return metroGuMatch[1];
 
   // 도 단위 지역에서 시/군 추출 (예: "경상북도 안동시" → "안동시")
