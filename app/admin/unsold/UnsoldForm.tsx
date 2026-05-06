@@ -191,8 +191,8 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
       total_units: item.totalUnits || prev.total_units,
       official_url: item.hmpgUrl || item.pblancUrl || prev.official_url,
       house_manage_no: item.houseManageNo || item.id || prev.house_manage_no,
-      move_in_date: prev.move_in_date ?? item.moveInDate ?? null,
-      contact: prev.contact ?? item.contact ?? null,
+      move_in_date: item.moveInDate || prev.move_in_date || null,
+      contact: item.contact || prev.contact || null,
     }));
     setShowImport(false);
     setImportResults([]);
@@ -239,8 +239,8 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
       setForm(prev => ({
         ...prev,
         official_url: detail.hmpgUrl || detail.pblancUrl || prev.official_url,
-        move_in_date: prev.move_in_date ?? detail.moveInDate ?? null,
-        contact: prev.contact ?? detail.contact ?? null,
+        move_in_date: detail.moveInDate || prev.move_in_date || null,
+        contact: detail.contact || prev.contact || null,
         announcement_date: prev.announcement_date ?? detail.announcementDate ?? null,
         receipt_start: prev.receipt_start ?? detail.receiptStart ?? null,
         receipt_end:   prev.receipt_end   ?? detail.receiptEnd   ?? null,
