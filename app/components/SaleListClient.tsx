@@ -256,12 +256,12 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
             >
               {/* 썸네일 이미지 */}
               {thumbnail && (
-                <div style={{ width: '100%', aspectRatio: '16/9', overflow: 'hidden', flexShrink: 0, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '100%', aspectRatio: '16/9', overflow: 'hidden', flexShrink: 0 }}>
                   <img
                     src={thumbnail}
                     alt={item.name}
                     loading="lazy"
-                    style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                   />
                 </div>
               )}
