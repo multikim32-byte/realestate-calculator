@@ -154,7 +154,7 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
                   </tr>
                   <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
                     <td style={{ padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>위치</td>
-                    <td colSpan={3} style={{ padding: '11px 16px', fontSize: 13, fontWeight: 600, color: '#1e293b' }}>📍 {item.location}</td>
+                    <td colSpan={3} style={{ padding: '11px 16px', fontSize: 13, fontWeight: 600, color: '#1e293b' }}>{item.location}</td>
                   </tr>
                   {item.total_units != null && (
                     <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
