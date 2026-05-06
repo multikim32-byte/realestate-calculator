@@ -173,7 +173,8 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
         merged = sortByDate([...(r1.items || []), ...(r2.items || [])]);
         src = r1.source || r2.source;
       } else {
-        const params = new URLSearchParams({ region: reg, type: ft, perPage: '50' });
+        // apt 탭은 100건 조회
+        const params = new URLSearchParams({ region: reg, type: ft, perPage: ft === 'apt' ? '100' : '50' });
         const data = await fetch(`/api/sale?${params}`).then(r => r.json());
         merged = data.items || [];
         src = data.source;
@@ -256,12 +257,12 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
             >
               {/* 썸네일 이미지 */}
               {thumbnail && (
-                <div style={{ width: '100%', aspectRatio: '16/9', overflow: 'hidden', flexShrink: 0 }}>
+                <div style={{ width: '100%', aspectRatio: '16/9', overflow: 'hidden', flexShrink: 0, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <img
                     src={thumbnail}
                     alt={item.name}
                     loading="lazy"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
                   />
                 </div>
               )}
