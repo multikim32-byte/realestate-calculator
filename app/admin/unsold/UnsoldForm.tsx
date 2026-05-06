@@ -17,6 +17,8 @@ type SaleSearchItem = {
   district: string;
   buildingType: string;
   totalUnits: number;
+  moveInDate?: string;
+  contact?: string;
   hmpgUrl?: string;
   pblancUrl?: string;
 };
@@ -29,7 +31,7 @@ type SaleDetailItem = {
   receiptEnd?: string;
   moveInDate?: string;
   contact?: string;
-  units?: Array<{ price: number }>;
+  units?: Array<{ type: string; price: number }>;
 };
 
 const LocationSelector = dynamic(() => import('./LocationSelector'), { ssr: false });
@@ -113,7 +115,7 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
       ? `${item.region} ${item.district}`
       : item.region || form.location;
 
-    // 기본 정보 즉시 반영
+    // 기본 정보 즉시 반영 (검색 결과에서 바로 쓸 수 있는 필드 모두 적용)
     setForm(prev => ({
       ...prev,
       name: item.name || prev.name,
@@ -122,12 +124,14 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
       total_units: item.totalUnits || prev.total_units,
       official_url: item.hmpgUrl || item.pblancUrl || prev.official_url,
       house_manage_no: item.houseManageNo || item.id || prev.house_manage_no,
+      move_in_date: prev.move_in_date ?? item.moveInDate ?? null,
+      contact: prev.contact ?? item.contact ?? null,
     }));
     setShowImport(false);
     setImportResults([]);
     setImportKeyword('');
 
-    // 상세 API 호출해서 청약 일정 + 가격 자동 입력
+    // 상세 API 호출해서 가격·전용면적 자동 입력
     const houseManageNo = item.houseManageNo || item.id;
     if (!houseManageNo) return;
     try {
@@ -137,20 +141,23 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
       if (!detail) return;
 
       const prices = (detail.units ?? []).map(u => u.price).filter(p => p > 0);
+
+      // 전용면적 타입 포맷: "072A","084B" → "72A, 84B"
+      const areaStr = [...new Set((detail.units ?? []).map(u => u.type).filter(Boolean))]
+        .map(t => t.replace(/^0+/, '').replace(/\.0+$/, ''))
+        .join(', ');
+
       setForm(prev => ({
         ...prev,
-        // 시행사 홈페이지 URL (HMPG_ADRES 우선, 없으면 PBLANC_URL)
         official_url: detail.hmpgUrl || detail.pblancUrl || prev.official_url,
-        // 가격 (만원 → 원)
         min_price: prev.min_price ?? (prices.length > 0 ? Math.min(...prices) * 10000 : null),
         max_price: prev.max_price ?? (prices.length > 0 ? Math.max(...prices) * 10000 : null),
-        // 청약 일정
+        move_in_date: prev.move_in_date ?? detail.moveInDate ?? null,
+        contact: prev.contact ?? detail.contact ?? null,
+        area: prev.area ?? (areaStr || null),
         announcement_date: prev.announcement_date ?? detail.announcementDate ?? null,
         receipt_start: prev.receipt_start ?? detail.receiptStart ?? null,
         receipt_end:   prev.receipt_end   ?? detail.receiptEnd   ?? null,
-        move_in_date:  prev.move_in_date  ?? detail.moveInDate   ?? null,
-        // 문의전화
-        contact: prev.contact ?? detail.contact ?? null,
       }));
     } catch { /* 상세 조회 실패 시 무시 */ }
   };
@@ -312,9 +319,15 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
           </div>
 
           {/* 세대 정보 */}
-          <div>
-            <label style={labelStyle}>총 세대수</label>
-            <input style={inputStyle} type="number" value={form.total_units ?? ''} onChange={e => set('total_units', e.target.value)} placeholder="예: 500" />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div>
+              <label style={labelStyle}>총 세대수</label>
+              <input style={inputStyle} type="number" value={form.total_units ?? ''} onChange={e => set('total_units', e.target.value)} placeholder="예: 500" />
+            </div>
+            <div>
+              <label style={labelStyle}>전용면적 타입</label>
+              <input style={inputStyle} value={form.area ?? ''} onChange={e => set('area', e.target.value)} placeholder="예: 72A, 84A, 84B" />
+            </div>
           </div>
 
           {/* 분양가 */}
