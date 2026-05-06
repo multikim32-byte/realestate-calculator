@@ -14,6 +14,8 @@ interface DaumResult {
   roadAddress: string;
   jibunAddress: string;
   autoJibunAddress: string;
+  sido: string;    // 단축 시도명 예) 서울, 경기, 전북
+  sigungu: string; // 시군구명 예) 강남구, 양주시
   bname: string;
   buildingName: string;
   apartment: string;
@@ -54,10 +56,15 @@ export default function AddressInput({ value, onChange }: Props) {
     }
     new window.daum.Postcode({
       oncomplete: (data) => {
-        const addr = data.roadAddress || data.jibunAddress || data.autoJibunAddress;
-        setBase(addr);
+        const full = data.roadAddress || data.jibunAddress || data.autoJibunAddress;
+        // 시도·시군구를 Daum 단축명으로 교체해 필터와 호환되도록 구성
+        // Daum roadAddress는 "경기도 양주시 ..." 형태이므로 앞 두 토큰을 교체
+        const parts = full.trim().split(/\s+/);
+        const rest = parts.slice(2).join(' ');
+        const normalized = [data.sido, data.sigungu, rest].filter(Boolean).join(' ');
+        setBase(normalized);
         setDetail('');
-        onChange(addr);
+        onChange(normalized);
       },
     }).open();
   };
