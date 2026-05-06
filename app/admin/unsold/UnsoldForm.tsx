@@ -31,24 +31,26 @@ type SaleDetailItem = {
   receiptEnd?: string;
   moveInDate?: string;
   contact?: string;
-  units?: Array<{ type: string; price: number }>;
+  units?: Array<{ type: string; supplyArea: number; count: number; price: number }>;
 };
 
-type UnitPrice = { type: string; min: string; max: string };
+type UnitPrice = { type: string; supplyArea: string; count: string; min: string; max: string };
 
 function parseUnitPrices(area: string | null | undefined): UnitPrice[] {
-  if (!area) return [{ type: '', min: '', max: '' }];
+  if (!area) return [{ type: '', supplyArea: '', count: '', min: '', max: '' }];
   try {
     const parsed = JSON.parse(area);
     if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed.map((p: { type?: string; min?: number | null; max?: number | null }) => ({
+      return parsed.map((p: { type?: string; supplyArea?: number | null; count?: number | null; min?: number | null; max?: number | null }) => ({
         type: p.type ?? '',
+        supplyArea: p.supplyArea ? String(p.supplyArea) : '',
+        count: p.count ? String(p.count) : '',
         min: p.min ? String(p.min) : '',
         max: p.max ? String(p.max) : '',
       }));
     }
   } catch { /* not JSON — legacy plain text */ }
-  return area.split(',').map(t => ({ type: t.trim(), min: '', max: '' })).filter(r => r.type);
+  return area.split(',').map(t => ({ type: t.trim(), supplyArea: '', count: '', min: '', max: '' })).filter(r => r.type);
 }
 
 function fmtPreview(v: string): string {
@@ -121,7 +123,13 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
   const syncUnitPrices = (prices: UnitPrice[]) => {
     const valid = prices.filter(p => p.type.trim());
     const areaJson = valid.length > 0
-      ? JSON.stringify(valid.map(p => ({ type: p.type.trim(), min: p.min ? Number(p.min) : null, max: p.max ? Number(p.max) : null })))
+      ? JSON.stringify(valid.map(p => ({
+          type: p.type.trim(),
+          supplyArea: p.supplyArea ? Number(p.supplyArea) : null,
+          count: p.count ? Number(p.count) : null,
+          min: p.min ? Number(p.min) : null,
+          max: p.max ? Number(p.max) : null,
+        })))
       : null;
     const mins = valid.map(p => Number(p.min)).filter(v => v > 0);
     const maxs = valid.map(p => Number(p.max)).filter(v => v > 0);
@@ -198,11 +206,13 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
       const detail = data.item as SaleDetailItem;
       if (!detail) return;
 
-      // 전용면적별 분양가: API units → UnitPrice 행 생성 (최고가만 제공)
+      // 전용면적별 분양가: API units → UnitPrice 행 생성 (최고가·공급면적·공급세대 자동 입력)
       const newRows: UnitPrice[] = (detail.units ?? [])
         .filter(u => u.type)
         .map(u => ({
           type: u.type.replace(/^0+/, '').replace(/\.0+$/, ''),
+          supplyArea: u.supplyArea > 0 ? String(u.supplyArea) : '',
+          count: u.count > 0 ? String(u.count) : '',
           min: '',
           max: u.price > 0 ? String(u.price * 10000) : '',
         }));
@@ -398,20 +408,36 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
                 </span>
               )}
             </div>
-            <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 36px', background: '#f8fafc', padding: '8px 12px', gap: 8 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#6b7280' }}>전용면적</span>
+            <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'auto' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '80px 100px 90px 1fr 1fr 36px', background: '#f8fafc', padding: '8px 12px', gap: 8, minWidth: 560 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#6b7280' }}>타입</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#6b7280' }}>공급면적 (m²)</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#6b7280' }}>공급세대</span>
                 <span style={{ fontSize: 11, fontWeight: 700, color: '#6b7280' }}>최저가 (원)</span>
                 <span style={{ fontSize: 11, fontWeight: 700, color: '#6b7280' }}>최고가 (원)</span>
                 <span />
               </div>
               {unitPrices.map((row, i) => (
-                <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 36px', gap: 8, padding: '8px 12px', borderTop: '1px solid #f3f4f6', alignItems: 'center' }}>
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: '80px 100px 90px 1fr 1fr 36px', gap: 8, padding: '8px 12px', borderTop: '1px solid #f3f4f6', alignItems: 'center', minWidth: 560 }}>
                   <input
                     style={{ ...inputStyle, padding: '7px 10px' }}
                     value={row.type}
                     onChange={e => updateUnit(i, 'type', e.target.value)}
-                    placeholder="예: 72A"
+                    placeholder="72A"
+                  />
+                  <input
+                    style={{ ...inputStyle, padding: '7px 10px' }}
+                    type="number"
+                    value={row.supplyArea}
+                    onChange={e => updateUnit(i, 'supplyArea', e.target.value)}
+                    placeholder="98.47"
+                  />
+                  <input
+                    style={{ ...inputStyle, padding: '7px 10px' }}
+                    type="number"
+                    value={row.count}
+                    onChange={e => updateUnit(i, 'count', e.target.value)}
+                    placeholder="50"
                   />
                   <div>
                     <input

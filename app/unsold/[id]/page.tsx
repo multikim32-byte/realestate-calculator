@@ -43,7 +43,7 @@ function fmt만원(v: number) {
   return `${v.toLocaleString()}원`;
 }
 
-type UnitPriceRow = { type: string; min: number | null; max: number | null };
+type UnitPriceRow = { type: string; supplyArea?: number | null; count?: number | null; min: number | null; max: number | null };
 
 function parseUnitPrices(area: string | null): UnitPriceRow[] {
   if (!area) return [];
@@ -174,15 +174,19 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                             <thead>
                               <tr>
-                                <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', fontSize: 11, color: '#6b7280', fontWeight: 600, width: '25%' }}>전용면적</th>
+                                <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', fontSize: 11, color: '#6b7280', fontWeight: 600 }}>타입</th>
+                                <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', fontSize: 11, color: '#6b7280', fontWeight: 600 }}>공급면적</th>
+                                <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', fontSize: 11, color: '#6b7280', fontWeight: 600 }}>공급세대</th>
                                 <th style={{ textAlign: 'left', padding: '4px 0', fontSize: 11, color: '#6b7280', fontWeight: 600 }}>분양가</th>
                               </tr>
                             </thead>
                             <tbody>
                               {rows.map((r, i) => (
                                 <tr key={i} style={{ borderTop: '1px solid #f3f4f6' }}>
-                                  <td style={{ padding: '6px 12px 6px 0', fontWeight: 700, color: '#1e293b' }}>{r.type} m²</td>
-                                  <td style={{ padding: '6px 0', fontWeight: 700, color: '#1d4ed8' }}>
+                                  <td style={{ padding: '7px 12px 7px 0', fontWeight: 700, color: '#1e293b' }}>{r.type} m²</td>
+                                  <td style={{ padding: '7px 12px 7px 0', color: '#374151' }}>{r.supplyArea ? `${r.supplyArea}m²` : '-'}</td>
+                                  <td style={{ padding: '7px 12px 7px 0', color: '#374151' }}>{r.count ? `${r.count.toLocaleString()}세대` : '-'}</td>
+                                  <td style={{ padding: '7px 0', fontWeight: 700, color: '#1d4ed8' }}>
                                     {r.min && r.max && r.min !== r.max
                                       ? `${fmt만원(r.min)} ~ ${fmt만원(r.max)}`
                                       : r.max ? fmt만원(r.max)
