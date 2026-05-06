@@ -308,35 +308,11 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
             <LocationSelector value={form.location ?? ''} onChange={val => set('location', val)} />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div>
-              <label style={labelStyle}>분양유형</label>
-              <select style={inputStyle} value={form.category} onChange={e => set('category', e.target.value)}>
-                {CATEGORIES.filter(c => c !== '전체').map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={labelStyle}>매물 구분</label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {(['청약중', '잔여세대'] as const).map(t => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => set('listing_type', t)}
-                    style={{
-                      flex: 1, padding: '9px 0', borderRadius: 8, border: '2px solid',
-                      borderColor: form.listing_type === t ? (t === '청약중' ? '#059669' : '#d97706') : '#e5e7eb',
-                      background: form.listing_type === t ? (t === '청약중' ? '#ecfdf5' : '#fffbeb') : '#fff',
-                      color: form.listing_type === t ? (t === '청약중' ? '#059669' : '#d97706') : '#6b7280',
-                      fontWeight: form.listing_type === t ? 700 : 400,
-                      fontSize: 14, cursor: 'pointer', transition: 'all 0.15s',
-                    }}
-                  >
-                    {t === '청약중' ? '🟢 청약중' : '🟡 잔여세대'}
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div>
+            <label style={labelStyle}>분양유형</label>
+            <select style={inputStyle} value={form.category} onChange={e => set('category', e.target.value)}>
+              {CATEGORIES.filter(c => c !== '전체').map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
           </div>
 
           {/* 세대 정보 */}
@@ -354,24 +330,9 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
           {/* 청약 일정 */}
           <div>
             <label style={{ ...labelStyle, marginBottom: 10 }}>청약 일정</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div>
-                <label style={{ ...labelStyle, fontSize: 12, color: '#6b7280' }}>입주자모집공고일</label>
-                <input style={inputStyle} type="date" value={form.announcement_date ?? ''} onChange={e => set('announcement_date', e.target.value)} />
-              </div>
-              <div />
-              <div>
-                <label style={{ ...labelStyle, fontSize: 12, color: '#6b7280' }}>청약접수 시작</label>
-                <input style={inputStyle} type="date" value={form.receipt_start ?? ''} onChange={e => set('receipt_start', e.target.value)} />
-              </div>
-              <div>
-                <label style={{ ...labelStyle, fontSize: 12, color: '#6b7280' }}>청약접수 종료</label>
-                <input style={inputStyle} type="date" value={form.receipt_end ?? ''} onChange={e => set('receipt_end', e.target.value)} />
-              </div>
-              <div>
-                <label style={{ ...labelStyle, fontSize: 12, color: '#6b7280' }}>입주 예정</label>
-                <input style={inputStyle} type="date" value={form.move_in_date ?? ''} onChange={e => set('move_in_date', e.target.value)} />
-              </div>
+            <div>
+              <label style={{ ...labelStyle, fontSize: 12, color: '#6b7280' }}>입주 예정</label>
+              <input style={inputStyle} type="date" value={form.move_in_date ?? ''} onChange={e => set('move_in_date', e.target.value)} />
             </div>
           </div>
 

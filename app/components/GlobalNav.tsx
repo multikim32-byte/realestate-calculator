@@ -12,7 +12,7 @@ import InstallButton from './InstallButton';
 
 const NAV_ITEMS = [
   { href: '/',           label: '청약정보',  icon: ClipboardList, exact: true },
-  { href: '/unsold',     label: '분양정보',  icon: Tag },
+  { href: '/unsold',     label: '미분양정보', icon: Tag },
   { href: '/calendar',   label: '청약달력',  icon: Calendar },
   { href: '/trade',      label: '실거래가',  icon: BarChart2 },
   { href: '/calculator', label: '계산기',    icon: Calculator },
