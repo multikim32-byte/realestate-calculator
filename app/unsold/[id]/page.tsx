@@ -43,6 +43,17 @@ function fmt만원(v: number) {
   return `${v.toLocaleString()}원`;
 }
 
+type UnitPriceRow = { type: string; min: number | null; max: number | null };
+
+function parseUnitPrices(area: string | null): UnitPriceRow[] {
+  if (!area) return [];
+  try {
+    const parsed = JSON.parse(area);
+    if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.type) return parsed;
+  } catch { /* not JSON */ }
+  return [];
+}
+
 export default async function UnsoldDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { data: item } = await supabase
@@ -129,30 +140,85 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
             <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1e293b', margin: '0 0 6px' }}>{item.name}</h1>
             <p style={{ fontSize: 14, color: '#6b7280', margin: '0 0 24px' }}>📍 {item.location}</p>
 
-            {/* 핵심 정보 카드 */}
-            {item.total_units != null && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
-                <div style={{ background: '#f0fdf4', borderRadius: 10, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>총 세대수</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#166534' }}>{item.total_units.toLocaleString()}세대</div>
-                </div>
+            {/* 분양기본정보 */}
+            <div style={{ border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
+              <div style={{ background: '#f8fafc', padding: '10px 16px', borderBottom: '1px solid #e5e7eb' }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#1e3a5f' }}>ℹ️ 분양기본정보</span>
               </div>
-            )}
-
-            {/* 일정 + 문의 */}
-            {(item.move_in_date || item.contact) && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 0, marginBottom: 20, border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
-                {[
-                  item.move_in_date && { label: '입주 예정', value: item.move_in_date },
-                  item.contact && { label: '문의전화', value: item.contact },
-                ].filter(Boolean).map((row: any, i) => (
-                  <div key={i} style={{ padding: '12px 16px', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 600 }}>{row.label}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{row.value}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <tbody>
+                  <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <td style={{ width: '22%', padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>단지명</td>
+                    <td style={{ width: '28%', padding: '11px 16px', fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{item.name}</td>
+                    <td style={{ width: '22%', padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>유형</td>
+                    <td style={{ width: '28%', padding: '11px 16px', fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{item.category}</td>
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <td style={{ padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>위치</td>
+                    <td colSpan={3} style={{ padding: '11px 16px', fontSize: 13, fontWeight: 600, color: '#1e293b' }}>📍 {item.location}</td>
+                  </tr>
+                  {item.total_units != null && (
+                    <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
+                      <td style={{ padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>세대수</td>
+                      <td colSpan={3} style={{ padding: '11px 16px', fontSize: 13, fontWeight: 700, color: '#1e293b' }}>
+                        {item.total_units.toLocaleString()}세대
+                      </td>
+                    </tr>
+                  )}
+                  {(() => {
+                    const rows = parseUnitPrices(item.area);
+                    if (rows.length > 0) return (
+                      <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
+                        <td style={{ padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap', verticalAlign: 'top' }}>전용면적별 분양가</td>
+                        <td colSpan={3} style={{ padding: '8px 16px' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                            <thead>
+                              <tr>
+                                <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', fontSize: 11, color: '#6b7280', fontWeight: 600, width: '25%' }}>전용면적</th>
+                                <th style={{ textAlign: 'left', padding: '4px 0', fontSize: 11, color: '#6b7280', fontWeight: 600 }}>분양가</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {rows.map((r, i) => (
+                                <tr key={i} style={{ borderTop: '1px solid #f3f4f6' }}>
+                                  <td style={{ padding: '6px 12px 6px 0', fontWeight: 700, color: '#1e293b' }}>{r.type} m²</td>
+                                  <td style={{ padding: '6px 0', fontWeight: 700, color: '#1d4ed8' }}>
+                                    {r.min && r.max && r.min !== r.max
+                                      ? `${fmt만원(r.min)} ~ ${fmt만원(r.max)}`
+                                      : r.max ? fmt만원(r.max)
+                                      : r.min ? fmt만원(r.min) : '-'}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+                    );
+                    // 폴백: area가 plain text이거나 없을 때
+                    if (item.min_price || item.max_price) return (
+                      <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
+                        <td style={{ padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>분양가</td>
+                        <td colSpan={3} style={{ padding: '11px 16px', fontSize: 13, fontWeight: 700, color: '#1d4ed8' }}>
+                          {item.min_price && item.max_price && item.min_price !== item.max_price
+                            ? `${fmt만원(item.min_price)} ~ ${fmt만원(item.max_price)}`
+                            : item.min_price ? fmt만원(item.min_price) : fmt만원(item.max_price!)}
+                        </td>
+                      </tr>
+                    );
+                    return null;
+                  })()}
+                  {(item.move_in_date || item.contact) && (
+                    <tr>
+                      <td style={{ padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>입주 예정</td>
+                      <td style={{ padding: '11px 16px', fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{item.move_in_date || '-'}</td>
+                      <td style={{ padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>문의전화</td>
+                      <td style={{ padding: '11px 16px', fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{item.contact || '-'}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
 
             {/* 계약 혜택 */}
             {item.benefit && (

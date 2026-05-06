@@ -34,6 +34,31 @@ type SaleDetailItem = {
   units?: Array<{ type: string; price: number }>;
 };
 
+type UnitPrice = { type: string; min: string; max: string };
+
+function parseUnitPrices(area: string | null | undefined): UnitPrice[] {
+  if (!area) return [{ type: '', min: '', max: '' }];
+  try {
+    const parsed = JSON.parse(area);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.map((p: { type?: string; min?: number | null; max?: number | null }) => ({
+        type: p.type ?? '',
+        min: p.min ? String(p.min) : '',
+        max: p.max ? String(p.max) : '',
+      }));
+    }
+  } catch { /* not JSON — legacy plain text */ }
+  return area.split(',').map(t => ({ type: t.trim(), min: '', max: '' })).filter(r => r.type);
+}
+
+function fmtPreview(v: string): string {
+  const n = Number(v);
+  if (!n || n <= 0) return '';
+  if (n >= 100000000) return `${(n / 100000000).toFixed(1)}억`;
+  if (n >= 10000) return `${Math.floor(n / 10000).toLocaleString()}만`;
+  return `${n.toLocaleString()}원`;
+}
+
 const LocationSelector = dynamic(() => import('./LocationSelector'), { ssr: false });
 const RichTextEditor = dynamic(() => import('./RichTextEditor'), { ssr: false });
 const SectionImageUploader = dynamic(() => import('./SectionImageUploader'), { ssr: false });
@@ -90,6 +115,39 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
   // 공식 홈페이지 미등록 여부 (체크하면 URL null 처리)
   const [noOfficialUrl, setNoOfficialUrl] = useState(initial?.official_url === null && !!id);
 
+  // 전용면적별 분양가
+  const [unitPrices, setUnitPrices] = useState<UnitPrice[]>(() => parseUnitPrices(initial?.area));
+
+  const syncUnitPrices = (prices: UnitPrice[]) => {
+    const valid = prices.filter(p => p.type.trim());
+    const areaJson = valid.length > 0
+      ? JSON.stringify(valid.map(p => ({ type: p.type.trim(), min: p.min ? Number(p.min) : null, max: p.max ? Number(p.max) : null })))
+      : null;
+    const mins = valid.map(p => Number(p.min)).filter(v => v > 0);
+    const maxs = valid.map(p => Number(p.max)).filter(v => v > 0);
+    setForm(prev => ({
+      ...prev,
+      area: areaJson,
+      min_price: mins.length > 0 ? Math.min(...mins) : (maxs.length > 0 ? Math.min(...maxs) : null),
+      max_price: maxs.length > 0 ? Math.max(...maxs) : null,
+    }));
+  };
+
+  const updateUnit = (i: number, field: keyof UnitPrice, value: string) => {
+    const next = unitPrices.map((row, idx) => idx === i ? { ...row, [field]: value } : row);
+    setUnitPrices(next);
+    syncUnitPrices(next);
+  };
+
+  const addUnit = () => setUnitPrices(prev => [...prev, { type: '', min: '', max: '' }]);
+
+  const removeUnit = (i: number) => {
+    const next = unitPrices.filter((_, idx) => idx !== i);
+    const safe = next.length > 0 ? next : [{ type: '', min: '', max: '' }];
+    setUnitPrices(safe);
+    syncUnitPrices(safe);
+  };
+
   // 청약정보 불러오기
   const [importKeyword, setImportKeyword] = useState('');
   const [importResults, setImportResults] = useState<SaleSearchItem[]>([]);
@@ -140,21 +198,25 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
       const detail = data.item as SaleDetailItem;
       if (!detail) return;
 
-      const prices = (detail.units ?? []).map(u => u.price).filter(p => p > 0);
+      // 전용면적별 분양가: API units → UnitPrice 행 생성 (최고가만 제공)
+      const newRows: UnitPrice[] = (detail.units ?? [])
+        .filter(u => u.type)
+        .map(u => ({
+          type: u.type.replace(/^0+/, '').replace(/\.0+$/, ''),
+          min: '',
+          max: u.price > 0 ? String(u.price * 10000) : '',
+        }));
 
-      // 전용면적 타입 포맷: "072A","084B" → "72A, 84B"
-      const areaStr = [...new Set((detail.units ?? []).map(u => u.type).filter(Boolean))]
-        .map(t => t.replace(/^0+/, '').replace(/\.0+$/, ''))
-        .join(', ');
+      if (newRows.length > 0) {
+        setUnitPrices(newRows);
+        syncUnitPrices(newRows);
+      }
 
       setForm(prev => ({
         ...prev,
         official_url: detail.hmpgUrl || detail.pblancUrl || prev.official_url,
-        min_price: prev.min_price ?? (prices.length > 0 ? Math.min(...prices) * 10000 : null),
-        max_price: prev.max_price ?? (prices.length > 0 ? Math.max(...prices) * 10000 : null),
         move_in_date: prev.move_in_date ?? detail.moveInDate ?? null,
         contact: prev.contact ?? detail.contact ?? null,
-        area: prev.area ?? (areaStr || null),
         announcement_date: prev.announcement_date ?? detail.announcementDate ?? null,
         receipt_start: prev.receipt_start ?? detail.receiptStart ?? null,
         receipt_end:   prev.receipt_end   ?? detail.receiptEnd   ?? null,
@@ -319,30 +381,71 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
           </div>
 
           {/* 세대 정보 */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div>
-              <label style={labelStyle}>총 세대수</label>
-              <input style={inputStyle} type="number" value={form.total_units ?? ''} onChange={e => set('total_units', e.target.value)} placeholder="예: 500" />
-            </div>
-            <div>
-              <label style={labelStyle}>전용면적 타입</label>
-              <input style={inputStyle} value={form.area ?? ''} onChange={e => set('area', e.target.value)} placeholder="예: 72A, 84A, 84B" />
-            </div>
+          <div>
+            <label style={labelStyle}>총 세대수</label>
+            <input style={inputStyle} type="number" value={form.total_units ?? ''} onChange={e => set('total_units', e.target.value)} placeholder="예: 500" />
           </div>
 
-          {/* 분양가 */}
+          {/* 전용면적별 분양가 */}
           <div>
-            <label style={labelStyle}>분양가 (원 단위)</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div>
-                <label style={{ ...labelStyle, fontSize: 12, color: '#6b7280' }}>최저가</label>
-                <input style={inputStyle} type="number" value={form.min_price ?? ''} onChange={e => set('min_price', e.target.value)} placeholder="예: 350000000" />
-                {form.min_price ? <span style={{ fontSize: 11, color: '#1d4ed8', marginTop: 3, display: 'block' }}>{(Number(form.min_price) / 100000000).toFixed(1)}억</span> : null}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <label style={labelStyle}>전용면적별 분양가</label>
+              {(form.min_price || form.max_price) && (
+                <span style={{ fontSize: 12, color: '#1d4ed8', fontWeight: 600 }}>
+                  전체 {form.min_price && form.max_price && form.min_price !== form.max_price
+                    ? `${fmtPreview(String(form.min_price))} ~ ${fmtPreview(String(form.max_price))}`
+                    : fmtPreview(String(form.min_price || form.max_price))}
+                </span>
+              )}
+            </div>
+            <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 36px', background: '#f8fafc', padding: '8px 12px', gap: 8 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#6b7280' }}>전용면적</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#6b7280' }}>최저가 (원)</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#6b7280' }}>최고가 (원)</span>
+                <span />
               </div>
-              <div>
-                <label style={{ ...labelStyle, fontSize: 12, color: '#6b7280' }}>최고가</label>
-                <input style={inputStyle} type="number" value={form.max_price ?? ''} onChange={e => set('max_price', e.target.value)} placeholder="예: 500000000" />
-                {form.max_price ? <span style={{ fontSize: 11, color: '#1d4ed8', marginTop: 3, display: 'block' }}>{(Number(form.max_price) / 100000000).toFixed(1)}억</span> : null}
+              {unitPrices.map((row, i) => (
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 36px', gap: 8, padding: '8px 12px', borderTop: '1px solid #f3f4f6', alignItems: 'center' }}>
+                  <input
+                    style={{ ...inputStyle, padding: '7px 10px' }}
+                    value={row.type}
+                    onChange={e => updateUnit(i, 'type', e.target.value)}
+                    placeholder="예: 72A"
+                  />
+                  <div>
+                    <input
+                      style={{ ...inputStyle, padding: '7px 10px' }}
+                      type="number"
+                      value={row.min}
+                      onChange={e => updateUnit(i, 'min', e.target.value)}
+                      placeholder="350000000"
+                    />
+                    {row.min && <span style={{ fontSize: 10, color: '#1d4ed8', marginTop: 2, display: 'block' }}>{fmtPreview(row.min)}</span>}
+                  </div>
+                  <div>
+                    <input
+                      style={{ ...inputStyle, padding: '7px 10px' }}
+                      type="number"
+                      value={row.max}
+                      onChange={e => updateUnit(i, 'max', e.target.value)}
+                      placeholder="500000000"
+                    />
+                    {row.max && <span style={{ fontSize: 10, color: '#1d4ed8', marginTop: 2, display: 'block' }}>{fmtPreview(row.max)}</span>}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeUnit(i)}
+                    style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #fca5a5', background: '#fef2f2', color: '#dc2626', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >×</button>
+                </div>
+              ))}
+              <div style={{ padding: '8px 12px', borderTop: '1px solid #f3f4f6' }}>
+                <button
+                  type="button"
+                  onClick={addUnit}
+                  style={{ fontSize: 12, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontWeight: 600 }}
+                >+ 타입 추가</button>
               </div>
             </div>
           </div>
