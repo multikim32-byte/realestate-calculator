@@ -119,10 +119,22 @@ function normalizeRegion(raw: string | undefined): string {
 
 // ─── 파서 ────────────────────────────────────────────────────────────────────
 
+// UPP_AIS_TP_CD → 기본 SPL_INF_TP_CD 매핑
+function defaultSplTpCd(uppTpCd: string | undefined): string {
+  switch (uppTpCd) {
+    case '05': return '050'; // 분양주택
+    case '06': return '060'; // 임대주택(공공임대)
+    case '39': return '390'; // 신혼희망타운
+    case '13': return '131'; // 주거복지(청년매입임대)
+    default:   return '060';
+  }
+}
+
 // lhLeaseNoticeInfo1 목록 API 파서
 function parseListItem(raw: RawItem): LhRentalItem {
   const announcementDate = fmtDate(raw.PAN_NT_ST_DT ?? raw.PAN_DT);
   const closeDate        = fmtDate(raw.CLSG_DT);
+  const uppAisTpCd       = raw.UPP_AIS_TP_CD ?? '';
 
   return {
     id:               raw.PAN_ID ?? String(Math.random()),
@@ -143,9 +155,9 @@ function parseListItem(raw: RawItem): LhRentalItem {
     pblancUrl:        raw.DTL_URL ?? '',
     contact:          '',
     ccrCnntSysDsCd:   raw.CCR_CNNT_SYS_DS_CD ?? '03',
-    uppAisTpCd:       raw.UPP_AIS_TP_CD ?? '',
+    uppAisTpCd,
     aisTpCd:          raw.AIS_TP_CD ?? '',
-    splInfTpCd:       raw.SPL_INF_TP_CD ?? '010',
+    splInfTpCd:       raw.SPL_INF_TP_CD ?? defaultSplTpCd(uppAisTpCd),
   };
 }
 
@@ -313,13 +325,15 @@ export async function fetchLhSupplyUnits(
   params: LhSupplyParams
 ): Promise<LhSupplyUnit[]> {
   const { panId, ccrCd = '03', uppTpCd = '', aisTpCd = '', splTpCd = '' } = params;
+  // SPL_INF_TP_CD가 없으면 UPP_AIS_TP_CD에서 자동 유도 (필수 파라미터)
+  const resolvedSplTpCd = splTpCd || defaultSplTpCd(uppTpCd);
   const extra: Record<string, string> = {
     PAN_ID: panId,
     CCR_CNNT_SYS_DS_CD: ccrCd,
+    SPL_INF_TP_CD: resolvedSplTpCd,
   };
   if (uppTpCd) extra.UPP_AIS_TP_CD = uppTpCd;
   if (aisTpCd) extra.AIS_TP_CD = aisTpCd;
-  if (splTpCd) extra.SPL_INF_TP_CD = splTpCd;
 
   const { items: raw } = await callLhApi(
     'lhLeaseNoticeSplInfo1',
