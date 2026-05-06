@@ -344,13 +344,16 @@ export async function fetchLhSupplyUnits(
     extra,
   );
 
-  return raw.map((r) => ({
-    houseType:   r.HOUSE_TY ?? r.SUPLY_TP ?? '',
-    supplyType:  r.SUPLY_TY_CD_NM ?? r.SUPLY_TP_NM ?? '일반',
-    count:       parseInt(r.SUPLY_HSHLDCO ?? '0') || 0,
-    deposit:     parseInt(r.LTTOT_TOP_AMOUNT ?? r.DEPOSIT_AMT ?? '0') || 0,
-    monthlyRent: parseInt(r.MONTHLY_RENT_AMT ?? '0') || 0,
-  }));
+  return raw
+    .map((r) => ({
+      houseType:   r.HOUSE_TY ?? r.SUPLY_TP ?? '',
+      supplyType:  r.SUPLY_TY_CD_NM ?? r.SUPLY_TP_NM ?? '',
+      count:       parseInt(r.SUPLY_HSHLDCO ?? '0') || 0,
+      deposit:     parseInt(r.LTTOT_TOP_AMOUNT ?? r.DEPOSIT_AMT ?? '0') || 0,
+      monthlyRent: parseInt(r.MONTHLY_RENT_AMT ?? '0') || 0,
+    }))
+    // API가 빈 스키마 행을 반환하는 경우 제거
+    .filter((u) => u.houseType || u.count > 0 || u.deposit > 0 || u.monthlyRent > 0);
 }
 
 export async function fetchLhRentalDetail(
