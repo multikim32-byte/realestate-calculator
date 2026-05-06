@@ -301,12 +301,25 @@ function buildDateCond(df: DateFilter): Record<string, string> {
   return cond;
 }
 
-// 공고일(없으면 접수시작일) 기준 내림차순 정렬 — 빈 날짜 항목도 포함
+// 공고일(없으면 접수시작일) 기준 내림차순 정렬 — APT 신규공급에 사용
 function sortByAnnouncementDesc(items: PublicSaleItem[], limit: number): PublicSaleItem[] {
   return items
     .sort((a, b) => {
       const da = a.announcementDate || a.receiptStart || '';
       const db = b.announcementDate || b.receiptStart || '';
+      return db.localeCompare(da);
+    })
+    .slice(0, limit);
+}
+
+// 접수시작일(없으면 공고일) 기준 내림차순 정렬 — 잔여세대·무순위에 사용
+// 이유: 무순위/잔여세대의 RCRIT_PBLANC_DE는 원사업 공고일(수년 전)이어서
+//       announcementDate 기준으로 정렬하면 신규 항목이 50건 커트라인 밖으로 밀림
+function sortByReceiptDesc(items: PublicSaleItem[], limit: number): PublicSaleItem[] {
+  return items
+    .sort((a, b) => {
+      const da = a.receiptStart || a.announcementDate || '';
+      const db = b.receiptStart || b.announcementDate || '';
       return db.localeCompare(da);
     })
     .slice(0, limit);
@@ -356,7 +369,8 @@ export async function fetchRemndrSaleList(
   const { data, totalCount } = await callApiWithLatest(
     'getRemndrLttotPblancDetail', serviceKey, Math.min(perPage * 2, 100), buildDateCond(df)
   );
-  const items = sortByAnnouncementDesc(data.map(d => parseDetail(d, '선착순')), perPage);
+  // 잔여세대는 receiptStart(청약접수일)가 핵심 날짜 — announcementDate는 원사업 공고일이라 옛날 날짜일 수 있음
+  const items = sortByReceiptDesc(data.map(d => parseDetail(d, '선착순')), perPage);
   return { items, total: totalCount };
 }
 
@@ -388,7 +402,8 @@ export async function fetchOptSaleList(
   const { data, totalCount } = await callApiWithLatest(
     'getOPTLttotPblancDetail', serviceKey, Math.min(perPage * 2, 100), buildDateCond(df)
   );
-  const items = sortByAnnouncementDesc(data.map(d => parseDetail(d, '선착순')), perPage);
+  // 무순위/임의공급도 receiptStart 기준 정렬 — RCRIT_PBLANC_DE가 원사업 공고일(수년 전)일 수 있음
+  const items = sortByReceiptDesc(data.map(d => parseDetail(d, '선착순')), perPage);
   return { items, total: totalCount };
 }
 
