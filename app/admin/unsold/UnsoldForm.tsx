@@ -101,13 +101,9 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
     searchTimerRef.current = setTimeout(async () => {
       setImportLoading(true);
       try {
-        const res = await fetch('/api/sale?type=all&perPage=100');
+        const res = await fetch(`/api/admin/sale-search?keyword=${encodeURIComponent(keyword)}`);
         const data = await res.json();
-        const kw = keyword.trim();
-        const filtered = (data.items ?? [] as SaleSearchItem[]).filter((item: SaleSearchItem) =>
-          item.name.includes(kw) || item.location.includes(kw)
-        );
-        setImportResults(filtered.slice(0, 8));
+        setImportResults((data.items ?? []).slice(0, 8));
       } catch { setImportResults([]); } finally { setImportLoading(false); }
     }, 400);
   };

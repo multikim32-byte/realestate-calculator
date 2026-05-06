@@ -657,3 +657,50 @@ export async function fetchUnitDetails(
     return [];
   }
 }
+
+/**
+ * 단지명 키워드로 청약홈 전체 검색 (어드민 불러오기용)
+ * 청약홈 API의 HOUSE_NM::LIKE 필터를 사용해 서버측 검색
+ */
+export async function searchSaleByKeyword(keyword: string): Promise<PublicSaleItem[]> {
+  const serviceKey = process.env.PUBLIC_DATA_API_KEY;
+  if (!serviceKey) throw new Error('PUBLIC_DATA_API_KEY가 설정되지 않았습니다.');
+
+  const kw = keyword.trim();
+  if (!kw) return [];
+
+  const ENDPOINTS: Array<{
+    ep: string;
+    rt: '신규공급' | '선착순';
+    st?: PublicSaleItem['supplyType'];
+  }> = [
+    { ep: 'getAPTLttotPblancDetail',        rt: '신규공급' },
+    { ep: 'getUrbtyOfctlLttotPblancDetail', rt: '신규공급' },
+    { ep: 'getRemndrLttotPblancDetail',     rt: '선착순' },
+    { ep: 'getPblPvtRentLttotPblancDetail', rt: '신규공급', st: '공공지원민간임대' },
+    { ep: 'getOPTLttotPblancDetail',        rt: '선착순' },
+  ];
+
+  const cond = { 'cond[HOUSE_NM::LIKE]': kw };
+
+  const results = await Promise.allSettled(
+    ENDPOINTS.map(({ ep, rt, st }) =>
+      callApi(ep, serviceKey, 1, 30, cond).then(({ data }) =>
+        data.map(d => parseDetail(d, rt, st))
+      )
+    )
+  );
+
+  const all: PublicSaleItem[] = [];
+  for (const r of results) {
+    if (r.status === 'fulfilled') all.push(...r.value);
+  }
+
+  return all
+    .sort((a, b) => {
+      const da = a.announcementDate || a.receiptStart || '';
+      const db = b.announcementDate || b.receiptStart || '';
+      return db.localeCompare(da);
+    })
+    .slice(0, 20);
+}
