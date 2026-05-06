@@ -31,10 +31,16 @@ export default function AddressInput({ value, onChange }: Props) {
   const [detail, setDetail] = useState('');
   const [scriptLoaded, setScriptLoaded] = useState(false);
 
-  // 외부 값 변경 반영 (불러오기 시)
+  // 외부 값 변경 반영 (불러오기 시) — 시도+시군구는 기본주소, 나머지는 상세주소로 분리
   useEffect(() => {
-    setBase(value);
-    setDetail('');
+    const parts = value.trim().split(/\s+/);
+    if (parts.length > 2) {
+      setBase(parts.slice(0, 2).join(' '));
+      setDetail(parts.slice(2).join(' '));
+    } else {
+      setBase(value);
+      setDetail('');
+    }
   }, [value]);
 
   useEffect(() => {
