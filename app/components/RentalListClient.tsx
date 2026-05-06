@@ -2,11 +2,20 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { LhRentalItem } from '@/lib/lhApi';
+import Link from 'next/link';
+import { type LhRentalItem } from '@/lib/lhApi';
 
-function saveAndNavigate(item: LhRentalItem, router: ReturnType<typeof useRouter>) {
+function rentalDetailHref(item: LhRentalItem): string {
+  const sp = new URLSearchParams();
+  if (item.ccrCnntSysDsCd) sp.set('ccrCd', item.ccrCnntSysDsCd);
+  if (item.uppAisTpCd)      sp.set('uppTpCd', item.uppAisTpCd);
+  if (item.aisTpCd)         sp.set('aisTpCd', item.aisTpCd);
+  const qs = sp.toString();
+  return `/rental/${item.id}${qs ? `?${qs}` : ''}`;
+}
+
+function saveItem(item: LhRentalItem) {
   try { sessionStorage.setItem(`rental_item_${item.id}`, JSON.stringify(item)); } catch {}
-  router.push(`/rental/${item.id}`);
 }
 
 const REGIONS = ['전체', '서울', '경기', '인천', '부산', '대구', '광주', '대전', '울산', '세종', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'];
@@ -154,9 +163,10 @@ export default function RentalListClient({ initialItems, initialTotal, dataSourc
             const dday = getDDay(item.receiptStart, item.receiptEnd, item.status);
 
             return (
-              <div
+              <Link
                 key={item.id}
-                onClick={() => saveAndNavigate(item, router)}
+                href={rentalDetailHref(item)}
+                onClick={() => saveItem(item)}
                 style={{
                   background: '#fff',
                   borderRadius: 14,
@@ -168,9 +178,11 @@ export default function RentalListClient({ initialItems, initialTotal, dataSourc
                   gap: 10,
                   cursor: 'pointer',
                   transition: 'box-shadow 0.15s, border-color 0.15s',
+                  textDecoration: 'none',
+                  color: 'inherit',
                 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)'; (e.currentTarget as HTMLDivElement).style.borderColor = '#93c5fd'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)'; (e.currentTarget as HTMLDivElement).style.borderColor = '#e5e7eb'; }}
+                onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = '#93c5fd'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = '#e5e7eb'; }}
               >
                 {/* 상단 뱃지 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -232,7 +244,7 @@ export default function RentalListClient({ initialItems, initialTotal, dataSourc
                   )}
                 </div>
 
-              </div>
+              </Link>
             );
           })}
         </div>

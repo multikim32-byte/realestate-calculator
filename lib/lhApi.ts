@@ -13,6 +13,10 @@
 
 const BASE_URL = 'https://apis.data.go.kr/B552555';
 
+function toYmd(d: Date): string {
+  return d.toISOString().slice(0, 10).replace(/-/g, '');
+}
+
 type RawItem = Record<string, string | undefined>;
 
 export interface LhRentalItem {
@@ -149,6 +153,7 @@ function parseListItem(raw: RawItem): LhRentalItem {
 function parseItem(raw: RawItem): LhRentalItem {
   const receiptStart = fmtDate(raw.SUBSCRPT_RCEPT_BGNDE ?? raw.RCEPT_BGNDE);
   const receiptEnd   = fmtDate(raw.SUBSCRPT_RCEPT_ENDDE ?? raw.RCEPT_ENDDE);
+  const uppAisTpCd   = raw.UPP_AIS_TP_CD ?? '';
 
   return {
     id:               raw.CCR_CNT ?? raw.PAN_ID ?? String(Math.random()),
@@ -169,9 +174,9 @@ function parseItem(raw: RawItem): LhRentalItem {
     pblancUrl:        raw.DTL_URL ?? raw.PBLANC_URL ?? '',
     contact:          raw.MDHS_TELNO ?? '',
     ccrCnntSysDsCd:   raw.CCR_CNNT_SYS_DS_CD ?? '03',
-    uppAisTpCd:       raw.UPP_AIS_TP_CD ?? '',
+    uppAisTpCd,
     aisTpCd:          raw.AIS_TP_CD ?? '',
-    splInfTpCd:       '010',
+    splInfTpCd:       raw.SPL_INF_TP_CD ?? (uppAisTpCd === '05' ? '050' : uppAisTpCd === '39' ? '390' : '060'),
   };
 }
 
@@ -255,7 +260,13 @@ export async function fetchLhRentalList(
   serviceKey: string,
   { page, perPage, region }: FetchRentalListParams
 ): Promise<{ items: LhRentalItem[]; total: number }> {
+  // lhLeaseNoticeInfo1 requires PAN_ST_DT and PAN_ED_DT
+  const today = new Date();
+  const start = new Date(today); start.setMonth(start.getMonth() - 3);
+  const end   = new Date(today); end.setMonth(end.getMonth() + 6);
   const extra: Record<string, string> = {
+    PAN_ST_DT: toYmd(start),
+    PAN_ED_DT: toYmd(end),
     PAN_SS: '공고중',
     UPP_AIS_TP_CD: '06', // 임대주택만 (상가·토지 제외)
   };
@@ -288,17 +299,34 @@ export async function fetchLhRentalList(
   return { items, total: filteredTotal };
 }
 
+export interface LhSupplyParams {
+  panId: string;
+  ccrCd?: string;
+  uppTpCd?: string;
+  aisTpCd?: string;
+  splTpCd?: string;
+}
+
 export async function fetchLhSupplyUnits(
   serviceKey: string,
-  ccrCnt: string
+  params: LhSupplyParams
 ): Promise<LhSupplyUnit[]> {
+  const { panId, ccrCd = '03', uppTpCd = '', aisTpCd = '', splTpCd = '' } = params;
+  const extra: Record<string, string> = {
+    PAN_ID: panId,
+    CCR_CNNT_SYS_DS_CD: ccrCd,
+  };
+  if (uppTpCd) extra.UPP_AIS_TP_CD = uppTpCd;
+  if (aisTpCd) extra.AIS_TP_CD = aisTpCd;
+  if (splTpCd) extra.SPL_INF_TP_CD = splTpCd;
+
   const { items: raw } = await callLhApi(
     'lhLeaseNoticeSplInfo1',
     'getLeaseNoticeSplInfo1',
     serviceKey,
     1,
     100,
-    { CCR_CNT: ccrCnt },
+    extra,
   );
 
   return raw.map((r) => ({
@@ -308,6 +336,57 @@ export async function fetchLhSupplyUnits(
     deposit:     parseInt(r.LTTOT_TOP_AMOUNT ?? r.DEPOSIT_AMT ?? '0') || 0,
     monthlyRent: parseInt(r.MONTHLY_RENT_AMT ?? '0') || 0,
   }));
+}
+
+export async function fetchLhRentalDetail(
+  serviceKey: string,
+  params: { panId: string; ccrCd?: string; uppTpCd?: string; aisTpCd?: string }
+): Promise<LhRentalItem | null> {
+  const { panId, ccrCd = '03', uppTpCd = '06', aisTpCd = '' } = params;
+  try {
+    const { items: raw } = await callLhApi(
+      'lhLeaseNoticeDtlInfo1',
+      'getLeaseNoticeDtlInfo1',
+      serviceKey,
+      1,
+      1,
+      {
+        PAN_ID:             panId,
+        CCR_CNNT_SYS_DS_CD: ccrCd,
+        UPP_AIS_TP_CD:      uppTpCd,
+        ...(aisTpCd && { AIS_TP_CD: aisTpCd }),
+        SPL_INF_TP_CD: '010',
+      },
+    );
+    if (!raw.length) return null;
+    return parseItem({ ...raw[0], PAN_ID: panId });
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchLhRentalItemById(
+  serviceKey: string,
+  panId: string
+): Promise<LhRentalItem | null> {
+  const today = new Date();
+  const start = new Date(today); start.setMonth(start.getMonth() - 12);
+  const end   = new Date(today); end.setMonth(end.getMonth() + 12);
+  try {
+    const { items: raw } = await callLhApi(
+      'lhLeaseNoticeInfo1',
+      'lhLeaseNoticeInfo1',
+      serviceKey,
+      1,
+      200,
+      { PAN_ST_DT: toYmd(start), PAN_ED_DT: toYmd(end) },
+    );
+    const match = raw.find((r) => r.PAN_ID === panId);
+    if (!match) return null;
+    return parseListItem(match);
+  } catch {
+    return null;
+  }
 }
 
 // ─── raw 디버그용 ─────────────────────────────────────────────────────────────

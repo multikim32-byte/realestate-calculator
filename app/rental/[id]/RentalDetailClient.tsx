@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import GlobalNav from '../../components/GlobalNav';
-import { LhRentalItem, LhAttachment, LhSupplyUnit } from '@/lib/lhApi';
+import { type LhRentalItem, type LhAttachment, type LhSupplyUnit } from '@/lib/lhApi';
 
 const RENTAL_TYPE_COLORS: Record<string, { bg: string; color: string }> = {
   '행복주택':     { bg: '#e0f2fe', color: '#0369a1' },
@@ -32,38 +31,57 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function RentalDetailClient() {
-  const { id } = useParams<{ id: string }>();
-  const [item, setItem] = useState<LhRentalItem | null>(null);
+interface Props {
+  initialItem: LhRentalItem | null;
+  panId: string;
+  searchParams: Record<string, string>;
+}
+
+export default function RentalDetailClient({ initialItem, panId, searchParams }: Props) {
+  // SSR provides initialItem; if null, try sessionStorage (client-only, lazy init)
+  const [item] = useState<LhRentalItem | null>(() => {
+    if (initialItem) return initialItem;
+    if (typeof window === 'undefined') return null;
+    try {
+      const cached = sessionStorage.getItem(`rental_item_${panId}`);
+      return cached ? (JSON.parse(cached) as LhRentalItem) : null;
+    } catch { return null; }
+  });
   const [attachments, setAttachments] = useState<LhAttachment[]>([]);
   const [supplyUnits, setSupplyUnits] = useState<LhSupplyUnit[]>([]);
 
+  // Persist to sessionStorage for back-navigation
   useEffect(() => {
-    if (!id) return;
-    try {
-      const cached = sessionStorage.getItem(`rental_item_${id}`);
-      if (cached) {
-        const parsed: LhRentalItem = JSON.parse(cached);
-        setItem(parsed);
-        // 첨부파일 로드
-        const qs = new URLSearchParams({
-          panId:    parsed.ccrCnt,
-          ccrCd:    parsed.ccrCnntSysDsCd || '03',
-          uppTpCd:  parsed.uppAisTpCd,
-          aisTpCd:  parsed.aisTpCd,
-        });
-        fetch(`/api/rental/attachments?${qs}`)
-          .then(r => r.json())
-          .then(d => setAttachments(d.attachments ?? []))
-          .catch(() => {});
+    if (!item) return;
+    try { sessionStorage.setItem(`rental_item_${item.id}`, JSON.stringify(item)); } catch {}
+  }, [item]);
 
-        fetch(`/api/rental/supply?ccrCnt=${encodeURIComponent(parsed.ccrCnt)}`)
-          .then(r => r.json())
-          .then(d => setSupplyUnits(d.units ?? []))
-          .catch(() => {});
-      }
-    } catch {}
-  }, [id]);
+  // Fetch supply units and attachments client-side
+  useEffect(() => {
+    if (!item) return;
+    const ccrCd   = item.ccrCnntSysDsCd || searchParams.ccrCd || '03';
+    const uppTpCd = item.uppAisTpCd      || searchParams.uppTpCd || '06';
+    const aisTpCd = item.aisTpCd         || searchParams.aisTpCd || '';
+    const splTpCd = item.splInfTpCd      || '';
+
+    const supplyQs = new URLSearchParams({
+      panId: item.ccrCnt,
+      ccrCd,
+      uppTpCd,
+      aisTpCd,
+      splTpCd,
+    });
+    fetch(`/api/rental/supply?${supplyQs}`)
+      .then(r => r.json())
+      .then(d => setSupplyUnits(d.units ?? []))
+      .catch(() => {});
+
+    const attQs = new URLSearchParams({ panId: item.ccrCnt, ccrCd, uppTpCd, aisTpCd });
+    fetch(`/api/rental/attachments?${attQs}`)
+      .then(r => r.json())
+      .then(d => setAttachments(d.attachments ?? []))
+      .catch(() => {});
+  }, [item, searchParams]);
 
   if (!item) {
     return (
@@ -85,7 +103,6 @@ export default function RentalDetailClient() {
       <GlobalNav />
       <div style={{ maxWidth: 760, margin: '0 auto', padding: '24px 16px 60px' }}>
 
-        {/* 뒤로가기 */}
         <Link href="/rental" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginBottom: 16 }}>
           ← 임대정보 목록
         </Link>
@@ -194,12 +211,10 @@ export default function RentalDetailClient() {
           </div>
         )}
 
-        {/* 안내 박스 */}
         <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: '14px 18px', marginBottom: 16, fontSize: 13, color: '#1e40af', lineHeight: 1.7 }}>
           주택형별 보증금·월임대료 등 상세 공급정보는 공고문 또는 LH청약플러스에서 확인하세요.
         </div>
 
-        {/* LH 공식 링크 버튼 */}
         {item.pblancUrl && (
           <a
             href={item.pblancUrl}
