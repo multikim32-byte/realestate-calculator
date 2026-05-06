@@ -321,6 +321,23 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
             <input style={inputStyle} type="number" value={form.total_units ?? ''} onChange={e => set('total_units', e.target.value)} placeholder="예: 500" />
           </div>
 
+          {/* 분양가 */}
+          <div>
+            <label style={labelStyle}>분양가 (원 단위)</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={{ ...labelStyle, fontSize: 12, color: '#6b7280' }}>최저가</label>
+                <input style={inputStyle} type="number" value={form.min_price ?? ''} onChange={e => set('min_price', e.target.value)} placeholder="예: 350000000" />
+                {form.min_price ? <span style={{ fontSize: 11, color: '#1d4ed8', marginTop: 3, display: 'block' }}>{(Number(form.min_price) / 100000000).toFixed(1)}억</span> : null}
+              </div>
+              <div>
+                <label style={{ ...labelStyle, fontSize: 12, color: '#6b7280' }}>최고가</label>
+                <input style={inputStyle} type="number" value={form.max_price ?? ''} onChange={e => set('max_price', e.target.value)} placeholder="예: 500000000" />
+                {form.max_price ? <span style={{ fontSize: 11, color: '#1d4ed8', marginTop: 3, display: 'block' }}>{(Number(form.max_price) / 100000000).toFixed(1)}억</span> : null}
+              </div>
+            </div>
+          </div>
+
           {/* 문의전화 */}
           <div>
             <label style={labelStyle}>문의전화</label>
