@@ -61,7 +61,7 @@ function fmtPreview(v: string): string {
   return `${n.toLocaleString()}원`;
 }
 
-const LocationSelector = dynamic(() => import('./LocationSelector'), { ssr: false });
+const AddressInput = dynamic(() => import('./AddressInput'), { ssr: false });
 const RichTextEditor = dynamic(() => import('./RichTextEditor'), { ssr: false });
 const SectionImageUploader = dynamic(() => import('./SectionImageUploader'), { ssr: false });
 
@@ -394,7 +394,7 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
 
           <div>
             <label style={labelStyle}>위치 *</label>
-            <LocationSelector value={form.location ?? ''} onChange={val => set('location', val)} />
+            <AddressInput value={form.location ?? ''} onChange={val => set('location', val)} />
           </div>
 
           <div>
