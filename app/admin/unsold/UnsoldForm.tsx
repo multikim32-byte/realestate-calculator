@@ -147,11 +147,11 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
     syncUnitPrices(next);
   };
 
-  const addUnit = () => setUnitPrices(prev => [...prev, { type: '', min: '', max: '' }]);
+  const addUnit = () => setUnitPrices(prev => [...prev, { type: '', supplyArea: '', count: '', min: '', max: '' }]);
 
   const removeUnit = (i: number) => {
     const next = unitPrices.filter((_, idx) => idx !== i);
-    const safe = next.length > 0 ? next : [{ type: '', min: '', max: '' }];
+    const safe: UnitPrice[] = next.length > 0 ? next : [{ type: '', supplyArea: '', count: '', min: '', max: '' }];
     setUnitPrices(safe);
     syncUnitPrices(safe);
   };
