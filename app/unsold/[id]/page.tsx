@@ -306,32 +306,17 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
           </div>
         </div>
 
-        {/* SEO 콘텐츠 섹션 */}
+        {/* SEO 키워드 태그 */}
         {(() => {
           const parts = item.location.trim().split(/\s+/);
-          const sido = parts[0];
+          const sido = parts[0].replace(/(특별자치도|특별자치시|특별시|광역시|도)$/, '');
           const sigungu = parts[1] ?? '';
+          const keywords = [item.name, `${sido} ${item.category} 분양`, `${sigungu} 분양정보`, '미분양 특별혜택', '잔여세대 계약'].filter(Boolean);
           return (
-            <div style={{ background: '#fff', borderRadius: 12, padding: '24px', marginTop: 20, border: '1px solid #e5e7eb' }}>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1e3a5f', margin: '0 0 12px' }}>
-                {item.name} 분양정보 안내
-              </h2>
-              <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.8, margin: '0 0 12px' }}>
-                {item.name}은(는) {item.location}에 위치한 {item.category}
-                {item.total_units ? ` 총 ${item.total_units.toLocaleString()}세대` : ''} 규모의 분양 단지입니다.
-                {item.area ? ` 전용면적 ${item.area} 구성으로 공급됩니다.` : ''}
-                {item.listing_type === '청약중' ? ' 현재 청약 접수 중이며,' : ' 잔여 세대 계약이 가능하며,'}
-                {item.benefit ? ` ${item.benefit} 등 특별 혜택을 제공합니다.` : ' 상세 계약 조건은 문의하시기 바랍니다.'}
-              </p>
-              <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.8, margin: '0 0 12px' }}>
-                {sigungu ? `${sido} ${sigungu} 지역` : `${sido} 지역`}의 아파트 실거래가와 함께 비교하여 적정 분양가를 판단해 보세요.
-                취득세·대출 한도 등 부동산 관련 비용은 mk-land.kr 무료 계산기를 이용하실 수 있습니다.
-              </p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-                {[item.name, `${sido} ${item.category} 분양`, `${sigungu} 분양정보`, '미분양 특별혜택', '잔여세대 계약'].filter(Boolean).map((kw, i) => (
-                  <span key={i} style={{ background: '#f3f4f6', color: '#6b7280', fontSize: 12, padding: '3px 10px', borderRadius: 12 }}>{kw}</span>
-                ))}
-              </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
+              {keywords.map((kw, i) => (
+                <span key={i} style={{ background: '#f3f4f6', color: '#6b7280', fontSize: 12, padding: '4px 12px', borderRadius: 20 }}>{kw}</span>
+              ))}
             </div>
           );
         })()}
