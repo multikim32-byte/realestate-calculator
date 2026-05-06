@@ -45,6 +45,18 @@ function FavBtn({ item }: { item: UnsoldListing }) {
   );
 }
 
+function parseAreaLabel(area: string | null | undefined): string | null {
+  if (!area) return null;
+  try {
+    const parsed = JSON.parse(area);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      const types = parsed.map((p: { type?: string }) => p.type).filter(Boolean);
+      return types.length > 0 ? types.join(' / ') + '㎡' : null;
+    }
+  } catch {}
+  return area;
+}
+
 function fmt만원(v: number) {
   if (v >= 100000000) return `${(v / 100000000).toFixed(1)}억`;
   if (v >= 10000) return `${Math.floor(v / 10000).toLocaleString()}만`;
@@ -269,9 +281,9 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
                       잔여 {item.remaining_units}세대
                     </span>
                   )}
-                  {item.area && (
+                  {parseAreaLabel(item.area) && (
                     <span style={{ background: '#f0f9ff', color: '#0369a1', padding: '2px 8px', borderRadius: 8 }}>
-                      {item.area}
+                      {parseAreaLabel(item.area)}
                     </span>
                   )}
                 </div>
