@@ -369,8 +369,7 @@ export async function fetchRemndrSaleList(
   const { data, totalCount } = await callApiWithLatest(
     'getRemndrLttotPblancDetail', serviceKey, Math.min(perPage * 2, 100), buildDateCond(df)
   );
-  // 잔여세대는 receiptStart(청약접수일)가 핵심 날짜 — announcementDate는 원사업 공고일이라 옛날 날짜일 수 있음
-  const items = sortByReceiptDesc(data.map(d => parseDetail(d, '선착순')), perPage);
+  const items = sortByAnnouncementDesc(data.map(d => parseDetail(d, '선착순')), perPage);
   return { items, total: totalCount };
 }
 
@@ -402,8 +401,7 @@ export async function fetchOptSaleList(
   const { data, totalCount } = await callApiWithLatest(
     'getOPTLttotPblancDetail', serviceKey, Math.min(perPage * 2, 100), buildDateCond(df)
   );
-  // 무순위/임의공급도 receiptStart 기준 정렬 — RCRIT_PBLANC_DE가 원사업 공고일(수년 전)일 수 있음
-  const items = sortByReceiptDesc(data.map(d => parseDetail(d, '선착순')), perPage);
+  const items = sortByAnnouncementDesc(data.map(d => parseDetail(d, '선착순')), perPage);
   return { items, total: totalCount };
 }
 

@@ -155,17 +155,8 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
       let merged: SaleItem[] = [];
       let src = 'api';
 
-      // APT 신규: 공고일 우선, 잔여세대·무순위: 접수시작일 우선
-      const sortByDate = (arr: SaleItem[], useReceipt = false) =>
-        arr.sort((a, b) => {
-          const da = useReceipt
-            ? (a.receiptStart || a.announcementDate || '')
-            : (a.announcementDate || a.receiptStart || '');
-          const db = useReceipt
-            ? (b.receiptStart || b.announcementDate || '')
-            : (b.announcementDate || b.receiptStart || '');
-          return db > da ? 1 : -1;
-        });
+      const sortByDate = (arr: SaleItem[]) =>
+        arr.sort((a, b) => ((b.announcementDate || b.receiptStart || '') > (a.announcementDate || a.receiptStart || '') ? 1 : -1));
 
       if (ft === 'ofcl_pblpvt') {
         const [r1, r2] = await Promise.all([
@@ -179,8 +170,7 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
           fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'remndr', perPage: '50' })}`).then(r => r.json()),
           fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'opt', perPage: '50' })}`).then(r => r.json()),
         ]);
-        // 잔여세대·무순위는 receiptStart 기준 정렬
-        merged = sortByDate([...(r1.items || []), ...(r2.items || [])], true);
+        merged = sortByDate([...(r1.items || []), ...(r2.items || [])]);
         src = r1.source || r2.source;
       } else {
         const params = new URLSearchParams({ region: reg, type: ft, perPage: '50' });
