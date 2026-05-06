@@ -3,13 +3,24 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import type { SaleContent } from '@/lib/saleContent';
+
+type SaleSearchItem = {
+  houseManageNo: string;
+  id: string;
+  name: string;
+  location: string;
+  buildingType: string;
+  totalUnits: number;
+  status: string;
+};
 
 export default function SaleContentListPage() {
   const [list, setList] = useState<SaleContent[]>([]);
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<SaleSearchItem[]>([]);
   const [searching, setSearching] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const router = useRouter();
@@ -28,7 +39,7 @@ export default function SaleContentListPage() {
       .then(r => { if (r.status === 401) router.push('/admin'); return r.json(); })
       .then(data => { setList(data ?? []); setLoading(false); })
       .catch(() => setLoading(false));
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (keyword.length < 2) { setSearchResults([]); return; }
@@ -38,7 +49,7 @@ export default function SaleContentListPage() {
         const res = await fetch('/api/sale?type=all&perPage=100');
         const data = await res.json();
         const kw = keyword.trim();
-        const filtered = (data.items ?? []).filter((item: any) =>
+        const filtered = (data.items ?? [] as SaleSearchItem[]).filter((item: SaleSearchItem) =>
           item.name.includes(kw) || item.location?.includes(kw)
         );
         setSearchResults(filtered.slice(0, 10));
@@ -93,7 +104,7 @@ export default function SaleContentListPage() {
 
           {searchResults.length > 0 && (
             <div style={{ marginTop: 10, border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
-              {searchResults.map((item: any, i: number) => {
+              {searchResults.map((item: SaleSearchItem, i: number) => {
                 const hasContent = existingIds.has(item.houseManageNo);
                 return (
                   <div key={item.houseManageNo ?? i} style={{
@@ -158,8 +169,8 @@ export default function SaleContentListPage() {
                 padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16,
               }}>
                 {item.thumbnail_url && (
-                  <img src={item.thumbnail_url} alt=""
-                    style={{ width: 80, height: 56, objectFit: 'cover', borderRadius: 8, flexShrink: 0, border: '1px solid #e5e7eb' }} />
+                  <Image src={item.thumbnail_url} alt="" width={80} height={56}
+                    style={{ objectFit: 'cover', borderRadius: 8, flexShrink: 0, border: '1px solid #e5e7eb' }} />
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>

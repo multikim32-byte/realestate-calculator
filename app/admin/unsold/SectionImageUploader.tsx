@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import Image from 'next/image';
 import type { UnsoldSection } from '@/lib/supabase';
 
 interface Props {
@@ -118,8 +119,8 @@ export default function SectionImageUploader({ sections, onChange }: Props) {
                     </div>
 
                     {/* 미리보기 */}
-                    <img src={url} alt={`${section.name} ${idx + 1}`}
-                      style={{ width: 120, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb', flexShrink: 0 }} />
+                    <Image src={url} alt={`${section.name} ${idx + 1}`} width={120} height={80}
+                      style={{ objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb', flexShrink: 0 }} />
 
                     {/* 파일명 */}
                     <span style={{ fontSize: 12, color: '#6b7280', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

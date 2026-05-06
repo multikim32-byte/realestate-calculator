@@ -6,6 +6,31 @@ import { CATEGORIES, DEFAULT_SECTIONS } from '@/lib/supabase';
 import type { UnsoldListing } from '@/lib/supabase';
 import { LAWD_CODE_MAP } from '@/lib/tradeApi';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
+
+type SaleSearchItem = {
+  id: string;
+  houseManageNo: string;
+  name: string;
+  location: string;
+  region: string;
+  district: string;
+  buildingType: string;
+  totalUnits: number;
+  hmpgUrl?: string;
+  pblancUrl?: string;
+};
+
+type SaleDetailItem = {
+  hmpgUrl?: string;
+  pblancUrl?: string;
+  announcementDate?: string;
+  receiptStart?: string;
+  receiptEnd?: string;
+  moveInDate?: string;
+  contact?: string;
+  units?: Array<{ price: number }>;
+};
 
 const LocationSelector = dynamic(() => import('./LocationSelector'), { ssr: false });
 const RichTextEditor = dynamic(() => import('./RichTextEditor'), { ssr: false });
@@ -65,7 +90,7 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
 
   // 청약정보 불러오기
   const [importKeyword, setImportKeyword] = useState('');
-  const [importResults, setImportResults] = useState<any[]>([]);
+  const [importResults, setImportResults] = useState<SaleSearchItem[]>([]);
   const [importLoading, setImportLoading] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -79,7 +104,7 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
         const res = await fetch('/api/sale?type=all&perPage=100');
         const data = await res.json();
         const kw = keyword.trim();
-        const filtered = (data.items ?? []).filter((item: any) =>
+        const filtered = (data.items ?? [] as SaleSearchItem[]).filter((item: SaleSearchItem) =>
           item.name.includes(kw) || item.location.includes(kw)
         );
         setImportResults(filtered.slice(0, 8));
@@ -87,7 +112,7 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
     }, 400);
   };
 
-  const applyImport = async (item: any) => {
+  const applyImport = async (item: SaleSearchItem) => {
     const location = item.region && item.district
       ? `${item.region} ${item.district}`
       : item.region || form.location;
@@ -112,10 +137,10 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
     try {
       const res = await fetch(`/api/sale/detail?id=${houseManageNo}`);
       const data = await res.json();
-      const detail = data.item;
+      const detail = data.item as SaleDetailItem;
       if (!detail) return;
 
-      const prices = (detail.units ?? []).map((u: any) => u.price).filter((p: number) => p > 0);
+      const prices = (detail.units ?? []).map(u => u.price).filter(p => p > 0);
       setForm(prev => ({
         ...prev,
         // 시행사 홈페이지 URL (HMPG_ADRES 우선, 없으면 PBLANC_URL)
@@ -239,7 +264,7 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
                 </div>
                 {importResults.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 280, overflowY: 'auto' }}>
-                    {importResults.map((item: any) => (
+                    {importResults.map((item: SaleSearchItem) => (
                       <button
                         key={item.id}
                         type="button"
@@ -389,7 +414,8 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
             {uploading && <p style={{ fontSize: 12, color: '#6b7280' }}>업로드 중...</p>}
             {form.thumbnail_url && (
               <div style={{ marginTop: 8 }}>
-                <img src={form.thumbnail_url} alt="썸네일" style={{ width: 200, height: 120, objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb' }} />
+                <Image src={form.thumbnail_url} alt="썸네일" width={200} height={120}
+                style={{ objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb' }} />
                 <button type="button" onClick={() => set('thumbnail_url', null)} style={{ display: 'block', marginTop: 6, fontSize: 12, color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}>이미지 제거</button>
               </div>
             )}

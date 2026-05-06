@@ -74,7 +74,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
       editor.chain().focus().setImage({
         src: data.url,
         alt: file.name,
-        // @ts-ignore
+        // @ts-expect-error — TipTap Image type does not expose custom attributes
         style: 'display:block;margin:12px 0;max-width:100%;border-radius:8px;',
       }).run();
     }

@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import type { UnsoldListing } from '@/lib/supabase';
 
 export default function AdminUnsoldListPage() {
@@ -27,15 +28,16 @@ export default function AdminUnsoldListPage() {
     });
   }, [listings, listingType, sido, search]);
 
-  async function load() {
-    const res = await fetch('/api/admin/unsold');
-    if (res.status === 401) { router.push('/admin'); return; }
-    const data = await res.json();
-    setListings(data);
-    setLoading(false);
-  }
-
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res = await fetch('/api/admin/unsold');
+      if (res.status === 401) { router.push('/admin'); return; }
+      const data = await res.json();
+      if (!cancelled) { setListings(data); setLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [router]);
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`"${name}"을 삭제하시겠습니까?`)) return;
@@ -141,7 +143,7 @@ export default function AdminUnsoldListPage() {
                 {/* 썸네일 */}
                 <div style={{ width: 60, height: 60, borderRadius: 8, background: '#e2e8f0', overflow: 'hidden', flexShrink: 0 }}>
                   {item.thumbnail_url
-                    ? <img src={item.thumbnail_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ? <Image src={item.thumbnail_url} alt={item.name} width={60} height={60} style={{ objectFit: 'cover' }} />
                     : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 24 }}>🏢</div>
                   }
                 </div>
