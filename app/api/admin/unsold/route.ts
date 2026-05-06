@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabaseAdmin';
 import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 
 async function isAdmin() {
   const cookieStore = await cookies();
@@ -32,5 +33,6 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
   if (error) return NextResponse.json({ error: '매물 등록에 실패했습니다.' }, { status: 500 });
   if (!data) return NextResponse.json({ error: '등록 후 데이터를 찾을 수 없습니다.' }, { status: 500 });
+  revalidatePath('/unsold');
   return NextResponse.json(data);
 }
