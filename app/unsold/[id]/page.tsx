@@ -137,8 +137,7 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
 
           {/* 상세 정보 */}
           <div style={{ padding: '28px 28px 32px' }}>
-            <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1e293b', margin: '0 0 6px' }}>{item.name}</h1>
-            <p style={{ fontSize: 14, color: '#6b7280', margin: '0 0 24px' }}>📍 {item.location}</p>
+            <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1e293b', margin: '0 0 24px' }}>{item.name}</h1>
 
             {/* 분양기본정보 */}
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
@@ -217,7 +216,11 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
                       <td style={{ padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>입주 예정</td>
                       <td style={{ padding: '11px 16px', fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{item.move_in_date || '-'}</td>
                       <td style={{ padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>문의전화</td>
-                      <td style={{ padding: '11px 16px', fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{item.contact || '-'}</td>
+                      <td style={{ padding: '11px 16px', fontSize: 13, fontWeight: 700, color: '#1e293b' }}>
+                        {item.contact
+                          ? <a href={`tel:${item.contact.replace(/[^0-9]/g, '')}`} style={{ color: '#1d4ed8', textDecoration: 'none' }}>{item.contact}</a>
+                          : '-'}
+                      </td>
                     </tr>
                   )}
                 </tbody>

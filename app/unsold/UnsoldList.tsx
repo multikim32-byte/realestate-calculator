@@ -63,12 +63,14 @@ function fmt만원(v: number) {
   return `${v.toLocaleString()}원`;
 }
 
-// location 문자열에서 시도·시군구 추출
+// location 문자열에서 시도·시군구 추출 (경기도→경기, 서울특별시→서울 등 정규화)
 function parseSido(location: string) {
-  return location.trim().split(/\s+/)[0] ?? '';
+  const word = location.trim().split(/\s+/)[0] ?? '';
+  return word.replace(/(특별자치도|특별자치시|특별시|광역시|도)$/, '');
 }
 function parseSigungu(location: string) {
-  return location.trim().split(/\s+/)[1] ?? '';
+  const parts = location.trim().split(/\s+/);
+  return parts[1] ?? '';
 }
 
 const selectStyle: React.CSSProperties = {

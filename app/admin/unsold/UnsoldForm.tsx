@@ -177,9 +177,10 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
   };
 
   const applyImport = async (item: SaleSearchItem) => {
-    const location = item.region && item.district
+    // 전체 주소 우선, 없으면 region+district 조합
+    const location = item.location || (item.region && item.district
       ? `${item.region} ${item.district}`
-      : item.region || form.location;
+      : item.region || form.location);
 
     // 기본 정보 즉시 반영 (검색 결과에서 바로 쓸 수 있는 필드 모두 적용)
     setForm(prev => ({
