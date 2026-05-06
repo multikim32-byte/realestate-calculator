@@ -220,7 +220,8 @@ async function callLhApi(
         if (key === 'resHeader' || key === 'dsSch') continue;
         if (Array.isArray(val)) {
           const nonempty = (val as RawItem[]).filter((r) => Object.keys(r).length > 0);
-          if (nonempty.length > 0) {
+          // 더 많은 항목을 가진 데이터셋 우선 — 페이지정보 배열이 실제 데이터를 덮어쓰는 버그 방지
+          if (nonempty.length > dataItems.length) {
             dataItems = nonempty;
             // ALL_CNT 필드에서 전체 건수 추출
             totalCount = parseInt(nonempty[0].ALL_CNT ?? String(nonempty.length)) || nonempty.length;

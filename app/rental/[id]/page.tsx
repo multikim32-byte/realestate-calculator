@@ -1,6 +1,6 @@
 import { cache } from 'react';
 import type { Metadata } from 'next';
-import { fetchLhRentalDetail, fetchLhRentalItemById, type LhRentalItem } from '@/lib/lhApi';
+import { fetchLhRentalItemById, type LhRentalItem } from '@/lib/lhApi';
 import RentalDetailClient from './RentalDetailClient';
 
 export const revalidate = 3600;
@@ -10,26 +10,18 @@ type PageProps = {
   searchParams: Promise<Record<string, string>>;
 };
 
-const getRentalItem = cache(async (
-  panId: string,
-  ccrCd: string,
-  uppTpCd: string,
-  aisTpCd: string,
-): Promise<LhRentalItem | null> => {
+// lhLeaseNoticeDtlInfo1은 첨부파일 전용 API라 공고명/날짜를 반환하지 않음
+// → 목록 API(lhLeaseNoticeInfo1)에서 PAN_ID로 검색해 올바른 데이터 사용
+const getRentalItem = cache(async (panId: string): Promise<LhRentalItem | null> => {
   const key = process.env.LH_API_KEY;
   if (!key) return null;
-  // Try targeted detail API first (needs params), fall back to list search
-  if (ccrCd || uppTpCd) {
-    const detail = await fetchLhRentalDetail(key, { panId, ccrCd, uppTpCd, aisTpCd });
-    if (detail) return detail;
-  }
   return fetchLhRentalItemById(key, panId);
 });
 
-export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams: _sp }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const sp = await searchParams;
-  const item = await getRentalItem(id, sp.ccrCd ?? '', sp.uppTpCd ?? '06', sp.aisTpCd ?? '');
+  await _sp; // Next.js requires searchParams to be awaited even if unused
+  const item = await getRentalItem(id);
 
   const canonical = `https://www.mk-land.kr/rental/${id}`;
 
@@ -66,7 +58,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
 export default async function RentalDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
   const sp = await searchParams;
-  const item = await getRentalItem(id, sp.ccrCd ?? '', sp.uppTpCd ?? '06', sp.aisTpCd ?? '');
+  const item = await getRentalItem(id);
 
   const jsonLd = item ? {
     '@context': 'https://schema.org',
