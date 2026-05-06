@@ -160,20 +160,20 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
 
       if (ft === 'ofcl_pblpvt') {
         const [r1, r2] = await Promise.all([
-          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'officetel', perPage: '100' })}`).then(r => r.json()),
-          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'pblpvtrent', perPage: '100' })}`).then(r => r.json()),
+          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'officetel', perPage: '50' })}`).then(r => r.json()),
+          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'pblpvtrent', perPage: '50' })}`).then(r => r.json()),
         ]);
         merged = sortByDate([...(r1.items || []), ...(r2.items || [])]);
         src = r1.source || r2.source;
       } else if (ft === 'remndr_opt') {
         const [r1, r2] = await Promise.all([
-          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'remndr', perPage: '100' })}`).then(r => r.json()),
-          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'opt', perPage: '100' })}`).then(r => r.json()),
+          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'remndr', perPage: '50' })}`).then(r => r.json()),
+          fetch(`/api/sale?${new URLSearchParams({ region: reg, type: 'opt', perPage: '50' })}`).then(r => r.json()),
         ]);
         merged = sortByDate([...(r1.items || []), ...(r2.items || [])]);
         src = r1.source || r2.source;
       } else {
-        const params = new URLSearchParams({ region: reg, type: ft, perPage: '100' });
+        const params = new URLSearchParams({ region: reg, type: ft, perPage: '50' });
         const data = await fetch(`/api/sale?${params}`).then(r => r.json());
         merged = data.items || [];
         src = data.source;
