@@ -30,7 +30,7 @@ export default function KakaoMap({ address, name }: Props) {
     // 괄호·블럭 표기 제거한 순수 주소
     const noParens = address
       .replace(/\(.*?\)/g, '')
-      .replace(/[A-Z]{1,3}\d+[A-Z]{0,2}BL/g, '')
+      .replace(/[A-Z]{1,3}\d+(-\d+)?[A-Z]{0,2}BL/gi, '')
       .trim();
 
     // 번지 주소 추출 — 콤마가 있으면 첫 번째 필지만 사용
