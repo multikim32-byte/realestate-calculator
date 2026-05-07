@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 declare global {
   interface Window {
@@ -31,8 +31,13 @@ export default function AddressInput({ value, onChange }: Props) {
   const [detail, setDetail] = useState('');
   const [scriptLoaded, setScriptLoaded] = useState(false);
 
-  // 외부 값 변경 반영 (불러오기 시) — 시도+시군구는 기본주소, 나머지는 상세주소로 분리
+  // 마지막으로 내부에서 emit한 값을 추적 — 외부 변경과 내부 타이핑 구분용
+  const lastEmitted = useRef(value);
+
+  // 외부 값 변경 반영 (불러오기 시) — 내부 타이핑으로 인한 변경은 무시
   useEffect(() => {
+    if (value === lastEmitted.current) return;
+    lastEmitted.current = value;
     const parts = value.trim().split(/\s+/);
     if (parts.length > 2) {
       setBase(parts.slice(0, 2).join(' '));
@@ -77,7 +82,9 @@ export default function AddressInput({ value, onChange }: Props) {
 
   const handleDetailChange = (val: string) => {
     setDetail(val);
-    onChange(val ? `${base} ${val}`.trim() : base);
+    const newLocation = val ? `${base} ${val}`.trim() : base;
+    lastEmitted.current = newLocation;
+    onChange(newLocation);
   };
 
   const inputStyle: React.CSSProperties = {

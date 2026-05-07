@@ -34,5 +34,6 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ error: '매물 등록에 실패했습니다.' }, { status: 500 });
   if (!data) return NextResponse.json({ error: '등록 후 데이터를 찾을 수 없습니다.' }, { status: 500 });
   revalidatePath('/unsold');
+  revalidatePath(`/unsold/${data.id}`);
   return NextResponse.json(data);
 }
