@@ -27,10 +27,15 @@ export default function KakaoMap({ address, name }: Props) {
     setError(false);
     setLoadingMap(true);
 
-    // 괄호·블럭 표기 제거한 순수 주소
+    // 블록지번 감지: "회천지구 A10-1BL", "계양지구 A9블록", "왕숙2 A-3블록"
+    const blockRe = /([가-힣A-Za-z0-9]+)\s+([A-Za-z]{1,3}[-]?\d+(?:-\d+)?[A-Za-z]{0,2}(?:블록|BL))/i;
+    const blockInfo = address.match(blockRe);
+    const blockKeyword = blockInfo ? `${blockInfo[1]} ${blockInfo[2]}` : '';
+
+    // 괄호·블럭 표기 제거한 순수 주소 (BL + 한글 "블록" 모두 처리)
     const noParens = address
       .replace(/\(.*?\)/g, '')
-      .replace(/[A-Z]{1,3}\d+(-\d+)?[A-Z]{0,2}BL/gi, '')
+      .replace(/[A-Z]{1,3}[-]?\d+(-\d+)?[A-Z]{0,2}(?:BL|블록)/gi, '')
       .trim();
 
     // 번지 주소 추출 — 콤마가 있으면 첫 번째 필지만 사용
@@ -88,7 +93,7 @@ export default function KakaoMap({ address, name }: Props) {
     }
 
     function geocodeAndPlace() {
-      const cacheKey = (lotAddress || cleanAddress) + '|' + name;
+      const cacheKey = (lotAddress || blockKeyword || cleanAddress) + '|' + name;
 
       // 캐시 확인 (성공 좌표만 캐시, 실패는 캐시하지 않아 재시도 허용)
       if (geocodeCache.has(cacheKey)) {
@@ -164,20 +169,36 @@ export default function KakaoMap({ address, name }: Props) {
         });
       }
 
-      // 1단계: 번지 주소로 정확한 위치 geocoding
-      // 성공 시 바로 마커 표시 / 실패 시 아파트명 검색으로 fallback
-      if (lotAddress) {
-        geocoder.addressSearch(lotAddress, (result: any, status: any) => {
-          if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
-            const coords = { y: result[0].y, x: result[0].x };
+      function startNormalGeocode() {
+        // 1단계: 번지 주소로 정확한 위치 geocoding
+        if (lotAddress) {
+          geocoder.addressSearch(lotAddress, (result: any, status: any) => {
+            if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
+              const coords = { y: result[0].y, x: result[0].x };
+              geocodeCache.set(cacheKey, coords);
+              placeMarker(coords);
+            } else {
+              fallbackToNameSearch();
+            }
+          });
+        } else {
+          fallbackToNameSearch();
+        }
+      }
+
+      // 0단계: 블록지번 → "지구명 블록번호" 키워드 직접 검색 (정확도 우선)
+      if (blockKeyword) {
+        ps.keywordSearch(blockKeyword, (places: any, status: any) => {
+          if (status === window.kakao.maps.services.Status.OK && places.length > 0) {
+            const coords = { y: places[0].y, x: places[0].x };
             geocodeCache.set(cacheKey, coords);
             placeMarker(coords);
           } else {
-            fallbackToNameSearch();
+            startNormalGeocode();
           }
         });
       } else {
-        fallbackToNameSearch();
+        startNormalGeocode();
       }
     }
 
