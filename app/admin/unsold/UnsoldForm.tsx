@@ -177,9 +177,12 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
   };
 
   const applyImport = async (item: SaleSearchItem) => {
-    // region(단축 시도명)+district 우선 → 필터 호환. 없으면 full address fallback
+    // 단축 시도+시군구 앞에 놓고, 나머지 상세주소는 뒤에 이어붙임
+    // → AddressInput이 앞 2토큰=기본주소, 나머지=상세주소로 자동 분리
+    const fullParts = (item.location || '').trim().split(/\s+/);
+    const addressTail = fullParts.length > 2 ? fullParts.slice(2).join(' ') : '';
     const location = (item.region && item.district)
-      ? `${item.region} ${item.district}`
+      ? [item.region, item.district, addressTail].filter(Boolean).join(' ')
       : item.location || item.region || form.location;
 
     // 기본 정보 즉시 반영 (검색 결과에서 바로 쓸 수 있는 필드 모두 적용)
