@@ -6,6 +6,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import SectionTabs from './SectionTabs';
+import KakaoMap from '@/app/components/KakaoMap';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -298,6 +299,9 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
                 </div>
               );
             })()}
+
+            {/* 단지 위치 지도 */}
+            <KakaoMap address={item.location} name={item.name} />
 
             {/* 섹션별 이미지 탭 */}
             {item.sections?.length > 0 && (
