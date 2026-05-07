@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import SectionTabs from './SectionTabs';
 import KakaoMap from '@/app/components/KakaoMap';
+import { fetchSaleDetail } from '@/lib/publicDataApi';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -65,6 +66,15 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
     .maybeSingle() as { data: UnsoldListing | null };
 
   if (!item) notFound();
+
+  // house_manage_no가 있으면 청약홈 API에서 상세 주소 가져옴 → KakaoMap 정확도 향상
+  let mapAddress = item.location;
+  if (item.house_manage_no) {
+    try {
+      const saleItem = await fetchSaleDetail(item.house_manage_no);
+      if (saleItem?.location) mapAddress = saleItem.location;
+    } catch { /* 실패 시 item.location 그대로 사용 */ }
+  }
 
   const priceFrom = item.min_price ?? item.max_price;
   const priceTo = item.max_price ?? item.min_price;
@@ -301,7 +311,7 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
             })()}
 
             {/* 단지 위치 지도 */}
-            <KakaoMap address={item.location} name={item.name} />
+            <KakaoMap address={mapAddress} name={item.name} />
 
             {/* 섹션별 이미지 탭 */}
             {item.sections?.length > 0 && (
