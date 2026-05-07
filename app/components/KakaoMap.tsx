@@ -169,36 +169,20 @@ export default function KakaoMap({ address, name }: Props) {
         });
       }
 
-      function startNormalGeocode() {
-        // 1단계: 번지 주소로 정확한 위치 geocoding
-        if (lotAddress) {
-          geocoder.addressSearch(lotAddress, (result: any, status: any) => {
-            if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
-              const coords = { y: result[0].y, x: result[0].x };
-              geocodeCache.set(cacheKey, coords);
-              placeMarker(coords);
-            } else {
-              fallbackToNameSearch();
-            }
-          });
-        } else {
-          fallbackToNameSearch();
-        }
-      }
-
-      // 0단계: 블록지번 → "지구명 블록번호" 키워드 직접 검색 (정확도 우선)
-      if (blockKeyword) {
-        ps.keywordSearch(blockKeyword, (places: any, status: any) => {
-          if (status === window.kakao.maps.services.Status.OK && places.length > 0) {
-            const coords = { y: places[0].y, x: places[0].x };
+      // 1단계: 번지 주소로 정확한 위치 geocoding
+      // 성공 시 바로 마커 표시 / 실패 시 아파트명 검색으로 fallback
+      if (lotAddress) {
+        geocoder.addressSearch(lotAddress, (result: any, status: any) => {
+          if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
+            const coords = { y: result[0].y, x: result[0].x };
             geocodeCache.set(cacheKey, coords);
             placeMarker(coords);
           } else {
-            startNormalGeocode();
+            fallbackToNameSearch();
           }
         });
       } else {
-        startNormalGeocode();
+        fallbackToNameSearch();
       }
     }
 
