@@ -174,7 +174,9 @@ export default function KakaoMap({ address, name }: Props) {
 
       const cityAddr = cleanAddress.replace(/\s+[가-힣]+(동|읍|면|리)$/, '').trim();
       const provinceCity = address.match(/^[가-힣]+(특별시|광역시|특별자치시|도)\s*[가-힣]*(시|군|구)/)?.[0] ?? '';
-      const addrList = [cleanAddress, cityAddr, provinceCity].filter((a, i, arr) => a && arr.indexOf(a) === i);
+      // 콤마 복수 필지("32-1, 4")는 Kakao geocoder 미지원 → 첫 번째 필지만 사용
+      const firstLotAddr = cleanAddress.includes(',') ? cleanAddress.split(',')[0].trim() : cleanAddress;
+      const addrList = [firstLotAddr, cleanAddress, cityAddr, provinceCity].filter((a, i, arr) => a && arr.indexOf(a) === i);
 
       if (lotAddress) {
         // 번지 주소 → 직접 geocoding → 성공 시 마커, 실패 시 이름 검색으로
