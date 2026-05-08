@@ -140,7 +140,7 @@ function MgmForm({ houseManageNo, aptName }: { houseManageNo: string; aptName: s
             <div style={{ fontSize: 11, color: '#6b7280', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, padding: '10px 12px', lineHeight: 1.8 }}>
               · 수집 항목: 성명, 생년월일, 전화번호, 거주지<br />
               · 수집 목적: {aptName} 분양 상담 연락<br />
-              · 보유 기간: 상담 완료 후 1년<br />
+              · 보유 기간: 상담 완료 후 3개월<br />
               · 동의 거부 시 MGM 신청이 불가합니다.
             </div>
           )}
@@ -158,7 +158,7 @@ function MgmForm({ houseManageNo, aptName }: { houseManageNo: string; aptName: s
               · 제공받는 자: {aptName} 시행사 및 분양대행사<br />
               · 제공 목적: 분양 상담 및 안내<br />
               · 제공 항목: 성명, 생년월일, 전화번호, 거주지<br />
-              · 보유 기간: 상담 완료 후 1년<br />
+              · 보유 기간: 상담 완료 후 3개월<br />
               · 동의 거부 시 MGM 신청이 불가합니다.
             </div>
           )}
