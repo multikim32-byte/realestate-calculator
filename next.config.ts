@@ -13,15 +13,27 @@ const nextConfig: NextConfig = {
     return [
       // mk-land.kr → aptzipsa.kr (구 도메인 → 신 도메인 301)
       {
-        source: '/:path*',
+        source: '/',
         has: [{ type: 'host', value: 'mk-land.kr' }],
-        destination: 'https://www.aptzipsa.kr/:path*',
+        destination: 'https://www.aptzipsa.kr/',
         permanent: true,
       },
       {
-        source: '/:path*',
+        source: '/',
         has: [{ type: 'host', value: 'www.mk-land.kr' }],
-        destination: 'https://www.aptzipsa.kr/:path*',
+        destination: 'https://www.aptzipsa.kr/',
+        permanent: true,
+      },
+      {
+        source: '/:path+',
+        has: [{ type: 'host', value: 'mk-land.kr' }],
+        destination: 'https://www.aptzipsa.kr/:path+',
+        permanent: true,
+      },
+      {
+        source: '/:path+',
+        has: [{ type: 'host', value: 'www.mk-land.kr' }],
+        destination: 'https://www.aptzipsa.kr/:path+',
         permanent: true,
       },
       // non-www → www 리다이렉트 (canonical 통일)
