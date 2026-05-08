@@ -44,6 +44,10 @@ type SaleDetail = {
 
 function MgmForm({ houseManageNo, aptName }: { houseManageNo: string; aptName: string }) {
   const [form, setForm] = useState({ name: '', birth_date: '', phone: '', address: '' });
+  const [consentPrivacy, setConsentPrivacy] = useState(false);
+  const [consentThirdParty, setConsentThirdParty] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showThirdParty, setShowThirdParty] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
@@ -52,6 +56,10 @@ function MgmForm({ houseManageNo, aptName }: { houseManageNo: string; aptName: s
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!consentPrivacy || !consentThirdParty) {
+      setError('필수 동의 항목에 모두 동의해주세요.');
+      return;
+    }
     setSubmitting(true);
     setError('');
     const res = await fetch('/api/mgm/leads', {
@@ -117,6 +125,45 @@ function MgmForm({ houseManageNo, aptName }: { houseManageNo: string; aptName: s
             style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14, boxSizing: 'border-box' as const }}
           />
         </div>
+        {/* 개인정보 동의 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e5e7eb' }}>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+            <input type="checkbox" checked={consentPrivacy} onChange={e => setConsentPrivacy(e.target.checked)} style={{ marginTop: 2, flexShrink: 0 }} />
+            <span>
+              <strong style={{ color: '#dc2626' }}>[필수]</strong> 개인정보 수집·이용에 동의합니다.{' '}
+              <button type="button" onClick={() => setShowPrivacy(v => !v)} style={{ fontSize: 11, color: '#1d4ed8', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                {showPrivacy ? '접기' : '상세보기'}
+              </button>
+            </span>
+          </label>
+          {showPrivacy && (
+            <div style={{ fontSize: 11, color: '#6b7280', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, padding: '10px 12px', lineHeight: 1.8 }}>
+              · 수집 항목: 성명, 생년월일, 전화번호, 거주지<br />
+              · 수집 목적: {aptName} 분양 상담 연락<br />
+              · 보유 기간: 상담 완료 후 1년<br />
+              · 동의 거부 시 MGM 신청이 불가합니다.
+            </div>
+          )}
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+            <input type="checkbox" checked={consentThirdParty} onChange={e => setConsentThirdParty(e.target.checked)} style={{ marginTop: 2, flexShrink: 0 }} />
+            <span>
+              <strong style={{ color: '#dc2626' }}>[필수]</strong> 개인정보 제3자 제공에 동의합니다.{' '}
+              <button type="button" onClick={() => setShowThirdParty(v => !v)} style={{ fontSize: 11, color: '#1d4ed8', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                {showThirdParty ? '접기' : '상세보기'}
+              </button>
+            </span>
+          </label>
+          {showThirdParty && (
+            <div style={{ fontSize: 11, color: '#6b7280', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, padding: '10px 12px', lineHeight: 1.8 }}>
+              · 제공받는 자: {aptName} 시행사 및 분양대행사<br />
+              · 제공 목적: 분양 상담 및 안내<br />
+              · 제공 항목: 성명, 생년월일, 전화번호, 거주지<br />
+              · 보유 기간: 상담 완료 후 1년<br />
+              · 동의 거부 시 MGM 신청이 불가합니다.
+            </div>
+          )}
+        </div>
+
         {error && <p style={{ fontSize: 13, color: '#dc2626', margin: 0 }}>{error}</p>}
         <button
           type="submit" disabled={submitting}
@@ -129,9 +176,6 @@ function MgmForm({ houseManageNo, aptName }: { houseManageNo: string; aptName: s
         >
           {submitting ? '신청 중...' : 'MGM 신청하기'}
         </button>
-        <p style={{ fontSize: 11, color: '#9ca3af', margin: 0, textAlign: 'center' }}>
-          입력하신 개인정보는 분양 상담 목적으로만 사용됩니다.
-        </p>
       </form>
     </div>
   );

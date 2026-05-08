@@ -10,6 +10,10 @@ interface Props {
 export default function UnsoldLeadForm({ unsoldId, aptName }: Props) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [consentPrivacy, setConsentPrivacy] = useState(false);
+  const [consentThirdParty, setConsentThirdParty] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showThirdParty, setShowThirdParty] = useState(false);
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -17,6 +21,10 @@ export default function UnsoldLeadForm({ unsoldId, aptName }: Props) {
     e.preventDefault();
     if (!name.trim() || !phone.trim()) {
       setErrorMsg('이름과 전화번호를 모두 입력해주세요.');
+      return;
+    }
+    if (!consentPrivacy || !consentThirdParty) {
+      setErrorMsg('필수 동의 항목에 모두 동의해주세요.');
       return;
     }
     setStatus('loading');
@@ -103,13 +111,49 @@ export default function UnsoldLeadForm({ unsoldId, aptName }: Props) {
           </button>
         </div>
 
+        {/* 개인정보 동의 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e5e7eb' }}>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+            <input type="checkbox" checked={consentPrivacy} onChange={e => setConsentPrivacy(e.target.checked)} style={{ marginTop: 2, flexShrink: 0 }} />
+            <span>
+              <strong style={{ color: '#dc2626' }}>[필수]</strong> 개인정보 수집·이용에 동의합니다.{' '}
+              <button type="button" onClick={() => setShowPrivacy(v => !v)} style={{ fontSize: 11, color: '#1d4ed8', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                {showPrivacy ? '접기' : '상세보기'}
+              </button>
+            </span>
+          </label>
+          {showPrivacy && (
+            <div style={{ fontSize: 11, color: '#6b7280', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, padding: '10px 12px', lineHeight: 1.8 }}>
+              · 수집 항목: 성명, 전화번호<br />
+              · 수집 목적: {aptName} 분양 상담 연락<br />
+              · 보유 기간: 상담 완료 후 1년<br />
+              · 동의 거부 시 관심 고객 등록이 불가합니다.
+            </div>
+          )}
+
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+            <input type="checkbox" checked={consentThirdParty} onChange={e => setConsentThirdParty(e.target.checked)} style={{ marginTop: 2, flexShrink: 0 }} />
+            <span>
+              <strong style={{ color: '#dc2626' }}>[필수]</strong> 개인정보 제3자 제공에 동의합니다.{' '}
+              <button type="button" onClick={() => setShowThirdParty(v => !v)} style={{ fontSize: 11, color: '#1d4ed8', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                {showThirdParty ? '접기' : '상세보기'}
+              </button>
+            </span>
+          </label>
+          {showThirdParty && (
+            <div style={{ fontSize: 11, color: '#6b7280', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, padding: '10px 12px', lineHeight: 1.8 }}>
+              · 제공받는 자: {aptName} 시행사 및 분양대행사<br />
+              · 제공 목적: 분양 상담 및 안내<br />
+              · 제공 항목: 성명, 전화번호<br />
+              · 보유 기간: 상담 완료 후 1년<br />
+              · 동의 거부 시 관심 고객 등록이 불가합니다.
+            </div>
+          )}
+        </div>
+
         {errorMsg && (
           <p style={{ fontSize: 12, color: '#dc2626', margin: 0 }}>{errorMsg}</p>
         )}
-
-        <p style={{ fontSize: 11, color: '#9ca3af', margin: 0 }}>
-          입력하신 정보는 {aptName} 분양 상담 목적으로만 사용됩니다.
-        </p>
       </form>
     </div>
   );
