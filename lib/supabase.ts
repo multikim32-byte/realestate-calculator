@@ -39,10 +39,11 @@ export type UnsoldListing = {
 };
 
 export type UnsoldLead = {
-  id: string;       // uuid
-  unsold_id: string; // uuid (unsold_listings.id 참조)
+  id: string;
+  unsold_id: string;
   name: string;
   phone: string;
+  memo: string | null;
   created_at: string;
   unsold_listings?: { name: string } | null;
 };

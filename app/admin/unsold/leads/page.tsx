@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { UnsoldLead } from '@/lib/supabase';
@@ -8,6 +8,82 @@ import type { UnsoldLead } from '@/lib/supabase';
 function fmtDate(s: string) {
   const d = new Date(s);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+function MemoCell({ lead, onSave }: { lead: UnsoldLead; onSave: (id: string, memo: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(lead.memo ?? '');
+  const [saving, setSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
+
+  async function save() {
+    setSaving(true);
+    const res = await fetch('/api/unsold/leads', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: lead.id, memo: value }),
+    });
+    setSaving(false);
+    if (res.ok) { onSave(lead.id, value); setEditing(false); }
+    else alert('저장 실패');
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter') save();
+    if (e.key === 'Escape') { setValue(lead.memo ?? ''); setEditing(false); }
+  }
+
+  if (editing) {
+    return (
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+        <input
+          ref={inputRef}
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          maxLength={200}
+          placeholder="메모 입력 (Enter 저장)"
+          style={{
+            flex: 1, padding: '5px 10px', borderRadius: 6,
+            border: '1px solid #93c5fd', fontSize: 13, outline: 'none',
+            minWidth: 0,
+          }}
+        />
+        <button
+          onClick={save}
+          disabled={saving}
+          style={{ padding: '5px 10px', borderRadius: 6, border: 'none', background: '#1d4ed8', color: '#fff', fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap' }}
+        >
+          {saving ? '…' : '저장'}
+        </button>
+        <button
+          onClick={() => { setValue(lead.memo ?? ''); setEditing(false); }}
+          style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#fff', fontSize: 12, cursor: 'pointer' }}
+        >
+          취소
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      onClick={() => setEditing(true)}
+      title="클릭해서 메모 편집"
+      style={{
+        minWidth: 100, cursor: 'pointer', padding: '4px 8px', borderRadius: 6,
+        border: '1px dashed #e5e7eb', fontSize: 13,
+        color: value ? '#374151' : '#d1d5db',
+        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 220,
+      }}
+    >
+      {value || '메모 추가...'}
+    </div>
+  );
 }
 
 export default function AdminLeadsPage() {
@@ -25,11 +101,11 @@ export default function AdminLeadsPage() {
   const filtered = leads.filter(l => {
     if (!search) return true;
     const q = search.toLowerCase();
-    return l.name.includes(search) || l.phone.includes(search) ||
-      (l.unsold_listings?.name ?? '').toLowerCase().includes(q);
+    return l.name.toLowerCase().includes(q) || l.phone.includes(q) ||
+      (l.unsold_listings?.name ?? '').toLowerCase().includes(q) ||
+      (l.memo ?? '').toLowerCase().includes(q);
   });
 
-  // 아파트별 그룹핑
   const grouped = filtered.reduce<Record<string, { aptName: string; leads: UnsoldLead[] }>>((acc, l) => {
     const key = l.unsold_id;
     if (!acc[key]) acc[key] = { aptName: l.unsold_listings?.name ?? l.unsold_id, leads: [] };
@@ -42,6 +118,10 @@ export default function AdminLeadsPage() {
     const res = await fetch(`/api/unsold/leads?id=${id}`, { method: 'DELETE' });
     if (res.ok) setLeads(prev => prev.filter(l => l.id !== id));
     else alert('삭제 실패');
+  };
+
+  const handleMemoSave = (id: string, memo: string) => {
+    setLeads(prev => prev.map(l => l.id === id ? { ...l, memo } : l));
   };
 
   const handleLogout = async () => {
@@ -60,7 +140,7 @@ export default function AdminLeadsPage() {
         <button onClick={handleLogout} style={{ fontSize: 13, color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer' }}>로그아웃</button>
       </div>
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 20px' }}>
+      <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 800, color: '#1e293b', margin: 0 }}>관심 고객 리드</h1>
@@ -70,8 +150,8 @@ export default function AdminLeadsPage() {
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="이름·전화번호·단지명 검색"
-            style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, width: 220 }}
+            placeholder="이름·전화번호·단지명·메모 검색"
+            style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, width: 240 }}
           />
         </div>
 
@@ -83,7 +163,6 @@ export default function AdminLeadsPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {Object.entries(grouped).map(([unsoldId, { aptName, leads: aptLeads }]) => (
               <div key={unsoldId} style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-                {/* 단지 헤더 */}
                 <div style={{
                   background: '#eff6ff', padding: '12px 20px',
                   borderBottom: '1px solid #dbeafe',
@@ -95,33 +174,31 @@ export default function AdminLeadsPage() {
                       {aptLeads.length}건
                     </span>
                   </div>
-                  <Link
-                    href={`/unsold/${unsoldId}`}
-                    target="_blank"
-                    style={{ fontSize: 12, color: '#6b7280', textDecoration: 'none' }}
-                  >
+                  <Link href={`/unsold/${unsoldId}`} target="_blank" style={{ fontSize: 12, color: '#6b7280', textDecoration: 'none' }}>
                     매물 보기 →
                   </Link>
                 </div>
 
-                {/* 리드 목록 */}
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
                     <tr style={{ background: '#f8fafc' }}>
-                      {['이름', '전화번호', '등록일시', ''].map(h => (
-                        <th key={h} style={{ padding: '9px 16px', textAlign: 'left', fontWeight: 600, color: '#6b7280', borderBottom: '1px solid #f3f4f6' }}>{h}</th>
+                      {['이름', '전화번호', '메모', '등록일시', ''].map(h => (
+                        <th key={h} style={{ padding: '9px 16px', textAlign: 'left', fontWeight: 600, color: '#6b7280', borderBottom: '1px solid #f3f4f6', whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {aptLeads.map((lead, i) => (
                       <tr key={lead.id} style={{ borderBottom: i < aptLeads.length - 1 ? '1px solid #f3f4f6' : 'none', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
-                        <td style={{ padding: '10px 16px', fontWeight: 600, color: '#1e293b' }}>{lead.name}</td>
-                        <td style={{ padding: '10px 16px' }}>
+                        <td style={{ padding: '10px 16px', fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap' }}>{lead.name}</td>
+                        <td style={{ padding: '10px 16px', whiteSpace: 'nowrap' }}>
                           <a href={`tel:${lead.phone}`} style={{ color: '#1d4ed8', textDecoration: 'none', fontWeight: 600 }}>{lead.phone}</a>
                         </td>
-                        <td style={{ padding: '10px 16px', color: '#9ca3af' }}>{fmtDate(lead.created_at)}</td>
-                        <td style={{ padding: '10px 16px', textAlign: 'right' }}>
+                        <td style={{ padding: '8px 16px', width: '100%' }}>
+                          <MemoCell lead={lead} onSave={handleMemoSave} />
+                        </td>
+                        <td style={{ padding: '10px 16px', color: '#9ca3af', whiteSpace: 'nowrap' }}>{fmtDate(lead.created_at)}</td>
+                        <td style={{ padding: '10px 16px', whiteSpace: 'nowrap' }}>
                           <button
                             onClick={() => handleDelete(lead.id)}
                             style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: '#fef2f2', color: '#dc2626', fontSize: 12, cursor: 'pointer' }}
