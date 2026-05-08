@@ -1,19 +1,5 @@
 {
   "regions": ["hnd1"],
-  "redirects": [
-    {
-      "source": "/:path*",
-      "has": [{ "type": "host", "value": "mk-land.kr" }],
-      "destination": "https://www.aptzipsa.kr/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
-      "has": [{ "type": "host", "value": "www.mk-land.kr" }],
-      "destination": "https://www.aptzipsa.kr/:path*",
-      "permanent": true
-    }
-  ],
   "crons": [
     {
       "path": "/api/push/send",
