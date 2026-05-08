@@ -42,6 +42,101 @@ type SaleDetail = {
   pblancNo?: string;
 };
 
+function MgmForm({ houseManageNo, aptName }: { houseManageNo: string; aptName: string }) {
+  const [form, setForm] = useState({ name: '', birth_date: '', phone: '', address: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState('');
+
+  const set = (k: keyof typeof form, v: string) => setForm(p => ({ ...p, [k]: v }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError('');
+    const res = await fetch('/api/mgm/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ house_manage_no: houseManageNo, ...form }),
+    });
+    setSubmitting(false);
+    if (res.ok) { setDone(true); }
+    else { const d = await res.json(); setError(d.error || '신청 실패. 다시 시도해주세요.'); }
+  };
+
+  if (done) {
+    return (
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 16, padding: '32px', marginTop: 16, textAlign: 'center' }}>
+        <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
+        <p style={{ fontSize: 16, fontWeight: 800, color: '#166534', margin: '0 0 6px' }}>MGM 신청이 완료됐습니다!</p>
+        <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>담당자가 확인 후 연락드리겠습니다.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ background: '#fff', border: '2px solid #1d4ed8', borderRadius: 16, padding: '28px', marginTop: 16 }}>
+      <div style={{ marginBottom: 20 }}>
+        <span style={{ fontSize: 12, background: '#1d4ed8', color: '#fff', padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>MGM 신청</span>
+        <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1e293b', margin: '10px 0 4px' }}>{aptName} — 지인 추천 신청</h2>
+        <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>청약자 정보를 입력하시면 담당자가 연락드립니다.</p>
+      </div>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 5 }}>청약자 성함 *</label>
+            <input
+              required value={form.name} onChange={e => set('name', e.target.value)}
+              placeholder="홍길동"
+              style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14, boxSizing: 'border-box' as const }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 5 }}>생년월일 *</label>
+            <input
+              required value={form.birth_date} onChange={e => set('birth_date', e.target.value)}
+              placeholder="예: 19901215"
+              maxLength={8}
+              style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14, boxSizing: 'border-box' as const }}
+            />
+          </div>
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 5 }}>전화번호 *</label>
+          <input
+            required value={form.phone} onChange={e => set('phone', e.target.value)}
+            placeholder="010-1234-5678"
+            style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14, boxSizing: 'border-box' as const }}
+          />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 5 }}>거주지 (동까지) *</label>
+          <input
+            required value={form.address} onChange={e => set('address', e.target.value)}
+            placeholder="예: 경기도 성남시 분당구 정자동"
+            style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14, boxSizing: 'border-box' as const }}
+          />
+        </div>
+        {error && <p style={{ fontSize: 13, color: '#dc2626', margin: 0 }}>{error}</p>}
+        <button
+          type="submit" disabled={submitting}
+          style={{
+            padding: '13px', borderRadius: 10, border: 'none',
+            background: submitting ? '#93c5fd' : '#1d4ed8',
+            color: '#fff', fontSize: 15, fontWeight: 800,
+            cursor: submitting ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {submitting ? '신청 중...' : 'MGM 신청하기'}
+        </button>
+        <p style={{ fontSize: 11, color: '#9ca3af', margin: 0, textAlign: 'center' }}>
+          입력하신 개인정보는 분양 상담 목적으로만 사용됩니다.
+        </p>
+      </form>
+    </div>
+  );
+}
+
 const statusStyle: Record<string, { bg: string; color: string }> = {
   '청약예정':   { bg: '#dbeafe', color: '#1d4ed8' },
   '청약중':     { bg: '#d1fae5', color: '#065f46' },
@@ -330,6 +425,9 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
             )}
           </div>
         )}
+
+        {/* MGM 신청 폼 */}
+        {content?.mgm_enabled && <MgmForm houseManageNo={item.houseManageNo ?? item.id} aptName={item.name} />}
 
         {/* 공유하기 배너 */}
         <button

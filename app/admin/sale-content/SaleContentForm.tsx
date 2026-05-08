@@ -26,6 +26,7 @@ type FormData = {
   thumbnail_url: string;
   image_urls: string[];
   is_published: boolean;
+  mgm_enabled: boolean;
 };
 
 const inputStyle = {
@@ -46,6 +47,7 @@ function toForm(c: SaleContent | null): FormData {
     thumbnail_url: c?.thumbnail_url ?? '',
     image_urls: c?.image_urls ?? [],
     is_published: c?.is_published ?? true,
+    mgm_enabled: c?.mgm_enabled ?? false,
   };
 }
 
@@ -118,7 +120,7 @@ export default function SaleContentForm({
       const res = await fetch(`/api/admin/sale-content/${houseManageNo}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, mgm_enabled: form.mgm_enabled }),
       });
       if (res.ok) {
         router.push('/admin/sale-content');
@@ -260,7 +262,7 @@ export default function SaleContentForm({
           </div>
 
           {/* 공개 여부 */}
-          <div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14 }}>
               <input
                 type="checkbox"
@@ -268,6 +270,19 @@ export default function SaleContentForm({
                 onChange={e => set('is_published', e.target.checked)}
               />
               공개 (청약 상세 페이지에 표시)
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14 }}>
+              <input
+                type="checkbox"
+                checked={form.mgm_enabled}
+                onChange={e => set('mgm_enabled', e.target.checked)}
+              />
+              <span>
+                MGM 신청 폼 활성화
+                <span style={{ fontSize: 12, color: '#6b7280', marginLeft: 6 }}>
+                  — 청약 상세 페이지에 신청 폼(성함·생년월일·전화번호·거주지) 표시
+                </span>
+              </span>
             </label>
           </div>
 

@@ -32,6 +32,13 @@ const MENUS = [
     desc: '앱 설치 사용자에게 수동으로 푸시 알림을 발송합니다.',
     color: '#fdf4ff', border: '#e9d5ff', titleColor: '#7c3aed',
   },
+  {
+    href: '/admin/mgm/leads',
+    emoji: '🤝',
+    title: 'MGM 신청 리드',
+    desc: '청약 상세 페이지의 MGM 신청 폼으로 접수된 지인 추천 신청 목록을 확인합니다.',
+    color: '#fff1f2', border: '#fecdd3', titleColor: '#be123c',
+  },
 ];
 
 async function getStats() {
@@ -50,10 +57,11 @@ async function getStats() {
       db.from('unsold_listings').select('*', { count: 'exact', head: true }).eq('is_active', true),
       db.from('unsold_leads').select('*', { count: 'exact', head: true }),
       db.from('push_subscriptions').select('*', { count: 'exact', head: true }),
+      db.from('mgm_leads').select('*', { count: 'exact', head: true }),
     ]);
-    return { totalListings, activeListings, totalLeads, pushSubs };
+    return { totalListings, activeListings, totalLeads, pushSubs, mgmLeads };
   } catch {
-    return { totalListings: null, activeListings: null, totalLeads: null, pushSubs: null };
+    return { totalListings: null, activeListings: null, totalLeads: null, pushSubs: null, mgmLeads: null };
   }
 }
 
@@ -70,6 +78,7 @@ export default async function AdminPage() {
     { label: '활성 매물', value: stats.activeListings ?? '-', unit: '건', color: '#059669' },
     { label: '관심 고객', value: stats.totalLeads ?? '-', unit: '명', color: '#c2410c' },
     { label: '푸시 구독자', value: stats.pushSubs ?? '-', unit: '명', color: '#7c3aed' },
+    { label: 'MGM 신청', value: stats.mgmLeads ?? '-', unit: '건', color: '#be123c' },
   ];
 
   return (
@@ -84,7 +93,7 @@ export default async function AdminPage() {
         <p style={{ fontSize: 14, color: '#6b7280', margin: '0 0 28px' }}>아파트집사 운영 현황</p>
 
         {/* 지표 카드 */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 36 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 36 }}>
           {STATS.map(s => (
             <div key={s.label} style={{
               background: '#fff', borderRadius: 12, padding: '20px 18px',

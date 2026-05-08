@@ -10,6 +10,7 @@ export type SaleContent = {
   thumbnail_url: string | null;
   image_urls: string[] | null;
   is_published: boolean;
+  mgm_enabled: boolean;
   created_at: string;
   updated_at: string;
 };
