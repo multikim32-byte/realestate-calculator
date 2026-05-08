@@ -52,6 +52,7 @@ async function getStats() {
       { count: activeListings },
       { count: totalLeads },
       { count: pushSubs },
+      { count: mgmLeads },
     ] = await Promise.all([
       db.from('unsold_listings').select('*', { count: 'exact', head: true }),
       db.from('unsold_listings').select('*', { count: 'exact', head: true }).eq('is_active', true),
