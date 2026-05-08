@@ -78,7 +78,7 @@ function MgmForm({ houseManageNo, aptName }: { houseManageNo: string; aptName: s
     <div style={{ background: '#fff', border: '2px solid #1d4ed8', borderRadius: 16, padding: '28px', marginTop: 16 }}>
       <div style={{ marginBottom: 20 }}>
         <span style={{ fontSize: 12, background: '#1d4ed8', color: '#fff', padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>MGM 신청</span>
-        <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1e293b', margin: '10px 0 4px' }}>{aptName} — 지인 추천 신청</h2>
+        <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1e293b', margin: '10px 0 4px' }}>{aptName}</h2>
         <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>청약자 정보를 입력하시면 담당자가 연락드립니다.</p>
       </div>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
