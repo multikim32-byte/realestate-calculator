@@ -32,13 +32,30 @@ export default function AdminMgmLeadsPage() {
   const [leads, setLeads] = useState<MgmLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [aptNames, setAptNames] = useState<Record<string, string>>({});
   const router = useRouter();
   const { toast, showToast } = useToast();
 
   useEffect(() => {
     fetch('/api/mgm/leads')
       .then(r => { if (r.status === 401) { router.push('/admin'); return null; } return r.json(); })
-      .then(data => { if (data) { setLeads(data); setLoading(false); } });
+      .then(async (data: MgmLead[] | null) => {
+        if (!data) return;
+        setLeads(data);
+        setLoading(false);
+
+        // 고유 house_manage_no별 아파트명 조회
+        const uniqueNos = [...new Set(data.map(l => l.house_manage_no))];
+        const results = await Promise.all(
+          uniqueNos.map(no =>
+            fetch(`/api/sale/detail?id=${no}`)
+              .then(r => r.json())
+              .then(d => ({ no, name: d.item?.name ?? no }))
+              .catch(() => ({ no, name: no }))
+          )
+        );
+        setAptNames(Object.fromEntries(results.map(r => [r.no, r.name])));
+      });
   }, [router]);
 
   const filtered = leads.filter(l => {
@@ -62,8 +79,8 @@ export default function AdminMgmLeadsPage() {
   };
 
   const handleDownloadCSV = () => {
-    const rows = [['청약공고번호', '성함', '생년월일', '전화번호', '거주지', '신청일시']];
-    leads.forEach(l => rows.push([l.house_manage_no, l.name, l.birth_date, l.phone, l.address, fmtDate(l.created_at)]));
+    const rows = [['아파트명', '청약공고번호', '성함', '생년월일', '전화번호', '거주지', '신청일시']];
+    leads.forEach(l => rows.push([aptNames[l.house_manage_no] ?? l.house_manage_no, l.house_manage_no, l.name, l.birth_date, l.phone, l.address, fmtDate(l.created_at)]));
     const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
     const a = document.createElement('a');
@@ -132,7 +149,7 @@ export default function AdminMgmLeadsPage() {
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: 15, fontWeight: 800, color: '#7c3aed' }}>공고번호: {houseManageNo}</span>
+                    <span style={{ fontSize: 15, fontWeight: 800, color: '#7c3aed' }}>{aptNames[houseManageNo] ?? houseManageNo}</span>
                     <span style={{ fontSize: 12, background: '#7c3aed', color: '#fff', padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>
                       {groupLeads.length}건
                     </span>
