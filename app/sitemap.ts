@@ -104,10 +104,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     'mortgage-fixed-vs-variable-2025','mortgage-application-documents','mortgage-loan-repayment-early-payoff',
     'apartment-management-fee-saving-tips','real-estate-auction-guide','housing-subscription-savings-guide',
     'move-in-checklist-guide','apartment-registration-tax-guide','real-estate-gap-investment-risk',
-    'real-estate-calculator-guide','apartment-subscription-info-guide','mk-land-real-estate-tools-guide',
+    'real-estate-calculator-guide','apartment-subscription-info-guide',
     'unsold-apartment-benefits-guide-2026','subscription-score-guide-2026','apartment-real-price-lookup-guide-2026',
     'unsold-apartment-investment-strategy-2026','first-home-subscription-complete-guide-2026',
-    'mk-land-unsold-listing-launch-2026','apartment-transfer-income-tax-guide-2026',
+    'apartment-transfer-income-tax-guide-2026',
     'real-estate-market-outlook-2026','jeonse-fraud-prevention-complete-guide-2026',
   ];
 

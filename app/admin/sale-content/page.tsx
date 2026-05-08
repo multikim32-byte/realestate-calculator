@@ -16,6 +16,15 @@ type SaleSearchItem = {
   status: string;
 };
 
+function useToast() {
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+  const showToast = (msg: string, ok = true) => {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 3000);
+  };
+  return { toast, showToast };
+}
+
 export default function SaleContentListPage() {
   const [list, setList] = useState<SaleContent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,13 +33,14 @@ export default function SaleContentListPage() {
   const [searching, setSearching] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const router = useRouter();
+  const { toast, showToast } = useToast();
 
   const handleDelete = async (houseManageNo: string) => {
     if (!confirm('이 콘텐츠를 삭제하시겠습니까?')) return;
     setDeleting(houseManageNo);
     const res = await fetch(`/api/admin/sale-content/${houseManageNo}`, { method: 'DELETE' });
     if (res.ok) setList(prev => prev.filter(c => c.house_manage_no !== houseManageNo));
-    else alert('삭제 실패');
+    else showToast('삭제 실패', false);
     setDeleting(null);
   };
 
@@ -62,6 +72,15 @@ export default function SaleContentListPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
+      {toast && (
+        <div style={{
+          position: 'fixed', top: 20, right: 20, zIndex: 9999,
+          padding: '12px 20px', borderRadius: 10, fontWeight: 700,
+          background: toast.ok ? '#dcfce7' : '#fef2f2',
+          color: toast.ok ? '#166534' : '#dc2626',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)', fontSize: 14,
+        }}>{toast.msg}</div>
+      )}
       {/* 헤더 */}
       <div style={{ background: '#1e293b', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>

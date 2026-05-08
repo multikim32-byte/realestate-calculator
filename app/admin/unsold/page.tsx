@@ -6,6 +6,15 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { UnsoldListing } from '@/lib/supabase';
 
+function useToast() {
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+  const showToast = (msg: string, ok = true) => {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 3000);
+  };
+  return { toast, showToast };
+}
+
 export default function AdminUnsoldListPage() {
   const [listings, setListings] = useState<UnsoldListing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -13,6 +22,7 @@ export default function AdminUnsoldListPage() {
   const [search, setSearch] = useState('');
   const [listingType, setListingType] = useState<'전체' | '청약중' | '잔여세대'>('전체');
   const router = useRouter();
+  const { toast, showToast } = useToast();
 
   const sidoList = useMemo(() => {
     const set = new Set(listings.map(l => l.location.trim().split(/\s+/)[0]).filter(Boolean));
@@ -43,7 +53,7 @@ export default function AdminUnsoldListPage() {
     if (!confirm(`"${name}"을 삭제하시겠습니까?`)) return;
     const res = await fetch(`/api/admin/unsold/${id}`, { method: 'DELETE' });
     if (res.ok) setListings(prev => prev.filter(l => l.id !== id));
-    else alert('삭제 실패');
+    else showToast('삭제 실패', false);
   };
 
   const handleToggleActive = async (item: UnsoldListing) => {
@@ -62,6 +72,15 @@ export default function AdminUnsoldListPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
+      {toast && (
+        <div style={{
+          position: 'fixed', top: 20, right: 20, zIndex: 9999,
+          padding: '12px 20px', borderRadius: 10, fontWeight: 700,
+          background: toast.ok ? '#dcfce7' : '#fef2f2',
+          color: toast.ok ? '#166534' : '#dc2626',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)', fontSize: 14,
+        }}>{toast.msg}</div>
+      )}
       {/* 헤더 */}
       <div style={{ background: '#1e293b', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>

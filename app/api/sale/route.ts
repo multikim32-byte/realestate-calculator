@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
     }
 
     const res = NextResponse.json({ items, total: result.total, source: 'api', type });
-    res.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');
+    res.headers.set('Cache-Control', 'public, s-maxage=1800, stale-while-revalidate=7200');
     return res;
   } catch (err) {
     console.error('청약홈 API 오류:', err);

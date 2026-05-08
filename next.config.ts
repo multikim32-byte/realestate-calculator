@@ -79,6 +79,16 @@ const nextConfig: NextConfig = {
         destination: '/sitemap.xml',
         permanent: false,
       },
+      {
+        source: '/blog/mk-land-real-estate-tools-guide',
+        destination: '/blog',
+        permanent: true,
+      },
+      {
+        source: '/blog/mk-land-unsold-listing-launch-2026',
+        destination: '/blog',
+        permanent: true,
+      },
     ];
   },
 };

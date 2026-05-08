@@ -14,6 +14,7 @@ function MemoCell({ lead, onSave }: { lead: UnsoldLead; onSave: (id: string, mem
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(lead.memo ?? '');
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -22,6 +23,7 @@ function MemoCell({ lead, onSave }: { lead: UnsoldLead; onSave: (id: string, mem
 
   async function save() {
     setSaving(true);
+    setSaveError(false);
     const res = await fetch('/api/unsold/leads', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -29,7 +31,7 @@ function MemoCell({ lead, onSave }: { lead: UnsoldLead; onSave: (id: string, mem
     });
     setSaving(false);
     if (res.ok) { onSave(lead.id, value); setEditing(false); }
-    else alert('저장 실패');
+    else { setSaveError(true); }
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -39,33 +41,36 @@ function MemoCell({ lead, onSave }: { lead: UnsoldLead; onSave: (id: string, mem
 
   if (editing) {
     return (
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-        <input
-          ref={inputRef}
-          value={value}
-          onChange={e => setValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          maxLength={200}
-          placeholder="메모 입력 (Enter 저장)"
-          style={{
-            flex: 1, padding: '5px 10px', borderRadius: 6,
-            border: '1px solid #93c5fd', fontSize: 13, outline: 'none',
-            minWidth: 0,
-          }}
-        />
-        <button
-          onClick={save}
-          disabled={saving}
-          style={{ padding: '5px 10px', borderRadius: 6, border: 'none', background: '#1d4ed8', color: '#fff', fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap' }}
-        >
-          {saving ? '…' : '저장'}
-        </button>
-        <button
-          onClick={() => { setValue(lead.memo ?? ''); setEditing(false); }}
-          style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#fff', fontSize: 12, cursor: 'pointer' }}
-        >
-          취소
-        </button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <input
+            ref={inputRef}
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            maxLength={200}
+            placeholder="메모 입력 (Enter 저장)"
+            style={{
+              flex: 1, padding: '5px 10px', borderRadius: 6,
+              border: `1px solid ${saveError ? '#fca5a5' : '#93c5fd'}`, fontSize: 13, outline: 'none',
+              minWidth: 0,
+            }}
+          />
+          <button
+            onClick={save}
+            disabled={saving}
+            style={{ padding: '5px 10px', borderRadius: 6, border: 'none', background: '#1d4ed8', color: '#fff', fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap' }}
+          >
+            {saving ? '…' : '저장'}
+          </button>
+          <button
+            onClick={() => { setValue(lead.memo ?? ''); setEditing(false); setSaveError(false); }}
+            style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#fff', fontSize: 12, cursor: 'pointer' }}
+          >
+            취소
+          </button>
+        </div>
+        {saveError && <span style={{ fontSize: 11, color: '#dc2626' }}>저장 실패. 다시 시도해주세요.</span>}
       </div>
     );
   }
@@ -86,11 +91,21 @@ function MemoCell({ lead, onSave }: { lead: UnsoldLead; onSave: (id: string, mem
   );
 }
 
+function useToast() {
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+  const showToast = (msg: string, ok = true) => {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 3000);
+  };
+  return { toast, showToast };
+}
+
 export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<UnsoldLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const router = useRouter();
+  const { toast, showToast } = useToast();
 
   useEffect(() => {
     fetch('/api/unsold/leads')
@@ -117,7 +132,7 @@ export default function AdminLeadsPage() {
     if (!confirm('이 리드를 삭제하시겠습니까?')) return;
     const res = await fetch(`/api/unsold/leads?id=${id}`, { method: 'DELETE' });
     if (res.ok) setLeads(prev => prev.filter(l => l.id !== id));
-    else alert('삭제 실패');
+    else showToast('삭제 실패', false);
   };
 
   const handleMemoSave = (id: string, memo: string) => {
@@ -131,6 +146,15 @@ export default function AdminLeadsPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
+      {toast && (
+        <div style={{
+          position: 'fixed', top: 20, right: 20, zIndex: 9999,
+          padding: '12px 20px', borderRadius: 10, fontWeight: 700,
+          background: toast.ok ? '#dcfce7' : '#fef2f2',
+          color: toast.ok ? '#166534' : '#dc2626',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)', fontSize: 14,
+        }}>{toast.msg}</div>
+      )}
       <div style={{ background: '#1e293b', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <Link href="/admin" style={{ color: '#fff', fontWeight: 800, fontSize: 16, textDecoration: 'none' }}>🏠 관리자</Link>
