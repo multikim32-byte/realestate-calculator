@@ -132,8 +132,10 @@ export default function AdminMgmLeadsPage() {
   const filtered = leads.filter(l => {
     if (!search) return true;
     const q = search.toLowerCase();
+    const aptName = (aptNames[l.house_manage_no] ?? '').toLowerCase();
     return l.name.toLowerCase().includes(q) || l.phone.includes(q) ||
-      l.address.toLowerCase().includes(q) || l.house_manage_no.includes(q);
+      l.address.toLowerCase().includes(q) || l.house_manage_no.includes(q) ||
+      aptName.includes(q);
   });
 
   const grouped = filtered.reduce<Record<string, MgmLead[]>>((acc, l) => {
