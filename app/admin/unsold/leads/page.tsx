@@ -170,13 +170,36 @@ export default function AdminLeadsPage() {
             <h1 style={{ fontSize: 20, fontWeight: 800, color: '#1e293b', margin: 0 }}>관심 고객 리드</h1>
             <p style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>총 {leads.length}건</p>
           </div>
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="이름·전화번호·단지명·메모 검색"
-            style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, width: 240 }}
-          />
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="이름·전화번호·단지명·메모 검색"
+              style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, width: 220 }}
+            />
+            <button
+              onClick={() => {
+                const rows = [['단지명', '이름', '전화번호', '메모', '등록일시']];
+                leads.forEach(l => rows.push([
+                  l.unsold_listings?.name ?? l.unsold_id,
+                  l.name, l.phone, l.memo ?? '', fmtDate(l.created_at),
+                ]));
+                const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+                const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `리드_${new Date().toISOString().slice(0, 10)}.csv`;
+                a.click();
+              }}
+              style={{
+                padding: '8px 16px', borderRadius: 8, border: '1px solid #e5e7eb',
+                background: '#fff', fontSize: 13, cursor: 'pointer', color: '#374151', whiteSpace: 'nowrap',
+              }}
+            >
+              CSV 다운로드
+            </button>
+          </div>
         </div>
 
         {loading ? (

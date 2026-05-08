@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 
 const admin = createClient(
@@ -11,6 +12,16 @@ interface PushItem {
   name: string;
   receiptStart: string;
   location: string;
+}
+
+// GET /api/push/subscribe — 구독자 수 조회 (관리자 전용)
+export async function GET() {
+  const cookieStore = await cookies();
+  if (cookieStore.get('admin_token')?.value !== process.env.ADMIN_SECRET) {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  }
+  const { count } = await admin.from('push_subscriptions').select('*', { count: 'exact', head: true });
+  return NextResponse.json({ count: count ?? 0 });
 }
 
 // POST /api/push/subscribe — 구독 추가 또는 아이템 추가

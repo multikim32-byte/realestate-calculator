@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import webpush from '@/lib/webpush';
 
@@ -55,4 +56,40 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ sent, cleaned: expired.length, date: tomorrowStr });
+}
+
+// 관리자가 수동으로 푸시 발송
+export async function POST(req: NextRequest) {
+  const cookieStore = await cookies();
+  if (cookieStore.get('admin_token')?.value !== process.env.ADMIN_SECRET) {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  }
+
+  const { title, body, url } = await req.json();
+  if (!title || !body) return NextResponse.json({ error: 'title, body required' }, { status: 400 });
+
+  const { data: subs } = await admin.from('push_subscriptions').select('*');
+  if (!subs || subs.length === 0) return NextResponse.json({ sent: 0, total: 0 });
+
+  const payload = JSON.stringify({ title, body, url: url || '/' });
+  let sent = 0;
+  const expired: string[] = [];
+
+  for (const sub of subs) {
+    try {
+      await webpush.sendNotification(
+        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+        payload
+      );
+      sent++;
+    } catch (err: any) {
+      if (err.statusCode === 410 || err.statusCode === 404) expired.push(sub.id);
+    }
+  }
+
+  if (expired.length > 0) {
+    await admin.from('push_subscriptions').delete().in('id', expired);
+  }
+
+  return NextResponse.json({ sent, total: subs.length, cleaned: expired.length });
 }
