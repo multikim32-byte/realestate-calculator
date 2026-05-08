@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -11,12 +11,83 @@ type MgmLead = {
   birth_date: string;
   phone: string;
   address: string;
+  memo: string | null;
   created_at: string;
 };
 
 function fmtDate(s: string) {
   const d = new Date(s);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+function MemoCell({ lead, onSave }: { lead: MgmLead; onSave: (id: string, memo: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(lead.memo ?? '');
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
+
+  async function save() {
+    setSaving(true);
+    setSaveError(false);
+    const res = await fetch('/api/mgm/leads', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: lead.id, memo: value }),
+    });
+    setSaving(false);
+    if (res.ok) { onSave(lead.id, value); setEditing(false); }
+    else setSaveError(true);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter') save();
+    if (e.key === 'Escape') { setValue(lead.memo ?? ''); setEditing(false); setSaveError(false); }
+  }
+
+  if (editing) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <input
+            ref={inputRef}
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            maxLength={200}
+            placeholder="메모 입력 (Enter 저장)"
+            style={{
+              flex: 1, padding: '5px 10px', borderRadius: 6, minWidth: 0,
+              border: `1px solid ${saveError ? '#fca5a5' : '#93c5fd'}`, fontSize: 13, outline: 'none',
+            }}
+          />
+          <button onClick={save} disabled={saving}
+            style={{ padding: '5px 10px', borderRadius: 6, border: 'none', background: '#1d4ed8', color: '#fff', fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            {saving ? '…' : '저장'}
+          </button>
+          <button onClick={() => { setValue(lead.memo ?? ''); setEditing(false); setSaveError(false); }}
+            style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#fff', fontSize: 12, cursor: 'pointer' }}>
+            취소
+          </button>
+        </div>
+        {saveError && <span style={{ fontSize: 11, color: '#dc2626' }}>저장 실패. 다시 시도해주세요.</span>}
+      </div>
+    );
+  }
+
+  return (
+    <div onClick={() => setEditing(true)} title="클릭해서 메모 편집"
+      style={{
+        minWidth: 100, cursor: 'pointer', padding: '4px 8px', borderRadius: 6,
+        border: '1px dashed #e5e7eb', fontSize: 13,
+        color: value ? '#374151' : '#d1d5db',
+        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 220,
+      }}>
+      {value || '메모 추가...'}
+    </div>
+  );
 }
 
 function useToast() {
@@ -71,6 +142,10 @@ export default function AdminMgmLeadsPage() {
     return acc;
   }, {});
 
+  const handleMemoSave = (id: string, memo: string) => {
+    setLeads(prev => prev.map(l => l.id === id ? { ...l, memo } : l));
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('이 리드를 삭제하시겠습니까?')) return;
     const res = await fetch(`/api/mgm/leads?id=${id}`, { method: 'DELETE' });
@@ -79,8 +154,8 @@ export default function AdminMgmLeadsPage() {
   };
 
   const handleDownloadCSV = () => {
-    const rows = [['아파트명', '청약공고번호', '성함', '생년월일', '전화번호', '거주지', '신청일시']];
-    leads.forEach(l => rows.push([aptNames[l.house_manage_no] ?? l.house_manage_no, l.house_manage_no, l.name, l.birth_date, l.phone, l.address, fmtDate(l.created_at)]));
+    const rows = [['아파트명', '청약공고번호', '성함', '생년월일', '전화번호', '거주지', '메모', '신청일시']];
+    leads.forEach(l => rows.push([aptNames[l.house_manage_no] ?? l.house_manage_no, l.house_manage_no, l.name, l.birth_date, l.phone, l.address, l.memo ?? '', fmtDate(l.created_at)]));
     const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
     const a = document.createElement('a');
@@ -162,7 +237,7 @@ export default function AdminMgmLeadsPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
                     <tr style={{ background: '#f8fafc' }}>
-                      {['성함', '생년월일', '전화번호', '거주지', '신청일시', ''].map(h => (
+                      {['성함', '생년월일', '전화번호', '거주지', '메모', '신청일시', ''].map(h => (
                         <th key={h} style={{ padding: '9px 16px', textAlign: 'left', fontWeight: 600, color: '#6b7280', borderBottom: '1px solid #f3f4f6', whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
                     </tr>
@@ -176,6 +251,9 @@ export default function AdminMgmLeadsPage() {
                           <a href={`tel:${lead.phone}`} style={{ color: '#1d4ed8', textDecoration: 'none', fontWeight: 600 }}>{lead.phone}</a>
                         </td>
                         <td style={{ padding: '10px 16px', color: '#374151' }}>{lead.address}</td>
+                        <td style={{ padding: '8px 16px', width: '100%' }}>
+                          <MemoCell lead={lead} onSave={handleMemoSave} />
+                        </td>
                         <td style={{ padding: '10px 16px', color: '#9ca3af', whiteSpace: 'nowrap' }}>{fmtDate(lead.created_at)}</td>
                         <td style={{ padding: '10px 16px', whiteSpace: 'nowrap' }}>
                           <button
