@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import SectionTabs from './SectionTabs';
 import KakaoMap from '@/app/components/KakaoMap';
+import UnsoldLeadForm from '@/app/components/UnsoldLeadForm';
 import { fetchSaleDetail } from '@/lib/publicDataApi';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -309,6 +310,9 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
                 </div>
               );
             })()}
+
+            {/* 관심 고객 등록 폼 */}
+            <UnsoldLeadForm unsoldId={item.id} aptName={item.name} />
 
             {/* 단지 위치 지도 */}
             <KakaoMap address={mapAddress} name={item.name} />

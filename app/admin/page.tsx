@@ -21,6 +21,15 @@ const MENUS = [
     border: '#bbf7d0',
     titleColor: '#166534',
   },
+  {
+    href: '/admin/unsold/leads',
+    emoji: '📞',
+    title: '관심 고객 리드',
+    desc: '미분양 매물 상세페이지에서 이름·전화번호를 남긴 관심 고객 목록을 단지별로 확인합니다.',
+    color: '#fff7ed',
+    border: '#fed7aa',
+    titleColor: '#c2410c',
+  },
 ];
 
 export default async function AdminPage() {

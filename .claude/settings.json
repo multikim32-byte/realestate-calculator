@@ -96,7 +96,27 @@
       "Bash(xargs wc:*)",
       "WebFetch(domain:www.mk-land.kr)",
       "Bash(cat next.config.mjs)",
-      "Bash(npx vercel:*)"
+      "Bash(npx vercel:*)",
+      "Bash(node -e \"const d = require\\('./app/apt/data.ts'\\); console.log\\('apt:', Object.keys\\(d\\).length\\)\")",
+      "Bash(grep -l \"metadata\" \"c:\\\\Users\\\\김경래소장\\\\realestate-calculator\\\\app\"/**/*.tsx)",
+      "Bash(grep -l \"generateMetadata\\\\|export const metadata\" /c/Users/김경래소장/realestate-calculator/app/admin/*.tsx)",
+      "Bash(find \"/c/Users/김경래소장/realestate-calculator/app\" -name \"page.tsx\" -exec grep -l \"generateStaticParams\\\\|generateMetadata\" {} \\\\;)",
+      "Bash(xargs ls *)",
+      "Bash(grep -B 5 -A 2 \".single\\(\\)\" \"/c/Users/김경래소장/realestate-calculator/app/admin/unsold/\"*\"/page.tsx\")",
+      "Bash(xargs grep *)",
+      "Bash(cat \"/c/Users/김경래소장/realestate-calculator/app/admin/unsold/\"*\"/edit/page.tsx\")",
+      "Bash(grep -B 5 -A 2 \".single\\(\\)\" \"/c/Users/김경래소장/realestate-calculator/app/unsold/\"*\"/page.tsx\")",
+      "Bash(grep \"generateStaticParams\" \"/c/Users/김경래소장/realestate-calculator/app/region/\"*\"/page.tsx\")",
+      "Bash(grep -c \"generateStaticParams\" \"/c/Users/김경래소장/realestate-calculator/app/blog/\"*\"/page.tsx\")",
+      "Bash(grep -E \"useEffect|dependencies|\\\\\\\\]\")",
+      "Bash(ls app/sale/)",
+      "Bash(ls app/rental/)",
+      "Bash(ls app/trade/)",
+      "Bash(cat app/api/unsold/by-sale/route.ts)",
+      "Bash(cat app/api/sale/route.ts)",
+      "Bash(grep -r \"kakao\\\\|KAKAO\" .env.local next.config.ts --include=\"*.ts\" --include=\"*.tsx\" -l)",
+      "Bash(grep -r \"kakao\\\\|KAKAO\" .env.local)",
+      "Bash(cd \"c:\\\\Users\\\\김경래소장\\\\realestate-calculator\" && rm app/unsold/\\\\[id\\\\]/KakaoMap.tsx)"
     ],
     "additionalDirectories": [
       "c:\\Users\\김경래소장\\realestate-calculator\\app\\sale\\[id]",
@@ -105,7 +125,8 @@
       "c:\\Users\\김경래소장\\realestate-calculator\\app\\api\\admin\\unsold",
       "c:\\Users\\김경래소장\\realestate-calculator\\app\\unsold",
       "c:\\Users\\김경래소장\\realestate-calculator\\app\\admin\\unsold\\[id]",
-      "c:\\Users\\김경래소장\\realestate-calculator\\app\\region"
+      "c:\\Users\\김경래소장\\realestate-calculator\\app\\region",
+      "C:\\Users\\김경래소장\\realestate-calculator\\app\\unsold\\[id]"
     ]
   }
 }

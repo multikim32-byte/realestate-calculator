@@ -38,6 +38,15 @@ export type UnsoldListing = {
   updated_at: string;
 };
 
+export type UnsoldLead = {
+  id: string;       // uuid
+  unsold_id: string; // uuid (unsold_listings.id 참조)
+  name: string;
+  phone: string;
+  created_at: string;
+  unsold_listings?: { name: string } | null;
+};
+
 export const CATEGORIES = ['전체', '아파트', '오피스텔', '상가'];
 export const LISTING_TYPES = ['전체', '청약중', '잔여세대'] as const;
 export type ListingType = typeof LISTING_TYPES[number];
