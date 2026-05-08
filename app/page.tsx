@@ -7,9 +7,16 @@ import type { Metadata } from 'next';
 import { Calendar, BarChart2, Calculator, Tag, Map, Building2 } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: '청약정보 — 전국 아파트·오피스텔 분양 청약 정보 & 실거래가',
-  description: '전국 아파트·오피스텔 청약 일정과 인근 실거래가를 한눈에 확인하세요. 국토교통부 공공데이터 기반, 지역별 필터·청약달력·실거래가 조회 지원.',
+  title: '아파트 분양정보·청약정보·실거래가',
+  description: '전국 아파트 분양정보, 청약 일정, 실거래가를 한눈에. 취득세·대출 계산기 무료 제공. 집 살 때, 아파트집사.',
+  keywords: ['아파트 분양정보', '청약정보', '실거래가', '청약 일정', '아파트집사', 'aptzipsa'],
   alternates: { canonical: 'https://www.aptzipsa.kr' },
+  openGraph: {
+    title: '아파트 분양정보·청약정보·실거래가 | 아파트집사',
+    description: '전국 아파트 분양·청약 정보와 실거래가를 무료로. 집 살 때, 아파트집사.',
+    url: 'https://www.aptzipsa.kr',
+    siteName: '아파트집사',
+  },
 };
 
 const orgJsonLd = {

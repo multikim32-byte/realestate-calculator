@@ -5,13 +5,15 @@ import type { Metadata } from 'next';
 export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
-  title: '2026 청약 달력 — 이번 달 청약 일정 한눈에',
-  description: '전국 아파트·오피스텔 청약 일정을 달력으로 확인하세요. 지역별 필터, 청약 시작일·종료일, 청약홈 바로가기 링크 제공.',
+  title: '2026 청약 일정 달력 — 아파트 청약 날짜 한눈에',
+  description: '2026년 전국 아파트·오피스텔 청약 일정을 달력으로 확인하세요. 특별공급·1순위·2순위 날짜, 당첨자 발표일 모두 제공. 아파트집사.',
+  keywords: ['청약 일정', '청약 달력', '2026 청약', '아파트 청약', '특별공급', '1순위 청약', '아파트집사'],
   alternates: { canonical: 'https://www.aptzipsa.kr/calendar' },
   openGraph: {
-    title: '2026년 청약 달력 | 부동산 계산기',
-    description: '이번 달 전국 청약 일정을 달력으로 한눈에 확인하세요.',
+    title: '2026 청약 일정 달력 — 아파트 청약 날짜 한눈에 | 아파트집사',
+    description: '2026년 전국 아파트·오피스텔 청약 일정을 달력으로 확인하세요. 특별공급·1순위·2순위 날짜, 당첨자 발표일 모두 제공.',
     url: 'https://www.aptzipsa.kr/calendar',
+    siteName: '아파트집사',
   },
 };
 

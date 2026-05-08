@@ -8,11 +8,12 @@ import type { Metadata } from 'next';
 export const revalidate = 1800;
 
 export const metadata: Metadata = {
-  title: 'LH 임대공고 — 행복주택·국민임대·장기전세 입주자 모집공고',
-  description: '한국토지주택공사(LH) 행복주택, 국민임대, 통합공공임대, 장기전세 등 임대공고를 한눈에 확인하세요. 지역별 모집 일정과 공급세대수를 빠르게 조회.',
+  title: 'LH 공공임대 아파트 정보 — 행복주택·전세임대',
+  description: 'LH 공공임대, 행복주택, 전세임대 등 전국 공공임대 아파트 정보를 한눈에. 입주 자격·신청 방법까지. 아파트집사.',
+  keywords: ['LH 공공임대', '행복주택', '전세임대', '국민임대', '장기전세', '임대아파트', '아파트집사'],
   openGraph: {
-    title: 'LH 임대공고 — 행복주택·국민임대·장기전세',
-    description: 'LH 공식 임대주택 모집공고 정보. 지역별 필터와 D-day 안내 제공.',
+    title: 'LH 공공임대 아파트 정보 — 행복주택·전세임대 | 아파트집사',
+    description: 'LH 공공임대, 행복주택, 전세임대 등 전국 공공임대 아파트 정보를 한눈에. 입주 자격·신청 방법까지.',
     type: 'website',
     url: 'https://www.aptzipsa.kr/rental',
     siteName: '아파트집사',

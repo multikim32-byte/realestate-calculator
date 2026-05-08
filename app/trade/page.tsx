@@ -6,13 +6,15 @@ import { fetchTradeList, recentMonths } from '@/lib/tradeApi';
 export const revalidate = 3600; // 실거래가 데이터 1시간 ISR 캐싱
 
 export const metadata: Metadata = {
-  title: '아파트 실거래가 조회 — 지역별 최신 매매 거래가',
-  description: '국토교통부 실거래가 공개시스템 기반. 서울·경기·인천 등 전국 아파트 매매 실거래가를 지역·월별로 조회하세요. 단지별 거래 내역, 면적별 가격 분포 차트 제공.',
+  title: '아파트 실거래가 조회 — 전국 매매가 확인',
+  description: '국토교통부 공공데이터 기반 전국 아파트 실거래가를 무료로 조회하세요. 지역별·단지별·평형별 매매가 한눈에. 아파트집사.',
+  keywords: ['아파트 실거래가', '실거래가 조회', '아파트 매매가', '전국 실거래가', '부동산 실거래가', '아파트집사'],
   alternates: { canonical: 'https://www.aptzipsa.kr/trade' },
   openGraph: {
-    title: '아파트 실거래가 조회 | 부동산 계산기',
-    description: '국토부 실거래가 데이터를 지역·월별로 한눈에 확인하세요.',
+    title: '아파트 실거래가 조회 — 전국 매매가 확인 | 아파트집사',
+    description: '국토교통부 공공데이터 기반 전국 아파트 실거래가를 무료로 조회하세요. 지역별·단지별·평형별 매매가 한눈에.',
     url: 'https://www.aptzipsa.kr/trade',
+    siteName: '아파트집사',
   },
 };
 
