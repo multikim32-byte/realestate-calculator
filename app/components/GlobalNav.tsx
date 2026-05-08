@@ -61,11 +61,11 @@ export default function GlobalNav() {
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{
               background: '#1d4ed8', borderRadius: 8,
-              width: 30, height: 30,
+              width: 36, height: 30,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0,
+              flexShrink: 0, gap: 1,
             }}>
-              <span style={{ color: '#fff', fontSize: 15, fontWeight: 900 }}>M</span>
+              <span style={{ color: '#fff', fontSize: 14, fontWeight: 900, letterSpacing: '-1px' }}>AZ</span>
             </div>
             <span style={{ fontSize: 16, fontWeight: 800, color: '#1e3a5f', letterSpacing: '-0.3px' }}>
               아파트집사
