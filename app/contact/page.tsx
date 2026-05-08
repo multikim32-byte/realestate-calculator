@@ -113,7 +113,7 @@ export default function ContactPage() {
           <table style={{ width: '100%', fontSize: 14, borderCollapse: 'collapse' }}>
             <tbody>
               {[
-                ['서비스명', '아파트집사 (아파트집사)'],
+                ['서비스명', '아파트집사 (aptzipsa.kr)'],
                 ['운영자', '김경래 공인중개사'],
                 ['이메일', 'multikim@naver.com'],
                 ['도메인', 'www.aptzipsa.kr'],
