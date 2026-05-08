@@ -95,7 +95,6 @@ export default function KakaoMap({ address, name }: Props) {
     function geocodeAndPlace() {
       const cacheKey = (lotAddress || blockKeyword || cleanAddress) + '|' + name;
 
-      // 캐시 확인 (성공 좌표만 캐시, 실패는 캐시하지 않아 재시도 허용)
       if (geocodeCache.has(cacheKey)) {
         const cached = geocodeCache.get(cacheKey);
         if (cached) { placeMarker(cached); return; }
@@ -103,86 +102,95 @@ export default function KakaoMap({ address, name }: Props) {
 
       const ps = new window.kakao.maps.services.Places();
       const geocoder = new window.kakao.maps.services.Geocoder();
-
       const searchName = (name ?? '').replace(/\s*\([^)]*\)\s*/g, '').trim();
 
-      // 아파트명 키워드 검색 → 실패 시 center 근처 검색 → 실패 시 center 그대로
+      // 이름 유사도 — 매칭 없으면 null 반환해 틀린 POI 방지
+      function bestMatch(places: any[]): any | null {
+        if (!places.length) return null;
+        const normalize = (s: string) => s.replace(/\s/g, '').toLowerCase();
+        const target = normalize(searchName);
+        let best: any = null;
+        let bestScore = 0;
+        for (const p of places) {
+          const pn = normalize(p.place_name);
+          const score = pn === target ? 100 : (target.includes(pn) || pn.includes(target)) ? 50 : 0;
+          if (score > bestScore) { bestScore = score; best = p; }
+        }
+        return best; // 모두 score 0이면 null
+      }
+
+      // 이름 전국 검색 (주소 geocoding 전부 실패 시 최후 수단)
+      function nameSearchDirect() {
+        if (!searchName) { setError(true); setLoadingMap(false); return; }
+        ps.keywordSearch(searchName, (places: any, st: any) => {
+          const hit = st === window.kakao.maps.services.Status.OK ? bestMatch(places) : null;
+          if (hit) {
+            geocodeCache.set(cacheKey, { y: hit.y, x: hit.x });
+            placeMarker({ y: hit.y, x: hit.x });
+          } else {
+            setError(true); setLoadingMap(false);
+          }
+        });
+      }
+
+      // 중심점 기준 이름 검색: 전국 → 중심 근처 5km → 중심점 그대로
       function searchByNameNearCenter(center: { y: string; x: string }) {
         if (!searchName) { geocodeCache.set(cacheKey, center); placeMarker(center); return; }
         const latLng = new window.kakao.maps.LatLng(center.y, center.x);
 
-        function bestMatch(places: any[]): any {
-          if (places.length === 1) return places[0];
-          const normalize = (s: string) => s.replace(/\s/g, '').toLowerCase();
-          const target = normalize(searchName);
-          return places.reduce((best: any, p: any) => {
-            const pn = normalize(p.place_name);
-            const score = pn === target ? 100 : target.includes(pn) || pn.includes(target) ? 50 : 0;
-            const bestScore = normalize(best.place_name) === target ? 100 : normalize(best.place_name).includes(target) ? 50 : 0;
-            return score > bestScore ? p : best;
-          });
-        }
-
-        // 1차: 아파트명 전국 직접 검색 (카테고리 없음 — 단지명이 고유하면 가장 정확)
+        // 1차: 전국 검색 (이름이 고유하면 가장 정확)
         ps.keywordSearch(searchName, (places: any, st: any) => {
-          if (st === window.kakao.maps.services.Status.OK && places.length > 0) {
-            const best = bestMatch(places);
-            const coords = { y: best.y, x: best.x };
-            geocodeCache.set(cacheKey, coords);
-            placeMarker(coords);
+          const hit = st === window.kakao.maps.services.Status.OK ? bestMatch(places) : null;
+          if (hit) {
+            geocodeCache.set(cacheKey, { y: hit.y, x: hit.x });
+            placeMarker({ y: hit.y, x: hit.x });
             return;
           }
-          // 2차: center 근처 2km 검색 (전국 검색 실패 시)
+          // 2차: 중심 근처 5km (블록지번 등 넓은 개발지구 대응)
           ps.keywordSearch(searchName, (p2: any, s2: any) => {
-            const coords = (s2 === window.kakao.maps.services.Status.OK && p2.length > 0)
-              ? { y: bestMatch(p2).y, x: bestMatch(p2).x }
-              : center;
-            geocodeCache.set(cacheKey, coords);
-            placeMarker(coords);
-          }, { location: latLng, radius: 2000 });
+            const hit2 = s2 === window.kakao.maps.services.Status.OK ? bestMatch(p2) : null;
+            geocodeCache.set(cacheKey, hit2 ? { y: hit2.y, x: hit2.x } : center);
+            placeMarker(hit2 ? { y: hit2.y, x: hit2.x } : center);
+          }, { location: latLng, radius: 5000 });
         });
       }
 
-      // 주소 목록을 순서대로 geocoding, 첫 성공 시 callback 호출
-      function geocodeCascade(addrs: string[], onFound: (c: { y: string; x: string }) => void) {
+      // 주소 목록 순서대로 geocoding → 첫 성공 시 onFound, 전부 실패 시 onFail
+      function geocodeCascade(
+        addrs: string[],
+        onFound: (c: { y: string; x: string }) => void,
+        onFail: () => void
+      ) {
         const [head, ...tail] = addrs;
-        if (!head) { setError(true); setLoadingMap(false); return; }
+        if (!head) { onFail(); return; }
         geocoder.addressSearch(head, (result: any, status: any) => {
           if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
             onFound({ y: result[0].y, x: result[0].x });
           } else {
-            geocodeCascade(tail, onFound);
+            geocodeCascade(tail, onFound, onFail);
           }
         });
       }
 
-      // 동 레벨 geocoding → 아파트명 키워드 검색 fallback
-      function fallbackToNameSearch() {
-        // 시도+시군구 추출 (최후 안전망)
-        const cityAddr = cleanAddress.replace(/\s+[가-힣]+(동|읍|면|리)$/, '').trim();
-        const provinceCity = address.match(/^[가-힣]+(특별시|광역시|특별자치시|도)\s*[가-힣]*(시|군|구)/)?.[0] ?? '';
+      const cityAddr = cleanAddress.replace(/\s+[가-힣]+(동|읍|면|리)$/, '').trim();
+      const provinceCity = address.match(/^[가-힣]+(특별시|광역시|특별자치시|도)\s*[가-힣]*(시|군|구)/)?.[0] ?? '';
+      const addrList = [cleanAddress, cityAddr, provinceCity].filter((a, i, arr) => a && arr.indexOf(a) === i);
 
-        const fallbackAddrs = [cleanAddress, cityAddr, provinceCity].filter((a, i, arr) => a && arr.indexOf(a) === i);
-
-        geocodeCascade(fallbackAddrs, (center) => {
-          searchByNameNearCenter(center);
-        });
-      }
-
-      // 1단계: 번지 주소로 정확한 위치 geocoding
-      // 성공 시 바로 마커 표시 / 실패 시 아파트명 검색으로 fallback
       if (lotAddress) {
+        // 번지 주소 → 직접 geocoding → 성공 시 마커, 실패 시 이름 검색으로
         geocoder.addressSearch(lotAddress, (result: any, status: any) => {
           if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
             const coords = { y: result[0].y, x: result[0].x };
             geocodeCache.set(cacheKey, coords);
             placeMarker(coords);
           } else {
-            fallbackToNameSearch();
+            geocodeCascade(addrList, searchByNameNearCenter, nameSearchDirect);
           }
         });
       } else {
-        fallbackToNameSearch();
+        // 번지 없음(블록지번 등) → 주소로 중심점 얻어 이름 검색
+        // 주소 전부 실패 시 이름 전국 직접 검색
+        geocodeCascade(addrList, searchByNameNearCenter, nameSearchDirect);
       }
     }
 
