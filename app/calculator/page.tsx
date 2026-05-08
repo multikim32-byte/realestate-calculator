@@ -1,4 +1,4 @@
-import GlobalNav from "../components/GlobalNav";
+﻿import GlobalNav from "../components/GlobalNav";
 import Calculator from "../components/Calculator";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -8,7 +8,7 @@ export const dynamic = 'force-static';
 export const metadata: Metadata = {
   title: "부동산 계산기 — 취득세·대출·중도금·전월세전환율",
   description: "2026년 최신 기준 취득세, 주택담보대출 원리금, 중도금 이자, 중개수수료, 수익률, 전월세 전환율을 한 번에 무료로 계산하세요. 생애최초 감면, 원리금균등·원금균등 비교 지원.",
-  alternates: { canonical: 'https://www.mk-land.kr/calculator' },
+  alternates: { canonical: 'https://www.aptzipsa.kr/calculator' },
 };
 
 const faqJsonLd = {

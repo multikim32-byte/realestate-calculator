@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -68,7 +68,7 @@ export default function GlobalNav() {
               <span style={{ color: '#fff', fontSize: 15, fontWeight: 900 }}>M</span>
             </div>
             <span style={{ fontSize: 16, fontWeight: 800, color: '#1e3a5f', letterSpacing: '-0.3px' }}>
-              엠케이랜드
+              아파트집사
             </span>
           </Link>
 

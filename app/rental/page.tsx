@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+﻿import { Suspense } from 'react';
 import GlobalNav from '../components/GlobalNav';
 import RentalListClient from '../components/RentalListClient';
 import { fetchLhRentalList } from '@/lib/lhApi';
@@ -14,10 +14,10 @@ export const metadata: Metadata = {
     title: 'LH 임대공고 — 행복주택·국민임대·장기전세',
     description: 'LH 공식 임대주택 모집공고 정보. 지역별 필터와 D-day 안내 제공.',
     type: 'website',
-    url: 'https://www.mk-land.kr/rental',
-    siteName: 'mk-land.kr',
+    url: 'https://www.aptzipsa.kr/rental',
+    siteName: '아파트집사',
   },
-  alternates: { canonical: 'https://www.mk-land.kr/rental' },
+  alternates: { canonical: 'https://www.aptzipsa.kr/rental' },
 };
 
 const jsonLd = {
@@ -25,7 +25,7 @@ const jsonLd = {
   '@type': 'WebPage',
   name: 'LH 임대공고 목록',
   description: '한국토지주택공사(LH) 행복주택, 국민임대, 통합공공임대, 장기전세 등 임대주택 입주자 모집공고 목록',
-  url: 'https://www.mk-land.kr/rental',
+  url: 'https://www.aptzipsa.kr/rental',
   provider: {
     '@type': 'Organization',
     name: '한국토지주택공사(LH)',

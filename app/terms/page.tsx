@@ -1,19 +1,19 @@
-import GlobalNav from '../components/GlobalNav';
+﻿import GlobalNav from '../components/GlobalNav';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
   title: '이용약관',
-  description: 'mk-land.kr 서비스 이용약관입니다. 서비스 이용 조건, 책임 한계, 면책 조항 등을 안내합니다.',
-  alternates: { canonical: 'https://www.mk-land.kr/terms' },
+  description: '아파트집사 서비스 이용약관입니다. 서비스 이용 조건, 책임 한계, 면책 조항 등을 안내합니다.',
+  alternates: { canonical: 'https://www.aptzipsa.kr/terms' },
   robots: { index: false, follow: false },
 };
 
 const sections = [
   {
     title: '제1조 (목적)',
-    content: `본 약관은 엠케이랜드 mk-land.kr(이하 "서비스")이 제공하는 모든 서비스의 이용 조건 및 절차, 운영자와 이용자의 권리·의무·책임사항을 규정함을 목적으로 합니다.`,
+    content: `본 약관은 아파트집사 아파트집사(이하 "서비스")이 제공하는 모든 서비스의 이용 조건 및 절차, 운영자와 이용자의 권리·의무·책임사항을 규정함을 목적으로 합니다.`,
   },
   {
     title: '제2조 (서비스 정의)',
@@ -96,7 +96,7 @@ export default function TermsPage() {
 
         <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid #e5e7eb', color: '#9ca3af', fontSize: 13 }}>
           <p>본 약관은 2026년 4월 10일부터 시행됩니다.</p>
-          <p style={{ marginTop: 4 }}>운영: 엠케이랜드 mk-land.kr · <a href="mailto:multikim@naver.com" style={{ color: '#6b7280' }}>multikim@naver.com</a></p>
+          <p style={{ marginTop: 4 }}>운영: 아파트집사 아파트집사 · <a href="mailto:multikim@naver.com" style={{ color: '#6b7280' }}>multikim@naver.com</a></p>
         </div>
 
         <div style={{ marginTop: 24, display: 'flex', gap: 12, flexWrap: 'wrap' }}>

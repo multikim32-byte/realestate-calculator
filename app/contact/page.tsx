@@ -1,12 +1,12 @@
-import GlobalNav from '../components/GlobalNav';
+﻿import GlobalNav from '../components/GlobalNav';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
   title: '문의하기',
-  description: '엠케이랜드 서비스 이용 중 궁금한 점이나 오류 제보, 개선 의견을 보내주세요.',
-  alternates: { canonical: 'https://www.mk-land.kr/contact' },
+  description: '아파트집사 서비스 이용 중 궁금한 점이나 오류 제보, 개선 의견을 보내주세요.',
+  alternates: { canonical: 'https://www.aptzipsa.kr/contact' },
 };
 
 const SERVICES = [
@@ -27,7 +27,7 @@ const FAQS = [
   },
   {
     q: '청약정보·분양정보는 얼마나 자주 업데이트되나요?',
-    a: '청약정보는 국토교통부 청약홈 공공데이터 API를 통해 실시간으로 제공됩니다. 분양정보(미분양 특별 혜택 단지)는 엠케이랜드 자체 DB로 관리되며 수시로 업데이트됩니다.',
+    a: '청약정보는 국토교통부 청약홈 공공데이터 API를 통해 실시간으로 제공됩니다. 분양정보(미분양 특별 혜택 단지)는 아파트집사 자체 DB로 관리되며 수시로 업데이트됩니다.',
   },
   {
     q: 'LH 임대공고 정보는 어디서 가져오나요?',
@@ -113,10 +113,10 @@ export default function ContactPage() {
           <table style={{ width: '100%', fontSize: 14, borderCollapse: 'collapse' }}>
             <tbody>
               {[
-                ['서비스명', '엠케이랜드 (mk-land.kr)'],
+                ['서비스명', '아파트집사 (아파트집사)'],
                 ['운영자', '김경래 공인중개사'],
                 ['이메일', 'multikim@naver.com'],
-                ['도메인', 'www.mk-land.kr'],
+                ['도메인', 'www.aptzipsa.kr'],
                 ['데이터 출처', '국토교통부 공공데이터 API, LH 공공데이터 API'],
               ].map(([label, value]) => (
                 <tr key={label} style={{ borderBottom: '1px solid #f3f4f6' }}>

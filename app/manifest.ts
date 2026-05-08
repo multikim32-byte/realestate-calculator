@@ -1,11 +1,11 @@
-import type { MetadataRoute } from 'next';
+﻿import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: '청약정보 & 실거래가',
     short_name: '청약정보',
     description: '전국 아파트·오피스텔 청약 일정과 인근 실거래가를 한눈에 확인하세요.',
-    id: 'https://www.mk-land.kr/',
+    id: 'https://www.aptzipsa.kr/',
     start_url: '/',
     scope: '/',
     display: 'standalone',

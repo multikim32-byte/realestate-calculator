@@ -1,4 +1,4 @@
-import { ImageResponse } from 'next/og';
+﻿import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
 export const alt = '청약정보 & 실거래가 — 전국 부동산 정보';
@@ -74,7 +74,7 @@ export default function Image() {
           fontSize: 20, color: 'rgba(255,255,255,0.45)',
           display: 'flex',
         }}>
-          www.mk-land.kr
+          www.aptzipsa.kr
         </div>
       </div>
     ),

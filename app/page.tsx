@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+﻿import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import SaleListClient from './components/SaleListClient';
@@ -9,7 +9,7 @@ import { Calendar, BarChart2, Calculator, Tag, Map, Building2 } from 'lucide-rea
 export const metadata: Metadata = {
   title: '청약정보 — 전국 아파트·오피스텔 분양 청약 정보 & 실거래가',
   description: '전국 아파트·오피스텔 청약 일정과 인근 실거래가를 한눈에 확인하세요. 국토교통부 공공데이터 기반, 지역별 필터·청약달력·실거래가 조회 지원.',
-  alternates: { canonical: 'https://www.mk-land.kr' },
+  alternates: { canonical: 'https://www.aptzipsa.kr' },
 };
 
 const orgJsonLd = {
@@ -17,20 +17,20 @@ const orgJsonLd = {
   '@graph': [
     {
       '@type': 'WebSite',
-      name: '엠케이랜드',
-      url: 'https://www.mk-land.kr',
+      name: '아파트집사',
+      url: 'https://www.aptzipsa.kr',
       description: '전국 아파트·오피스텔 청약 정보, 실거래가 조회, 부동산 계산기를 무료로 제공합니다.',
       potentialAction: {
         '@type': 'SearchAction',
-        target: { '@type': 'EntryPoint', urlTemplate: 'https://www.mk-land.kr/?q={search_term_string}' },
+        target: { '@type': 'EntryPoint', urlTemplate: 'https://www.aptzipsa.kr/?q={search_term_string}' },
         'query-input': 'required name=search_term_string',
       },
     },
     {
       '@type': 'Organization',
-      name: '엠케이랜드',
-      url: 'https://www.mk-land.kr',
-      logo: 'https://www.mk-land.kr/icon-192.png',
+      name: '아파트집사',
+      url: 'https://www.aptzipsa.kr',
+      logo: 'https://www.aptzipsa.kr/icon-192.png',
       contactPoint: { '@type': 'ContactPoint', contactType: 'customer support', email: 'multikim@naver.com' },
     },
   ],

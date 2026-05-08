@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { notFound } from "next/navigation";
 import { posts } from "../data";
 import GlobalNav from "../../components/GlobalNav";
@@ -8,7 +8,7 @@ import type { Metadata } from "next";
 // AdSense 대시보드 > 광고 > 광고 단위에서 발급받은 슬롯 ID로 교체하세요
 const AD_SLOT = "XXXXXXXXXX";
 
-const BASE_URL = 'https://www.mk-land.kr';
+const BASE_URL = 'https://www.aptzipsa.kr';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: post.title,
       description: post.description,
       publishedTime: post.date,
-      siteName: 'mk-land.kr',
+      siteName: '아파트집사',
       images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
     },
     twitter: {
@@ -58,7 +58,7 @@ export default async function PostPage({ params }: Props) {
     datePublished: post.date,
     dateModified: post.date,
     author: { '@type': 'Person', name: '김경래', jobTitle: '공인중개사', url: `${BASE_URL}/about` },
-    publisher: { '@type': 'Organization', name: 'mk-land.kr', url: BASE_URL },
+    publisher: { '@type': 'Organization', name: '아파트집사', url: BASE_URL },
     url: `${BASE_URL}/blog/${slug}`,
     mainEntityOfPage: { '@type': 'WebPage', '@id': `${BASE_URL}/blog/${slug}` },
   };

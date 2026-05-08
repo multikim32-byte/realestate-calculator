@@ -1,4 +1,4 @@
-import GlobalNav from '../components/GlobalNav';
+﻿import GlobalNav from '../components/GlobalNav';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import {
@@ -11,7 +11,7 @@ export const dynamic = 'force-static';
 export const metadata: Metadata = {
   title: '서비스 소개',
   description: '전국 아파트·오피스텔 청약 정보, 실거래가 조회, LH 임대공고, 부동산 계산기(취득세·대출·중도금·중개수수료)를 무료로 제공합니다.',
-  alternates: { canonical: 'https://www.mk-land.kr/about' },
+  alternates: { canonical: 'https://www.aptzipsa.kr/about' },
 };
 
 const features = [
@@ -120,7 +120,7 @@ export default function AboutPage() {
       <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)', padding: '36px 16px 32px', textAlign: 'center' }}>
         <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: '0 0 8px' }}>서비스 소개</h1>
         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0 }}>
-          청약·실거래가·임대공고·계산기를 한 곳에서 — mk-land.kr
+          청약·실거래가·임대공고·계산기를 한 곳에서 — 아파트집사
         </p>
       </div>
 
@@ -192,7 +192,7 @@ export default function AboutPage() {
             취득세·대출·청약·임대차 등 실생활에 필요한 부동산 정보를 누구나 쉽게 이해할 수 있도록 정리하고, 직접 사용하기 편한 계산·조회 도구를 만들어 제공합니다.
           </p>
           <p style={{ fontSize: 13, color: '#9ca3af', margin: 0 }}>
-            www.mk-land.kr &nbsp;·&nbsp; multikim@naver.com
+            www.aptzipsa.kr &nbsp;·&nbsp; multikim@naver.com
           </p>
         </div>
 

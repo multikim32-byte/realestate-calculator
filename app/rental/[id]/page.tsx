@@ -1,4 +1,4 @@
-import { cache } from 'react';
+﻿import { cache } from 'react';
 import type { Metadata } from 'next';
 import { fetchLhRentalItemById, type LhRentalItem } from '@/lib/lhApi';
 import RentalDetailClient from './RentalDetailClient';
@@ -23,11 +23,11 @@ export async function generateMetadata({ params, searchParams: _sp }: PageProps)
   await _sp; // Next.js requires searchParams to be awaited even if unused
   const item = await getRentalItem(id);
 
-  const canonical = `https://www.mk-land.kr/rental/${id}`;
+  const canonical = `https://www.aptzipsa.kr/rental/${id}`;
 
   if (!item) {
     return {
-      title: 'LH 임대공고 상세 — mk-land.kr',
+      title: 'LH 임대공고 상세 — 아파트집사',
       alternates: { canonical },
     };
   }
@@ -48,7 +48,7 @@ export async function generateMetadata({ params, searchParams: _sp }: PageProps)
       description,
       type: 'article',
       url: canonical,
-      siteName: 'mk-land.kr',
+      siteName: '아파트집사',
     },
     twitter: { card: 'summary', title, description },
     alternates: { canonical },
@@ -76,7 +76,7 @@ export default async function RentalDetailPage({ params, searchParams }: PagePro
       availabilityStarts: item.receiptStart,
       availabilityEnds: item.receiptEnd || undefined,
     }),
-    url: item.pblancUrl || `https://www.mk-land.kr/rental/${id}`,
+    url: item.pblancUrl || `https://www.aptzipsa.kr/rental/${id}`,
   } : null;
 
   return (

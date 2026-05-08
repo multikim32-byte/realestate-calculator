@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import GlobalNav from './components/GlobalNav';
 
 export const metadata: Metadata = {
-  title: '페이지를 찾을 수 없습니다 | mk-land',
+  title: '페이지를 찾을 수 없습니다 | 아파트집사',
   description: '요청하신 페이지를 찾을 수 없습니다. 주소를 다시 확인하거나 홈으로 이동해주세요.',
   robots: { index: false, follow: false },
 };

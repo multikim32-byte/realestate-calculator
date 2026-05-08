@@ -42,7 +42,7 @@ export default async function AdminPage() {
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
       {/* 헤더 */}
       <div style={{ background: '#1e293b', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ color: '#fff', fontWeight: 800, fontSize: 16 }}>🏠 mk-land 관리자</span>
+        <span style={{ color: '#fff', fontWeight: 800, fontSize: 16 }}>🏠 아파트집사 관리자</span>
         <Link href="/api/admin/logout" style={{ color: '#94a3b8', fontSize: 13, textDecoration: 'none' }}>로그아웃</Link>
       </div>
 

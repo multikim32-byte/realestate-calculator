@@ -1,4 +1,4 @@
-import GlobalNav from '../components/GlobalNav';
+﻿import GlobalNav from '../components/GlobalNav';
 import CalendarClient from './CalendarClient';
 import type { Metadata } from 'next';
 
@@ -7,11 +7,11 @@ export const dynamic = 'force-static';
 export const metadata: Metadata = {
   title: '2026 청약 달력 — 이번 달 청약 일정 한눈에',
   description: '전국 아파트·오피스텔 청약 일정을 달력으로 확인하세요. 지역별 필터, 청약 시작일·종료일, 청약홈 바로가기 링크 제공.',
-  alternates: { canonical: 'https://www.mk-land.kr/calendar' },
+  alternates: { canonical: 'https://www.aptzipsa.kr/calendar' },
   openGraph: {
     title: '2026년 청약 달력 | 부동산 계산기',
     description: '이번 달 전국 청약 일정을 달력으로 한눈에 확인하세요.',
-    url: 'https://www.mk-land.kr/calendar',
+    url: 'https://www.aptzipsa.kr/calendar',
   },
 };
 

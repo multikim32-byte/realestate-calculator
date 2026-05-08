@@ -1,8 +1,8 @@
-import type { MetadataRoute } from 'next';
+﻿import type { MetadataRoute } from 'next';
 import { supabase } from '@/lib/supabase';
 import { fetchPublicSaleList } from '@/lib/publicDataApi';
 
-const BASE = 'https://www.mk-land.kr';
+const BASE = 'https://www.aptzipsa.kr';
 
 const REGIONS = ['서울','경기','인천','부산','대구','광주','대전','울산','세종','강원','충북','충남','전북','전남','경북','경남','제주'];
 

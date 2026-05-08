@@ -1,4 +1,4 @@
-import GlobalNav from '../components/GlobalNav';
+﻿import GlobalNav from '../components/GlobalNav';
 import { supabase } from '@/lib/supabase';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -9,11 +9,11 @@ const REGIONS = ['서울','경기','인천','부산','대구','광주','대전',
 export const metadata: Metadata = {
   title: '전국 분양정보 2026 — 미분양·잔여세대·청약중 매물',
   description: '전국 아파트·오피스텔 분양정보를 한눈에 확인하세요. 청약 중 단지, 미분양 잔여세대, 계약 혜택(중도금 무이자·발코니 확장 등) 정보를 지역별로 무료 제공합니다.',
-  alternates: { canonical: 'https://www.mk-land.kr/unsold' },
+  alternates: { canonical: 'https://www.aptzipsa.kr/unsold' },
   openGraph: {
-    title: '전국 분양정보 2026 — 미분양·잔여세대·청약중 매물 | mk-land.kr',
+    title: '전국 분양정보 2026 — 미분양·잔여세대·청약중 매물 | 아파트집사',
     description: '전국 아파트·오피스텔 분양정보 한눈에. 청약중·잔여세대·계약 혜택 무료 확인.',
-    url: 'https://www.mk-land.kr/unsold',
+    url: 'https://www.aptzipsa.kr/unsold',
   },
 };
 
@@ -36,16 +36,16 @@ export default async function UnsoldPage() {
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: '홈', item: 'https://www.mk-land.kr' },
-          { '@type': 'ListItem', position: 2, name: '전국 분양정보', item: 'https://www.mk-land.kr/unsold' },
+          { '@type': 'ListItem', position: 1, name: '홈', item: 'https://www.aptzipsa.kr' },
+          { '@type': 'ListItem', position: 2, name: '전국 분양정보', item: 'https://www.aptzipsa.kr/unsold' },
         ],
       },
       {
         '@type': 'CollectionPage',
         name: '전국 분양정보 2026',
         description: '전국 아파트·오피스텔 분양정보. 청약중 단지, 미분양 잔여세대, 계약 혜택 정보 제공.',
-        url: 'https://www.mk-land.kr/unsold',
-        isPartOf: { '@type': 'WebSite', url: 'https://www.mk-land.kr', name: 'mk-land.kr' },
+        url: 'https://www.aptzipsa.kr/unsold',
+        isPartOf: { '@type': 'WebSite', url: 'https://www.aptzipsa.kr', name: '아파트집사' },
       },
     ],
   };

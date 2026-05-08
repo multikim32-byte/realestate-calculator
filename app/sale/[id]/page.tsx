@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 import { cache } from 'react';
 import { fetchSaleDetail, fetchPublicSaleList } from '@/lib/publicDataApi';
 import { fetchSaleContent } from '@/lib/saleContent';
@@ -57,14 +57,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       title,
       description,
       keywords,
-      alternates: { canonical: `https://www.mk-land.kr/sale/${id}` },
+      alternates: { canonical: `https://www.aptzipsa.kr/sale/${id}` },
       openGraph: {
         title,
         description,
-        url: `https://www.mk-land.kr/sale/${id}`,
+        url: `https://www.aptzipsa.kr/sale/${id}`,
         type: 'website',
         locale: 'ko_KR',
-        siteName: '부동산 계산기 | mk-land',
+        siteName: '아파트집사',
         ...(ogImages && { images: ogImages }),
       },
     };
@@ -86,7 +86,7 @@ async function buildJsonLd(id: string) {
       '@context': 'https://schema.org',
       '@type': 'RealEstateListing',
       name: `${item.name} ${item.buildingType} 청약`,
-      url: `https://www.mk-land.kr/sale/${id}`,
+      url: `https://www.aptzipsa.kr/sale/${id}`,
       description: content?.summary || [
         `${item.location} ${item.buildingType}.`,
         item.totalUnits ? `총 ${item.totalUnits.toLocaleString()}세대.` : '',

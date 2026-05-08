@@ -1,4 +1,4 @@
-import GlobalNav from '@/app/components/GlobalNav';
+﻿import GlobalNav from '@/app/components/GlobalNav';
 import ShareButton from '@/app/components/ShareButton';
 import { supabase } from '@/lib/supabase';
 import type { UnsoldListing } from '@/lib/supabase';
@@ -30,11 +30,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return {
     title,
     description,
-    alternates: { canonical: `https://www.mk-land.kr/unsold/${id}` },
+    alternates: { canonical: `https://www.aptzipsa.kr/unsold/${id}` },
     openGraph: {
       title,
       description,
-      url: `https://www.mk-land.kr/unsold/${id}`,
+      url: `https://www.aptzipsa.kr/unsold/${id}`,
       images: data.thumbnail_url ? [{ url: data.thumbnail_url }] : [],
     },
   };
@@ -85,16 +85,16 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: '홈', item: 'https://www.mk-land.kr' },
-          { '@type': 'ListItem', position: 2, name: '분양정보', item: 'https://www.mk-land.kr/unsold' },
-          { '@type': 'ListItem', position: 3, name: item.name, item: `https://www.mk-land.kr/unsold/${id}` },
+          { '@type': 'ListItem', position: 1, name: '홈', item: 'https://www.aptzipsa.kr' },
+          { '@type': 'ListItem', position: 2, name: '분양정보', item: 'https://www.aptzipsa.kr/unsold' },
+          { '@type': 'ListItem', position: 3, name: item.name, item: `https://www.aptzipsa.kr/unsold/${id}` },
         ],
       },
       {
         '@type': 'Residence',
         name: item.name,
         description: item.benefit ?? `${item.location} ${item.category} 분양 매물`,
-        url: `https://www.mk-land.kr/unsold/${id}`,
+        url: `https://www.aptzipsa.kr/unsold/${id}`,
         address: {
           '@type': 'PostalAddress',
           streetAddress: item.location,

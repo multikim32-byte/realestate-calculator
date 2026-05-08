@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Noto_Sans_KR } from 'next/font/google';
 import Script from "next/script";
 import BookmarkToast from "./components/BookmarkToast";
@@ -12,13 +12,13 @@ const notoSansKr = Noto_Sans_KR({
   variable: '--font-kr',
 });
 
-const BASE_URL = 'https://www.mk-land.kr';
+const BASE_URL = 'https://www.aptzipsa.kr';
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: "청약정보 & 실거래가 — 전국 분양·청약 일정 한눈에 | mk-land",
-    template: "%s | mk-land",
+    default: "청약정보 & 실거래가 — 전국 분양·청약 일정 한눈에 | 아파트집사",
+    template: "%s | 아파트집사",
   },
   description: "전국 아파트·오피스텔 청약 일정과 인근 실거래가를 한눈에 확인하세요. 청약달력, 실거래가 조회, 부동산 계산기(취득세·대출·중도금) 무료 제공.",
   keywords: ["부동산 계산기", "취득세 계산기", "주택담보대출", "중도금 이자", "중개수수료", "분양정보", "청약", "수익률 계산"],
@@ -28,14 +28,14 @@ export const metadata: Metadata = {
     type: "website",
     locale: "ko_KR",
     url: BASE_URL,
-    siteName: "엠케이랜드",
-    title: "전국 부동산 정보 — 청약·실거래가·분양·계산기 | mk-land",
+    siteName: "아파트집사",
+    title: "전국 부동산 정보 — 청약·실거래가·분양·계산기 | 아파트집사",
     description: "청약 일정 · 실거래가 · 분양정보 · 계산기까지 무료로. 국토교통부 공공데이터 기반 전국 부동산 정보 서비스.",
     images: [{ url: '/opengraph-image?v=2', width: 1200, height: 630, alt: '전국 부동산 정보' }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "전국 부동산 정보 — 청약·실거래가·분양·계산기 | mk-land",
+    title: "전국 부동산 정보 — 청약·실거래가·분양·계산기 | 아파트집사",
     description: "청약 일정 · 실거래가 · 분양정보 · 계산기까지 무료로. 국토교통부 공공데이터 기반 전국 부동산 정보 서비스.",
     images: ['/opengraph-image?v=2'],
   },
@@ -89,7 +89,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <BookmarkToast />
         <footer style={{ background: '#f9fafb', borderTop: '1px solid #e5e7eb', padding: '24px 16px', marginTop: 40 }}>
           <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'space-between', alignItems: 'center' }}>
-            <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>© 2026 엠케이랜드 · 전국 아파트·오피스텔 분양 청약 정보 &amp; 실거래가 | mk-land.kr</p>
+            <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>© 2026 아파트집사 · 전국 아파트·오피스텔 분양 청약 정보 &amp; 실거래가 | 아파트집사</p>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <a href="/about" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>서비스 소개</a>
               <a href="/terms" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>이용약관</a>

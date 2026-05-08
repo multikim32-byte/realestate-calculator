@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+﻿import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
@@ -14,8 +14,8 @@ const nextConfig: NextConfig = {
       // non-www → www 리다이렉트 (canonical 통일)
       {
         source: '/:path*',
-        has: [{ type: 'host', value: 'mk-land.kr' }],
-        destination: 'https://www.mk-land.kr/:path*',
+        has: [{ type: 'host', value: 'aptzipsa.kr' }],
+        destination: 'https://www.aptzipsa.kr/:path*',
         permanent: true,
       },
       {

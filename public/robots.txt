@@ -1,4 +1,4 @@
-User-agent: *
+﻿User-agent: *
 Allow: /
 
-Sitemap: https://www.mk-land.kr/sitemap.xml
+Sitemap: https://www.aptzipsa.kr/sitemap.xml
