@@ -1,8 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+
+type PushLog = {
+  id: string;
+  title: string;
+  body: string;
+  url: string;
+  sent_count: number;
+  total_count: number;
+  created_at: string;
+};
 
 export default function AdminPushPage() {
   const [title, setTitle] = useState('');
@@ -12,7 +22,15 @@ export default function AdminPushPage() {
   const [result, setResult] = useState<{ sent: number; total: number } | null>(null);
   const [error, setError] = useState('');
   const [subCount, setSubCount] = useState<number | null>(null);
+  const [logs, setLogs] = useState<PushLog[]>([]);
   const router = useRouter();
+
+  const fetchLogs = useCallback(() => {
+    fetch('/api/push/logs')
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setLogs(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch('/api/admin/unsold')
@@ -22,7 +40,8 @@ export default function AdminPushPage() {
       .then(r => r.json())
       .then(d => setSubCount(d.count ?? null))
       .catch(() => {});
-  }, [router]);
+    fetchLogs();
+  }, [router, fetchLogs]);
 
   const handleSend = async () => {
     if (!title.trim() || !body.trim()) { setError('제목과 내용을 입력하세요.'); return; }
@@ -41,6 +60,7 @@ export default function AdminPushPage() {
       setTitle('');
       setBody('');
       setUrl('/');
+      fetchLogs();
     } else {
       setError('발송 실패. 다시 시도해주세요.');
     }
@@ -145,6 +165,40 @@ export default function AdminPushPage() {
           >
             {sending ? '발송 중...' : '전체 발송'}
           </button>
+        </div>
+
+        {/* 발송 기록 */}
+        <div style={{ marginTop: 36 }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', margin: '0 0 14px' }}>
+            발송 기록 {logs.length > 0 ? `(최근 ${logs.length}건)` : ''}
+          </p>
+          {logs.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '32px 20px', background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', color: '#9ca3af', fontSize: 13 }}>
+              발송 기록이 없습니다.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {logs.map(log => (
+                <div key={log.id} style={{
+                  background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb',
+                  padding: '14px 18px', display: 'flex', alignItems: 'flex-start', gap: 14,
+                }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 3 }}>{log.title}</div>
+                    <div style={{ fontSize: 13, color: '#374151', marginBottom: 4 }}>{log.body}</div>
+                    <div style={{ fontSize: 12, color: '#9ca3af' }}>
+                      {log.url !== '/' && <span style={{ marginRight: 8 }}>→ {log.url}</span>}
+                      {new Date(log.created_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: '#7c3aed' }}>{log.sent_count}명</div>
+                    <div style={{ fontSize: 11, color: '#9ca3af' }}>/{log.total_count}명</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -46,12 +46,15 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-// PATCH — 어드민 전용: 메모 수정
+// PATCH — 어드민 전용: 메모·상태 수정
 export async function PATCH(req: NextRequest) {
   if (!await isAdmin()) return NextResponse.json({ error: '권한 없음' }, { status: 401 });
-  const { id, memo } = await req.json();
+  const { id, memo, status } = await req.json();
   if (!id) return NextResponse.json({ error: 'id 필요' }, { status: 400 });
-  const { error } = await admin.from('mgm_leads').update({ memo }).eq('id', id);
+  const update: Record<string, string | undefined> = {};
+  if (memo !== undefined) update.memo = memo;
+  if (status !== undefined) update.status = status;
+  const { error } = await admin.from('mgm_leads').update(update).eq('id', id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

@@ -47,22 +47,42 @@ async function getStats() {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
     const [
       { count: totalListings },
       { count: activeListings },
       { count: totalLeads },
       { count: pushSubs },
       { count: mgmLeads },
+      { count: thisMonthLeads },
+      { count: thisMonthMgm },
+      { data: locationRows },
     ] = await Promise.all([
       db.from('unsold_listings').select('*', { count: 'exact', head: true }),
       db.from('unsold_listings').select('*', { count: 'exact', head: true }).eq('is_active', true),
       db.from('unsold_leads').select('*', { count: 'exact', head: true }),
       db.from('push_subscriptions').select('*', { count: 'exact', head: true }),
       db.from('mgm_leads').select('*', { count: 'exact', head: true }),
+      db.from('unsold_leads').select('*', { count: 'exact', head: true }).gte('created_at', monthStart),
+      db.from('mgm_leads').select('*', { count: 'exact', head: true }).gte('created_at', monthStart),
+      db.from('unsold_listings').select('location').eq('is_active', true),
     ]);
-    return { totalListings, activeListings, totalLeads, pushSubs, mgmLeads };
+
+    // 시/도 단위 집계
+    const regionMap: Record<string, number> = {};
+    for (const row of locationRows ?? []) {
+      const sido = (row.location as string)?.trim().split(/\s+/)[0] ?? '기타';
+      regionMap[sido] = (regionMap[sido] ?? 0) + 1;
+    }
+    const topRegions = Object.entries(regionMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    return { totalListings, activeListings, totalLeads, pushSubs, mgmLeads, thisMonthLeads, thisMonthMgm, topRegions };
   } catch {
-    return { totalListings: null, activeListings: null, totalLeads: null, pushSubs: null, mgmLeads: null };
+    return { totalListings: null, activeListings: null, totalLeads: null, pushSubs: null, mgmLeads: null, thisMonthLeads: null, thisMonthMgm: null, topRegions: [] as [string, number][] };
   }
 }
 
@@ -74,6 +94,9 @@ export default async function AdminPage() {
 
   const stats = await getStats();
 
+  const now = new Date();
+  const monthLabel = `${now.getMonth() + 1}월`;
+
   const STATS = [
     { label: '전체 매물', value: stats.totalListings ?? '-', unit: '건', color: '#1d4ed8' },
     { label: '활성 매물', value: stats.activeListings ?? '-', unit: '건', color: '#059669' },
@@ -82,6 +105,13 @@ export default async function AdminPage() {
     { label: 'MGM 신청', value: stats.mgmLeads ?? '-', unit: '건', color: '#be123c' },
   ];
 
+  const MONTHLY = [
+    { label: `${monthLabel} 관심고객`, value: stats.thisMonthLeads ?? '-', unit: '명', color: '#c2410c', bg: '#fff7ed', border: '#fed7aa' },
+    { label: `${monthLabel} MGM`, value: stats.thisMonthMgm ?? '-', unit: '건', color: '#be123c', bg: '#fff1f2', border: '#fecdd3' },
+  ];
+
+  const maxRegion = (stats.topRegions[0]?.[1] ?? 1) as number;
+
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
       <div style={{ background: '#1e293b', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -89,12 +119,12 @@ export default async function AdminPage() {
         <Link href="/api/admin/logout" style={{ color: '#94a3b8', fontSize: 13, textDecoration: 'none' }}>로그아웃</Link>
       </div>
 
-      <div style={{ maxWidth: 800, margin: '0 auto', padding: '48px 20px' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '48px 20px' }}>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1e293b', margin: '0 0 6px' }}>관리자 대시보드</h1>
         <p style={{ fontSize: 14, color: '#6b7280', margin: '0 0 28px' }}>아파트집사 운영 현황</p>
 
-        {/* 지표 카드 */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 36 }}>
+        {/* 전체 지표 */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 14 }}>
           {STATS.map(s => (
             <div key={s.label} style={{
               background: '#fff', borderRadius: 12, padding: '20px 18px',
@@ -108,9 +138,47 @@ export default async function AdminPage() {
           ))}
         </div>
 
+        {/* 이번달 리드 + 지역별 분포 */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: 14, marginBottom: 36 }}>
+          {MONTHLY.map(s => (
+            <div key={s.label} style={{
+              background: s.bg, borderRadius: 12, padding: '20px 18px',
+              border: `1px solid ${s.border}`, textAlign: 'center',
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: s.color, marginBottom: 4, letterSpacing: 0.3 }}>
+                이번 달
+              </div>
+              <div style={{ fontSize: 28, fontWeight: 900, color: s.color, lineHeight: 1 }}>
+                {s.value}<span style={{ fontSize: 14, fontWeight: 600 }}>{s.unit}</span>
+              </div>
+              <div style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>{s.label}</div>
+            </div>
+          ))}
+
+          {/* 지역별 활성 매물 */}
+          <div style={{ background: '#fff', borderRadius: 12, padding: '16px 20px', border: '1px solid #e5e7eb' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 12 }}>지역별 활성 매물</div>
+            {stats.topRegions.length === 0 ? (
+              <p style={{ fontSize: 13, color: '#9ca3af', margin: 0 }}>데이터 없음</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                {stats.topRegions.map(([sido, cnt]) => (
+                  <div key={sido} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 12, color: '#374151', width: 56, flexShrink: 0 }}>{sido}</span>
+                    <div style={{ flex: 1, background: '#f3f4f6', borderRadius: 4, overflow: 'hidden', height: 8 }}>
+                      <div style={{ width: `${Math.round((cnt / maxRegion) * 100)}%`, height: '100%', background: '#3b82f6', borderRadius: 4 }} />
+                    </div>
+                    <span style={{ fontSize: 12, color: '#6b7280', width: 28, textAlign: 'right', flexShrink: 0 }}>{cnt}건</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* 메뉴 카드 */}
         <style>{`.admin-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.1); transform: translateY(-2px); }`}</style>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
           {MENUS.map(m => (
             <Link key={m.href} href={m.href} style={{ textDecoration: 'none' }}>
               <div className="admin-card" style={{

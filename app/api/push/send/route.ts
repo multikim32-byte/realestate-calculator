@@ -91,5 +91,8 @@ export async function POST(req: NextRequest) {
     await admin.from('push_subscriptions').delete().in('id', expired);
   }
 
+  // 발송 기록 저장 (push_logs 테이블)
+  try { await admin.from('push_logs').insert({ title, body, url: url || '/', sent_count: sent, total_count: subs.length }); } catch { /* table may not exist */ }
+
   return NextResponse.json({ sent, total: subs.length, cleaned: expired.length });
 }

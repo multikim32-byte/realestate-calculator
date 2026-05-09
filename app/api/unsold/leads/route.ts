@@ -36,9 +36,12 @@ export async function PATCH(req: NextRequest) {
   const isAdmin = cookieStore.get('admin_token')?.value === process.env.ADMIN_SECRET;
   if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { id, memo } = await req.json();
+  const { id, memo, status } = await req.json();
   if (!id) return NextResponse.json({ error: '필수 파라미터 누락' }, { status: 400 });
-  const { error } = await supabase.from('unsold_leads').update({ memo }).eq('id', id);
+  const update: Record<string, string | undefined> = {};
+  if (memo !== undefined) update.memo = memo;
+  if (status !== undefined) update.status = status;
+  const { error } = await supabase.from('unsold_leads').update(update).eq('id', id);
   if (error) return NextResponse.json({ error: '수정 실패' }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

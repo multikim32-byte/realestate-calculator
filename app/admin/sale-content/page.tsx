@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { SaleContent } from '@/lib/saleContent';
+import DeleteModal from '@/app/admin/components/DeleteModal';
 
 type SaleSearchItem = {
   houseManageNo: string;
@@ -32,16 +33,26 @@ export default function SaleContentListPage() {
   const [searchResults, setSearchResults] = useState<SaleSearchItem[]>([]);
   const [searching, setSearching] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const router = useRouter();
   const { toast, showToast } = useToast();
 
   const handleDelete = async (houseManageNo: string) => {
-    if (!confirm('이 콘텐츠를 삭제하시겠습니까?')) return;
     setDeleting(houseManageNo);
+    setDeleteTarget(null);
     const res = await fetch(`/api/admin/sale-content/${houseManageNo}`, { method: 'DELETE' });
     if (res.ok) setList(prev => prev.filter(c => c.house_manage_no !== houseManageNo));
     else showToast('삭제 실패', false);
     setDeleting(null);
+  };
+
+  const toggleExpand = (id: string) => {
+    setExpanded(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   };
 
   useEffect(() => {
@@ -72,6 +83,14 @@ export default function SaleContentListPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
+      {deleteTarget && (
+        <DeleteModal
+          title="콘텐츠를 삭제하시겠습니까?"
+          description="삭제된 콘텐츠는 복구할 수 없습니다."
+          onConfirm={() => handleDelete(deleteTarget)}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
       {toast && (
         <div style={{
           position: 'fixed', top: 20, right: 20, zIndex: 9999,
@@ -182,61 +201,129 @@ export default function SaleContentListPage() {
 
         {list.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {list.map(item => (
-              <div key={item.id} style={{
-                background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb',
-                padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16,
-              }}>
-                {item.thumbnail_url && (
-                  <Image src={item.thumbnail_url} alt="" width={80} height={56}
-                    style={{ objectFit: 'cover', borderRadius: 8, flexShrink: 0, border: '1px solid #e5e7eb' }} />
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <span style={{
-                      fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
-                      background: item.is_published ? '#d1fae5' : '#f3f4f6',
-                      color: item.is_published ? '#065f46' : '#6b7280',
-                    }}>
-                      {item.is_published ? '공개' : '비공개'}
-                    </span>
-                    <span style={{ fontSize: 11, color: '#9ca3af' }}>{item.house_manage_no}</span>
+            {list.map(item => {
+              const isExpanded = expanded.has(item.house_manage_no);
+              return (
+                <div key={item.id} style={{
+                  background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden',
+                }}>
+                  {/* 메인 행 */}
+                  <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
+                    {item.thumbnail_url && (
+                      <Image src={item.thumbnail_url} alt="" width={80} height={56}
+                        style={{ objectFit: 'cover', borderRadius: 8, flexShrink: 0, border: '1px solid #e5e7eb' }} />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <span style={{
+                          fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
+                          background: item.is_published ? '#d1fae5' : '#f3f4f6',
+                          color: item.is_published ? '#065f46' : '#6b7280',
+                        }}>
+                          {item.is_published ? '공개' : '비공개'}
+                        </span>
+                        <span style={{ fontSize: 11, color: '#9ca3af' }}>{item.house_manage_no}</span>
+                      </div>
+                      {item.summary && (
+                        <p style={{ fontSize: 13, color: '#374151', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {item.summary}
+                        </p>
+                      )}
+                      <p style={{ fontSize: 11, color: '#9ca3af', margin: '4px 0 0' }}>
+                        수정: {new Date(item.updated_at).toLocaleDateString('ko-KR')}
+                        {item.pros?.length ? ` · 장점 ${item.pros.length}개` : ''}
+                        {item.cons?.length ? ` · 단점 ${item.cons.length}개` : ''}
+                        {item.image_urls?.length ? ` · 이미지 ${item.image_urls.length}장` : ''}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                      <button
+                        onClick={() => toggleExpand(item.house_manage_no)}
+                        style={{
+                          padding: '7px 12px', borderRadius: 8, border: '1px solid #e5e7eb',
+                          background: isExpanded ? '#f3f4f6' : '#fff', fontSize: 12, color: '#374151',
+                          cursor: 'pointer', fontWeight: 600,
+                        }}
+                      >
+                        {isExpanded ? '▲ 접기' : '▼ 미리보기'}
+                      </button>
+                      <Link
+                        href={`/admin/sale-content/${item.house_manage_no}`}
+                        style={{ padding: '7px 16px', borderRadius: 8, background: '#1d4ed8', color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}
+                      >
+                        수정
+                      </Link>
+                      <button
+                        onClick={() => setDeleteTarget(item.house_manage_no)}
+                        disabled={deleting === item.house_manage_no}
+                        style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #fca5a5', background: '#fff', fontSize: 12, color: '#dc2626', cursor: 'pointer', fontWeight: 600 }}
+                      >
+                        {deleting === item.house_manage_no ? '삭제 중...' : '삭제'}
+                      </button>
+                    </div>
                   </div>
-                  {item.summary && (
-                    <p style={{ fontSize: 13, color: '#374151', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {item.summary}
-                    </p>
+
+                  {/* 인라인 미리보기 */}
+                  {isExpanded && (
+                    <div style={{ borderTop: '1px solid #f3f4f6', padding: '16px 20px', background: '#fafafa' }}>
+                      {item.summary && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', marginBottom: 4 }}>요약</div>
+                          <p style={{ fontSize: 13, color: '#374151', margin: 0, lineHeight: 1.7 }}>{item.summary}</p>
+                        </div>
+                      )}
+                      <div style={{ display: 'grid', gridTemplateColumns: item.pros?.length && item.cons?.length ? '1fr 1fr' : '1fr', gap: 12 }}>
+                        {item.pros && item.pros.length > 0 && (
+                          <div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', marginBottom: 6 }}>장점</div>
+                            <ul style={{ margin: 0, padding: '0 0 0 16px' }}>
+                              {item.pros.map((p, i) => (
+                                <li key={i} style={{ fontSize: 13, color: '#374151', marginBottom: 3 }}>{p}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {item.cons && item.cons.length > 0 && (
+                          <div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', marginBottom: 6 }}>단점</div>
+                            <ul style={{ margin: 0, padding: '0 0 0 16px' }}>
+                              {item.cons.map((c, i) => (
+                                <li key={i} style={{ fontSize: 13, color: '#374151', marginBottom: 3 }}>{c}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                      {item.image_urls && item.image_urls.length > 0 && (
+                        <div style={{ marginTop: 12 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', marginBottom: 8 }}>이미지 ({item.image_urls.length}장)</div>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {item.image_urls.slice(0, 6).map((url, i) => (
+                              <Image key={i} src={url} alt="" width={80} height={56}
+                                style={{ objectFit: 'cover', borderRadius: 6, border: '1px solid #e5e7eb' }} />
+                            ))}
+                            {item.image_urls.length > 6 && (
+                              <div style={{ width: 80, height: 56, borderRadius: 6, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#6b7280' }}>
+                                +{item.image_urls.length - 6}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      <div style={{ marginTop: 12, textAlign: 'right' }}>
+                        <Link
+                          href={`/sale/${item.house_manage_no}`}
+                          target="_blank"
+                          style={{ fontSize: 12, color: '#6b7280', textDecoration: 'none', border: '1px solid #e5e7eb', padding: '5px 12px', borderRadius: 7 }}
+                        >
+                          실제 페이지 보기 →
+                        </Link>
+                      </div>
+                    </div>
                   )}
-                  <p style={{ fontSize: 11, color: '#9ca3af', margin: '4px 0 0' }}>
-                    수정: {new Date(item.updated_at).toLocaleDateString('ko-KR')}
-                    {item.pros?.length ? ` · 장점 ${item.pros.length}개` : ''}
-                    {item.image_urls?.length ? ` · 이미지 ${item.image_urls.length}장` : ''}
-                  </p>
                 </div>
-                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                  <Link
-                    href={`/sale/${item.house_manage_no}`}
-                    target="_blank"
-                    style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 12, color: '#6b7280', textDecoration: 'none' }}
-                  >
-                    미리보기
-                  </Link>
-                  <Link
-                    href={`/admin/sale-content/${item.house_manage_no}`}
-                    style={{ padding: '7px 16px', borderRadius: 8, background: '#1d4ed8', color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}
-                  >
-                    수정
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(item.house_manage_no)}
-                    disabled={deleting === item.house_manage_no}
-                    style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #fca5a5', background: '#fff', fontSize: 12, color: '#dc2626', cursor: 'pointer', fontWeight: 600 }}
-                  >
-                    {deleting === item.house_manage_no ? '삭제 중...' : '삭제'}
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
