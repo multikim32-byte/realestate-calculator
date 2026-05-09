@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { UnsoldLead } from '@/lib/supabase';
+import AdminHeader from '@/app/admin/components/AdminHeader';
 import DeleteModal from '../../components/DeleteModal';
 
 const PAGE_SIZE = 20;
@@ -207,14 +208,7 @@ export default function AdminLeadsPage() {
         />
       )}
 
-      <div style={{ background: '#1e293b', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <Link href="/admin" style={{ color: '#fff', fontWeight: 800, fontSize: 16, textDecoration: 'none' }}>🏠 관리자</Link>
-          <Link href="/admin/unsold" style={{ color: '#94a3b8', fontSize: 14, textDecoration: 'none' }}>미분양 매물</Link>
-          <span style={{ color: '#60a5fa', fontSize: 14, fontWeight: 700 }}>관심 고객 리드</span>
-        </div>
-        <button onClick={handleLogout} style={{ fontSize: 13, color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer' }}>로그아웃</button>
-      </div>
+      <AdminHeader />
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}>
         {/* 헤더 */}

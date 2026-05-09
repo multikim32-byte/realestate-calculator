@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import AdminHeader from '@/app/admin/components/AdminHeader';
 import type { SaleContent } from '@/lib/saleContent';
 import DeleteModal from '@/app/admin/components/DeleteModal';
 
@@ -101,14 +102,7 @@ export default function SaleContentListPage() {
         }}>{toast.msg}</div>
       )}
       {/* 헤더 */}
-      <div style={{ background: '#1e293b', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <Link href="/admin" style={{ color: '#fff', fontWeight: 800, fontSize: 16, textDecoration: 'none' }}>🏠 관리자</Link>
-          <Link href="/admin/unsold" style={{ color: '#94a3b8', fontSize: 14, textDecoration: 'none' }}>미분양 매물</Link>
-          <span style={{ color: '#60a5fa', fontSize: 14, fontWeight: 700 }}>청약 콘텐츠</span>
-        </div>
-        <Link href="/api/admin/logout" style={{ color: '#94a3b8', fontSize: 13, textDecoration: 'none' }}>로그아웃</Link>
-      </div>
+      <AdminHeader />
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 20px' }}>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1e293b', margin: '0 0 4px' }}>청약 에디토리얼 콘텐츠</h1>

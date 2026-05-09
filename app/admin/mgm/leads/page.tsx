@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import AdminHeader from '@/app/admin/components/AdminHeader';
 import DeleteModal from '../../components/DeleteModal';
 
 const PAGE_SIZE = 20;
@@ -175,14 +176,7 @@ export default function AdminMgmLeadsPage() {
       {toast && <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999, padding: '12px 20px', borderRadius: 10, fontWeight: 700, background: toast.ok ? '#dcfce7' : '#fef2f2', color: toast.ok ? '#166534' : '#dc2626', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', fontSize: 14 }}>{toast.msg}</div>}
       {deleteTarget && <DeleteModal title={`"${deleteTarget.name}" 리드 삭제`} description="삭제하면 복구할 수 없습니다." onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />}
 
-      <div style={{ background: '#1e293b', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <Link href="/admin" style={{ color: '#fff', fontWeight: 800, fontSize: 16, textDecoration: 'none' }}>🏠 관리자</Link>
-          <Link href="/admin/sale-content" style={{ color: '#94a3b8', fontSize: 14, textDecoration: 'none' }}>청약 콘텐츠</Link>
-          <span style={{ color: '#f0abfc', fontSize: 14, fontWeight: 700 }}>MGM 신청 리드</span>
-        </div>
-        <button onClick={async () => { await fetch('/api/admin/logout', { method: 'POST' }); router.push('/admin'); }} style={{ fontSize: 13, color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer' }}>로그아웃</button>
-      </div>
+      <AdminHeader />
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>

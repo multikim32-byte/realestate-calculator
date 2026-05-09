@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import AdminHeader from '@/app/admin/components/AdminHeader';
 import DeleteModal from '@/app/admin/components/DeleteModal';
 
 type BlogPost = {
@@ -64,13 +65,7 @@ export default function AdminBlogPage() {
         />
       )}
 
-      <div style={{ background: '#1e293b', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <Link href="/admin" style={{ color: '#fff', fontWeight: 800, fontSize: 16, textDecoration: 'none' }}>🏠 관리자</Link>
-          <span style={{ color: '#34d399', fontSize: 14, fontWeight: 700 }}>블로그 관리</span>
-        </div>
-        <Link href="/api/admin/logout" style={{ color: '#94a3b8', fontSize: 13, textDecoration: 'none' }}>로그아웃</Link>
-      </div>
+      <AdminHeader />
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>

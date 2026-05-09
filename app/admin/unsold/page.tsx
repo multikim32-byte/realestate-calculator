@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { UnsoldListing } from '@/lib/supabase';
 import DeleteModal from '../components/DeleteModal';
+import AdminHeader from '../components/AdminHeader';
 
 const PAGE_SIZE = 20;
 
@@ -129,15 +130,7 @@ export default function AdminUnsoldListPage() {
       {deleteTarget && <DeleteModal title={`"${deleteTarget.name}" 삭제`} description="삭제하면 복구할 수 없습니다." onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />}
       {bulkDeleteModal && <DeleteModal title={`선택한 ${selected.size}건 삭제`} description="삭제하면 복구할 수 없습니다." onConfirm={handleBulkDelete} onCancel={() => setBulkDeleteModal(false)} />}
 
-      <div style={{ background: '#1e293b', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <Link href="/admin" style={{ color: '#fff', fontWeight: 800, fontSize: 16, textDecoration: 'none' }}>🏠 관리자</Link>
-          <span style={{ color: '#60a5fa', fontSize: 14, fontWeight: 700 }}>미분양 매물</span>
-          <Link href="/admin/sale-content" style={{ color: '#94a3b8', fontSize: 14, textDecoration: 'none' }}>청약 콘텐츠</Link>
-          <Link href="/admin/unsold/leads" style={{ color: '#94a3b8', fontSize: 14, textDecoration: 'none' }}>리드 관리</Link>
-        </div>
-        <button onClick={async () => { await fetch('/api/admin/logout', { method: 'POST' }); router.push('/admin'); }} style={{ fontSize: 13, color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer' }}>로그아웃</button>
-      </div>
+      <AdminHeader />
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>

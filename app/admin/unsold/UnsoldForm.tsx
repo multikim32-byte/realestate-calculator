@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { CATEGORIES, DEFAULT_SECTIONS } from '@/lib/supabase';
+import AdminHeader from '@/app/admin/components/AdminHeader';
 import type { UnsoldListing } from '@/lib/supabase';
 import { LAWD_CODE_MAP } from '@/lib/tradeApi';
 import dynamic from 'next/dynamic';
@@ -316,10 +317,7 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
-      <div style={{ background: '#1e293b', padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 16 }}>
-        <span style={{ color: '#fff', fontWeight: 800, fontSize: 16 }}>🏠 관리자</span>
-        <span style={{ color: '#94a3b8', fontSize: 14 }}>{isEdit ? '매물 수정' : '매물 등록'}</span>
-      </div>
+      <AdminHeader />
 
       <div style={{ maxWidth: 760, margin: '0 auto', padding: '32px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>

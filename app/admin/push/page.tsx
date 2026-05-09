@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import AdminHeader from '@/app/admin/components/AdminHeader';
 
 type PushLog = {
   id: string;
@@ -74,12 +74,7 @@ export default function AdminPushPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
-      <div style={{ background: '#1e293b', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <Link href="/admin" style={{ color: '#fff', fontWeight: 800, fontSize: 16, textDecoration: 'none' }}>🏠 관리자</Link>
-          <span style={{ color: '#a78bfa', fontSize: 14, fontWeight: 700 }}>푸시 알림 발송</span>
-        </div>
-      </div>
+      <AdminHeader />
 
       <div style={{ maxWidth: 640, margin: '0 auto', padding: '40px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>

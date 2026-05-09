@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import AdminHeader from '@/app/admin/components/AdminHeader';
 import Image from 'next/image';
 import type { SaleContent } from '@/lib/saleContent';
 
@@ -134,10 +135,7 @@ export default function SaleContentForm({
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
       {/* 헤더 */}
-      <div style={{ background: '#1e293b', padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 16 }}>
-        <span style={{ color: '#fff', fontWeight: 800, fontSize: 16 }}>🏠 관리자</span>
-        <span style={{ color: '#94a3b8', fontSize: 14 }}>청약 에디토리얼 콘텐츠</span>
-      </div>
+      <AdminHeader />
 
       <div style={{ maxWidth: 760, margin: '0 auto', padding: '32px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>

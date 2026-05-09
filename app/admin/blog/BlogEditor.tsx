@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import AdminHeader from '@/app/admin/components/AdminHeader';
 
 export type BlogPostData = {
   id?: string;
@@ -150,23 +151,19 @@ export default function BlogEditor({ initial }: { initial: BlogPostData }) {
         }}>{toast.msg}</div>
       )}
 
-      <div style={{ background: '#1e293b', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <Link href="/admin" style={{ color: '#fff', fontWeight: 800, fontSize: 16, textDecoration: 'none' }}>🏠 관리자</Link>
-          <Link href="/admin/blog" style={{ color: '#94a3b8', fontSize: 14, textDecoration: 'none' }}>블로그 관리</Link>
-          <span style={{ color: '#34d399', fontSize: 14, fontWeight: 700 }}>
-            {form.id ? '글 수정' : '새 글 작성'}
-          </span>
+      <AdminHeader />
+      {/* 서브 헤더: 현재 작업 컨텍스트 */}
+      <div style={{ background: '#0f172a', padding: '8px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1e293b' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#94a3b8' }}>
+          <Link href="/admin/blog" style={{ color: '#94a3b8', textDecoration: 'none' }}>블로그 관리</Link>
+          <span>›</span>
+          <span style={{ color: '#34d399', fontWeight: 700 }}>{form.id ? '글 수정' : '새 글 작성'}</span>
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          {form.slug && (
-            <Link href={`/blog/${form.slug}`} target="_blank"
-              style={{ fontSize: 13, color: '#94a3b8', textDecoration: 'none' }}>
-              미리보기 ↗
-            </Link>
-          )}
-          <Link href="/api/admin/logout" style={{ color: '#94a3b8', fontSize: 13, textDecoration: 'none' }}>로그아웃</Link>
-        </div>
+        {form.slug && (
+          <Link href={`/blog/${form.slug}`} target="_blank" style={{ fontSize: 12, color: '#60a5fa', textDecoration: 'none' }}>
+            실제 페이지 보기 ↗
+          </Link>
+        )}
       </div>
 
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px 20px' }}>
