@@ -223,7 +223,7 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
   // 분양정보 (Supabase)
   const { data: unsoldListings } = await supabase
     .from('unsold_listings')
-    .select('id, name, location, category, listing_type, min_price, max_price, thumbnail_url, benefit, highlight')
+    .select('id, name, location, category, min_price, max_price, thumbnail_url, benefit, highlight')
     .eq('is_active', true)
     .ilike('location', `${sido} %`)
     .order('created_at', { ascending: false });
@@ -372,10 +372,10 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
                       }
                       <span style={{
                         position: 'absolute', top: 8, left: 8,
-                        background: item.listing_type === '청약중' ? '#059669' : '#d97706',
+                        background: '#d97706',
                         color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
                       }}>
-                        {item.listing_type === '청약중' ? '🟢 청약중' : '🟡 잔여세대'}
+                        미분양
                       </span>
                     </div>
                     <div style={{ padding: '14px 16px' }}>

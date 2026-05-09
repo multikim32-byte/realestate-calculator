@@ -9,7 +9,7 @@ const MENUS = [
     href: '/admin/unsold',
     emoji: '🏠',
     title: '미분양 매물 관리',
-    desc: '잔여세대·청약중 매물을 등록·수정·삭제합니다.',
+    desc: '미분양 아파트 매물을 등록·수정·삭제합니다.',
     color: '#eff6ff', border: '#bfdbfe', titleColor: '#1d4ed8',
   },
   {
