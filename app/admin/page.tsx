@@ -12,11 +12,18 @@ const MENUS = [
     color: '#eff6ff', border: '#bfdbfe', titleColor: '#1d4ed8',
   },
   {
+    href: '/admin/blog',
+    emoji: '📝',
+    title: '블로그 글 관리',
+    desc: '부동산 정보 블로그 글을 작성·수정·삭제합니다. 이미지 자동 최적화(WebP) 지원.',
+    color: '#f0fdf4', border: '#bbf7d0', titleColor: '#166534',
+  },
+  {
     href: '/admin/sale-content',
     emoji: '✍️',
     title: '청약 에디토리얼 콘텐츠',
     desc: '청약홈 API 페이지에 커스텀 설명·이미지를 추가해 SEO를 강화합니다.',
-    color: '#f0fdf4', border: '#bbf7d0', titleColor: '#166534',
+    color: '#f0f9ff', border: '#bae6fd', titleColor: '#0369a1',
   },
   {
     href: '/admin/unsold/leads',

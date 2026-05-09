@@ -1,8 +1,9 @@
 ﻿import Link from "next/link";
 import { notFound } from "next/navigation";
-import { posts } from "../data";
+import { posts as filePosts } from "../data";
 import GlobalNav from "../../components/GlobalNav";
 import AdUnit from "../../components/AdUnit";
+import { createClient } from '@supabase/supabase-js';
 import type { Metadata } from "next";
 
 // AdSense 대시보드 > 광고 > 광고 단위에서 발급받은 슬롯 ID로 교체하세요
@@ -10,11 +11,38 @@ const AD_SLOT = "XXXXXXXXXX";
 
 const BASE_URL = 'https://www.aptzipsa.kr';
 
+export const revalidate = 3600;
+export const dynamicParams = true; // DB에 새로 추가된 슬러그 허용
+
 type Props = { params: Promise<{ slug: string }> };
+
+type PostData = { slug: string; title: string; description: string; date: string; content: string };
+
+async function getPost(slug: string): Promise<PostData | null> {
+  // DB 먼저 확인
+  try {
+    const db = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    const { data } = await db
+      .from('blog_posts')
+      .select('slug, title, description, content, published_at')
+      .eq('slug', slug)
+      .eq('is_published', true)
+      .single();
+    if (data) return { slug: data.slug, title: data.title, description: data.description, date: data.published_at.slice(0, 10), content: data.content };
+  } catch { /* fall through to file */ }
+
+  // 파일 기반 fallback
+  const filePost = filePosts.find(p => p.slug === slug);
+  if (filePost) return filePost;
+  return null;
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const post = posts.find((p) => p.slug === slug);
+  const post = await getPost(slug);
   if (!post) return {};
   const url = `${BASE_URL}/blog/${slug}`;
   return {
@@ -39,16 +67,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export function generateStaticParams() {
-  return posts.map((p) => ({ slug: p.slug }));
+  return filePosts.map((p) => ({ slug: p.slug }));
 }
 
 export default async function PostPage({ params }: Props) {
   const { slug } = await params;
-  const post = posts.find((p) => p.slug === slug);
+  const post = await getPost(slug);
   if (!post) notFound();
 
-  // 관련 글: 현재 글 제외하고 최대 3개
-  const related = posts.filter((p) => p.slug !== slug).slice(0, 3);
+  // 관련 글: 파일 기반 글에서 현재 글 제외하고 최대 3개
+  const related = filePosts.filter((p) => p.slug !== slug).slice(0, 3);
 
   const jsonLd = {
     '@context': 'https://schema.org',
