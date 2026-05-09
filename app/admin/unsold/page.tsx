@@ -212,6 +212,8 @@ export default function AdminUnsoldListPage() {
                   <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>등록일: {item.created_at.slice(0, 10)}</div>
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                  <Link href={`/unsold/${item.id}`} target="_blank"
+                    style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #bfdbfe', background: '#eff6ff', fontSize: 12, textDecoration: 'none', color: '#1d4ed8', fontWeight: 600 }}>보기</Link>
                   <button onClick={() => handleToggleActive(item)}
                     style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#fff', fontSize: 12, cursor: 'pointer', color: item.is_active ? '#dc2626' : '#059669' }}>
                     {item.is_active ? '비활성' : '활성화'}
