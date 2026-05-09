@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import GlobalNav from '../../components/GlobalNav';
@@ -140,7 +140,7 @@ function MgmForm({ houseManageNo, aptName }: { houseManageNo: string; aptName: s
             <div style={{ fontSize: 11, color: '#6b7280', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6, padding: '10px 12px', lineHeight: 1.8 }}>
               · 수집 항목: 성명, 생년월일, 전화번호, 거주지<br />
               · 수집 목적: {aptName} 분양 상담 연락<br />
-              · 보유 기간: 상담 완료 후 3개월<br />
+              · 보유 기간: 분양 종료 시까지 보유, 목적 달성 시 폐기<br />
               · 동의 거부 시 MGM 신청이 불가합니다.
             </div>
           )}
@@ -158,7 +158,7 @@ function MgmForm({ houseManageNo, aptName }: { houseManageNo: string; aptName: s
               · 제공받는 자: {aptName} 시행사 및 분양대행사<br />
               · 제공 목적: 분양 상담 및 안내<br />
               · 제공 항목: 성명, 생년월일, 전화번호, 거주지<br />
-              · 보유 기간: 상담 완료 후 3개월<br />
+              · 보유 기간: 분양 종료 시까지 보유, 목적 달성 시 폐기<br />
               · 동의 거부 시 MGM 신청이 불가합니다.
             </div>
           )}
@@ -216,10 +216,15 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
   const [error, setError] = useState(false);
   const [unsoldLink, setUnsoldLink] = useState<UnsoldLink | null>(null);
   const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const lightboxRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ startX: number; startY: number; ox: number; oy: number } | null>(null);
 
-  const closeLightbox = useCallback(() => setLightbox(null), []);
-  const prevImage = useCallback(() => setLightbox(lb => lb && lb.idx > 0 ? { ...lb, idx: lb.idx - 1 } : lb), []);
-  const nextImage = useCallback(() => setLightbox(lb => lb && lb.idx < lb.urls.length - 1 ? { ...lb, idx: lb.idx + 1 } : lb), []);
+  const resetZoom = useCallback(() => { setZoom(1); setOffset({ x: 0, y: 0 }); }, []);
+  const closeLightbox = useCallback(() => { setLightbox(null); resetZoom(); }, [resetZoom]);
+  const prevImage = useCallback(() => { setLightbox(lb => lb && lb.idx > 0 ? { ...lb, idx: lb.idx - 1 } : lb); resetZoom(); }, [resetZoom]);
+  const nextImage = useCallback(() => { setLightbox(lb => lb && lb.idx < lb.urls.length - 1 ? { ...lb, idx: lb.idx + 1 } : lb); resetZoom(); }, [resetZoom]);
 
   useEffect(() => {
     if (!lightbox) return;
@@ -227,10 +232,23 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
       if (e.key === 'Escape') closeLightbox();
       if (e.key === 'ArrowLeft') prevImage();
       if (e.key === 'ArrowRight') nextImage();
+      if (e.key === '+' || e.key === '=') setZoom(z => Math.min(4, z + 0.5));
+      if (e.key === '-') setZoom(z => Math.max(1, z - 0.5));
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [lightbox, closeLightbox, prevImage, nextImage]);
+
+  useEffect(() => {
+    const el = lightboxRef.current;
+    if (!lightbox || !el) return;
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      setZoom(z => Math.min(4, Math.max(1, z * (1 - e.deltaY * 0.002))));
+    };
+    el.addEventListener('wheel', handler, { passive: false });
+    return () => el.removeEventListener('wheel', handler);
+  }, [lightbox]);
 
   useEffect(() => {
     if (!id) return;
@@ -591,15 +609,24 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
 
     {lightbox && (
       <div
-        onClick={closeLightbox}
+        ref={lightboxRef}
+        onClick={zoom > 1 ? undefined : closeLightbox}
+        onMouseMove={e => {
+          if (!dragRef.current) return;
+          setOffset({ x: dragRef.current.ox + e.clientX - dragRef.current.startX, y: dragRef.current.oy + e.clientY - dragRef.current.startY });
+        }}
+        onMouseUp={() => { dragRef.current = null; }}
+        onMouseLeave={() => { dragRef.current = null; }}
         style={{
           position: 'fixed', inset: 0, zIndex: 9999,
           background: 'rgba(0,0,0,0.92)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: zoom > 1 ? (dragRef.current ? 'grabbing' : 'grab') : 'default',
+          userSelect: 'none',
         }}
       >
         {/* 이전 */}
-        {lightbox.idx > 0 && (
+        {lightbox.idx > 0 && zoom === 1 && (
           <button
             onClick={e => { e.stopPropagation(); prevImage(); }}
             style={{
@@ -615,16 +642,25 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
         <img
           src={lightbox.urls[lightbox.idx]}
           alt={`이미지 ${lightbox.idx + 1}`}
+          draggable={false}
+          onMouseDown={e => {
+            e.stopPropagation();
+            if (zoom > 1) dragRef.current = { startX: e.clientX, startY: e.clientY, ox: offset.x, oy: offset.y };
+          }}
           onClick={e => e.stopPropagation()}
+          onDoubleClick={e => { e.stopPropagation(); zoom > 1 ? (resetZoom()) : (setZoom(2)); }}
           style={{
             maxWidth: '90vw', maxHeight: '88vh',
-            objectFit: 'contain', borderRadius: 10,
+            objectFit: 'contain', borderRadius: zoom > 1 ? 0 : 10,
             boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
+            transform: `scale(${zoom}) translate(${offset.x / zoom}px, ${offset.y / zoom}px)`,
+            transition: dragRef.current ? 'none' : 'transform 0.15s ease',
+            cursor: zoom > 1 ? 'grab' : 'zoom-in',
           }}
         />
 
         {/* 다음 */}
-        {lightbox.idx < lightbox.urls.length - 1 && (
+        {lightbox.idx < lightbox.urls.length - 1 && zoom === 1 && (
           <button
             onClick={e => { e.stopPropagation(); nextImage(); }}
             style={{
@@ -647,10 +683,28 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
           }}
         >✕</button>
 
+        {/* 줌 버튼 */}
+        <div style={{ position: 'absolute', bottom: 20, right: 20, display: 'flex', gap: 8 }}>
+          <button
+            onClick={e => { e.stopPropagation(); setZoom(z => Math.min(4, z + 0.5)); }}
+            style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', fontSize: 20, cursor: 'pointer' }}
+          >+</button>
+          <button
+            onClick={e => { e.stopPropagation(); zoom > 1 ? (zoom - 0.5 <= 1 ? resetZoom() : setZoom(z => z - 0.5)) : undefined; }}
+            style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', fontSize: 20, cursor: 'pointer', opacity: zoom > 1 ? 1 : 0.4 }}
+          >−</button>
+          {zoom > 1 && (
+            <button
+              onClick={e => { e.stopPropagation(); resetZoom(); }}
+              style={{ height: 36, padding: '0 12px', borderRadius: 18, background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', fontSize: 12, cursor: 'pointer' }}
+            >1:1</button>
+          )}
+        </div>
+
         {/* 페이지 표시 */}
         {lightbox.urls.length > 1 && (
           <div style={{
-            position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)',
+            position: 'absolute', bottom: 26, left: '50%', transform: 'translateX(-50%)',
             fontSize: 13, color: 'rgba(255,255,255,0.7)',
           }}>
             {lightbox.idx + 1} / {lightbox.urls.length}
