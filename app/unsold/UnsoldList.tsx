@@ -202,7 +202,7 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
         {paged.map(item => (
           <div key={item.id} style={{ position: 'relative' }}>
             <FavBtn item={item} />
-          <Link href={`/unsold/${item.id}`} style={{ textDecoration: 'none' }}>
+          <Link href={`/unsold/${item.slug ?? item.id}`} style={{ textDecoration: 'none' }}>
             <div
               style={{
                 background: '#fff', borderRadius: 14, overflow: 'hidden',

@@ -116,7 +116,20 @@
       "Bash(cat app/api/sale/route.ts)",
       "Bash(grep -r \"kakao\\\\|KAKAO\" .env.local next.config.ts --include=\"*.ts\" --include=\"*.tsx\" -l)",
       "Bash(grep -r \"kakao\\\\|KAKAO\" .env.local)",
-      "Bash(cd \"c:\\\\Users\\\\김경래소장\\\\realestate-calculator\" && rm app/unsold/\\\\[id\\\\]/KakaoMap.tsx)"
+      "Bash(cd \"c:\\\\Users\\\\김경래소장\\\\realestate-calculator\" && rm app/unsold/\\\\[id\\\\]/KakaoMap.tsx)",
+      "Bash(powershell -Command ' *)",
+      "Bash(git reset *)",
+      "Bash(Select-String sitemap *)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\김경래소장\\\\realestate-calculator\" -Force)",
+      "Bash(Select-Object Name, FullName)",
+      "Read(//c/Users/��淡����/**)",
+      "Bash(git -C \"c:\\\\Users\\\\김경래소장\\\\realestate-calculator\" log --oneline -20)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\김경래소장\\\\realestate-calculator\" -Recurse -Include \"*.tsx\", \"*.ts\", \"*.json\" -Depth 3)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\김경래소장\\\\realestate-calculator\" -Recurse -Filter \"admin\" -Directory)",
+      "Bash(Select-Object FullName)",
+      "Bash(Get-ChildItem \"c:\\\\Users\\\\김경래소장\\\\realestate-calculator\\\\app\\\\admin\" -Recurse -Filter \"*.tsx\")",
+      "Bash(node -e ' *)"
     ],
     "additionalDirectories": [
       "c:\\Users\\김경래소장\\realestate-calculator\\app\\sale\\[id]",
@@ -126,7 +139,8 @@
       "c:\\Users\\김경래소장\\realestate-calculator\\app\\unsold",
       "c:\\Users\\김경래소장\\realestate-calculator\\app\\admin\\unsold\\[id]",
       "c:\\Users\\김경래소장\\realestate-calculator\\app\\region",
-      "C:\\Users\\김경래소장\\realestate-calculator\\app\\unsold\\[id]"
+      "C:\\Users\\김경래소장\\realestate-calculator\\app\\unsold\\[id]",
+      "c:\\Users\\��淡����\\realestate-calculator\\app\\unsold"
     ]
   }
 }

@@ -35,6 +35,7 @@ export type UnsoldListing = {
   receipt_end: string | null;
   move_in_date: string | null;
   youtube_url: string | null;
+  slug: string | null;
   created_at: string;
   updated_at: string;
 };

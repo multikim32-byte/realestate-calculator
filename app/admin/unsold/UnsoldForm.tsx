@@ -100,6 +100,7 @@ const DEFAULT: FormData = {
   receipt_end: null,
   move_in_date: null,
   youtube_url: null,
+  slug: null,
 };
 
 export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData>; id?: string }) {

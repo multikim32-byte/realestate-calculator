@@ -5,38 +5,58 @@ import type { UnsoldListing } from '@/lib/supabase';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import SectionTabs from './SectionTabs';
 import KakaoMap from '@/app/components/KakaoMap';
 import UnsoldLeadForm from '@/app/components/UnsoldLeadForm';
 import { fetchSaleDetail } from '@/lib/publicDataApi';
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params;
-  const { data, error } = await supabase
+async function findListing(slug: string, selectCols = '*') {
+  // slug로 먼저 조회
+  const { data: bySlug } = await supabase
     .from('unsold_listings')
-    .select('name, location, category, benefit, min_price, max_price, thumbnail_url')
-    .eq('id', id)
+    .select(selectCols)
+    .eq('slug', slug)
     .maybeSingle();
+  if (bySlug) return { data: bySlug, redirectTo: null };
 
-  if (error || !data) return { title: '분양정보' };
+  // 구 UUID URL 하위 호환: id로 조회 후 slug로 리다이렉트
+  try {
+    const { data: byId } = await supabase
+      .from('unsold_listings')
+      .select(selectCols)
+      .eq('id', slug)
+      .maybeSingle();
+    if (byId) return { data: byId, redirectTo: (byId as UnsoldListing).slug ?? null };
+  } catch { /* invalid UUID format */ }
 
-  const priceText = data.min_price
-    ? `분양가 ${data.min_price >= 100000000 ? `${(data.min_price / 100000000).toFixed(1)}억` : `${Math.floor(data.min_price / 10000).toLocaleString()}만`}원~`
+  return { data: null, redirectTo: null };
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const { data } = await findListing(slug, 'name, location, category, benefit, min_price, max_price, thumbnail_url, slug');
+
+  if (!data) return { title: '분양정보' };
+
+  const item = data as Pick<UnsoldListing, 'name' | 'location' | 'category' | 'benefit' | 'min_price' | 'max_price' | 'thumbnail_url' | 'slug'>;
+  const canonical = item.slug ?? slug;
+  const priceText = item.min_price
+    ? `분양가 ${item.min_price >= 100000000 ? `${(item.min_price / 100000000).toFixed(1)}억` : `${Math.floor(item.min_price / 10000).toLocaleString()}만`}원~`
     : '';
-  const title = `${data.name} 미분양 분양정보 — ${data.location} ${data.category}${priceText ? ` ${priceText}` : ''} 선착순 계약`;
-  const benefitText = data.benefit ? ` 계약 혜택: ${data.benefit}.` : '';
-  const description = `${data.name}(${data.location}) ${data.category} 미분양 분양정보입니다. ${priceText ? `${priceText}.` : ''}${benefitText} 선착순 동·호지정 계약 가능합니다.`.trim();
+  const title = `${item.name} 미분양 분양정보 — ${item.location} ${item.category}${priceText ? ` ${priceText}` : ''} 선착순 계약`;
+  const benefitText = item.benefit ? ` 계약 혜택: ${item.benefit}.` : '';
+  const description = `${item.name}(${item.location}) ${item.category} 미분양 분양정보입니다. ${priceText ? `${priceText}.` : ''}${benefitText} 선착순 동·호지정 계약 가능합니다.`.trim();
 
   return {
     title,
     description,
-    alternates: { canonical: `https://www.aptzipsa.kr/unsold/${id}` },
+    alternates: { canonical: `https://www.aptzipsa.kr/unsold/${canonical}` },
     openGraph: {
       title,
       description,
-      url: `https://www.aptzipsa.kr/unsold/${id}`,
-      images: data.thumbnail_url ? [{ url: data.thumbnail_url }] : [],
+      url: `https://www.aptzipsa.kr/unsold/${canonical}`,
+      images: item.thumbnail_url ? [{ url: item.thumbnail_url }] : [],
     },
   };
 }
@@ -64,16 +84,15 @@ function parseUnitPrices(area: string | null): UnitPriceRow[] {
   return [];
 }
 
-export default async function UnsoldDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const { data: item } = await supabase
-    .from('unsold_listings')
-    .select('*')
-    .eq('id', id)
-    .eq('is_active', true)
-    .maybeSingle() as { data: UnsoldListing | null };
+export default async function UnsoldDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const { data: raw, redirectTo } = await findListing(slug);
 
-  if (!item) notFound();
+  if (!raw) notFound();
+  if (redirectTo) redirect(`/unsold/${redirectTo}`);
+
+  const item = raw as UnsoldListing;
+  if (!item.is_active) notFound();
 
   // house_manage_no가 있으면 청약홈 API에서 상세 주소 가져옴 → KakaoMap 정확도 향상
   let mapAddress = item.location;
@@ -94,14 +113,14 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: '홈', item: 'https://www.aptzipsa.kr' },
           { '@type': 'ListItem', position: 2, name: '분양정보', item: 'https://www.aptzipsa.kr/unsold' },
-          { '@type': 'ListItem', position: 3, name: item.name, item: `https://www.aptzipsa.kr/unsold/${id}` },
+          { '@type': 'ListItem', position: 3, name: item.name, item: `https://www.aptzipsa.kr/unsold/${item.slug ?? slug}` },
         ],
       },
       {
         '@type': 'Residence',
         name: item.name,
         description: item.benefit ?? `${item.location} ${item.category} 분양 매물`,
-        url: `https://www.aptzipsa.kr/unsold/${id}`,
+        url: `https://www.aptzipsa.kr/unsold/${item.slug ?? slug}`,
         address: {
           '@type': 'PostalAddress',
           streetAddress: item.location,
