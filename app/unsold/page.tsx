@@ -7,13 +7,13 @@ import UnsoldList from './UnsoldList';
 const REGIONS = ['서울','경기','인천','부산','대구','광주','대전','울산','세종','강원','충북','충남','전북','전남','경북','경남','제주'];
 
 export const metadata: Metadata = {
-  title: '미분양 아파트 분양정보 — 전국 잔여세대 조회',
-  description: '전국 미분양·잔여세대 아파트 분양정보를 한눈에. 청약통장 없이 선착순 신청 가능한 매물 실시간 업데이트. 아파트집사에서 확인하세요.',
-  keywords: ['미분양 아파트', '분양정보', '잔여세대', '청약중', '선착순 분양', '아파트집사'],
+  title: '미분양 아파트 분양정보 — 전국 선착순 계약 매물 | 아파트집사',
+  description: '전국 미분양 아파트 분양정보를 한눈에. 청약 없이 선착순 동·호 지정 계약 가능한 매물을 지역별로 확인하세요. 아파트집사에서 실시간 업데이트.',
+  keywords: ['미분양 아파트', '미분양 분양정보', '선착순 분양', '청약없이 분양', '아파트 선착순 계약', '아파트집사'],
   alternates: { canonical: 'https://www.aptzipsa.kr/unsold' },
   openGraph: {
-    title: '미분양 아파트 분양정보 — 전국 잔여세대 조회 | 아파트집사',
-    description: '전국 미분양·잔여세대 아파트 분양정보를 한눈에. 청약통장 없이 선착순 신청 가능한 매물 실시간 업데이트.',
+    title: '미분양 아파트 분양정보 — 전국 선착순 계약 매물 | 아파트집사',
+    description: '전국 미분양 아파트 분양정보를 한눈에. 청약 없이 선착순 동·호 지정 계약 가능한 매물을 지역별로 확인하세요.',
     url: 'https://www.aptzipsa.kr/unsold',
     siteName: '아파트집사',
   },
@@ -44,8 +44,8 @@ export default async function UnsoldPage() {
       },
       {
         '@type': 'CollectionPage',
-        name: '전국 분양정보 2026',
-        description: '전국 아파트·오피스텔 분양정보. 청약중 단지, 미분양 잔여세대, 계약 혜택 정보 제공.',
+        name: '전국 미분양 아파트 분양정보',
+        description: '전국 미분양 아파트 분양정보. 청약 없이 선착순 동·호 지정 계약 가능한 매물 및 계약 혜택 정보 제공.',
         url: 'https://www.aptzipsa.kr/unsold',
         isPartOf: { '@type': 'WebSite', url: 'https://www.aptzipsa.kr', name: '아파트집사' },
       },
@@ -59,9 +59,9 @@ export default async function UnsoldPage() {
 
       {/* 헤더 */}
       <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)', padding: '36px 16px 32px', textAlign: 'center' }}>
-        <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: '0 0 8px' }}>전국 분양정보 2026</h1>
+        <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: '0 0 8px' }}>전국 미분양 아파트</h1>
         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0 }}>
-          청약중 · 미분양 잔여세대 · 계약 혜택 단지를 지역별로 확인하세요
+          청약 없이 선착순 동·호 지정 계약 가능한 매물을 지역별로 확인하세요
         </p>
       </div>
 
@@ -71,7 +71,7 @@ export default async function UnsoldPage() {
         {/* 전체 매물 링크 — 서버 렌더링으로 크롤러가 모든 개별 페이지를 발견할 수 있도록 */}
         {listings.length > 0 && (
           <div style={{ marginTop: 48, background: '#fff', borderRadius: 12, padding: '24px', border: '1px solid #e5e7eb' }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1e3a5f', margin: '0 0 16px' }}>전체 분양 매물 목록</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1e3a5f', margin: '0 0 16px' }}>전체 미분양 매물 목록</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {listings.map(item => (
                 <Link
@@ -79,9 +79,7 @@ export default async function UnsoldPage() {
                   href={`/unsold/${item.id}`}
                   style={{ fontSize: 14, color: '#374151', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid #f3f4f6' }}
                 >
-                  <span style={{ color: item.listing_type === '청약중' ? '#059669' : '#d97706', fontWeight: 700, fontSize: 12, minWidth: 52 }}>
-                    {item.listing_type === '청약중' ? '청약중' : '잔여세대'}
-                  </span>
+                  <span style={{ color: '#d97706', fontWeight: 700, fontSize: 12, minWidth: 44 }}>미분양</span>
                   <span style={{ fontWeight: 600 }}>{item.name}</span>
                   <span style={{ color: '#6b7280', fontSize: 13 }}>— {item.location}</span>
                 </Link>
