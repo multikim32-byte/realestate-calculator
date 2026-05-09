@@ -26,18 +26,38 @@ function fmtDate(s: string) {
 
 function StatusBadge({ lead, onChange }: { lead: MgmLead; onChange: (id: string, status: string) => void }) {
   const [open, setOpen] = useState(false);
+  const [dropPos, setDropPos] = useState({ top: 0, left: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
   const cur = STATUS_OPTIONS.find(s => s.value === (lead.status ?? 'new')) ?? STATUS_OPTIONS[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [open]);
+
+  const handleOpen = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setDropPos({ top: rect.bottom + 4, left: rect.left });
+    }
+    setOpen(v => !v);
+  };
+
   return (
-    <div style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(v => !v)}
+    <div>
+      <button ref={btnRef} onClick={handleOpen}
         style={{ padding: '3px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', background: cur.bg, color: cur.color, fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>
         {cur.label} ▾
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, marginTop: 4, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', overflow: 'hidden', minWidth: 90 }}>
+        <div onMouseDown={e => e.stopPropagation()}
+          style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, zIndex: 9999, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.15)', overflow: 'hidden', minWidth: 90 }}>
           {STATUS_OPTIONS.map(s => (
             <button key={s.value} onClick={() => { onChange(lead.id, s.value); setOpen(false); }}
-              style={{ display: 'block', width: '100%', padding: '8px 14px', border: 'none', background: lead.status === s.value ? s.bg : '#fff', color: s.color, fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
+              style={{ display: 'block', width: '100%', padding: '8px 14px', border: 'none', background: (lead.status ?? 'new') === s.value ? s.bg : '#fff', color: s.color, fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
               {s.label}
             </button>
           ))}
