@@ -10,6 +10,12 @@ import type { SaleContent } from '@/lib/saleContent';
 
 type UnitDetail = { type: string; area: number; supplyArea?: number; count: number; specialCount?: number; price: number };
 
+function extractYoutubeId(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
+  return m?.[1] ?? null;
+}
+
 type SaleDetail = {
   id: string;
   name: string;
@@ -489,6 +495,22 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* 유튜브 영상 */}
+        {extractYoutubeId(content?.youtube_url) && (
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: '24px', marginTop: 16 }}>
+            <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', margin: '0 0 14px' }}>📹 분양 영상</h2>
+            <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, borderRadius: 10, overflow: 'hidden', background: '#000' }}>
+              <iframe
+                src={`https://www.youtube.com/embed/${extractYoutubeId(content!.youtube_url)}`}
+                title="분양 영상"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+              />
+            </div>
           </div>
         )}
 

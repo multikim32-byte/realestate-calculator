@@ -11,6 +11,7 @@ export type SaleContent = {
   image_urls: string[] | null;
   is_published: boolean;
   mgm_enabled: boolean;
+  youtube_url: string | null;
   created_at: string;
   updated_at: string;
 };

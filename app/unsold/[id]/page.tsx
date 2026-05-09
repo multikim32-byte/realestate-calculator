@@ -49,6 +49,12 @@ function fmt만원(v: number) {
 
 type UnitPriceRow = { type: string; supplyArea?: number | null; count?: number | null; min: number | null; max: number | null };
 
+function extractYoutubeId(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
+  return m?.[1] ?? null;
+}
+
 function parseUnitPrices(area: string | null): UnitPriceRow[] {
   if (!area) return [];
   try {
@@ -273,6 +279,22 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
               </div>
             )}
 
+
+            {/* 유튜브 영상 */}
+            {extractYoutubeId(item.youtube_url) && (
+              <div style={{ marginBottom: 28 }}>
+                <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>📹 분양 영상</h2>
+                <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, borderRadius: 12, overflow: 'hidden', background: '#000' }}>
+                  <iframe
+                    src={`https://www.youtube.com/embed/${extractYoutubeId(item.youtube_url)}`}
+                    title="분양 영상"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* 관련 도구 */}
             {(() => {

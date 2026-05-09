@@ -99,6 +99,7 @@ const DEFAULT: FormData = {
   receipt_start: null,
   receipt_end: null,
   move_in_date: null,
+  youtube_url: null,
 };
 
 export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData>; id?: string }) {
@@ -533,6 +534,17 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
           <div>
             <label style={labelStyle}>계약 혜택</label>
             <input style={inputStyle} value={form.benefit ?? ''} onChange={e => set('benefit', e.target.value)} placeholder="예: 계약금 정액제 + 중도금 무이자" />
+          </div>
+
+          {/* 유튜브 영상 */}
+          <div>
+            <label style={labelStyle}>유튜브 영상 URL <span style={{ color: '#9ca3af', fontWeight: 400 }}>— 링크 입력 시 상세 페이지에 영상 표시</span></label>
+            <input
+              style={inputStyle}
+              value={form.youtube_url ?? ''}
+              onChange={e => set('youtube_url', e.target.value)}
+              placeholder="https://youtu.be/xxxxx 또는 https://youtube.com/watch?v=xxxxx"
+            />
           </div>
 
           {/* 공식 URL */}

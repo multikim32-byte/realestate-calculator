@@ -28,6 +28,7 @@ type FormData = {
   image_urls: string[];
   is_published: boolean;
   mgm_enabled: boolean;
+  youtube_url: string;
 };
 
 const inputStyle = {
@@ -49,6 +50,7 @@ function toForm(c: SaleContent | null): FormData {
     image_urls: c?.image_urls ?? [],
     is_published: c?.is_published ?? true,
     mgm_enabled: c?.mgm_enabled ?? false,
+    youtube_url: c?.youtube_url ?? '',
   };
 }
 
@@ -117,6 +119,7 @@ export default function SaleContentForm({
         thumbnail_url: form.thumbnail_url || null,
         image_urls: form.image_urls.length > 0 ? form.image_urls : null,
         is_published: form.is_published,
+        youtube_url: form.youtube_url || null,
       };
       const res = await fetch(`/api/admin/sale-content/${houseManageNo}`, {
         method: 'PUT',
@@ -257,6 +260,17 @@ export default function SaleContentForm({
                 ))}
               </div>
             )}
+          </div>
+
+          {/* 유튜브 영상 */}
+          <div>
+            <label style={labelStyle}>유튜브 영상 URL <span style={{ color: '#9ca3af', fontWeight: 400 }}>— 링크 입력 시 상세 페이지에 영상 표시</span></label>
+            <input
+              style={inputStyle}
+              value={form.youtube_url}
+              onChange={e => set('youtube_url', e.target.value)}
+              placeholder="https://youtu.be/xxxxx 또는 https://youtube.com/watch?v=xxxxx"
+            />
           </div>
 
           {/* 공개 여부 */}
