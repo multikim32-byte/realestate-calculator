@@ -24,9 +24,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const priceText = data.min_price
     ? `분양가 ${data.min_price >= 100000000 ? `${(data.min_price / 100000000).toFixed(1)}억` : `${Math.floor(data.min_price / 10000).toLocaleString()}만`}원~`
     : '';
-  const title = `${data.name} 분양정보 — ${data.location} ${data.category} ${priceText ? `${priceText} ` : ''}잔여세대 확인`;
+  const title = `${data.name} 미분양 분양정보 — ${data.location} ${data.category}${priceText ? ` ${priceText}` : ''} 선착순 계약`;
   const benefitText = data.benefit ? ` 계약 혜택: ${data.benefit}.` : '';
-  const description = `${data.name}(${data.location}) ${data.category} 분양정보입니다. ${priceText ? `${priceText}.` : ''} ${benefitText} 잔여 세대 및 청약 조건을 확인하세요.`.trim();
+  const description = `${data.name}(${data.location}) ${data.category} 미분양 분양정보입니다. ${priceText ? `${priceText}.` : ''}${benefitText} 선착순 동·호지정 계약 가능합니다.`.trim();
 
   return {
     title,
@@ -137,12 +137,6 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 72 }}>🏢</div>
             )}
             <div style={{ position: 'absolute', top: 16, left: 16, display: 'flex', gap: 8 }}>
-              <span style={{
-                background: item.listing_type === '청약중' ? '#059669' : '#d97706',
-                color: '#fff', fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 16,
-              }}>
-                {item.listing_type === '청약중' ? '🟢 청약중' : '🟡 잔여세대'}
-              </span>
               <span style={{ background: '#1d4ed8', color: '#fff', fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 16 }}>{item.category}</span>
               {item.highlight && <span style={{ background: '#f59e0b', color: '#fff', fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 16 }}>⭐ 주목 단지</span>}
             </div>

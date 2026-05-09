@@ -22,7 +22,6 @@ export default function AdminUnsoldListPage() {
   const [loading, setLoading] = useState(true);
   const [sido, setSido] = useState('전체');
   const [search, setSearch] = useState('');
-  const [listingType, setListingType] = useState<'전체' | '청약중' | '잔여세대'>('전체');
   const [sortKey, setSortKey] = useState<SortKey>('created_at');
   const [sortAsc, setSortAsc] = useState(false);
   const [page, setPage] = useState(1);
@@ -39,7 +38,6 @@ export default function AdminUnsoldListPage() {
 
   const filtered = useMemo(() => {
     const base = listings.filter(l => {
-      if (listingType !== '전체' && l.listing_type !== listingType) return false;
       if (sido !== '전체' && l.location.trim().split(/\s+/)[0] !== sido) return false;
       if (search && !l.name.includes(search) && !l.location.includes(search)) return false;
       return true;
@@ -51,7 +49,7 @@ export default function AdminUnsoldListPage() {
       else if (sortKey === 'location') v = a.location.localeCompare(b.location, 'ko');
       return sortAsc ? v : -v;
     });
-  }, [listings, listingType, sido, search, sortKey, sortAsc]);
+  }, [listings, sido, search, sortKey, sortAsc]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -157,18 +155,6 @@ export default function AdminUnsoldListPage() {
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <input type="text" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder="단지명 검색"
               style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, width: 180 }} />
-            <div style={{ display: 'flex', gap: 6 }}>
-              {(['전체', '청약중', '잔여세대'] as const).map(t => {
-                const active = listingType === t;
-                const color = t === '청약중' ? '#059669' : t === '잔여세대' ? '#d97706' : '#1d4ed8';
-                return (
-                  <button key={t} onClick={() => { setListingType(t); setPage(1); }}
-                    style={{ padding: '7px 14px', borderRadius: 20, border: 'none', fontSize: 13, cursor: 'pointer', background: active ? color : '#f1f5f9', color: active ? '#fff' : '#374151', fontWeight: active ? 700 : 400 }}>
-                    {t === '청약중' ? '🟢 청약중' : t === '잔여세대' ? '🟡 잔여세대' : t}
-                  </button>
-                );
-              })}
-            </div>
             <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
               <span style={{ fontSize: 12, color: '#9ca3af' }}>정렬:</span>
               <SortBtn k="created_at" label="등록일" />
@@ -226,9 +212,6 @@ export default function AdminUnsoldListPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 15, fontWeight: 700, color: '#1e293b' }}>{item.name}</span>
                     <span style={{ fontSize: 11, background: '#eff6ff', color: '#1d4ed8', padding: '2px 8px', borderRadius: 8 }}>{item.category}</span>
-                    <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 8, fontWeight: 600, background: item.listing_type === '청약중' ? '#ecfdf5' : '#fffbeb', color: item.listing_type === '청약중' ? '#059669' : '#d97706' }}>
-                      {item.listing_type === '청약중' ? '🟢 청약중' : '🟡 잔여세대'}
-                    </span>
                     {item.highlight && <span style={{ fontSize: 11, background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: 8 }}>⭐ 주목</span>}
                     {!item.is_active && <span style={{ fontSize: 11, background: '#fef2f2', color: '#dc2626', padding: '2px 8px', borderRadius: 8 }}>비활성</span>}
                   </div>

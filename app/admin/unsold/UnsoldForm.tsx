@@ -65,7 +65,7 @@ const AddressInput = dynamic(() => import('./AddressInput'), { ssr: false });
 const RichTextEditor = dynamic(() => import('./RichTextEditor'), { ssr: false });
 const SectionImageUploader = dynamic(() => import('./SectionImageUploader'), { ssr: false });
 
-type FormData = Omit<UnsoldListing, 'id' | 'created_at' | 'updated_at'>;
+type FormData = Omit<UnsoldListing, 'id' | 'created_at' | 'updated_at' | 'listing_type' | 'remaining_units'>;
 
 const FIRST_SIDO = Object.keys(LAWD_CODE_MAP)[0] as keyof typeof LAWD_CODE_MAP;
 const FIRST_SIGUNGU = LAWD_CODE_MAP[FIRST_SIDO][0].name;
@@ -81,9 +81,7 @@ const DEFAULT: FormData = {
   name: '',
   location: `${FIRST_SIDO} ${FIRST_SIGUNGU}`,
   category: '아파트',
-  listing_type: '잔여세대',
   total_units: null,
-  remaining_units: null,
   min_price: null,
   max_price: null,
   area: null,
@@ -280,8 +278,9 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
 
     const body = {
       ...form,
+      listing_type: '잔여세대',
+      remaining_units: null,
       total_units: form.total_units ? Number(form.total_units) : null,
-      remaining_units: form.remaining_units ? Number(form.remaining_units) : null,
       min_price: form.min_price ? Number(form.min_price) : null,
       max_price: form.max_price ? Number(form.max_price) : null,
     };
