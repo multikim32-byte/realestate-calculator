@@ -4,6 +4,7 @@ import { SaleItem } from '@/lib/types';
 import { MapPin, Calendar, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { formatPrice } from '@/lib/formatUtils';
 
 const FAV_KEY = 'mk_favorites';
 function loadFavs() {
@@ -24,15 +25,7 @@ const statusColors: Record<string, string> = {
 };
 
 
-function formatPrice(price: number) {
-  if (!price) return '-';
-  if (price >= 10000) {
-    const eok = Math.floor(price / 10000);
-    const rest = price % 10000;
-    return rest > 0 ? `${eok}억 ${rest.toLocaleString()}만원` : `${eok}억원`;
-  }
-  return `${price.toLocaleString()}만원`;
-}
+
 
 export default function SaleCard({ item }: SaleCardProps) {
   const floors = (item as any).floors;

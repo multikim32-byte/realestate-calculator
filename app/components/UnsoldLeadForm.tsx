@@ -19,10 +19,8 @@ export default function UnsoldLeadForm({ unsoldId, aptName }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim() || !phone.trim()) {
-      setErrorMsg('이름과 전화번호를 모두 입력해주세요.');
-      return;
-    }
+    if (name.trim().length < 2) { setErrorMsg('이름을 2자 이상 입력해주세요.'); return; }
+    if (!/^0\d{1,2}[-.\s]?\d{3,4}[-.\s]?\d{4}$/.test(phone.trim())) { setErrorMsg('올바른 전화번호를 입력해주세요. (예: 010-1234-5678)'); return; }
     if (!consentPrivacy || !consentThirdParty) {
       setErrorMsg('필수 동의 항목에 모두 동의해주세요.');
       return;

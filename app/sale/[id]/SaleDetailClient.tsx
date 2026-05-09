@@ -56,6 +56,10 @@ function MgmForm({ houseManageNo, aptName }: { houseManageNo: string; aptName: s
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (form.name.trim().length < 2) { setError('성함을 2자 이상 입력해주세요.'); return; }
+    if (!/^\d{8}$/.test(form.birth_date.replace(/-/g, ''))) { setError('생년월일을 8자리 숫자로 입력해주세요. (예: 19901215)'); return; }
+    if (!/^0\d{1,2}[-.\s]?\d{3,4}[-.\s]?\d{4}$/.test(form.phone.trim())) { setError('올바른 전화번호를 입력해주세요. (예: 010-1234-5678)'); return; }
+    if (form.address.trim().length < 5) { setError('거주지를 동까지 정확히 입력해주세요.'); return; }
     if (!consentPrivacy || !consentThirdParty) {
       setError('필수 동의 항목에 모두 동의해주세요.');
       return;

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { SaleItem, Region } from '@/lib/types';
 import KakaoMapList from './KakaoMapList';
+import { formatPriceShort, formatPriceCard } from '@/lib/formatUtils';
 
 const regions: Region[] = ['전체', '서울', '경기', '인천', '부산', '대구', '광주', '대전', '울산', '세종', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'];
 
@@ -44,28 +45,6 @@ function getDDay(receiptStart: string, receiptEnd: string, status: string): { la
   return null;
 }
 
-function formatPrice(p: number) {
-  if (!p) return '-';
-  const eok = Math.floor(p / 10000);
-  const rest = p % 10000;
-  if (eok > 0 && rest > 0) return `${eok}억 ${Math.round(rest / 100) * 100 > 0 ? `${(rest / 1000).toFixed(1)}천` : ''}만`;
-  if (eok > 0) return `${eok}억`;
-  return `${p.toLocaleString()}만`;
-}
-
-function formatPriceCard(p: number) {
-  if (!p) return '-';
-  const eok = Math.floor(p / 10000);
-  const rest = p % 10000;
-  const chun = Math.floor(rest / 1000);
-  const baek = Math.round((rest % 1000) / 100) * 100;
-  let s = '';
-  if (eok > 0) s += `${eok}억 `;
-  if (chun > 0) s += `${chun}천`;
-  if (baek > 0) s += `${baek}`;
-  if (s.endsWith(' ')) s = s.trim();
-  return s ? s + '만원' : '-';
-}
 
 function extractSigungu(location: string): string {
   const parts = location.split(/\s+/);
@@ -404,7 +383,7 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
                 <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', fontSize: 12, color: '#374151', alignItems: 'center' }}>
                   <span>세대수 <strong>{item.totalUnits.toLocaleString()}세대</strong></span>
                   {item.minPrice > 0 && (
-                    <span>분양가 <strong style={{ color: '#1d4ed8' }}>{formatPrice(item.minPrice)}~{formatPrice(item.maxPrice)}</strong></span>
+                    <span>분양가 <strong style={{ color: '#1d4ed8' }}>{formatPriceShort(item.minPrice)}~{formatPriceShort(item.maxPrice)}</strong></span>
                   )}
                   <span>접수 <strong>{item.receiptStart} ~ {item.receiptEnd}</strong></span>
                   {item.winnerDate && <span>당첨발표 <strong>{item.winnerDate}</strong></span>}

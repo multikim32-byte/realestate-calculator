@@ -68,7 +68,7 @@ export default function UnsoldAptCard({ apt }: { apt: UnsoldApt }) {
             공식 분양 페이지 →
           </a>
           <Link
-            href="/#취득세"
+            href="/calculator"
             className="flex-1 text-center py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold border border-blue-100 hover:bg-blue-100 transition-colors"
             style={{ textDecoration: 'none' }}
           >

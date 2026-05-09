@@ -2,8 +2,10 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { CATEGORIES, LISTING_TYPES } from '@/lib/supabase';
 import type { UnsoldListing } from '@/lib/supabase';
+import { formatWon } from '@/lib/formatUtils';
 
 const FAV_KEY = 'mk_favorites';
 function loadFavs() {
@@ -57,11 +59,6 @@ function parseAreaLabel(area: string | null | undefined): string | null {
   return area;
 }
 
-function fmt만원(v: number) {
-  if (v >= 100000000) return `${(v / 100000000).toFixed(1)}억`;
-  if (v >= 10000) return `${Math.floor(v / 10000).toLocaleString()}만`;
-  return `${v.toLocaleString()}원`;
-}
 
 // 전체 도명 → 약칭 정규화 테이블
 const SIDO_NORMALIZE: Record<string, string> = {
@@ -255,7 +252,7 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
               {/* 썸네일 */}
               <div style={{ width: '100%', height: 200, background: '#e2e8f0', position: 'relative', overflow: 'hidden' }}>
                 {item.thumbnail_url ? (
-                  <img src={item.thumbnail_url} alt={item.name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <Image src={item.thumbnail_url} alt={item.name} fill sizes="(max-width: 768px) 100vw, 400px" style={{ objectFit: 'cover' }} />
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 48 }}>🏢</div>
                 )}
@@ -304,8 +301,8 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
                     <span style={{ fontSize: 13, fontWeight: 700, color: item.min_price || item.max_price ? '#1d4ed8' : '#9ca3af' }}>
                       {item.min_price || item.max_price
                         ? (item.min_price && item.max_price && item.min_price !== item.max_price
-                            ? `${fmt만원(item.min_price)} ~ ${fmt만원(item.max_price)}`
-                            : fmt만원((item.min_price ?? item.max_price)!))
+                            ? `${formatWon(item.min_price)} ~ ${formatWon(item.max_price)}`
+                            : formatWon((item.min_price ?? item.max_price)!))
                         : '문의'}
                     </span>
                   </div>

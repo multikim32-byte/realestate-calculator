@@ -3,6 +3,7 @@ import ShareButton from '@/app/components/ShareButton';
 import { supabase } from '@/lib/supabase';
 import type { UnsoldListing } from '@/lib/supabase';
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import SectionTabs from './SectionTabs';
@@ -131,7 +132,7 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
           {/* 썸네일 */}
           <div style={{ width: '100%', height: 320, background: '#e2e8f0', position: 'relative', overflow: 'hidden' }}>
             {item.thumbnail_url ? (
-              <img src={item.thumbnail_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <Image src={item.thumbnail_url} alt={item.name} fill sizes="(max-width: 768px) 100vw, 900px" style={{ objectFit: 'cover' }} priority />
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 72 }}>🏢</div>
             )}
