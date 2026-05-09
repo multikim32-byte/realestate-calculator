@@ -296,6 +296,9 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
               </div>
             )}
 
+            {/* 관심 고객 등록 폼 */}
+            <UnsoldLeadForm unsoldId={item.id} aptName={item.name} />
+
             {/* 관련 도구 */}
             {(() => {
               const parts = item.location.trim().split(/\s+/);
@@ -327,9 +330,6 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ i
                 </div>
               );
             })()}
-
-            {/* 관심 고객 등록 폼 */}
-            <UnsoldLeadForm unsoldId={item.id} aptName={item.name} />
 
             {/* 단지 위치 지도 */}
             <KakaoMap address={mapAddress} name={item.name} />
