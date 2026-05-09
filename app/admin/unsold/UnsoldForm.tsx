@@ -160,6 +160,7 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
   const [importResults, setImportResults] = useState<SaleSearchItem[]>([]);
   const [importLoading, setImportLoading] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [unitLoadStatus, setUnitLoadStatus] = useState<'idle' | 'loading' | 'done' | 'empty'>('idle');
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const searchSaleItems = (keyword: string) => {
@@ -203,39 +204,51 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
     // 상세 API 호출해서 가격·전용면적 자동 입력
     const houseManageNo = item.houseManageNo || item.id;
     if (!houseManageNo) return;
+
+    setUnitLoadStatus('loading');
     try {
       const res = await fetch(`/api/sale/detail?id=${houseManageNo}`);
       const data = await res.json();
       const detail = data.item as SaleDetailItem;
-      if (!detail) return;
+      if (!detail) { setUnitLoadStatus('empty'); return; }
 
-      // 전용면적별 분양가: API units → 타입별 그룹화 (특별공급+일반공급 합산)
+      // 전용면적별 분양가: API units → 타입별 그룹화 (동일 타입의 일반+특별공급 합산)
       const grouped = new Map<string, { supplyArea: number; count: number; price: number }>();
       for (const u of (detail.units ?? [])) {
         if (!u.type) continue;
-        const key = u.type.replace(/^0+/, '').replace(/\.0+$/, '');
+        // 앞의 0 제거, ".0000" 형태 꼬리 제거 (e.g. "059.0000" → "59")
+        const key = u.type.replace(/^0+/, '').replace(/\.0+$/, '') || u.type;
         const prev = grouped.get(key);
         if (prev) {
           grouped.set(key, {
             supplyArea: prev.supplyArea || u.supplyArea,
-            count: prev.count + u.count,
-            price: Math.max(prev.price, u.price),
+            count: prev.count + (u.count || 0),
+            price: Math.max(prev.price, u.price || 0),
           });
         } else {
-          grouped.set(key, { supplyArea: u.supplyArea, count: u.count, price: u.price });
+          grouped.set(key, {
+            supplyArea: u.supplyArea || 0,
+            count: u.count || 0,
+            price: u.price || 0,
+          });
         }
       }
+
       const newRows: UnitPrice[] = Array.from(grouped.entries()).map(([key, u]) => ({
         type: key,
         supplyArea: u.supplyArea > 0 ? String(u.supplyArea) : '',
         count: u.count > 0 ? String(u.count) : '',
         min: '',
+        // API price 단위: 만원 → 원으로 변환
         max: u.price > 0 ? String(u.price * 10000) : '',
       }));
 
       if (newRows.length > 0) {
         setUnitPrices(newRows);
         syncUnitPrices(newRows);
+        setUnitLoadStatus('done');
+      } else {
+        setUnitLoadStatus('empty');
       }
 
       setForm(prev => ({
@@ -247,7 +260,7 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
         receipt_start: prev.receipt_start ?? detail.receiptStart ?? null,
         receipt_end:   prev.receipt_end   ?? detail.receiptEnd   ?? null,
       }));
-    } catch { /* 상세 조회 실패 시 무시 */ }
+    } catch { setUnitLoadStatus('empty'); }
   };
 
   const set = (key: keyof FormData, value: unknown) =>
@@ -413,7 +426,18 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
           {/* 전용면적별 분양가 */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <label style={labelStyle}>전용면적별 분양가</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <label style={labelStyle}>전용면적별 분양가</label>
+                {unitLoadStatus === 'loading' && (
+                  <span style={{ fontSize: 11, color: '#6b7280' }}>불러오는 중...</span>
+                )}
+                {unitLoadStatus === 'done' && (
+                  <span style={{ fontSize: 11, color: '#059669', fontWeight: 600 }}>✅ 자동 입력 완료</span>
+                )}
+                {unitLoadStatus === 'empty' && (
+                  <span style={{ fontSize: 11, color: '#d97706', fontWeight: 600 }}>⚠️ 가격 정보 없음 — 직접 입력</span>
+                )}
+              </div>
               {(form.min_price || form.max_price) && (
                 <span style={{ fontSize: 12, color: '#1d4ed8', fontWeight: 600 }}>
                   전체 {form.min_price && form.max_price && form.min_price !== form.max_price

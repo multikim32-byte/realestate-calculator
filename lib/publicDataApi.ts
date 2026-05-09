@@ -635,27 +635,57 @@ export async function fetchUnitDetails(
   const serviceKey = process.env.PUBLIC_DATA_API_KEY;
   if (!serviceKey) return [];
 
+  // PBLANC_NO 조건 포함 여부를 선택할 수 있는 내부 헬퍼
+  const fetchUnits = async (
+    ep: string,
+    hmNo: string,
+    pNo: string,
+  ): Promise<UnitDetail[]> => {
+    const cond: Record<string, string> = { 'cond[HOUSE_MANAGE_NO::EQ]': hmNo };
+    if (pNo) cond['cond[PBLANC_NO::EQ]'] = pNo;
+    const { data } = await callApi(ep, serviceKey, 1, 50, cond);
+    return data.map(parseUnit);
+  };
+
   try {
-    // 오피스텔/도시형
+    // 1차: buildingType·recruitType에 맞는 엔드포인트 + PBLANC_NO 포함 시도
+    let results: UnitDetail[] = [];
+
     if (buildingType === '오피스텔' || buildingType === '도시형생활주택') {
-      return await fetchOfficetelUnits(serviceKey, houseManageNo, pblancNo);
+      results = await fetchUnits('getUrbtyOfctlLttotPblancMdl', houseManageNo, pblancNo);
+    } else if (recruitType === '선착순') {
+      results = await fetchUnits('getRemndrLttotPblancMdl', houseManageNo, pblancNo).catch(() => []);
+      if (results.length === 0)
+        results = await fetchUnits('getOPTLttotPblancMdl', houseManageNo, pblancNo).catch(() => []);
+    } else {
+      results = await fetchUnits('getAPTLttotPblancMdl', houseManageNo, pblancNo).catch(() => []);
+      if (results.length === 0)
+        results = await fetchUnits('getPblPvtRentLttotPblancMdl', houseManageNo, pblancNo).catch(() => []);
     }
 
-    if (recruitType === '선착순') {
-      // 잔여세대 먼저 시도 → 없으면 임의공급(OPT) 시도
-      const remndr = await fetchRemndrUnits(serviceKey, houseManageNo, pblancNo);
-      if (remndr.length > 0) return remndr;
-      return await fetchOptUnits(serviceKey, houseManageNo, pblancNo);
+    if (results.length > 0) return results;
+
+    // 2차: PBLANC_NO 없이 모든 유닛 엔드포인트 순차 시도 (잔여세대·OPT 우선)
+    const fallbackOrder = [
+      'getRemndrLttotPblancMdl',
+      'getOPTLttotPblancMdl',
+      'getAPTLttotPblancMdl',
+      'getUrbtyOfctlLttotPblancMdl',
+      'getPblPvtRentLttotPblancMdl',
+    ];
+    for (const ep of fallbackOrder) {
+      try {
+        results = await fetchUnits(ep, houseManageNo, '');
+        if (results.length > 0) return results;
+      } catch { /* 다음 엔드포인트 시도 */ }
     }
 
-    // 신규공급: APT 먼저 → 없으면 공공지원민간임대 시도
-    const apt = await fetchAPTUnits(serviceKey, houseManageNo, pblancNo);
-    if (apt.length > 0) return apt;
-    return await fetchPblPvtRentUnits(serviceKey, houseManageNo, pblancNo);
+    return [];
   } catch {
     return [];
   }
 }
+
 
 /**
  * 단지명 키워드로 청약홈 전체 검색 (어드민 불러오기용)
