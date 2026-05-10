@@ -1,4 +1,6 @@
-﻿import type { MetadataRoute } from 'next';
+﻿export const revalidate = 3600; // 1시간마다 재생성
+
+import type { MetadataRoute } from 'next';
 import { supabase } from '@/lib/supabase';
 import { fetchPublicSaleList } from '@/lib/publicDataApi';
 

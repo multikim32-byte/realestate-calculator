@@ -1,4 +1,6 @@
-﻿import GlobalNav from '@/app/components/GlobalNav';
+﻿export const revalidate = 3600; // 1시간 캐시, 어드민 저장 시 revalidatePath로 즉시 갱신
+
+import GlobalNav from '@/app/components/GlobalNav';
 import ShareButton from '@/app/components/ShareButton';
 import { supabase } from '@/lib/supabase';
 import type { UnsoldListing } from '@/lib/supabase';
