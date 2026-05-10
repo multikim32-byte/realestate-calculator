@@ -2,6 +2,7 @@
 import { supabase } from '@/lib/supabase';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import UnsoldList from './UnsoldList';
 
 const REGIONS = ['서울','경기','인천','부산','대구','광주','대전','울산','세종','강원','충북','충남','전북','전남','경북','경남','제주'];
@@ -66,7 +67,9 @@ export default async function UnsoldPage() {
       </div>
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 16px 64px' }}>
-        <UnsoldList listings={listings ?? []} />
+        <Suspense>
+          <UnsoldList listings={listings ?? []} />
+        </Suspense>
 
         {/* 전체 매물 링크 — 서버 렌더링으로 크롤러가 모든 개별 페이지를 발견할 수 있도록 */}
         {listings.length > 0 && (
@@ -76,7 +79,7 @@ export default async function UnsoldPage() {
               {listings.map(item => (
                 <Link
                   key={item.id}
-                  href={`/unsold/${item.id}`}
+                  href={`/unsold/${item.slug ?? item.id}`}
                   style={{ fontSize: 14, color: '#374151', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid #f3f4f6' }}
                 >
                   <span style={{ color: '#d97706', fontWeight: 700, fontSize: 12, minWidth: 44 }}>미분양</span>

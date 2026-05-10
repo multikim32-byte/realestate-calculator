@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { CATEGORIES } from '@/lib/supabase';
 import type { UnsoldListing } from '@/lib/supabase';
 import { formatWon } from '@/lib/formatUtils';
@@ -88,11 +89,28 @@ const selectStyle: React.CSSProperties = {
 };
 
 export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) {
-  const [category, setCategory] = useState('전체');
-  const [sido, setSido] = useState('전체');
-  const [sigungu, setSigungu] = useState('전체');
-  const [page, setPage] = useState(1);
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const PER_PAGE = 12;
+
+  const [category, setCategory] = useState(searchParams.get('category') ?? '전체');
+  const [sido, setSido] = useState(searchParams.get('sido') ?? '전체');
+  const [sigungu, setSigungu] = useState(searchParams.get('sigungu') ?? '전체');
+  const [page, setPage] = useState(Number(searchParams.get('page') ?? '1'));
+
+  const updateUrl = (overrides: Partial<{ category: string; sido: string; sigungu: string; page: number }>) => {
+    const c = overrides.category ?? category;
+    const s = overrides.sido ?? sido;
+    const sg = overrides.sigungu ?? sigungu;
+    const p = overrides.page ?? page;
+    const sp = new URLSearchParams();
+    if (c !== '전체') sp.set('category', c);
+    if (s !== '전체') sp.set('sido', s);
+    if (sg !== '전체') sp.set('sigungu', sg);
+    if (p > 1) sp.set('page', String(p));
+    const query = sp.toString();
+    router.replace(`/unsold${query ? `?${query}` : ''}`, { scroll: false });
+  };
 
   // 시도 목록 (location 첫 단어)
   const sidoList = useMemo(() => {
@@ -111,6 +129,7 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
     setSido(val);
     setSigungu('전체');
     setPage(1);
+    updateUrl({ sido: val, sigungu: '전체', page: 1 });
   };
 
   const filtered = useMemo(() => {
@@ -154,7 +173,7 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
             {sidoList.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
           {sigunguList.length > 2 && (
-            <select value={sigungu} onChange={e => { setSigungu(e.target.value); setPage(1); }} style={selectStyle}>
+            <select value={sigungu} onChange={e => { setSigungu(e.target.value); setPage(1); updateUrl({ sigungu: e.target.value, page: 1 }); }} style={selectStyle}>
               {sigunguList.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           )}
@@ -169,7 +188,7 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
             {CATEGORIES.map(cat => (
               <button
                 key={cat}
-                onClick={() => { setCategory(cat); setPage(1); }}
+                onClick={() => { setCategory(cat); setPage(1); updateUrl({ category: cat, page: 1 }); }}
                 style={{
                   padding: '6px 14px', borderRadius: 20, border: 'none', fontSize: 13,
                   fontWeight: category === cat ? 700 : 400,
@@ -285,17 +304,17 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
       {/* 페이지네이션 */}
       {totalPages > 1 && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 32 }}>
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+          <button onClick={() => { const p = Math.max(1, page - 1); setPage(p); updateUrl({ page: p }); }} disabled={page === 1}
             style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', cursor: page === 1 ? 'not-allowed' : 'pointer', color: page === 1 ? '#9ca3af' : '#374151' }}>
             이전
           </button>
           {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => i + 1).map(p => (
-            <button key={p} onClick={() => setPage(p)}
+            <button key={p} onClick={() => { setPage(p); updateUrl({ page: p }); }}
               style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: page === p ? '#1d4ed8' : '#fff', color: page === p ? '#fff' : '#374151', fontWeight: page === p ? 700 : 400, cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
               {p}
             </button>
           ))}
-          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+          <button onClick={() => { const p = Math.min(totalPages, page + 1); setPage(p); updateUrl({ page: p }); }} disabled={page === totalPages}
             style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', cursor: page === totalPages ? 'not-allowed' : 'pointer', color: page === totalPages ? '#9ca3af' : '#374151' }}>
             다음
           </button>
