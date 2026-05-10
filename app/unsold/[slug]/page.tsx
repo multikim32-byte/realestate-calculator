@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   if (!data) return { title: '분양정보' };
 
-  const item = data as Pick<UnsoldListing, 'name' | 'location' | 'category' | 'benefit' | 'min_price' | 'max_price' | 'thumbnail_url' | 'slug'>;
+  const item = data as unknown as Pick<UnsoldListing, 'name' | 'location' | 'category' | 'benefit' | 'min_price' | 'max_price' | 'thumbnail_url' | 'slug'>;
   const canonical = item.slug ?? slug;
   const priceText = item.min_price
     ? `분양가 ${item.min_price >= 100000000 ? `${(item.min_price / 100000000).toFixed(1)}억` : `${Math.floor(item.min_price / 10000).toLocaleString()}만`}원~`
@@ -93,7 +93,7 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ s
   if (!raw) notFound();
   if (redirectTo) redirect(`/unsold/${redirectTo}`);
 
-  const item = raw as UnsoldListing;
+  const item = raw as unknown as UnsoldListing;
   if (!item.is_active) notFound();
 
   // house_manage_no가 있으면 청약홈 API에서 상세 주소 가져옴 → KakaoMap 정확도 향상
