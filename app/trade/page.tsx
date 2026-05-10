@@ -6,13 +6,13 @@ import { fetchTradeList, recentMonths } from '@/lib/tradeApi';
 export const revalidate = 3600; // 실거래가 데이터 1시간 ISR 캐싱
 
 export const metadata: Metadata = {
-  title: '아파트 실거래가 조회 — 전국 매매가 확인',
-  description: '국토교통부 공공데이터 기반 전국 아파트 실거래가를 무료로 조회하세요. 지역별·단지별·평형별 매매가 한눈에. 아파트집사.',
-  keywords: ['아파트 실거래가', '실거래가 조회', '아파트 매매가', '전국 실거래가', '부동산 실거래가', '아파트집사'],
+  title: '아파트 실거래가 조회 — 매매·전세·월세 확인',
+  description: '국토교통부 공공데이터 기반 전국 아파트 매매·전세·월세 실거래가를 무료로 조회하세요. 전세가율 자동 계산, 지역별·단지별 상세 내역 한눈에. 아파트집사.',
+  keywords: ['아파트 실거래가', '실거래가 조회', '아파트 매매가', '전세 실거래가', '월세 실거래가', '전세가율', '전국 실거래가', '부동산 실거래가', '아파트집사'],
   alternates: { canonical: 'https://www.aptzipsa.kr/trade' },
   openGraph: {
-    title: '아파트 실거래가 조회 — 전국 매매가 확인 | 아파트집사',
-    description: '국토교통부 공공데이터 기반 전국 아파트 실거래가를 무료로 조회하세요. 지역별·단지별·평형별 매매가 한눈에.',
+    title: '아파트 실거래가 조회 — 매매·전세·월세 확인 | 아파트집사',
+    description: '국토교통부 공공데이터 기반 전국 아파트 매매·전세·월세 실거래가를 무료로 조회하세요. 전세가율 자동 계산, 지역별·단지별 상세 내역 한눈에.',
     url: 'https://www.aptzipsa.kr/trade',
     siteName: '아파트집사',
   },
@@ -33,7 +33,7 @@ export default async function TradePage() {
       <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)', padding: '36px 16px 32px', textAlign: 'center' }}>
         <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: '0 0 8px' }}>아파트 실거래가 조회</h1>
         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0 }}>
-          국토교통부 실거래가 공개시스템 · 지역·월 선택 후 조회
+          국토교통부 실거래가 공개시스템 · 매매 · 전세 · 월세 · 전세가율
         </p>
       </div>
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 16px' }}>
@@ -47,9 +47,10 @@ export default async function TradePage() {
               실거래가 조회 안내
             </h2>
             <p style={{ fontSize: 14, lineHeight: 1.8, color: '#374151' }}>
-              본 서비스는 국토교통부 실거래가 공개시스템(RTMSOBJSvc) API를 활용해
-              전국 아파트 매매 실거래 정보를 제공합니다.
-              시/도 → 시/군/구 선택 후 거래월을 선택하면 해당 지역의 실제 매매 거래 내역을 조회할 수 있습니다.
+              본 서비스는 국토교통부 실거래가 공개시스템 API를 활용해
+              전국 아파트 매매·전세·월세 실거래 정보를 제공합니다.
+              시/도 → 시/군/구 선택 후 거래월을 선택하고 매매·전세·월세 탭을 전환하여 조회할 수 있습니다.
+              전세 탭에서는 같은 단지의 매매가와 비교한 전세가율도 자동으로 표시됩니다.
             </p>
           </section>
 
