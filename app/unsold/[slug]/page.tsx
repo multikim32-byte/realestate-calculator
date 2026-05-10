@@ -29,7 +29,7 @@ async function findListing(slug: string, selectCols = '*') {
       .select(selectCols)
       .eq('id', slug)
       .maybeSingle();
-    if (byId) return { data: byId, redirectTo: (byId as UnsoldListing).slug ?? null };
+    if (byId) return { data: byId, redirectTo: (byId as unknown as UnsoldListing).slug ?? null };
   } catch { /* invalid UUID format */ }
 
   return { data: null, redirectTo: null };
