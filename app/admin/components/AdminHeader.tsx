@@ -10,6 +10,7 @@ const NAV = [
   { href: '/admin/unsold/leads', label: '관심고객',      icon: '📞' },
   { href: '/admin/mgm/leads',    label: 'MGM',           icon: '🤝' },
   { href: '/admin/push',         label: '푸시 알림',     icon: '🔔' },
+  { href: '/admin/insta-card',   label: '인스타 카드',   icon: '📸' },
 ];
 
 export default function AdminHeader() {
