@@ -54,18 +54,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // 분양정보 개별 매물 (Supabase)
-  let unsoldItems: { id: string; updated_at: string }[] = [];
+  let unsoldItems: { id: string; slug: string | null; updated_at: string }[] = [];
   try {
     const { data } = await supabase
       .from('unsold_listings')
-      .select('id, updated_at')
+      .select('id, slug, updated_at')
       .eq('is_active', true)
       .order('created_at', { ascending: false });
     unsoldItems = data ?? [];
   } catch {}
 
   const unsoldEntries: MetadataRoute.Sitemap = unsoldItems.map(item => ({
-    url: `${BASE}/unsold/${item.id}`,
+    url: `${BASE}/unsold/${item.slug ?? item.id}`,
     lastModified: new Date(item.updated_at),
     changeFrequency: 'daily' as const,
     priority: 0.9,

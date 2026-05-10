@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import type { UnsoldSection } from '@/lib/supabase';
 
 export default function SectionTabs({ sections }: { sections: UnsoldSection[] }) {
@@ -12,12 +13,13 @@ export default function SectionTabs({ sections }: { sections: UnsoldSection[] })
             {section.name}
           </h3>
           {section.images.map((url, i) => (
-            <img
+            <Image
               key={i}
               src={url}
               alt={`${section.name} ${i + 1}`}
-              loading="lazy"
-              decoding="async"
+              width={0}
+              height={0}
+              sizes="(max-width: 860px) 100vw, 860px"
               style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 8, marginBottom: 8 }}
             />
           ))}
