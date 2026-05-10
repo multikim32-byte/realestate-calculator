@@ -32,7 +32,7 @@ function fmt만원(v: number) {
 function fmtDateRange(start: string, end: string) {
   const s = start.slice(5).replace('-', '.');
   const e = end.slice(5).replace('-', '.');
-  return `${s} ~ ${e}`;
+  return `${s}~${e}`;
 }
 
 function fmtMonth(month: string) {
@@ -59,14 +59,13 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
   const px = (n: number) => n * scale;
   const sp = (n: number): CSSProperties => ({ fontSize: px(n) });
 
-  // 현재 페이지에 해당하는 5건만 슬라이스
   const allItems = isSale ? saleItems : unsoldItems;
   const start = (page - 1) * PER_PAGE;
   const pageItems = allItems.slice(start, start + PER_PAGE);
   const count = pageItems.length;
 
-  // count에 따라 폰트 비율 조정 (5건 = 1.0 기준, 적을수록 더 크게)
-  const fs = count <= 2 ? 1.55 : count <= 3 ? 1.35 : count <= 4 ? 1.15 : 1.0;
+  // 5건 기준 폰트 스케일 — 적을수록 더 크게
+  const fs = count <= 2 ? 1.5 : count <= 3 ? 1.3 : count <= 4 ? 1.12 : 1.0;
 
   const accentColor = isSale ? '#1d4ed8' : '#059669';
   const bgLight = isSale ? '#eff6ff' : '#f0fdf4';
@@ -85,37 +84,37 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
       {/* ── 헤더 ── */}
       <div style={{
         background: 'linear-gradient(135deg, #0f2044 0%, #1d4ed8 100%)',
-        padding: `${px(26)}px ${px(44)}px`,
+        padding: `${px(28)}px ${px(44)}px`,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         flexShrink: 0,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: px(14) }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: px(16) }}>
           <div style={{
-            background: '#fff', borderRadius: px(10),
-            width: px(54), height: px(54),
+            background: '#fff', borderRadius: px(12),
+            width: px(62), height: px(62),
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            ...sp(23), fontWeight: 900, color: '#1d4ed8',
+            ...sp(26), fontWeight: 900, color: '#1d4ed8',
           }}>AZ</div>
           <div>
-            <div style={{ ...sp(23), fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>아파트집사</div>
-            <div style={{ ...sp(13), color: 'rgba(255,255,255,0.55)', marginTop: px(2) }}>aptzipsa.kr</div>
+            <div style={{ ...sp(28), fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>아파트집사</div>
+            <div style={{ ...sp(16), color: 'rgba(255,255,255,0.55)', marginTop: px(3) }}>aptzipsa.kr</div>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: px(10) }}>
           {totalPages > 1 && (
             <div style={{
-              background: 'rgba(255,255,255,0.2)',
-              borderRadius: px(16),
-              padding: `${px(6)}px ${px(14)}px`,
-              ...sp(15), color: '#fff', fontWeight: 700,
+              background: 'rgba(255,255,255,0.22)',
+              borderRadius: px(18),
+              padding: `${px(8)}px ${px(16)}px`,
+              ...sp(18), color: '#fff', fontWeight: 700,
             }}>
               {page} / {totalPages}
             </div>
           )}
           <div style={{
-            background: 'rgba(255,255,255,0.15)', borderRadius: px(20),
-            padding: `${px(8)}px ${px(18)}px`,
-            ...sp(15), color: '#fff', fontWeight: 700,
+            background: 'rgba(255,255,255,0.15)', borderRadius: px(22),
+            padding: `${px(9)}px ${px(20)}px`,
+            ...sp(18), color: '#fff', fontWeight: 700,
           }}>
             {isSale ? '📅 청약 일정' : '🏢 미분양 정보'}
           </div>
@@ -131,13 +130,13 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div>
-          <div style={{ ...sp(42), fontWeight: 900, color: '#1e293b', lineHeight: 1.15 }}>{title}</div>
-          <div style={{ ...sp(19), color: '#64748b', marginTop: px(5), fontWeight: 600 }}>{subtitle}</div>
+          <div style={{ ...sp(48), fontWeight: 900, color: '#1e293b', lineHeight: 1.15 }}>{title}</div>
+          <div style={{ ...sp(22), color: '#64748b', marginTop: px(6), fontWeight: 600 }}>{subtitle}</div>
         </div>
         <div style={{
           background: accentColor, color: '#fff',
-          borderRadius: px(50), padding: `${px(8)}px ${px(22)}px`,
-          ...sp(22), fontWeight: 900, flexShrink: 0, marginLeft: px(16),
+          borderRadius: px(50), padding: `${px(10)}px ${px(24)}px`,
+          ...sp(24), fontWeight: 900, flexShrink: 0, marginLeft: px(16),
         }}>
           {start + 1}–{start + count}건
         </div>
@@ -147,13 +146,13 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
       <div style={{
         flex: 1, overflow: 'hidden',
         display: 'flex', flexDirection: 'column',
-        padding: `${px(12)}px ${px(44)}px ${px(8)}px`,
+        padding: `${px(14)}px ${px(44)}px ${px(10)}px`,
       }}>
         {/* 컬럼 헤더 */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: isSale ? '1fr 220px 150px' : '1fr 200px',
-          padding: `${px(8)}px ${px(14)}px`,
+          gridTemplateColumns: isSale ? '1fr 230px 160px' : '1fr 210px',
+          padding: `${px(9)}px ${px(14)}px`,
           background: '#f1f5f9',
           borderRadius: px(8),
           marginBottom: px(6),
@@ -163,7 +162,7 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
             ? ['단지명 / 지역', '청약기간', '세대수']
             : ['단지명 / 지역', '분양가']
           ).map(h => (
-            <div key={h} style={{ ...sp(14), color: '#94a3b8', fontWeight: 700 }}>{h}</div>
+            <div key={h} style={{ ...sp(16), color: '#94a3b8', fontWeight: 700 }}>{h}</div>
           ))}
         </div>
 
@@ -174,42 +173,34 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
               <div key={i} style={{
                 flex: 1,
                 display: 'grid',
-                gridTemplateColumns: '1fr 220px 150px',
+                gridTemplateColumns: '1fr 230px 160px',
                 alignItems: 'center',
-                borderBottom: i < count - 1 ? `${px(1.5)}px solid #f1f5f9` : 'none',
+                borderBottom: i < count - 1 ? `${px(2)}px solid #f1f5f9` : 'none',
                 paddingLeft: px(14), paddingRight: px(14),
                 overflow: 'hidden',
               }}>
                 <div style={{ overflow: 'hidden', paddingRight: px(12) }}>
                   <div style={{
-                    ...sp(Math.round(20 * fs)),
+                    ...sp(Math.round(26 * fs)),
                     fontWeight: 800, color: '#1e293b',
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                     lineHeight: 1.3,
                   }}>{item.name}</div>
                   <div style={{
-                    ...sp(Math.round(14 * fs)),
-                    color: '#94a3b8', marginTop: px(4),
+                    ...sp(Math.round(18 * fs)),
+                    color: '#94a3b8', marginTop: px(5),
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>{fmtLocation(item.location)}</div>
-                  {fs >= 1.3 && item.status && (
-                    <div style={{
-                      display: 'inline-block',
-                      background: accentColor + '18', color: accentColor,
-                      borderRadius: px(4), padding: `${px(2)}px ${px(8)}px`,
-                      ...sp(Math.round(13 * fs)), fontWeight: 700, marginTop: px(6),
-                    }}>{item.status}</div>
-                  )}
                 </div>
                 <div style={{
-                  ...sp(Math.round(18 * fs)),
+                  ...sp(Math.round(22 * fs)),
                   color: accentColor, fontWeight: 700, lineHeight: 1.4,
                 }}>
                   {item.receiptStart && item.receiptEnd
                     ? fmtDateRange(item.receiptStart, item.receiptEnd)
                     : <span style={{ color: '#94a3b8' }}>{item.status}</span>}
                 </div>
-                <div style={{ ...sp(Math.round(18 * fs)), color: '#374151', fontWeight: 700 }}>
+                <div style={{ ...sp(Math.round(22 * fs)), color: '#374151', fontWeight: 700 }}>
                   {item.totalUnits ? `${item.totalUnits.toLocaleString()}세대` : '-'}
                 </div>
               </div>
@@ -218,35 +209,35 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
               <div key={i} style={{
                 flex: 1,
                 display: 'grid',
-                gridTemplateColumns: '1fr 200px',
+                gridTemplateColumns: '1fr 210px',
                 alignItems: 'center',
-                borderBottom: i < count - 1 ? `${px(1.5)}px solid #f1f5f9` : 'none',
+                borderBottom: i < count - 1 ? `${px(2)}px solid #f1f5f9` : 'none',
                 paddingLeft: px(14), paddingRight: px(14),
                 overflow: 'hidden',
               }}>
                 <div style={{ overflow: 'hidden', paddingRight: px(16) }}>
                   <div style={{
-                    ...sp(Math.round(21 * fs)),
+                    ...sp(Math.round(27 * fs)),
                     fontWeight: 800, color: '#1e293b',
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                     lineHeight: 1.3,
                   }}>{item.name}</div>
                   <div style={{
-                    ...sp(Math.round(14 * fs)),
-                    color: '#94a3b8', marginTop: px(4),
+                    ...sp(Math.round(18 * fs)),
+                    color: '#94a3b8', marginTop: px(5),
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>{fmtLocation(item.location, 3)}</div>
                   {item.benefit && (
                     <div style={{
-                      ...sp(Math.round(13 * fs)),
+                      ...sp(Math.round(16 * fs)),
                       color: '#f59e0b', marginTop: px(6), fontWeight: 700,
                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                    }}>✦ {item.benefit.slice(0, 32)}{item.benefit.length > 32 ? '…' : ''}</div>
+                    }}>✦ {item.benefit.slice(0, 28)}{item.benefit.length > 28 ? '…' : ''}</div>
                   )}
                 </div>
                 <div>
                   <div style={{
-                    ...sp(Math.round((fs >= 1.4 ? 40 : fs >= 1.2 ? 32 : 26) * (fs >= 1.0 ? 1 : fs))),
+                    ...sp(Math.round(38 * fs)),
                     color: accentColor, fontWeight: 900, lineHeight: 1.1,
                   }}>
                     {item.min_price || item.max_price
@@ -254,7 +245,7 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
                       : '문의'}
                   </div>
                   {(item.min_price || item.max_price) && (
-                    <div style={{ ...sp(Math.round(14 * fs)), color: '#94a3b8', marginTop: px(3) }}>부터~</div>
+                    <div style={{ ...sp(Math.round(16 * fs)), color: '#94a3b8', marginTop: px(3) }}>부터~</div>
                   )}
                 </div>
               </div>
@@ -266,12 +257,12 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
       {/* ── 푸터 ── */}
       <div style={{
         background: '#1e293b',
-        padding: `${px(17)}px ${px(44)}px`,
+        padding: `${px(18)}px ${px(44)}px`,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         flexShrink: 0,
       }}>
-        <div style={{ ...sp(16), color: '#e2e8f0', fontWeight: 700 }}>aptzipsa.kr</div>
-        <div style={{ ...sp(13), color: '#64748b' }}>
+        <div style={{ ...sp(18), color: '#e2e8f0', fontWeight: 700 }}>aptzipsa.kr</div>
+        <div style={{ ...sp(15), color: '#64748b' }}>
           #아파트집사 #{isSale ? '청약일정' : '미분양'} #{region === '전국' ? '전국아파트' : region}
         </div>
       </div>
