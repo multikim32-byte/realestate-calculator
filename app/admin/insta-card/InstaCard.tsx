@@ -10,6 +10,7 @@ export type UnsoldItem = {
   name: string; location: string;
   min_price: number | null; max_price: number | null;
   benefit: string | null;
+  area: string | null;
 };
 
 type Props = {
@@ -246,6 +247,19 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
                   </div>
                   {(item.min_price || item.max_price) && (
                     <div style={{ ...sp(Math.round(19 * fs)), color: '#94a3b8', marginTop: px(3) }}>부터~</div>
+                  )}
+                  {item.area && (
+                    <div style={{
+                      display: 'inline-block',
+                      background: '#f1f5f9',
+                      color: '#475569',
+                      borderRadius: px(6),
+                      padding: `${px(3)}px ${px(10)}px`,
+                      ...sp(Math.round(17 * fs)),
+                      fontWeight: 700, marginTop: px(6),
+                    }}>
+                      {item.area}
+                    </div>
                   )}
                 </div>
               </div>
