@@ -46,6 +46,18 @@ function fmtLocation(loc: string, parts = 3) {
   return loc.split(' ').slice(0, parts).join(' ');
 }
 
+function fmtArea(area: string | null): string {
+  if (!area) return '';
+  try {
+    const parsed = JSON.parse(area);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      const types = parsed.map((p: { type?: string }) => p.type ?? '').filter(Boolean);
+      return types.slice(0, 3).join(' · ');
+    }
+  } catch { /* plain text */ }
+  return area.split(',').slice(0, 3).map(s => s.trim()).join(' · ');
+}
+
 const PER_PAGE = 5;
 
 export default function InstaCard({ type, region, month, saleItems, unsoldItems, scale = 1, page = 1, totalPages = 1 }: Props) {
@@ -248,7 +260,7 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
                   {(item.min_price || item.max_price) && (
                     <div style={{ ...sp(Math.round(19 * fs)), color: '#94a3b8', marginTop: px(3) }}>부터~</div>
                   )}
-                  {item.area && (
+                  {fmtArea(item.area) && (
                     <div style={{
                       display: 'inline-block',
                       background: '#f1f5f9',
@@ -258,7 +270,7 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
                       ...sp(Math.round(17 * fs)),
                       fontWeight: 700, marginTop: px(6),
                     }}>
-                      {item.area}
+                      {fmtArea(item.area)}
                     </div>
                   )}
                 </div>
