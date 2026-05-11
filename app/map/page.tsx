@@ -2,7 +2,7 @@ import GlobalNav from '@/app/components/GlobalNav';
 import MapClient from './MapClient';
 import type { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
-import { fetchPublicSaleList } from '@/lib/publicDataApi';
+import { fetchPublicSaleList, fetchSaleDetail } from '@/lib/publicDataApi';
 
 export const revalidate = 1800; // 30분
 
@@ -27,6 +27,7 @@ export type MapUnsoldItem = {
   category: string;
   benefit: string | null;
   thumbnail_url: string | null;
+  house_manage_no: string | null;
 };
 
 export type MapSaleItem = {
@@ -44,7 +45,7 @@ export default async function MapPage() {
   const [{ data: unsoldRaw }, saleResult] = await Promise.allSettled([
     supabase
       .from('unsold_listings')
-      .select('id, slug, name, location, min_price, max_price, category, benefit, thumbnail_url')
+      .select('id, slug, name, location, min_price, max_price, category, benefit, thumbnail_url, house_manage_no')
       .eq('is_active', true)
       .order('created_at', { ascending: false }),
     fetchPublicSaleList({ type: 'all', perPage: 100, skipEnrich: true }),
@@ -53,7 +54,19 @@ export default async function MapPage() {
     s.status === 'fulfilled' ? s.value : { items: [] },
   ]) as [{ data: MapUnsoldItem[] | null }, { items: any[] }];
 
-  const unsoldListings: MapUnsoldItem[] = (unsoldRaw ?? []).filter(i => i.location);
+  // 주소가 시/구 수준으로 너무 간략한 매물은 청약홈 API에서 상세 주소 보완
+  const unsoldListings: MapUnsoldItem[] = await Promise.all(
+    (unsoldRaw ?? []).filter(i => i.location).map(async (item: any) => {
+      const isVague = !/[동읍면리]|번지/.test(item.location.replace(/\(.*?\)/g, ''));
+      if (isVague && item.house_manage_no) {
+        try {
+          const detail = await fetchSaleDetail(item.house_manage_no);
+          if (detail?.location) return { ...item, location: detail.location };
+        } catch { /* 실패 시 원본 주소 유지 */ }
+      }
+      return item;
+    })
+  );
 
   const saleListings: MapSaleItem[] = (saleResult.items ?? [])
     .filter((i: any) => i.status === '청약중' || i.status?.includes('예정'))
