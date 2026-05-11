@@ -8,6 +8,57 @@ import type { UnsoldListing } from '@/lib/supabase';
 import DeleteModal from '../components/DeleteModal';
 import AdminHeader from '../components/AdminHeader';
 
+const KAKAO_KEY = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
+
+function loadKakaoMaps(): Promise<void> {
+  return new Promise(resolve => {
+    if (window.kakao?.maps?.services) { resolve(); return; }
+    const existing = document.getElementById('kakao-map-sdk');
+    if (existing) { window.kakao?.maps?.load?.(resolve); return; }
+    const script = document.createElement('script');
+    script.id = 'kakao-map-sdk';
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_KEY}&libraries=services&autoload=false`;
+    script.onload = () => window.kakao.maps.load(resolve);
+    document.head.appendChild(script);
+  });
+}
+
+function geocodeAddress(geocoder: any, ps: any, address: string, name: string): Promise<{ lat: number; lng: number } | null> {
+  const noParens = address.replace(/\(.*?\)/g, '').trim();
+  const isPrecise = /[동읍면리]$|[동읍면리]\s+\d|[로길]\s+\d|번지/.test(noParens);
+  const searchName = name.replace(/\s*\([^)]*\)\s*/g, '').trim();
+
+  function addrSearch(addr: string): Promise<{ lat: number; lng: number } | null> {
+    return new Promise(res => {
+      geocoder.addressSearch(addr, (result: any[], status: string) => {
+        if (status === window.kakao.maps.services.Status.OK && result.length > 0)
+          res({ lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) });
+        else res(null);
+      });
+    });
+  }
+
+  function nameSearch(center?: { lat: number; lng: number }): Promise<{ lat: number; lng: number } | null> {
+    return new Promise(res => {
+      if (!searchName) { res(center ?? null); return; }
+      ps.keywordSearch(searchName, (places: any[], st: string) => {
+        if (st === window.kakao.maps.services.Status.OK && places.length > 0) {
+          res({ lat: parseFloat(places[0].y), lng: parseFloat(places[0].x) });
+        } else res(center ?? null);
+      });
+    });
+  }
+
+  return (async () => {
+    if (isPrecise) {
+      const coords = await addrSearch(noParens) ?? await addrSearch(address);
+      return coords ?? await nameSearch();
+    } else {
+      return await nameSearch();
+    }
+  })();
+}
+
 const PAGE_SIZE = 20;
 
 function useToast() {
@@ -29,6 +80,7 @@ export default function AdminUnsoldListPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleteTarget, setDeleteTarget] = useState<UnsoldListing | null>(null);
   const [bulkDeleteModal, setBulkDeleteModal] = useState(false);
+  const [geocodeStatus, setGeocodeStatus] = useState<{ active: boolean; done: number; total: number; err: number } | null>(null);
   const router = useRouter();
   const { toast, show } = useToast();
 
@@ -106,6 +158,39 @@ export default function AdminUnsoldListPage() {
     if (res.ok) setListings(prev => prev.map(l => l.id === item.id ? { ...l, is_active: !l.is_active } : l));
   };
 
+  const handleBulkGeocode = async () => {
+    if (!KAKAO_KEY) { alert('Kakao 지도 키가 없습니다.'); return; }
+    const targets = listings.filter(l => !l.lat || !l.lng);
+    if (targets.length === 0) { show('좌표가 없는 매물이 없습니다.'); return; }
+    if (!confirm(`좌표가 없는 매물 ${targets.length}건의 위치를 자동으로 채웁니다. 진행할까요?`)) return;
+
+    setGeocodeStatus({ active: true, done: 0, total: targets.length, err: 0 });
+    await loadKakaoMaps();
+    const geocoder = new window.kakao.maps.services.Geocoder();
+    const ps = new window.kakao.maps.services.Places();
+
+    let done = 0, err = 0;
+    for (const item of targets) {
+      const coords = await geocodeAddress(geocoder, ps, item.location, item.name);
+      if (coords) {
+        await fetch(`/api/admin/unsold/${item.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lat: coords.lat, lng: coords.lng }),
+        });
+        setListings(prev => prev.map(l => l.id === item.id ? { ...l, lat: coords.lat, lng: coords.lng } : l));
+        done++;
+      } else {
+        err++;
+      }
+      setGeocodeStatus({ active: true, done: done + err, total: targets.length, err });
+      // Kakao API 과부하 방지
+      await new Promise(r => setTimeout(r, 150));
+    }
+    setGeocodeStatus({ active: false, done, total: targets.length, err });
+    show(`좌표 자동 채우기 완료: ${done}건 성공, ${err}건 실패`);
+  };
+
   const toggleSelect = (id: string) => setSelected(prev => {
     const next = new Set(prev);
     next.has(id) ? next.delete(id) : next.add(id);
@@ -138,9 +223,19 @@ export default function AdminUnsoldListPage() {
             <h1 style={{ fontSize: 20, fontWeight: 800, color: '#1e293b', margin: 0 }}>미분양 매물 관리</h1>
             <p style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>총 {listings.length}건 · 검색결과 {filtered.length}건</p>
           </div>
-          <Link href="/admin/unsold/new" style={{ padding: '10px 20px', background: '#1d4ed8', color: '#fff', borderRadius: 8, textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>
-            + 매물 등록
-          </Link>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button
+              onClick={handleBulkGeocode}
+              disabled={geocodeStatus?.active}
+              style={{ padding: '10px 16px', background: geocodeStatus?.active ? '#e5e7eb' : '#f0fdf4', color: geocodeStatus?.active ? '#9ca3af' : '#166534', border: '1px solid #bbf7d0', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: geocodeStatus?.active ? 'default' : 'pointer', whiteSpace: 'nowrap' }}>
+              {geocodeStatus?.active
+                ? `📍 ${geocodeStatus.done}/${geocodeStatus.total} 처리 중...`
+                : `📍 좌표 일괄 자동 채우기 (${listings.filter(l => !l.lat).length}건)`}
+            </button>
+            <Link href="/admin/unsold/new" style={{ padding: '10px 20px', background: '#1d4ed8', color: '#fff', borderRadius: 8, textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>
+              + 매물 등록
+            </Link>
+          </div>
         </div>
 
         {/* 검색/필터 */}
@@ -209,7 +304,12 @@ export default function AdminUnsoldListPage() {
                     {!item.is_active && <span style={{ fontSize: 11, background: '#fef2f2', color: '#dc2626', padding: '2px 8px', borderRadius: 8 }}>비활성</span>}
                   </div>
                   <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>{item.location}</div>
-                  <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>등록일: {item.created_at.slice(0, 10)}</div>
+                  <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>
+                    등록일: {item.created_at.slice(0, 10)}
+                    {item.lat
+                      ? <span style={{ marginLeft: 8, color: '#059669' }}>📍 좌표 있음</span>
+                      : <span style={{ marginLeft: 8, color: '#f59e0b' }}>⚠️ 좌표 없음</span>}
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                   <Link href={`/unsold/${item.slug ?? item.id}`} target="_blank"
