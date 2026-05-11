@@ -45,8 +45,11 @@ function ageGroup(builtYear: number): 'y5' | 'y10' | 'y15' | 'y20' {
 function calcStats(items: TradeItem[]): PriceStats {
   if (items.length === 0) return { avgPerM2: 0, avgTotal: 0, count: 0 };
   const withArea = items.filter(it => it.area > 0 && it.price > 0);
-  const avgPerM2 = withArea.length > 0
-    ? Math.round(withArea.reduce((s, it) => s + it.price / it.area, 0) / withArea.length)
+  // 면적 가중평균: 총거래금액 / 총전용면적 (KB·한국부동산원 표준 방식)
+  const totalPrice = withArea.reduce((s, it) => s + it.price, 0);
+  const totalArea  = withArea.reduce((s, it) => s + it.area,  0);
+  const avgPerM2 = withArea.length > 0 && totalArea > 0
+    ? Math.round(totalPrice / totalArea)
     : 0;
   const avgTotal = Math.round(items.reduce((s, it) => s + it.price, 0) / items.length);
   return { avgPerM2, avgTotal, count: items.length };
