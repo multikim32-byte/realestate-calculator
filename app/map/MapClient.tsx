@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import type { MapUnsoldItem, MapSaleItem } from './page';
+import type { DistrictPrice } from '@/app/api/map-prices/route';
+import { LAWD_CODE_MAP } from '@/lib/tradeApi';
 
 interface Props {
   unsoldListings: MapUnsoldItem[];
@@ -19,7 +21,26 @@ interface PinInfo {
 const KAKAO_KEY    = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
 const UNSOLD_COLOR = '#1d4ed8';
 const SALE_COLOR   = '#059669';
-const CONCURRENCY  = 8; // 동시 geocoding 요청 수
+const CONCURRENCY  = 8;
+
+// 가격 티어 (단위: 만원)
+const PRICE_TIERS = [
+  { label: '10억+',     min: 100000, bg: 'rgba(220,38,38,0.88)',  border: '#b91c1c' },
+  { label: '6~10억',    min: 60000,  bg: 'rgba(234,88,12,0.88)',   border: '#c2410c' },
+  { label: '3~6억',     min: 30000,  bg: 'rgba(202,138,4,0.88)',   border: '#a16207' },
+  { label: '1.5~3억',   min: 15000,  bg: 'rgba(22,163,74,0.88)',   border: '#15803d' },
+  { label: '1.5억 미만', min: 0,     bg: 'rgba(37,99,235,0.88)',   border: '#1d4ed8' },
+] as const;
+
+function priceColor(avgTotal: number) {
+  return PRICE_TIERS.find(t => avgTotal >= t.min) ?? PRICE_TIERS[4];
+}
+
+function fmtW(v: number): string {
+  // v: 만원 단위
+  if (v >= 10000) return `${(v / 10000).toFixed(1)}억`;
+  return `${Math.round(v / 1000)}천만`;
+}
 
 function fmt(v: number) {
   if (v >= 100000000) return `${(v / 100000000).toFixed(1)}억`;
@@ -178,8 +199,13 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
   const [placed, setPlaced]   = useState({ unsold: 0, sale: 0 });
   const [total]               = useState({ unsold: unsoldListings.length, sale: saleListings.length });
   const [loading, setLoading] = useState(true);
-
   const [selected, setSelected] = useState<PinInfo | null>(null);
+
+  const [priceMode, setPriceMode] = useState(false);
+  const [priceLoadState, setPriceLoadState] = useState<'idle' | 'loading' | 'done'>('idle');
+  const priceModeRef = useRef(false);
+  const priceOverlaysRef = useRef<any[]>([]);
+  const loadedSidosRef = useRef(new Set<string>());
 
   function applyFilter(next: typeof filter) {
     filterRef.current = next;
@@ -190,6 +216,86 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
       );
     });
   }
+
+  // 시세 오버레이 ON/OFF
+  function togglePriceMode() {
+    const next = !priceModeRef.current;
+    priceModeRef.current = next;
+    setPriceMode(next);
+    if (!next) {
+      priceOverlaysRef.current.forEach(o => o.setMap(null));
+      return;
+    }
+    priceOverlaysRef.current.forEach(o => o.setMap(mapInst.current));
+    if (priceLoadState === 'idle') loadAllPrices();
+  }
+
+  const loadAllPrices = useCallback(async () => {
+    if (!mapInst.current) return;
+    setPriceLoadState('loading');
+
+    const geocoder = new window.kakao.maps.services.Geocoder();
+    const SIDOS = Object.keys(LAWD_CODE_MAP);
+
+    // 시도별 순차 요청 (서버 부하 분산), 화면에 즉시 반영
+    for (const sido of SIDOS) {
+      if (loadedSidosRef.current.has(sido)) continue;
+      loadedSidosRef.current.add(sido);
+      try {
+        const res = await fetch(`/api/map-prices?sido=${encodeURIComponent(sido)}`);
+        if (!res.ok) continue;
+        const data: DistrictPrice[] = await res.json();
+
+        await Promise.all(data.map(async (d) => {
+          const cacheKey = `gc-dist:${sido}:${d.code}`;
+          let coords = getCachedByKey(cacheKey);
+          if (!coords) {
+            coords = await new Promise<{ lat: number; lng: number } | null>(resolve => {
+              geocoder.addressSearch(`${sido} ${d.name}`, (result: any[], status: string) => {
+                if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
+                  resolve({ lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) });
+                } else resolve(null);
+              });
+            });
+            if (coords) saveCache(cacheKey, coords);
+          }
+          if (!coords || !mapInst.current) return;
+
+          const color = priceColor(d.avgTotal);
+          const label = d.name.split(' ').at(-1) ?? d.name; // 마지막 토큰만 표시
+          const div = document.createElement('div');
+          div.style.cssText = [
+            `background:${color.bg}`,
+            `border:1.5px solid ${color.border}`,
+            `border-radius:5px`,
+            `padding:3px 7px`,
+            `font-size:11px`,
+            `font-weight:700`,
+            `color:#fff`,
+            `white-space:nowrap`,
+            `cursor:default`,
+            `box-shadow:0 2px 6px rgba(0,0,0,0.22)`,
+            `transform:translate(-50%,-50%)`,
+            `line-height:1.4`,
+            `text-align:center`,
+          ].join(';');
+          div.innerHTML = `${label}<br><span style="font-size:10px;font-weight:600;opacity:0.92">${fmtW(d.avgTotal)}</span>`;
+          div.title = `${d.name} · 평균 ${fmtW(d.avgTotal)} (${d.count}건)\n㎡당 ${fmtW(d.avgPerM2)}`;
+
+          const overlay = new window.kakao.maps.CustomOverlay({
+            position: new window.kakao.maps.LatLng(coords.lat, coords.lng),
+            content: div,
+            map: priceModeRef.current ? mapInst.current : null,
+            zIndex: 5,
+          });
+          priceOverlaysRef.current.push(overlay);
+        }));
+      } catch { /* 개별 시도 실패 무시 */ }
+    }
+
+    setPriceLoadState('done');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!KAKAO_KEY || !mapRef.current) return;
@@ -340,6 +446,25 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
           청약 {loading ? `${placed.sale}/${total.sale}` : placed.sale}
         </button>
 
+        <div style={{ width: 1, height: 16, background: '#e5e7eb' }} />
+
+        {/* 시세 오버레이 토글 */}
+        <button
+          onClick={togglePriceMode}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            padding: '5px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
+            background: priceMode ? '#7c3aed' : '#f1f5f9',
+            color: priceMode ? '#fff' : '#64748b',
+            fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
+          }}
+        >
+          💰 시세
+          {priceMode && priceLoadState === 'loading' && (
+            <span style={{ fontSize: 10, opacity: 0.8 }}>로딩…</span>
+          )}
+        </button>
+
         {loading && (
           <span style={{ fontSize: 11, color: '#9ca3af', whiteSpace: 'nowrap' }}>
             지도 로딩 중…
@@ -463,10 +588,23 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
           <span style={{ width: 10, height: 10, borderRadius: '50%', background: UNSOLD_COLOR, display: 'inline-block', flexShrink: 0 }} />
           미분양 매물
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: priceMode ? 8 : 0 }}>
           <span style={{ width: 10, height: 10, borderRadius: '50%', background: SALE_COLOR, display: 'inline-block', flexShrink: 0 }} />
           청약 단지
         </div>
+        {priceMode && (
+          <>
+            <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: 8, marginBottom: 4, fontWeight: 700, color: '#7c3aed', fontSize: 10 }}>
+              💰 실거래 평균가
+            </div>
+            {PRICE_TIERS.map(t => (
+              <div key={t.label} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                <span style={{ width: 10, height: 10, borderRadius: 2, background: t.bg, border: `1px solid ${t.border}`, display: 'inline-block', flexShrink: 0 }} />
+                {t.label}
+              </div>
+            ))}
+          </>
+        )}
       </div>
     </div>
   );
