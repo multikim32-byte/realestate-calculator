@@ -75,7 +75,11 @@ function parseAddress(raw: string) {
     .replace(/[,\-\s]+$/g, '')
     .trim();
 
-  return { lotAddress, cleanAddress };
+  // 동/읍/면/리/로/길 이상 세부 주소가 있어야 위치 정확도 신뢰 가능
+  // "경기 양주시"처럼 시 수준만 있으면 false → 이름 검색으로 fallback
+  const isPrecise = !!lotAddress || /[동읍면리]$|[동읍면리]\s+\d|[로길]\s+\d/.test(cleanAddress);
+
+  return { lotAddress, cleanAddress, isPrecise };
 }
 
 // 미분양: 주소 우선(실제 사업지), 이름 검색은 주소가 완전 실패할 때만
@@ -91,7 +95,7 @@ function geocodePin(
   const cached = getCachedByKey(cacheKey);
   if (cached) return Promise.resolve(cached);
 
-  const { lotAddress, cleanAddress } = parseAddress(address);
+  const { lotAddress, cleanAddress, isPrecise } = parseAddress(address);
   const searchName = name.replace(/\s*\([^)]*\)\s*/g, '').trim();
 
   function save(coords: { lat: number; lng: number }) {
@@ -141,13 +145,16 @@ function geocodePin(
   return new Promise(resolve => {
     const addrs = [lotAddress, cleanAddress, address].filter((a, i, arr) => a && arr.indexOf(a) === i);
 
-    if (type === 'unsold') {
-      // 미분양: 주소 우선 → 주소 전부 실패 시에만 이름 검색
+    if (type === 'unsold' && isPrecise) {
+      // 미분양 + 세부 주소 있음: 주소 우선 → 실패 시에만 이름 검색
       addrCascade(
         addrs,
-        coords => resolve(save(coords)),           // 주소 성공 → 바로 사용
-        async () => resolve(await nameSearchNear(null)), // 완전 실패 → 이름 검색
+        coords => resolve(save(coords)),
+        async () => resolve(await nameSearchNear(null)),
       );
+    } else if (type === 'unsold' && !isPrecise) {
+      // 미분양 + 시/구 수준 주소: 바로 이름 검색 (시청 좌표 방지)
+      nameSearchNear(null).then(resolve);
     } else {
       // 청약: 주소로 중심점 확보 → 단지명 근방 검색
       addrCascade(
