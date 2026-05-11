@@ -87,7 +87,7 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
       if (found) {
         setSido(sidoParam as keyof typeof LAWD_CODE_MAP);
         setLawdCd(found.code);
-        doTradeSearch(found.code, dealYmd);
+        doTradeSearch(found.code, dealYmd, true);
         return;
       }
     }
@@ -99,12 +99,12 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
 
   // ── 매매 검색 ──────────────────────────────────────────────────────────────
 
-  const doTradeSearch = async (searchLawdCd: string, searchDealYmd: string) => {
+  const doTradeSearch = async (searchLawdCd: string, searchDealYmd: string, resetDong = false) => {
     setLoading(true);
     setError('');
     setSearched(true);
     setSelectedApt('');
-    setSelectedDong('전체');
+    if (resetDong) setSelectedDong('전체');
     setAptCardCount(20);
     setItems([]);
     // 새 검색 시 전월세 캐시 무효화
@@ -175,12 +175,12 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
     const firstCode = LAWD_CODE_MAP[s][0].code;
     setSido(s);
     setLawdCd(firstCode);
-    doTradeSearch(firstCode, dealYmd);
+    doTradeSearch(firstCode, dealYmd, true);
   };
 
   const handleSigunguChange = (code: string) => {
     setLawdCd(code);
-    doTradeSearch(code, dealYmd);
+    doTradeSearch(code, dealYmd, true);
   };
 
   // ── 파생 데이터 ────────────────────────────────────────────────────────────
