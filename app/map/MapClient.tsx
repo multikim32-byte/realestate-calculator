@@ -378,11 +378,23 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
     function initMap() {
       if (!mapRef.current || mapInst.current) return;
 
+      // 기본: 서울시청 / 접속자 위치 허용 시 해당 위치로 이동
       const map = new window.kakao.maps.Map(mapRef.current, {
-        center: new window.kakao.maps.LatLng(36.5, 127.8),
-        level: 13,
+        center: new window.kakao.maps.LatLng(37.5665, 126.9780),
+        level: 10,
       });
       mapInst.current = map;
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          ({ coords }) => {
+            map.setCenter(new window.kakao.maps.LatLng(coords.latitude, coords.longitude));
+            map.setLevel(10);
+          },
+          () => { /* 거부 시 서울시청 유지 */ },
+          { timeout: 5000, maximumAge: 60000 },
+        );
+      }
 
       const geocoder = new window.kakao.maps.services.Geocoder();
       const ps       = new window.kakao.maps.services.Places();
