@@ -9,6 +9,7 @@ import KakaoMap from '@/app/components/KakaoMap';
 
 const VolumeChart = dynamic(() => import('@/app/components/VolumeChart'), { ssr: false });
 const RentPriceTrendChart = dynamic(() => import('@/app/components/RentPriceTrendChart'), { ssr: false });
+const MapRegionPicker = dynamic(() => import('@/app/components/MapRegionPicker'), { ssr: false });
 
 const AptPriceTrendChart = dynamic(() => import('@/app/components/AptPriceTrendChart'), {
   ssr: false,
@@ -70,6 +71,7 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
   const [aptCardCount, setAptCardCount] = useState(20);
   const [selectedDong, setSelectedDong] = useState(initialItems.length > 0 ? initialDong : '전체');
   const [areaRange, setAreaRange] = useState<AreaRange>('전체');
+  const [showMapPicker, setShowMapPicker] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const pendingDongRef = useRef<string | null>(null);
 
@@ -195,6 +197,13 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
   const handleSigunguChange = (code: string) => {
     setLawdCd(code);
     doTradeSearch(code, dealYmd, true);
+  };
+
+  const handleMapSelect = (region: { sido: string; sigunguName: string; lawdCd: string }) => {
+    setSido(region.sido as keyof typeof LAWD_CODE_MAP);
+    setLawdCd(region.lawdCd);
+    setShowMapPicker(false);
+    doTradeSearch(region.lawdCd, dealYmd, true);
   };
 
   // ── 파생 데이터 ────────────────────────────────────────────────────────────
@@ -333,6 +342,14 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
         ))}
       </div>
 
+      {/* ── 지도 선택 피커 ── */}
+      {showMapPicker && (
+        <MapRegionPicker
+          onSelect={handleMapSelect}
+          onClose={() => setShowMapPicker(false)}
+        />
+      )}
+
       {/* ── 검색 조건 ── */}
       <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 12, padding: 20, marginBottom: 24 }}>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -397,6 +414,22 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
             }}
           >
             {activeLoading ? '조회 중...' : '조회'}
+          </button>
+          <button
+            onClick={() => setShowMapPicker(v => !v)}
+            style={{
+              padding: '9px 16px',
+              borderRadius: 8,
+              background: showMapPicker ? '#0f172a' : '#f1f5f9',
+              color: showMapPicker ? '#fff' : '#374151',
+              border: 'none',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            🗺️ 지도 선택
           </button>
         </div>
       </div>
