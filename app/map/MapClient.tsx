@@ -36,9 +36,13 @@ function makeMarkerSvg(color: string) {
 
 function getCached(address: string): { lat: number; lng: number } | null {
   try {
-    const hit = localStorage.getItem(`gc2:${address}`);
+    const hit = localStorage.getItem(`gc3:${address}`);
     return hit ? JSON.parse(hit) : null;
   } catch { return null; }
+}
+
+function saveCache(address: string, coords: { lat: number; lng: number }) {
+  try { localStorage.setItem(`gc3:${address}`, JSON.stringify(coords)); } catch { /* ignore */ }
 }
 
 function geocodeAddress(geocoder: any, address: string): Promise<{ lat: number; lng: number } | null> {
@@ -46,14 +50,26 @@ function geocodeAddress(geocoder: any, address: string): Promise<{ lat: number; 
   if (cached) return Promise.resolve(cached);
 
   return new Promise(resolve => {
+    // 1차: 주소 검색 (정확한 도로명/지번 주소)
     geocoder.addressSearch(address, (result: any[], status: string) => {
       if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
         const coords = { lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) };
-        try { localStorage.setItem(`gc2:${address}`, JSON.stringify(coords)); } catch { /* ignore */ }
+        saveCache(address, coords);
         resolve(coords);
-      } else {
-        resolve(null);
+        return;
       }
+
+      // 2차 fallback: 장소/키워드 검색 (단지명·동네 이름 등)
+      const ps = new window.kakao.maps.services.Places();
+      ps.keywordSearch(address, (places: any[], status2: string) => {
+        if (status2 === window.kakao.maps.services.Status.OK && places.length > 0) {
+          const coords = { lat: parseFloat(places[0].y), lng: parseFloat(places[0].x) };
+          saveCache(address, coords);
+          resolve(coords);
+        } else {
+          resolve(null);
+        }
+      });
     });
   });
 }
