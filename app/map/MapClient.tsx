@@ -56,42 +56,80 @@ function bestMatch(places: any[], name: string): any | null {
   return best; // score 0이면 null
 }
 
-// address로 중심점 찾고 → 단지명으로 근방 검색 (KakaoMap 컴포넌트와 동일한 전략)
+// KakaoMap 컴포넌트와 동일한 주소 전처리: 번지/괄호 파싱
+function parseAddress(raw: string) {
+  const noParens = raw.replace(/\(.*?\)/g, '').replace(/（.*?）/g, '').trim();
+
+  // 번지 주소 추출 ("덕계동 152번지 일원" → "경기 양주시 덕계동 152번지")
+  let lotAddress = '';
+  if (noParens.includes('번지')) {
+    const beforeBunji = noParens.split('번지')[0];
+    const firstLot = beforeBunji.split(',')[0].trim();
+    lotAddress = (firstLot + '번지').replace(/일원.*$/g, '').trim();
+  }
+
+  // 동/읍/면 이하 번지 제거한 행정구역 주소
+  const cleanAddress = noParens
+    .replace(/\s*(산\s*)?\d[\d\-,\s]*번지.*$/g, '')
+    .replace(/일원.*$/g, '')
+    .replace(/[,\-\s]+$/g, '')
+    .trim();
+
+  return { lotAddress, cleanAddress };
+}
+
+// 미분양: 주소 우선(실제 사업지), 이름 검색은 주소가 완전 실패할 때만
+// 청약: 주소→중심점 확보 후 단지명 근방 검색
 function geocodePin(
   geocoder: any,
   ps: any,
   address: string,
   name: string,
+  type: PinType,
 ): Promise<{ lat: number; lng: number } | null> {
-  const cacheKey = `gc4:${address}|${name}`;
+  const cacheKey = `gc5:${address}|${name}`;
   const cached = getCachedByKey(cacheKey);
   if (cached) return Promise.resolve(cached);
 
+  const { lotAddress, cleanAddress } = parseAddress(address);
   const searchName = name.replace(/\s*\([^)]*\)\s*/g, '').trim();
 
+  function save(coords: { lat: number; lng: number }) {
+    saveCache(cacheKey, coords);
+    return coords;
+  }
+
+  // 주소 cascade: 번지 → cleanAddress → 원본 순서로 시도
+  function addrCascade(
+    addrs: string[],
+    onFound: (c: { lat: number; lng: number }) => void,
+    onFail: () => void,
+  ) {
+    const [head, ...tail] = addrs.filter(Boolean);
+    if (!head) { onFail(); return; }
+    geocoder.addressSearch(head, (result: any[], status: string) => {
+      if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
+        onFound({ lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) });
+      } else {
+        addrCascade(tail, onFound, onFail);
+      }
+    });
+  }
+
+  // 단지명 근방 검색 (청약용) — 전국 → 중심 5km
   function nameSearchNear(center: { lat: number; lng: number } | null): Promise<{ lat: number; lng: number } | null> {
     return new Promise(res => {
       if (!searchName) { res(center); return; }
-
-      // 전국 단지명 검색
       ps.keywordSearch(searchName, (places: any[], st: string) => {
         if (st === window.kakao.maps.services.Status.OK) {
           const hit = bestMatch(places, searchName);
-          if (hit) {
-            const coords = { lat: parseFloat(hit.y), lng: parseFloat(hit.x) };
-            saveCache(cacheKey, coords);
-            res(coords);
-            return;
-          }
+          if (hit) { res(save({ lat: parseFloat(hit.y), lng: parseFloat(hit.x) })); return; }
         }
-        // 전국 검색 실패 → 중심점 근방 5km 재시도
         if (center) {
           const latLng = new window.kakao.maps.LatLng(center.lat, center.lng);
           ps.keywordSearch(searchName, (p2: any[], s2: string) => {
             const hit2 = s2 === window.kakao.maps.services.Status.OK ? p2[0] : null;
-            const coords = hit2 ? { lat: parseFloat(hit2.y), lng: parseFloat(hit2.x) } : center;
-            saveCache(cacheKey, coords);
-            res(coords);
+            res(save(hit2 ? { lat: parseFloat(hit2.y), lng: parseFloat(hit2.x) } : center));
           }, { location: latLng, radius: 5000 });
         } else {
           res(null);
@@ -101,12 +139,23 @@ function geocodePin(
   }
 
   return new Promise(resolve => {
-    geocoder.addressSearch(address, async (result: any[], status: string) => {
-      const center = (status === window.kakao.maps.services.Status.OK && result.length > 0)
-        ? { lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) }
-        : null;
-      resolve(await nameSearchNear(center));
-    });
+    const addrs = [lotAddress, cleanAddress, address].filter((a, i, arr) => a && arr.indexOf(a) === i);
+
+    if (type === 'unsold') {
+      // 미분양: 주소 우선 → 주소 전부 실패 시에만 이름 검색
+      addrCascade(
+        addrs,
+        coords => resolve(save(coords)),           // 주소 성공 → 바로 사용
+        async () => resolve(await nameSearchNear(null)), // 완전 실패 → 이름 검색
+      );
+    } else {
+      // 청약: 주소로 중심점 확보 → 단지명 근방 검색
+      addrCascade(
+        addrs,
+        async center => resolve(await nameSearchNear(center)),
+        async ()     => resolve(await nameSearchNear(null)),
+      );
+    }
   });
 }
 
@@ -193,15 +242,15 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
         // 1패스: localStorage 캐시 → 즉시 마커 배치 (동기)
         const uncached: typeof allPins = [];
         for (const pin of allPins) {
-          const cacheKey = `gc4:${pin.address}|${(pin.item as any).name}`;
+          const cacheKey = `gc5:${pin.address}|${(pin.item as any).name}`;
           const coords = getCachedByKey(cacheKey);
           if (coords) placeMarker(pin.type, pin.item, coords);
           else uncached.push(pin);
         }
 
-        // 2패스: 미캐시 항목 병렬 geocoding (주소→중심점→단지명 근방 검색)
+        // 2패스: 미캐시 항목 병렬 geocoding
         await runParallel(uncached, async pin => {
-          const coords = await geocodePin(geocoder, ps, pin.address, (pin.item as any).name);
+          const coords = await geocodePin(geocoder, ps, pin.address, (pin.item as any).name, pin.type);
           if (coords) placeMarker(pin.type, pin.item, coords);
         });
 
