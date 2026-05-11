@@ -392,7 +392,7 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
         navigator.geolocation.getCurrentPosition(
           ({ coords }) => {
             map.setCenter(new window.kakao.maps.LatLng(coords.latitude, coords.longitude));
-            map.setLevel(10);
+            map.setLevel(5);
           },
           () => { /* 거부 시 서울시청 유지 */ },
           { timeout: 5000, maximumAge: 60000 },
