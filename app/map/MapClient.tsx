@@ -304,37 +304,46 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
     setPriceLoadState('loading');
     console.log('[시세] 로드 시작:', sido);
 
+    let data: DistrictPrice[];
     try {
       const res = await fetch(`/api/map-prices?sido=${encodeURIComponent(sido)}`);
-      if (!res.ok) { console.warn('[시세] API 실패:', res.status); return; }
-      const data: DistrictPrice[] = await res.json();
+      if (!res.ok) { console.warn('[시세] API 실패:', res.status); setPriceLoadState('done'); return; }
+      data = await res.json();
       console.log('[시세] 수신:', sido, data.length, '개 구/시');
+    } catch (e) { console.error('[시세] fetch 오류:', e); setPriceLoadState('done'); return; }
 
-      for (const d of data) {
-        const ps = placesRef.current;
-        if (!ps) continue; // return → continue 수정 (한 구 실패해도 계속)
+    for (const d of data) {
+      try {
+        const geocoder = geocoderRef.current;
+        if (!geocoder || !mapInst.current) continue;
 
-        const cacheKey = `gc-dist2:${sido}:${d.code}`;
+        const cacheKey = `gc-dist3:${d.code}`;
         let coords = getCachedByKey(cacheKey);
+
         if (!coords) {
-          const shortName = d.name.split(' ').at(-1) ?? d.name;
-          const keyword = `${sido} ${shortName}청`;
+          // "수원 장안구" → "수원시 장안구" / "종로구" 그대로
+          const parts = d.name.trim().split(/\s+/);
+          const addr = parts.length >= 2
+            ? `${parts[0]}시 ${parts.slice(1).join(' ')}`
+            : d.name;
+
           coords = await new Promise<{ lat: number; lng: number } | null>(resolve => {
-            ps.keywordSearch(keyword, (places: any[], status: string) => {
-              if (status === window.kakao.maps.services.Status.OK && places.length > 0) {
-                resolve({ lat: parseFloat(places[0].y), lng: parseFloat(places[0].x) });
+            const timer = setTimeout(() => { console.warn('[시세] 타임아웃:', addr); resolve(null); }, 5000);
+            geocoder.addressSearch(addr, (result: any[], status: string) => {
+              clearTimeout(timer);
+              if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
+                resolve({ lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) });
               } else {
-                ps.keywordSearch(`${shortName}청`, (p2: any[], s2: string) => {
-                  resolve(s2 === window.kakao.maps.services.Status.OK && p2.length > 0
-                    ? { lat: parseFloat(p2[0].y), lng: parseFloat(p2[0].x) }
-                    : null);
-                });
+                console.warn('[시세] 좌표 없음:', addr, status);
+                resolve(null);
               }
             });
           });
+
           if (coords) saveCache(cacheKey, coords);
-          await new Promise(r => setTimeout(r, 120)); // Rate Limit 방지
+          await new Promise(r => setTimeout(r, 60));
         }
+
         if (!coords || !mapInst.current) continue;
 
         const currentTab = ageTabRef.current;
@@ -371,10 +380,12 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
           zIndex: 5,
         });
         priceOverlaysRef.current.push({ overlay, div, data: d });
-      }
-    } catch { /* 시도 실패 무시 */ }
+        console.log('[시세] 오버레이 생성:', d.name, coords);
+      } catch (e) { console.error('[시세] 구/시 처리 오류:', d.name, e); }
+    }
 
     setPriceLoadState('done');
+    console.log('[시세] 완료. 총 오버레이:', priceOverlaysRef.current.length);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
