@@ -28,11 +28,11 @@ const CONCURRENCY  = 8;
 
 // 가격 티어 — ㎡당 만원 기준
 const PRICE_TIERS = [
-  { label: '2,000만↑/㎡',    min: 2000, bg: 'rgba(220,38,38,0.9)',  border: '#b91c1c' },
-  { label: '1,200~2,000만/㎡', min: 1200, bg: 'rgba(234,88,12,0.9)',  border: '#c2410c' },
-  { label: '700~1,200만/㎡',   min: 700,  bg: 'rgba(202,138,4,0.9)',  border: '#a16207' },
-  { label: '400~700만/㎡',     min: 400,  bg: 'rgba(22,163,74,0.9)',  border: '#15803d' },
-  { label: '400만 미만/㎡',    min: 0,    bg: 'rgba(37,99,235,0.9)',  border: '#1d4ed8' },
+  { label: '2,000만↑/전용㎡',    min: 2000, bg: 'rgba(220,38,38,0.9)',  border: '#b91c1c' },
+  { label: '1,200~2,000만/전용㎡', min: 1200, bg: 'rgba(234,88,12,0.9)',  border: '#c2410c' },
+  { label: '700~1,200만/전용㎡',   min: 700,  bg: 'rgba(202,138,4,0.9)',  border: '#a16207' },
+  { label: '400~700만/전용㎡',     min: 400,  bg: 'rgba(22,163,74,0.9)',  border: '#15803d' },
+  { label: '400만 미만/전용㎡',    min: 0,    bg: 'rgba(37,99,235,0.9)',  border: '#1d4ed8' },
 ] as const;
 
 const AGE_TABS: { key: AgeTab; label: string }[] = [
@@ -258,7 +258,7 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
       div.style.background = color.bg;
       div.style.borderColor = color.border;
       const label = data.name.split(' ').at(-1) ?? data.name;
-      div.innerHTML = `${label}<br><span style="font-size:10px;font-weight:600;opacity:0.92">${fmtW(stats.avgPerM2)}/㎡</span>`;
+      div.innerHTML = `${label}<br><span style="font-size:10px;font-weight:600;opacity:0.92">${fmtW(stats.avgPerM2)}/전용㎡</span>`;
       div.title = `${data.name}\n평균 ${fmtW(stats.avgTotal)} (${stats.count}건)\n㎡당 ${fmtW(stats.avgPerM2)}`;
     });
   }
@@ -370,7 +370,7 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
         ].join(';');
 
         const dispStats = stats?.count > 0 ? stats : d.all;
-        div.innerHTML = `${label}<br><span style="font-size:10px;font-weight:600;opacity:0.92">${fmtW(dispStats.avgPerM2)}/㎡</span>`;
+        div.innerHTML = `${label}<br><span style="font-size:10px;font-weight:600;opacity:0.92">${fmtW(dispStats.avgPerM2)}/전용㎡</span>`;
         div.title = `${d.name}\n평균 ${fmtW(dispStats.avgTotal)} (${dispStats.count}건)\n㎡당 ${fmtW(dispStats.avgPerM2)}`;
 
         const overlay = new window.kakao.maps.CustomOverlay({
