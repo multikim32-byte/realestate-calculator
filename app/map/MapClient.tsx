@@ -299,12 +299,14 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
         if (!res.ok) continue;
         const data: DistrictPrice[] = await res.json();
 
-        await Promise.all(data.map(async (d) => {
+        for (const d of data) {
           const cacheKey = `gc-dist2:${sido}:${d.code}`;
           let coords = getCachedByKey(cacheKey);
           if (!coords) {
             coords = await geocodeDistrict(sido, d.name);
             if (coords) saveCache(cacheKey, coords);
+            // 캐시 미스인 경우만 딜레이 (Rate Limit 방지)
+            await new Promise(r => setTimeout(r, 120));
           }
           if (!coords || !mapInst.current) return;
 
@@ -342,7 +344,7 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
             zIndex: 5,
           });
           priceOverlaysRef.current.push({ overlay, div, data: d });
-        }));
+        }
       } catch { /* 개별 시도 실패 무시 */ }
     }
 
