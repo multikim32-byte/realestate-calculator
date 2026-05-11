@@ -7,6 +7,9 @@ import type { TradeItem } from '@/lib/tradeApi';
 import type { RentItem } from '@/lib/rentApi';
 import KakaoMap from '@/app/components/KakaoMap';
 
+const VolumeChart = dynamic(() => import('@/app/components/VolumeChart'), { ssr: false });
+const RentPriceTrendChart = dynamic(() => import('@/app/components/RentPriceTrendChart'), { ssr: false });
+
 const AptPriceTrendChart = dynamic(() => import('@/app/components/AptPriceTrendChart'), {
   ssr: false,
   loading: () => <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: 13 }}>차트 로딩 중...</div>,
@@ -16,6 +19,16 @@ const SIDOS = Object.keys(LAWD_CODE_MAP) as Array<keyof typeof LAWD_CODE_MAP>;
 const MONTHS = recentMonths(12);
 
 type TabType = '매매' | '전세' | '월세';
+
+type AreaRange = '전체' | '~40' | '40~60' | '60~85' | '85~102' | '102~';
+const AREA_RANGES: { label: string; value: AreaRange; min: number; max: number }[] = [
+  { label: '전체', value: '전체', min: 0, max: Infinity },
+  { label: '~40㎡', value: '~40', min: 0, max: 40 },
+  { label: '40~60㎡', value: '40~60', min: 40, max: 60 },
+  { label: '60~85㎡', value: '60~85', min: 60, max: 85 },
+  { label: '85~102㎡', value: '85~102', min: 85, max: 102 },
+  { label: '102㎡~', value: '102~', min: 102, max: Infinity },
+];
 
 function fmt만원(v: number) {
   if (v >= 10000) return `${(v / 10000).toFixed(1)}억`;
@@ -56,6 +69,7 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
   const [selectedApt, setSelectedApt] = useState('');
   const [aptCardCount, setAptCardCount] = useState(20);
   const [selectedDong, setSelectedDong] = useState(initialItems.length > 0 ? initialDong : '전체');
+  const [areaRange, setAreaRange] = useState<AreaRange>('전체');
   const [isMobile, setIsMobile] = useState(false);
   const pendingDongRef = useRef<string | null>(null);
 
@@ -191,6 +205,12 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
     return ['전체', ...Array.from(set).sort()];
   }, [tab, items, rentItems]);
 
+  // 평형 범위 체크
+  const inAreaRange = (area: number) => {
+    const r = AREA_RANGES.find(a => a.value === areaRange)!;
+    return area >= r.min && area < r.max;
+  };
+
   // 현재 탭의 필터된 전월세 목록
   const filteredRent = useMemo(() => {
     return rentItems.filter(i => {
@@ -198,18 +218,22 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
       if (tab === '월세' && i.monthlyRent === 0) return false;
       if (selectedDong !== '전체' && i.dong !== selectedDong) return false;
       if (keyword && !i.name.includes(keyword)) return false;
+      if (areaRange !== '전체' && !inAreaRange(i.area)) return false;
       return true;
     });
-  }, [rentItems, tab, selectedDong, keyword]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rentItems, tab, selectedDong, keyword, areaRange]);
 
   // 매매 필터
   const filtered = useMemo(() => {
     return items.filter(i => {
       if (selectedDong !== '전체' && i.dong !== selectedDong) return false;
       if (keyword && !i.name.includes(keyword)) return false;
+      if (areaRange !== '전체' && !inAreaRange(i.area)) return false;
       return true;
     });
-  }, [items, selectedDong, keyword]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, selectedDong, keyword, areaRange]);
 
   // 단지별 통계 (매매)
   const aptStats = useMemo(() => {
@@ -376,6 +400,23 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
           </button>
         </div>
       </div>
+
+      {/* ── 평형 필터 ── */}
+      {(searched || rentSearched) && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
+          {AREA_RANGES.map(r => (
+            <button key={r.value} onClick={() => { setAreaRange(r.value); setSelectedApt(''); }} style={{
+              padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
+              fontSize: 13, fontWeight: areaRange === r.value ? 700 : 500,
+              background: areaRange === r.value ? '#1d4ed8' : '#f1f5f9',
+              color: areaRange === r.value ? '#fff' : '#475569',
+              transition: 'all 0.15s',
+            }}>
+              {r.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ── 에러 ── */}
       {activeError && (
@@ -611,6 +652,9 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
           {/* 시세 추이 차트 */}
           {selectedApt && <AptPriceTrendChart aptName={selectedApt} lawdCd={lawdCd} />}
 
+          {/* 월별 거래량 차트 */}
+          <VolumeChart lawdCd={lawdCd} currentYmd={dealYmd} sigunguName={sigunguName} />
+
           {/* 선택 단지 위치 지도 */}
           {selectedApt && (() => {
             const dong = filtered.find(i => i.name === selectedApt)?.dong ?? '';
@@ -687,6 +731,49 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
               style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14, boxSizing: 'border-box' }}
             />
           </div>
+
+          {/* 갭투자 랭킹 (전세 탭 + 매매 데이터 있을 때) */}
+          {tab === '전세' && Object.keys(jeonseRatioMap).length > 0 && (() => {
+            const ranked = Object.entries(jeonseRatioMap)
+              .sort(([, a], [, b]) => b - a)
+              .slice(0, 10);
+            return (
+              <div style={{ marginBottom: 24, background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                <div style={{ padding: '14px 20px', background: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 16 }}>⚡</span>
+                  <span style={{ color: '#fff', fontWeight: 800, fontSize: 15 }}>갭투자 주의 랭킹</span>
+                  <span style={{ color: '#94a3b8', fontSize: 12, marginLeft: 4 }}>전세가율 높은 단지 TOP {ranked.length}</span>
+                </div>
+                <div style={{ padding: '0 4px 8px' }}>
+                  {ranked.map(([name, ratio], idx) => {
+                    const bg   = ratio >= 80 ? '#fef2f2' : ratio >= 70 ? '#fffbeb' : '#f0fdf4';
+                    const clr  = ratio >= 80 ? '#dc2626' : ratio >= 70 ? '#92400e' : '#166534';
+                    const lbl  = ratio >= 80 ? '위험' : ratio >= 70 ? '주의' : '안전';
+                    return (
+                      <div key={name} onClick={() => setSelectedApt(selectedApt === name ? '' : name)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 12,
+                          padding: '10px 16px', cursor: 'pointer',
+                          background: selectedApt === name ? '#f0fdf4' : 'transparent',
+                          borderBottom: idx < ranked.length - 1 ? '1px solid #f3f4f6' : 'none',
+                        }}
+                      >
+                        <span style={{ fontSize: 13, fontWeight: 800, color: '#9ca3af', width: 20, flexShrink: 0 }}>{idx + 1}</span>
+                        <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: clr }}>{ratio}%</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: bg, color: clr }}>{lbl}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{ padding: '8px 16px 12px', fontSize: 11, color: '#9ca3af' }}>
+                  ※ 전세가율 = 전세 보증금 ÷ 매매 최고가 · 80%↑ 위험 · 70~80% 주의
+                </div>
+              </div>
+            );
+          })()}
 
           {/* 단지별 요약 카드 */}
           <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1e3a5f', marginBottom: 12 }}>
@@ -890,6 +977,11 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
                 </div>
               )}
             </div>
+          )}
+
+          {/* 전세/월세 시세 추이 차트 */}
+          {selectedApt && (
+            <RentPriceTrendChart aptName={selectedApt} lawdCd={lawdCd} mode={tab as '전세' | '월세'} />
           )}
 
           {/* 선택 단지 지도 */}

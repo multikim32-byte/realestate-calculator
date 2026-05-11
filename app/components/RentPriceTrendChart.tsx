@@ -2,22 +2,20 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, ReferenceLine, Area, AreaChart,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 
-interface TradeItem {
+interface RentItem {
   name: string;
   area: number;
-  price: number;
-  floor: number;
+  deposit: number;
+  monthlyRent: number;
   dealDate: string;
-  dong: string;
 }
 
 interface MonthStat {
-  ym: string;       // "2024-03"
-  label: string;    // "24.03"
+  ym: string;
+  label: string;
   avg: number;
   min: number;
   max: number;
@@ -27,6 +25,7 @@ interface MonthStat {
 interface Props {
   aptName: string;
   lawdCd: string;
+  mode: '전세' | '월세';
 }
 
 function fmt(v: number) {
@@ -34,7 +33,7 @@ function fmt(v: number) {
   return `${v.toLocaleString()}만`;
 }
 
-function recentYms(n = 36): string[] {
+function recentYms(n = 24): string[] {
   const result: string[] = [];
   const now = new Date();
   for (let i = 1; i <= n; i++) {
@@ -44,7 +43,7 @@ function recentYms(n = 36): string[] {
   return result;
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload as MonthStat;
   return (
@@ -53,7 +52,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       fontSize: 13, color: '#fff', boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
     }}>
       <div style={{ fontWeight: 700, marginBottom: 6 }}>{d.ym}</div>
-      <div style={{ color: '#60a5fa' }}>평균 {fmt(d.avg)}</div>
+      <div style={{ color: '#34d399' }}>평균 {fmt(d.avg)}</div>
       <div style={{ color: '#94a3b8', fontSize: 12 }}>
         {fmt(d.min)} ~ {fmt(d.max)} · {d.count}건
       </div>
@@ -61,128 +60,121 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-export default function AptPriceTrendChart({ aptName, lawdCd }: Props) {
-  const [stats, setStats]     = useState<MonthStat[]>([]);
+export default function RentPriceTrendChart({ aptName, lawdCd, mode }: Props) {
+  const [allTrades, setAllTrades] = useState<RentItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [areaFilter, setAreaFilter] = useState<string>('전체');
-  const [allTrades, setAllTrades] = useState<TradeItem[]>([]);
+  const [areaFilter, setAreaFilter] = useState('전체');
 
   useEffect(() => {
     if (!aptName || !lawdCd) return;
     setLoading(true);
-    setStats([]);
     setAllTrades([]);
     setAreaFilter('전체');
 
-    const yms = recentYms(36);
-    // 36개월을 12개씩 3묶음으로 병렬 요청
+    const yms = recentYms(24);
     const chunks: string[][] = [];
-    for (let i = 0; i < yms.length; i += 12) chunks.push(yms.slice(i, i + 12));
+    for (let i = 0; i < yms.length; i += 8) chunks.push(yms.slice(i, i + 8));
 
     Promise.all(
       chunks.map(chunk =>
         Promise.all(
           chunk.map(ym =>
-            fetch(`/api/trade?lawdCd=${lawdCd}&dealYmd=${ym}&numOfRows=200`)
+            fetch(`/api/rent?lawdCd=${lawdCd}&dealYmd=${ym}&numOfRows=200`)
               .then(r => r.json())
-              .then(d => (d.items ?? []) as TradeItem[])
-              .catch(() => [] as TradeItem[])
+              .then(d => (d.items ?? []) as RentItem[])
+              .catch(() => [] as RentItem[])
           )
         )
       )
     ).then(results => {
-      const all = results.flat(2).filter(t => t.name === aptName);
+      const all = results.flat(2).filter(t =>
+        t.name === aptName &&
+        (mode === '전세' ? t.monthlyRent === 0 : t.monthlyRent > 0)
+      );
       setAllTrades(all);
     }).finally(() => setLoading(false));
-  }, [aptName, lawdCd]);
+  }, [aptName, lawdCd, mode]);
 
-  // 면적 목록 (평 기준)
   const areaOptions = useMemo(() => {
     const set = new Set(allTrades.map(t => `${Math.round(t.area / 3.305785)}평`));
     return ['전체', ...Array.from(set).sort((a, b) => parseInt(a) - parseInt(b))];
   }, [allTrades]);
 
-  // 필터된 거래 → 월별 통계
-  const chartData = useMemo(() => {
-    const filtered = areaFilter === '전체'
+  const chartData = useMemo((): MonthStat[] => {
+    const trades = areaFilter === '전체'
       ? allTrades
       : allTrades.filter(t => `${Math.round(t.area / 3.305785)}평` === areaFilter);
 
     const map: Record<string, { sum: number; min: number; max: number; count: number }> = {};
-    filtered.forEach(t => {
-      const ym = t.dealDate.slice(0, 7); // "2024-03"
+    trades.forEach(t => {
+      const val = mode === '전세' ? t.deposit : t.monthlyRent;
+      const ym = t.dealDate.slice(0, 7);
       if (!map[ym]) map[ym] = { sum: 0, min: Infinity, max: -Infinity, count: 0 };
-      map[ym].sum += t.price;
-      map[ym].min = Math.min(map[ym].min, t.price);
-      map[ym].max = Math.max(map[ym].max, t.price);
+      map[ym].sum += val;
+      map[ym].min = Math.min(map[ym].min, val);
+      map[ym].max = Math.max(map[ym].max, val);
       map[ym].count++;
     });
-
     return Object.entries(map)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([ym, s]) => ({
         ym,
-        label: ym.slice(2).replace('-', '.'), // "24.03"
+        label: ym.slice(2).replace('-', '.'),
         avg: Math.round(s.sum / s.count),
-        min: s.min,
-        max: s.max,
+        min: s.min === Infinity ? 0 : s.min,
+        max: s.max === -Infinity ? 0 : s.max,
         count: s.count,
       }));
-  }, [allTrades, areaFilter]);
+  }, [allTrades, areaFilter, mode]);
 
-  // 최고/최저 표시
   const maxStat = chartData.length ? chartData.reduce((a, b) => a.avg > b.avg ? a : b) : null;
   const minStat = chartData.length ? chartData.reduce((a, b) => a.avg < b.avg ? a : b) : null;
   const latest  = chartData[chartData.length - 1];
   const prev    = chartData[chartData.length - 2];
   const change  = latest && prev ? latest.avg - prev.avg : null;
-  const peakVsLatest = maxStat && latest && maxStat.avg > 0 && maxStat.ym !== latest.ym
+  const peakVsLatest = maxStat && latest && maxStat.avg > 0
     ? Math.round((latest.avg - maxStat.avg) / maxStat.avg * 100)
     : null;
 
-  if (loading) {
-    return (
-      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 24, marginTop: 16 }}>
-        <div style={{ fontWeight: 800, fontSize: 15, color: '#1e293b', marginBottom: 16 }}>
-          📈 {aptName} 시세 추이
-        </div>
-        <div style={{ textAlign: 'center', padding: '32px 0', color: '#9ca3af' }}>
-          최근 3년 데이터 불러오는 중...
-        </div>
-      </div>
-    );
-  }
+  const color = '#059669';
+  const gradId = `rentGrad-${mode}`;
 
-  if (chartData.length === 0) {
-    return (
-      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 24, marginTop: 16 }}>
-        <div style={{ fontWeight: 800, fontSize: 15, color: '#1e293b', marginBottom: 8 }}>
-          📈 {aptName} 시세 추이
-        </div>
-        <div style={{ color: '#9ca3af', fontSize: 14 }}>최근 12개월 거래 데이터가 없습니다.</div>
+  if (loading) return (
+    <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 24, marginTop: 16 }}>
+      <div style={{ fontWeight: 800, fontSize: 15, color: '#1e293b', marginBottom: 16 }}>
+        {mode === '전세' ? '🔑' : '💰'} {aptName} {mode} 시세 추이
       </div>
-    );
-  }
+      <div style={{ textAlign: 'center', padding: '32px 0', color: '#9ca3af' }}>
+        최근 2년 데이터 불러오는 중...
+      </div>
+    </div>
+  );
+
+  if (chartData.length === 0) return (
+    <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 24, marginTop: 16 }}>
+      <div style={{ fontWeight: 800, fontSize: 15, color: '#1e293b' }}>
+        {mode === '전세' ? '🔑' : '💰'} {aptName} {mode} 시세 추이
+      </div>
+      <div style={{ color: '#9ca3af', fontSize: 14, marginTop: 8 }}>최근 2년 거래 데이터가 없습니다.</div>
+    </div>
+  );
 
   return (
     <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 24, marginTop: 16 }}>
-      {/* 헤더 */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
         <div>
           <div style={{ fontWeight: 800, fontSize: 15, color: '#1e293b' }}>
-            📈 {aptName} 시세 추이
+            {mode === '전세' ? '🔑' : '💰'} {aptName} {mode} 시세 추이
           </div>
-          <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 3 }}>최근 3년 월별 평균 실거래가</div>
+          <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 3 }}>최근 2년 월별 평균 {mode === '전세' ? '보증금' : '월세'}</div>
         </div>
-
-        {/* 면적 필터 */}
         {areaOptions.length > 2 && (
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {areaOptions.map(a => (
               <button key={a} onClick={() => setAreaFilter(a)} style={{
                 padding: '4px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
                 fontSize: 12, fontWeight: 600,
-                background: areaFilter === a ? '#1d4ed8' : '#f1f5f9',
+                background: areaFilter === a ? color : '#f1f5f9',
                 color: areaFilter === a ? '#fff' : '#475569',
               }}>{a}</button>
             ))}
@@ -190,19 +182,18 @@ export default function AptPriceTrendChart({ aptName, lawdCd }: Props) {
         )}
       </div>
 
-      {/* 요약 카드 */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
         {latest && (
-          <div style={{ flex: 1, minWidth: 100, background: '#eff6ff', borderRadius: 10, padding: '10px 14px' }}>
-            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>최근 평균가</div>
-            <div style={{ fontSize: 17, fontWeight: 800, color: '#1d4ed8' }}>{fmt(latest.avg)}</div>
+          <div style={{ flex: 1, minWidth: 100, background: '#f0fdf4', borderRadius: 10, padding: '10px 14px' }}>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>최근 평균</div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: color }}>{fmt(latest.avg)}</div>
             {change !== null && (
-              <div style={{ fontSize: 12, color: change > 0 ? '#dc2626' : change < 0 ? '#2563eb' : '#9ca3af', marginTop: 2 }}>
+              <div style={{ fontSize: 12, marginTop: 2, color: change > 0 ? '#dc2626' : change < 0 ? '#2563eb' : '#9ca3af' }}>
                 전월 대비 {change > 0 ? '▲' : change < 0 ? '▼' : '-'} {fmt(Math.abs(change))}
               </div>
             )}
-            {peakVsLatest !== null && (
-              <div style={{ fontSize: 11, color: peakVsLatest >= 0 ? '#dc2626' : '#2563eb', marginTop: 2, fontWeight: 700 }}>
+            {peakVsLatest !== null && peakVsLatest !== 0 && (
+              <div style={{ fontSize: 11, marginTop: 2, color: peakVsLatest >= 0 ? '#dc2626' : '#2563eb' }}>
                 전고점 대비 {peakVsLatest > 0 ? '+' : ''}{peakVsLatest}%
               </div>
             )}
@@ -210,49 +201,42 @@ export default function AptPriceTrendChart({ aptName, lawdCd }: Props) {
         )}
         {maxStat && (
           <div style={{ flex: 1, minWidth: 100, background: '#fff7ed', borderRadius: 10, padding: '10px 14px' }}>
-            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>3년 최고</div>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>2년 최고</div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#ea580c' }}>{fmt(maxStat.avg)}</div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{maxStat.ym}</div>
           </div>
         )}
         {minStat && minStat.ym !== maxStat?.ym && (
           <div style={{ flex: 1, minWidth: 100, background: '#f0fdf4', borderRadius: 10, padding: '10px 14px' }}>
-            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>3년 최저</div>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>2년 최저</div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#059669' }}>{fmt(minStat.avg)}</div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{minStat.ym}</div>
           </div>
         )}
       </div>
 
-      {/* 차트 */}
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={200}>
         <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <defs>
-            <linearGradient id="priceGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%"  stopColor="#1d4ed8" stopOpacity={0.15}/>
-              <stop offset="95%" stopColor="#1d4ed8" stopOpacity={0}/>
+            <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%"  stopColor={color} stopOpacity={0.15}/>
+              <stop offset="95%" stopColor={color} stopOpacity={0}/>
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false}/>
           <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false}/>
-          <YAxis
-            tick={{ fontSize: 11, fill: '#9ca3af' }}
-            axisLine={false} tickLine={false} width={52}
-            tickFormatter={v => fmt(v)}
-          />
+          <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={52} tickFormatter={v => fmt(v)}/>
           <Tooltip content={<CustomTooltip />}/>
-          <Area
-            type="monotone" dataKey="avg"
-            stroke="#1d4ed8" strokeWidth={2.5}
-            fill="url(#priceGrad)"
-            dot={{ r: 4, fill: '#1d4ed8', strokeWidth: 0 }}
-            activeDot={{ r: 6, fill: '#1d4ed8' }}
+          <Area type="monotone" dataKey="avg" stroke={color} strokeWidth={2.5}
+            fill={`url(#${gradId})`}
+            dot={{ r: 4, fill: color, strokeWidth: 0 }}
+            activeDot={{ r: 6, fill: color }}
           />
         </AreaChart>
       </ResponsiveContainer>
 
       <p style={{ margin: '10px 0 0', fontSize: 11, color: '#9ca3af' }}>
-        ※ 국토교통부 실거래가 기준 · 최근 3년 월별 평균가 · 총 {allTrades.length}건
+        ※ 국토교통부 실거래가 기준 · 최근 2년 월별 평균 {mode === '전세' ? '보증금' : '월세'} · 총 {allTrades.length}건
       </p>
     </div>
   );
