@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { href: '/unsold',     label: '미분양정보', icon: Tag },
   { href: '/calendar',   label: '청약달력',  icon: Calendar },
   { href: '/trade',      label: '실거래가',  icon: BarChart2 },
+  { href: '/map',        label: '지도',      icon: Map },
   { href: '/calculator', label: '계산기',    icon: Calculator },
   { href: '/rental',     label: '임대정보',  icon: Building2 },
   { href: '/region/서울', label: '지역별',   icon: Map, matchPrefix: '/region' },
