@@ -43,6 +43,17 @@ const AGE_TABS: { key: AgeTab; label: string }[] = [
   { key: 'y20', label: '20년+' },
 ];
 
+// Kakao coord2RegionCode 반환 시도명 → LAWD_CODE_MAP 키 변환
+const REGION_NAME_MAP: Record<string, string> = {
+  '서울특별시': '서울', '경기도': '경기', '인천광역시': '인천',
+  '부산광역시': '부산', '대구광역시': '대구', '광주광역시': '광주',
+  '대전광역시': '대전', '울산광역시': '울산', '세종특별자치시': '세종',
+  '강원도': '강원', '강원특별자치도': '강원',
+  '충청북도': '충북', '충청남도': '충남',
+  '전라북도': '전북', '전북특별자치도': '전북', '전라남도': '전남',
+  '경상북도': '경북', '경상남도': '경남', '제주특별자치도': '제주',
+};
+
 function priceColor(avgPerM2: number) {
   return PRICE_TIERS.find(t => avgPerM2 >= t.min) ?? PRICE_TIERS[4];
 }
@@ -219,6 +230,8 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
   const ageTabRef = useRef<AgeTab>('all');
   const priceOverlaysRef = useRef<PriceOverlayItem[]>([]);
   const loadedSidosRef = useRef(new Set<string>());
+  const geocoderRef = useRef<any>(null);
+  const placesRef = useRef<any>(null);
 
   function applyFilter(next: typeof filter) {
     filterRef.current = next;
@@ -260,93 +273,100 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
       return;
     }
     priceOverlaysRef.current.forEach(({ overlay }) => overlay.setMap(mapInst.current));
-    if (priceLoadState === 'idle') loadAllPrices();
+    // 현재 지도 중심의 시도 로드
+    loadSidoByCenter();
   }
 
-  const loadAllPrices = useCallback(async () => {
-    if (!mapInst.current) return;
+  // 지도 중심 좌표 → 시도명 → 해당 시도 로드
+  function loadSidoByCenter() {
+    if (!mapInst.current || !geocoderRef.current) return;
+    const center = mapInst.current.getCenter();
+    geocoderRef.current.coord2RegionCode(
+      center.getLng(), center.getLat(),
+      (result: any[], status: string) => {
+        if (status !== window.kakao.maps.services.Status.OK) return;
+        const region = result.find((r: any) => r.region_type === 'H');
+        if (!region) return;
+        const sido = REGION_NAME_MAP[region.region_1depth_name];
+        if (sido) loadSido(sido);
+      },
+    );
+  }
+
+  // 단일 시도 데이터 로드 (중복 방지 포함)
+  const loadSido = useCallback(async (sido: string) => {
+    if (loadedSidosRef.current.has(sido)) return;
+    loadedSidosRef.current.add(sido);
     setPriceLoadState('loading');
 
-    const ps = new window.kakao.maps.services.Places();
-    const SIDOS = Object.keys(LAWD_CODE_MAP);
+    try {
+      const res = await fetch(`/api/map-prices?sido=${encodeURIComponent(sido)}`);
+      if (!res.ok) return;
+      const data: DistrictPrice[] = await res.json();
 
-    // 구/시/군청 키워드로 행정구역 중심 좌표 검색
-    function geocodeDistrict(sido: string, name: string): Promise<{ lat: number; lng: number } | null> {
-      return new Promise(resolve => {
-        const shortName = name.split(' ').at(-1) ?? name; // "수원 장안구" → "장안구"
-        const suffix = shortName.endsWith('군') ? '청' : '청';
-        const keyword = `${sido} ${shortName}${suffix}`; // "서울 강남구청", "경기 장안구청"
-        ps.keywordSearch(keyword, (places: any[], status: string) => {
-          if (status === window.kakao.maps.services.Status.OK && places.length > 0) {
-            resolve({ lat: parseFloat(places[0].y), lng: parseFloat(places[0].x) });
-          } else {
-            // fallback: 시도+구 이름만으로 재검색
-            ps.keywordSearch(`${shortName}${suffix}`, (p2: any[], s2: string) => {
-              if (s2 === window.kakao.maps.services.Status.OK && p2.length > 0) {
-                resolve({ lat: parseFloat(p2[0].y), lng: parseFloat(p2[0].x) });
-              } else resolve(null);
+      for (const d of data) {
+        const ps = placesRef.current;
+        if (!ps) return;
+
+        const cacheKey = `gc-dist2:${sido}:${d.code}`;
+        let coords = getCachedByKey(cacheKey);
+        if (!coords) {
+          const shortName = d.name.split(' ').at(-1) ?? d.name;
+          const keyword = `${sido} ${shortName}청`;
+          coords = await new Promise<{ lat: number; lng: number } | null>(resolve => {
+            ps.keywordSearch(keyword, (places: any[], status: string) => {
+              if (status === window.kakao.maps.services.Status.OK && places.length > 0) {
+                resolve({ lat: parseFloat(places[0].y), lng: parseFloat(places[0].x) });
+              } else {
+                ps.keywordSearch(`${shortName}청`, (p2: any[], s2: string) => {
+                  resolve(s2 === window.kakao.maps.services.Status.OK && p2.length > 0
+                    ? { lat: parseFloat(p2[0].y), lng: parseFloat(p2[0].x) }
+                    : null);
+                });
+              }
             });
-          }
-        });
-      });
-    }
-
-    for (const sido of SIDOS) {
-      if (loadedSidosRef.current.has(sido)) continue;
-      loadedSidosRef.current.add(sido);
-      try {
-        const res = await fetch(`/api/map-prices?sido=${encodeURIComponent(sido)}`);
-        if (!res.ok) continue;
-        const data: DistrictPrice[] = await res.json();
-
-        for (const d of data) {
-          const cacheKey = `gc-dist2:${sido}:${d.code}`;
-          let coords = getCachedByKey(cacheKey);
-          if (!coords) {
-            coords = await geocodeDistrict(sido, d.name);
-            if (coords) saveCache(cacheKey, coords);
-            // 캐시 미스인 경우만 딜레이 (Rate Limit 방지)
-            await new Promise(r => setTimeout(r, 120));
-          }
-          if (!coords || !mapInst.current) return;
-
-          const currentTab = ageTabRef.current;
-          const stats: PriceStats = d[currentTab];
-          const color = (stats?.count > 0) ? priceColor(stats.avgPerM2) : priceColor(0);
-          const label = d.name.split(' ').at(-1) ?? d.name;
-
-          const div = document.createElement('div');
-          div.style.cssText = [
-            `background:${color.bg}`,
-            `border:1.5px solid ${color.border}`,
-            `border-radius:5px`,
-            `padding:3px 7px`,
-            `font-size:11px`,
-            `font-weight:700`,
-            `color:#fff`,
-            `white-space:nowrap`,
-            `cursor:default`,
-            `box-shadow:0 2px 6px rgba(0,0,0,0.22)`,
-            `transform:translate(-50%,-50%)`,
-            `line-height:1.4`,
-            `text-align:center`,
-            `opacity:${stats?.count > 0 ? '1' : '0.25'}`,
-          ].join(';');
-
-          const dispStats = stats?.count > 0 ? stats : d.all;
-          div.innerHTML = `${label}<br><span style="font-size:10px;font-weight:600;opacity:0.92">${fmtW(dispStats.avgPerM2)}/㎡</span>`;
-          div.title = `${d.name}\n평균 ${fmtW(dispStats.avgTotal)} (${dispStats.count}건)\n㎡당 ${fmtW(dispStats.avgPerM2)}`;
-
-          const overlay = new window.kakao.maps.CustomOverlay({
-            position: new window.kakao.maps.LatLng(coords.lat, coords.lng),
-            content: div,
-            map: priceModeRef.current ? mapInst.current : null,
-            zIndex: 5,
           });
-          priceOverlaysRef.current.push({ overlay, div, data: d });
+          if (coords) saveCache(cacheKey, coords);
+          await new Promise(r => setTimeout(r, 120)); // Rate Limit 방지
         }
-      } catch { /* 개별 시도 실패 무시 */ }
-    }
+        if (!coords || !mapInst.current) continue;
+
+        const currentTab = ageTabRef.current;
+        const stats: PriceStats = d[currentTab];
+        const color = (stats?.count > 0) ? priceColor(stats.avgPerM2) : priceColor(0);
+        const label = d.name.split(' ').at(-1) ?? d.name;
+
+        const div = document.createElement('div');
+        div.style.cssText = [
+          `background:${color.bg}`,
+          `border:1.5px solid ${color.border}`,
+          `border-radius:5px`,
+          `padding:3px 7px`,
+          `font-size:11px`,
+          `font-weight:700`,
+          `color:#fff`,
+          `white-space:nowrap`,
+          `cursor:default`,
+          `box-shadow:0 2px 6px rgba(0,0,0,0.22)`,
+          `transform:translate(-50%,-50%)`,
+          `line-height:1.4`,
+          `text-align:center`,
+          `opacity:${stats?.count > 0 ? '1' : '0.25'}`,
+        ].join(';');
+
+        const dispStats = stats?.count > 0 ? stats : d.all;
+        div.innerHTML = `${label}<br><span style="font-size:10px;font-weight:600;opacity:0.92">${fmtW(dispStats.avgPerM2)}/㎡</span>`;
+        div.title = `${d.name}\n평균 ${fmtW(dispStats.avgTotal)} (${dispStats.count}건)\n㎡당 ${fmtW(dispStats.avgPerM2)}`;
+
+        const overlay = new window.kakao.maps.CustomOverlay({
+          position: new window.kakao.maps.LatLng(coords.lat, coords.lng),
+          content: div,
+          map: priceModeRef.current ? mapInst.current : null,
+          zIndex: 5,
+        });
+        priceOverlaysRef.current.push({ overlay, div, data: d });
+      }
+    } catch { /* 시도 실패 무시 */ }
 
     setPriceLoadState('done');
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -366,6 +386,21 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
 
       const geocoder = new window.kakao.maps.services.Geocoder();
       const ps       = new window.kakao.maps.services.Places();
+      geocoderRef.current = geocoder;
+      placesRef.current   = ps;
+
+      // 지도 이동 시 새 시도가 보이면 자동 로드
+      window.kakao.maps.event.addListener(map, 'idle', () => {
+        if (!priceModeRef.current) return;
+        const center = map.getCenter();
+        geocoder.coord2RegionCode(center.getLng(), center.getLat(), (result: any[], status: string) => {
+          if (status !== window.kakao.maps.services.Status.OK) return;
+          const region = result.find((r: any) => r.region_type === 'H');
+          if (!region) return;
+          const sido = REGION_NAME_MAP[region.region_1depth_name];
+          if (sido && !loadedSidosRef.current.has(sido)) loadSido(sido);
+        });
+      });
       const unsoldImg = new window.kakao.maps.MarkerImage(
         makeMarkerSvg(UNSOLD_COLOR),
         new window.kakao.maps.Size(22, 22),
