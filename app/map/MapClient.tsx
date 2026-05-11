@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import type { MapUnsoldItem, MapSaleItem } from './page';
 import type { DistrictPrice, PriceStats } from '@/app/api/map-prices/route';
+import type { DongPrice } from '@/app/api/map-prices/dong/route';
 import { LAWD_CODE_MAP } from '@/lib/tradeApi';
 
 type AgeTab = 'all' | 'y5' | 'y10' | 'y15' | 'y20';
@@ -226,6 +227,8 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
   const [priceMode, setPriceMode] = useState(false);
   const [priceLoadState, setPriceLoadState] = useState<'idle' | 'loading' | 'done'>('idle');
   const [ageTab, setAgeTab] = useState<AgeTab>('all');
+  const [dongPanel, setDongPanel] = useState<{ districtName: string; code: string; dongs: DongPrice[] } | null>(null);
+  const [dongLoading, setDongLoading] = useState(false);
   const priceModeRef = useRef(false);
   const ageTabRef = useRef<AgeTab>('all');
   const priceOverlaysRef = useRef<PriceOverlayItem[]>([]);
@@ -372,6 +375,17 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
         const dispStats = stats?.count > 0 ? stats : d.all;
         div.innerHTML = `${label}<br><span style="font-size:10px;font-weight:600;opacity:0.92">${fmtW(dispStats.avgPerM2)}/전용㎡</span>`;
         div.title = `${d.name}\n평균 ${fmtW(dispStats.avgTotal)} (${dispStats.count}건)\n㎡당 ${fmtW(dispStats.avgPerM2)}`;
+
+        div.style.cursor = 'pointer';
+        div.addEventListener('click', () => {
+          setDongLoading(true);
+          setDongPanel(null);
+          fetch(`/api/map-prices/dong?code=${d.code}`)
+            .then(r => r.json())
+            .then((dongs: DongPrice[]) => setDongPanel({ districtName: d.name, code: d.code, dongs }))
+            .catch(() => setDongPanel({ districtName: d.name, code: d.code, dongs: [] }))
+            .finally(() => setDongLoading(false));
+        });
 
         const overlay = new window.kakao.maps.CustomOverlay({
           position: new window.kakao.maps.LatLng(coords.lat, coords.lng),
@@ -721,6 +735,71 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
             </div>
           </div>
         </>
+      )}
+
+      {/* 동별 시세 패널 */}
+      {(dongLoading || dongPanel) && (
+        <div style={{
+          position: 'absolute', top: 70, right: 12,
+          width: 'min(280px, calc(100vw - 24px))',
+          maxHeight: 'calc(100dvh - 140px)',
+          background: '#fff', borderRadius: 14,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+          zIndex: 20, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        }}>
+          {/* 헤더 */}
+          <div style={{
+            background: '#7c3aed', padding: '10px 14px',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0,
+          }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>
+              💰 {dongPanel?.districtName ?? '…'} 동별 시세
+            </span>
+            <button
+              onClick={() => setDongPanel(null)}
+              style={{ background: 'none', border: 'none', color: '#fff', fontSize: 18, cursor: 'pointer', lineHeight: 1, padding: 0 }}
+            >✕</button>
+          </div>
+
+          <div style={{ overflowY: 'auto', flex: 1 }}>
+            {dongLoading ? (
+              <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: 13, padding: '24px 0' }}>불러오는 중…</p>
+            ) : !dongPanel || dongPanel.dongs.length === 0 ? (
+              <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: 13, padding: '24px 0' }}>데이터가 없습니다</p>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: '#f8f5ff', borderBottom: '1px solid #ede9fe' }}>
+                    <th style={{ padding: '7px 12px', textAlign: 'left', fontWeight: 700, color: '#5b21b6' }}>읍면동</th>
+                    <th style={{ padding: '7px 8px', textAlign: 'right', fontWeight: 700, color: '#5b21b6' }}>전용㎡당</th>
+                    <th style={{ padding: '7px 8px', textAlign: 'right', fontWeight: 700, color: '#5b21b6', whiteSpace: 'nowrap' }}>거래</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dongPanel.dongs
+                    .map(d => ({ d, stats: d[ageTab] }))
+                    .filter(({ stats }) => stats.count > 0)
+                    .sort((a, b) => b.stats.avgPerM2 - a.stats.avgPerM2)
+                    .map(({ d, stats }, i) => (
+                      <tr key={d.dong} style={{ borderBottom: '1px solid #f3f4f6', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
+                        <td style={{ padding: '6px 12px', color: '#374151', fontWeight: 600 }}>{d.dong}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'right', color: '#7c3aed', fontWeight: 700 }}>
+                          {fmtW(stats.avgPerM2)}
+                        </td>
+                        <td style={{ padding: '6px 8px', textAlign: 'right', color: '#9ca3af' }}>
+                          {stats.count}건
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          <div style={{ padding: '6px 12px', borderTop: '1px solid #f3f4f6', fontSize: 10, color: '#9ca3af', flexShrink: 0 }}>
+            최근 3개월 실거래 · 2건 미만 제외 · 전용면적 가중평균
+          </div>
+        </div>
       )}
 
       {/* 우측 하단 범례 */}
