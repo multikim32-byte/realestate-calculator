@@ -101,6 +101,8 @@ const DEFAULT: FormData = {
   move_in_date: null,
   youtube_url: null,
   slug: null,
+  lat: null,
+  lng: null,
 };
 
 export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData>; id?: string }) {
@@ -394,7 +396,7 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
                 )}
                 {form.house_manage_no && (
                   <p style={{ fontSize: 11, color: '#059669', marginTop: 8, marginBottom: 0 }}>
-                    ✅ 연결됨: {form.house_manage_no}
+                    ✅ 청약홈 연결됨: {form.house_manage_no}
                   </p>
                 )}
               </div>
@@ -409,7 +411,14 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
 
           <div>
             <label style={labelStyle}>위치 *</label>
-            <AddressInput value={form.location ?? ''} onChange={val => set('location', val)} />
+            <AddressInput
+              value={form.location ?? ''}
+              onChange={val => set('location', val)}
+              onGeocode={(lat, lng) => setForm(prev => ({ ...prev, lat, lng }))}
+            />
+            <p style={{ fontSize: 11, marginTop: 6, marginBottom: 0, color: form.lat ? '#059669' : '#9ca3af' }}>
+              {form.lat ? `📍 좌표 확정됨 (${form.lat.toFixed(5)}, ${form.lng?.toFixed(5)}) — 지도 핀 정확` : '⚠️ 좌표 없음 — 주소 검색 버튼으로 선택하면 자동 저장'}
+            </p>
           </div>
 
           <div>

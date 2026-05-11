@@ -28,6 +28,8 @@ export type MapUnsoldItem = {
   benefit: string | null;
   thumbnail_url: string | null;
   house_manage_no: string | null;
+  lat: number | null;
+  lng: number | null;
 };
 
 export type MapSaleItem = {
@@ -45,7 +47,7 @@ export default async function MapPage() {
   const [{ data: unsoldRaw }, saleResult] = await Promise.allSettled([
     supabase
       .from('unsold_listings')
-      .select('id, slug, name, location, min_price, max_price, category, benefit, thumbnail_url, house_manage_no')
+      .select('id, slug, name, location, min_price, max_price, category, benefit, thumbnail_url, house_manage_no, lat, lng')
       .eq('is_active', true)
       .order('created_at', { ascending: false }),
     fetchPublicSaleList({ type: 'all', perPage: 100, skipEnrich: true }),
@@ -54,9 +56,10 @@ export default async function MapPage() {
     s.status === 'fulfilled' ? s.value : { items: [] },
   ]) as [{ data: MapUnsoldItem[] | null }, { items: any[] }];
 
-  // 주소가 시/구 수준으로 너무 간략한 매물은 청약홈 API에서 상세 주소 보완
+  // 좌표 없는 + 주소 모호한 매물만 청약홈 API로 주소 보완
   const unsoldListings: MapUnsoldItem[] = await Promise.all(
     (unsoldRaw ?? []).filter(i => i.location).map(async (item: any) => {
+      if (item.lat && item.lng) return item; // 저장된 좌표 있으면 그대로
       const isVague = !/[동읍면리]|번지/.test(item.location.replace(/\(.*?\)/g, ''));
       if (isVague && item.house_manage_no) {
         try {

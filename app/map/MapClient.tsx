@@ -246,17 +246,23 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
         const salePins   = saleListings.map(i => ({ type: 'sale' as PinType, item: i, address: i.location }));
         const allPins    = [...unsoldPins, ...salePins];
 
-        // 1패스: localStorage 캐시 → 즉시 마커 배치 (동기)
-        const uncached: typeof allPins = [];
+        // 0패스: DB에 저장된 좌표 있는 미분양 → 즉시 배치 (geocoding 불필요)
+        const uncachedPins: typeof allPins = [];
         for (const pin of allPins) {
+          const item = pin.item as MapUnsoldItem;
+          if (pin.type === 'unsold' && item.lat && item.lng) {
+            placeMarker(pin.type, pin.item, { lat: item.lat, lng: item.lng });
+            continue;
+          }
+          // 1패스: localStorage 캐시
           const cacheKey = `gc5:${pin.address}|${(pin.item as any).name}`;
           const coords = getCachedByKey(cacheKey);
           if (coords) placeMarker(pin.type, pin.item, coords);
-          else uncached.push(pin);
+          else uncachedPins.push(pin);
         }
 
         // 2패스: 미캐시 항목 병렬 geocoding
-        await runParallel(uncached, async pin => {
+        await runParallel(uncachedPins, async pin => {
           const coords = await geocodePin(geocoder, ps, pin.address, (pin.item as any).name, pin.type);
           if (coords) placeMarker(pin.type, pin.item, coords);
         });

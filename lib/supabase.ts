@@ -36,6 +36,8 @@ export type UnsoldListing = {
   move_in_date: string | null;
   youtube_url: string | null;
   slug: string | null;
+  lat: number | null;
+  lng: number | null;
   created_at: string;
   updated_at: string;
 };

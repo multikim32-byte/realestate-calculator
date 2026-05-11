@@ -24,9 +24,28 @@ interface DaumResult {
 interface Props {
   value: string;
   onChange: (value: string) => void;
+  onGeocode?: (lat: number, lng: number) => void;
 }
 
-export default function AddressInput({ value, onChange }: Props) {
+const KAKAO_KEY = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
+
+function loadKakaoMaps(): Promise<void> {
+  return new Promise(resolve => {
+    if (window.kakao?.maps?.services) { resolve(); return; }
+    const existing = document.getElementById('kakao-map-sdk');
+    if (existing) {
+      window.kakao?.maps?.load?.(resolve);
+      return;
+    }
+    const script = document.createElement('script');
+    script.id = 'kakao-map-sdk';
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_KEY}&libraries=services&autoload=false`;
+    script.onload = () => window.kakao.maps.load(resolve);
+    document.head.appendChild(script);
+  });
+}
+
+export default function AddressInput({ value, onChange, onGeocode }: Props) {
   const [base, setBase] = useState(value);
   const [detail, setDetail] = useState('');
   const [scriptLoaded, setScriptLoaded] = useState(false);
@@ -68,14 +87,24 @@ export default function AddressInput({ value, onChange }: Props) {
     new window.daum.Postcode({
       oncomplete: (data) => {
         const full = data.roadAddress || data.jibunAddress || data.autoJibunAddress;
-        // 시도·시군구를 Daum 단축명으로 교체해 필터와 호환되도록 구성
-        // Daum roadAddress는 "경기도 양주시 ..." 형태이므로 앞 두 토큰을 교체
         const parts = full.trim().split(/\s+/);
         const rest = parts.slice(2).join(' ');
         const normalized = [data.sido, data.sigungu, rest].filter(Boolean).join(' ');
         setBase(normalized);
         setDetail('');
         onChange(normalized);
+
+        // 좌표 자동 추출 — Kakao 지오코딩 (onGeocode 콜백이 있을 때만)
+        if (onGeocode && KAKAO_KEY && full) {
+          loadKakaoMaps().then(() => {
+            const geocoder = new window.kakao.maps.services.Geocoder();
+            geocoder.addressSearch(full, (result: any[], status: string) => {
+              if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
+                onGeocode(parseFloat(result[0].y), parseFloat(result[0].x));
+              }
+            });
+          });
+        }
       },
     }).open();
   };
