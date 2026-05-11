@@ -753,7 +753,7 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
             display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0,
           }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>
-              💰 {dongPanel?.districtName ?? '…'} 동별 시세
+              💰 {dongPanel?.districtName ?? '…'} 읍·면·동별 시세
             </span>
             <button
               onClick={() => setDongPanel(null)}
@@ -770,7 +770,7 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                 <thead>
                   <tr style={{ background: '#f8f5ff', borderBottom: '1px solid #ede9fe' }}>
-                    <th style={{ padding: '7px 12px', textAlign: 'left', fontWeight: 700, color: '#5b21b6' }}>읍면동</th>
+                    <th style={{ padding: '7px 12px', textAlign: 'left', fontWeight: 700, color: '#5b21b6' }}>읍·면·동</th>
                     <th style={{ padding: '7px 8px', textAlign: 'right', fontWeight: 700, color: '#5b21b6' }}>전용㎡당</th>
                     <th style={{ padding: '7px 8px', textAlign: 'right', fontWeight: 700, color: '#5b21b6', whiteSpace: 'nowrap' }}>거래</th>
                   </tr>
