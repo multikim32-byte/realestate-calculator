@@ -37,10 +37,10 @@ const PRICE_TIERS = [
 
 const AGE_TABS: { key: AgeTab; label: string }[] = [
   { key: 'all', label: '전체' },
-  { key: 'y5',  label: '5년 이내' },
-  { key: 'y10', label: '10년' },
-  { key: 'y15', label: '15년' },
-  { key: 'y20', label: '20년+' },
+  { key: 'y5',  label: '신축(5년↓)' },
+  { key: 'y10', label: '준신축(10년↓)' },
+  { key: 'y15', label: '중축(15년↓)' },
+  { key: 'y20', label: '구축(20년↑)' },
 ];
 
 // Kakao coord2RegionCode 반환 시도명 → LAWD_CODE_MAP 키 변환
