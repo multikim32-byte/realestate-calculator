@@ -272,8 +272,11 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
       priceOverlaysRef.current.forEach(({ overlay }) => overlay.setMap(null));
       return;
     }
-    priceOverlaysRef.current.forEach(({ overlay }) => overlay.setMap(mapInst.current));
-    // 현재 지도 중심의 시도 로드
+    if (mapInst.current) {
+      // 레벨 8 미만(너무 줌인)이면 구/시 오버레이가 보이도록 레벨 8로 조정
+      if (mapInst.current.getLevel() < 8) mapInst.current.setLevel(8);
+      priceOverlaysRef.current.forEach(({ overlay }) => overlay.setMap(mapInst.current));
+    }
     loadSidoByCenter();
   }
 
@@ -404,9 +407,17 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
       geocoderRef.current = geocoder;
       placesRef.current   = ps;
 
-      // 지도 이동 시 새 시도가 보이면 자동 로드
+      // 지도 이동/줌 시 시세 오버레이 갱신
       window.kakao.maps.event.addListener(map, 'idle', () => {
         if (!priceModeRef.current) return;
+        const level = map.getLevel();
+        // 레벨 8 미만: 오버레이 숨김 (너무 줌인돼서 구/시 레이블 의미 없음)
+        if (level < 8) {
+          priceOverlaysRef.current.forEach(({ overlay }) => overlay.setMap(null));
+          return;
+        }
+        // 레벨 8 이상: 오버레이 복원
+        priceOverlaysRef.current.forEach(({ overlay }) => overlay.setMap(map));
         const center = map.getCenter();
         geocoder.coord2RegionCode(center.getLng(), center.getLat(), (result: any[]) => {
           const region = result?.find((r: any) => r.region_type === 'H');
