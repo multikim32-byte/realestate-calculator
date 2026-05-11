@@ -267,8 +267,29 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
     if (!mapInst.current) return;
     setPriceLoadState('loading');
 
-    const geocoder = new window.kakao.maps.services.Geocoder();
+    const ps = new window.kakao.maps.services.Places();
     const SIDOS = Object.keys(LAWD_CODE_MAP);
+
+    // 구/시/군청 키워드로 행정구역 중심 좌표 검색
+    function geocodeDistrict(sido: string, name: string): Promise<{ lat: number; lng: number } | null> {
+      return new Promise(resolve => {
+        const shortName = name.split(' ').at(-1) ?? name; // "수원 장안구" → "장안구"
+        const suffix = shortName.endsWith('군') ? '청' : '청';
+        const keyword = `${sido} ${shortName}${suffix}`; // "서울 강남구청", "경기 장안구청"
+        ps.keywordSearch(keyword, (places: any[], status: string) => {
+          if (status === window.kakao.maps.services.Status.OK && places.length > 0) {
+            resolve({ lat: parseFloat(places[0].y), lng: parseFloat(places[0].x) });
+          } else {
+            // fallback: 시도+구 이름만으로 재검색
+            ps.keywordSearch(`${shortName}${suffix}`, (p2: any[], s2: string) => {
+              if (s2 === window.kakao.maps.services.Status.OK && p2.length > 0) {
+                resolve({ lat: parseFloat(p2[0].y), lng: parseFloat(p2[0].x) });
+              } else resolve(null);
+            });
+          }
+        });
+      });
+    }
 
     for (const sido of SIDOS) {
       if (loadedSidosRef.current.has(sido)) continue;
@@ -279,16 +300,10 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
         const data: DistrictPrice[] = await res.json();
 
         await Promise.all(data.map(async (d) => {
-          const cacheKey = `gc-dist:${sido}:${d.code}`;
+          const cacheKey = `gc-dist2:${sido}:${d.code}`;
           let coords = getCachedByKey(cacheKey);
           if (!coords) {
-            coords = await new Promise<{ lat: number; lng: number } | null>(resolve => {
-              geocoder.addressSearch(`${sido} ${d.name}`, (result: any[], status: string) => {
-                if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
-                  resolve({ lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) });
-                } else resolve(null);
-              });
-            });
+            coords = await geocodeDistrict(sido, d.name);
             if (coords) saveCache(cacheKey, coords);
           }
           if (!coords || !mapInst.current) return;
