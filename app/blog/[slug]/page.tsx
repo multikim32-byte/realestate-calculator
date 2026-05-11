@@ -152,9 +152,11 @@ export default async function PostPage({ params }: Props) {
         </div>
 
         {/* 광고 */}
-        <div style={{ marginTop: 24 }}>
+        <div style={{ marginTop: 40, marginBottom: 40 }}>
           <AdUnit slotId={AD_SLOT} />
         </div>
+
+        <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '0 0 40px' }} />
 
         {/* 관련 정보 바로가기 */}
         <div style={{ marginTop: 24, background: "#fff", borderRadius: 16, padding: "20px 20px 18px", boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>
