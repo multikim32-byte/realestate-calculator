@@ -3,6 +3,7 @@
 import type { MetadataRoute } from 'next';
 import { supabase } from '@/lib/supabase';
 import { fetchPublicSaleList } from '@/lib/publicDataApi';
+import { LAWD_CODE_MAP } from '@/lib/tradeApi';
 
 const BASE = 'https://www.aptzipsa.kr';
 
@@ -40,6 +41,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: 'weekly' as const,
     priority: 0.85,
   }));
+
+  // 시/군/구 상세 페이지
+  const sigunguEntries: MetadataRoute.Sitemap = REGIONS.flatMap(sido => {
+    const districts = LAWD_CODE_MAP[sido as keyof typeof LAWD_CODE_MAP] ?? [];
+    return districts.map(d => ({
+      url: `${BASE}/region/${encodeURIComponent(sido)}/${encodeURIComponent(d.name)}`,
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority: 0.75,
+    }));
+  });
 
   // 청약정보 개별 페이지 /sale/[houseManageNo]
   let saleItems: import('@/lib/publicDataApi').PublicSaleItem[] = [];
@@ -123,6 +135,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...staticEntries,
     ...regionEntries,
+    ...sigunguEntries,
     ...saleEntries,
     ...unsoldEntries,
     ...aptEntries,

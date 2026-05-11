@@ -191,6 +191,10 @@ const REGION_INFO: Record<string, RegionInfo> = {
 
 export const revalidate = 3600; // 1시간 캐시 후 재검증
 
+export function generateStaticParams() {
+  return Object.keys(REGION_LABELS).map(sido => ({ sido: encodeURIComponent(sido) }));
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ sido: string }> }): Promise<Metadata> {
   const { sido: rawSido } = await params;
   const sido = decodeURIComponent(rawSido);
@@ -223,7 +227,7 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
   // 분양정보 (Supabase)
   const { data: unsoldListings } = await supabase
     .from('unsold_listings')
-    .select('id, name, location, category, min_price, max_price, thumbnail_url, benefit, highlight')
+    .select('id, slug, name, location, category, min_price, max_price, thumbnail_url, benefit, highlight')
     .eq('is_active', true)
     .ilike('location', `${sido} %`)
     .order('created_at', { ascending: false });
@@ -358,7 +362,7 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
               {unsoldListings.map(item => (
-                <Link key={item.id} href={`/unsold/${item.id}`} style={{ textDecoration: 'none' }}>
+                <Link key={item.id} href={`/unsold/${item.slug ?? item.id}`} style={{ textDecoration: 'none' }}>
                   <div style={{
                     background: '#fff', borderRadius: 12, overflow: 'hidden',
                     boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
@@ -426,6 +430,34 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
             실거래가 조회하기 →
           </Link>
         </div>
+
+        {/* ── 시/군/구별 바로가기 ── */}
+        {(() => {
+          const districts = (LAWD_CODE_MAP as any)[sido] as { name: string; code: string }[] | undefined;
+          if (!districts?.length) return null;
+          return (
+            <section style={{ marginBottom: 40 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1e3a5f', marginBottom: 12 }}>
+                {sido} 시·군·구별 부동산 정보
+              </h2>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {districts.map(d => (
+                  <Link
+                    key={d.code}
+                    href={`/region/${encodeURIComponent(sido)}/${encodeURIComponent(d.name)}`}
+                    style={{
+                      padding: '7px 16px', background: '#fff', border: '1px solid #e5e7eb',
+                      borderRadius: 20, textDecoration: 'none', fontSize: 13, color: '#1d4ed8',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {d.name}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
 
         {/* ── 다른 지역 ── */}
         <section>

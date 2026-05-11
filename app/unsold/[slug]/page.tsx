@@ -13,7 +13,12 @@ import KakaoMap from '@/app/components/KakaoMap';
 import UnsoldLeadForm from '@/app/components/UnsoldLeadForm';
 import { fetchSaleDetail } from '@/lib/publicDataApi';
 
-async function findListing(slug: string, selectCols = '*') {
+async function findListing(rawSlug: string, selectCols = '*') {
+  // Next.js가 한글 slug를 URL-encoded 상태로 전달할 때를 대비해 decode
+  const slug = (() => {
+    try { return decodeURIComponent(rawSlug); } catch { return rawSlug; }
+  })();
+
   // slug로 먼저 조회
   const { data: bySlug } = await supabase
     .from('unsold_listings')
@@ -22,21 +27,32 @@ async function findListing(slug: string, selectCols = '*') {
     .maybeSingle();
   if (bySlug) return { data: bySlug, redirectTo: null };
 
-  // 구 UUID URL 하위 호환: id로 조회 후 slug로 리다이렉트
+  // decoded와 raw가 다른 경우 raw slug도 추가 시도
+  if (slug !== rawSlug) {
+    const { data: byRaw } = await supabase
+      .from('unsold_listings')
+      .select(selectCols)
+      .eq('slug', rawSlug)
+      .maybeSingle();
+    if (byRaw) return { data: byRaw, redirectTo: null };
+  }
+
+  // 구 UUID URL 하위 호환: 리다이렉트 없이 그대로 표시 (기존 URL 유지)
   try {
     const { data: byId } = await supabase
       .from('unsold_listings')
       .select(selectCols)
       .eq('id', slug)
       .maybeSingle();
-    if (byId) return { data: byId, redirectTo: (byId as unknown as UnsoldListing).slug ?? null };
+    if (byId) return { data: byId, redirectTo: null };
   } catch { /* invalid UUID format */ }
 
   return { data: null, redirectTo: null };
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = (() => { try { return decodeURIComponent(rawSlug); } catch { return rawSlug; } })();
   const { data } = await findListing(slug, 'name, location, category, benefit, min_price, max_price, thumbnail_url, slug');
 
   if (!data) return { title: '분양정보' };
@@ -87,7 +103,8 @@ function parseUnitPrices(area: string | null): UnitPriceRow[] {
 }
 
 export default async function UnsoldDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = (() => { try { return decodeURIComponent(rawSlug); } catch { return rawSlug; } })();
   const { data: raw, redirectTo } = await findListing(slug);
 
   if (!raw) notFound();
