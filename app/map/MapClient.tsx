@@ -3,8 +3,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import type { MapUnsoldItem, MapSaleItem } from './page';
-import type { DistrictPrice } from '@/app/api/map-prices/route';
+import type { DistrictPrice, PriceStats } from '@/app/api/map-prices/route';
 import { LAWD_CODE_MAP } from '@/lib/tradeApi';
+
+type AgeTab = 'all' | 'y5' | 'y10' | 'y15' | 'y20';
+type PriceOverlayItem = { overlay: any; div: HTMLDivElement; data: DistrictPrice };
 
 interface Props {
   unsoldListings: MapUnsoldItem[];
@@ -23,23 +26,31 @@ const UNSOLD_COLOR = '#1d4ed8';
 const SALE_COLOR   = '#059669';
 const CONCURRENCY  = 8;
 
-// 가격 티어 (단위: 만원)
+// 가격 티어 — ㎡당 만원 기준
 const PRICE_TIERS = [
-  { label: '10억+',     min: 100000, bg: 'rgba(220,38,38,0.88)',  border: '#b91c1c' },
-  { label: '6~10억',    min: 60000,  bg: 'rgba(234,88,12,0.88)',   border: '#c2410c' },
-  { label: '3~6억',     min: 30000,  bg: 'rgba(202,138,4,0.88)',   border: '#a16207' },
-  { label: '1.5~3억',   min: 15000,  bg: 'rgba(22,163,74,0.88)',   border: '#15803d' },
-  { label: '1.5억 미만', min: 0,     bg: 'rgba(37,99,235,0.88)',   border: '#1d4ed8' },
+  { label: '2,000만↑/㎡',    min: 2000, bg: 'rgba(220,38,38,0.9)',  border: '#b91c1c' },
+  { label: '1,200~2,000만/㎡', min: 1200, bg: 'rgba(234,88,12,0.9)',  border: '#c2410c' },
+  { label: '700~1,200만/㎡',   min: 700,  bg: 'rgba(202,138,4,0.9)',  border: '#a16207' },
+  { label: '400~700만/㎡',     min: 400,  bg: 'rgba(22,163,74,0.9)',  border: '#15803d' },
+  { label: '400만 미만/㎡',    min: 0,    bg: 'rgba(37,99,235,0.9)',  border: '#1d4ed8' },
 ] as const;
 
-function priceColor(avgTotal: number) {
-  return PRICE_TIERS.find(t => avgTotal >= t.min) ?? PRICE_TIERS[4];
+const AGE_TABS: { key: AgeTab; label: string }[] = [
+  { key: 'all', label: '전체' },
+  { key: 'y5',  label: '5년 이내' },
+  { key: 'y10', label: '10년' },
+  { key: 'y15', label: '15년' },
+  { key: 'y20', label: '20년+' },
+];
+
+function priceColor(avgPerM2: number) {
+  return PRICE_TIERS.find(t => avgPerM2 >= t.min) ?? PRICE_TIERS[4];
 }
 
 function fmtW(v: number): string {
-  // v: 만원 단위
   if (v >= 10000) return `${(v / 10000).toFixed(1)}억`;
-  return `${Math.round(v / 1000)}천만`;
+  if (v >= 1000)  return `${Math.round(v / 100) / 10}천만`;
+  return `${v}만`;
 }
 
 function fmt(v: number) {
@@ -203,8 +214,10 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
 
   const [priceMode, setPriceMode] = useState(false);
   const [priceLoadState, setPriceLoadState] = useState<'idle' | 'loading' | 'done'>('idle');
+  const [ageTab, setAgeTab] = useState<AgeTab>('all');
   const priceModeRef = useRef(false);
-  const priceOverlaysRef = useRef<any[]>([]);
+  const ageTabRef = useRef<AgeTab>('all');
+  const priceOverlaysRef = useRef<PriceOverlayItem[]>([]);
   const loadedSidosRef = useRef(new Set<string>());
 
   function applyFilter(next: typeof filter) {
@@ -217,16 +230,36 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
     });
   }
 
+  // 탭 변경 시 오버레이 색상/내용 즉시 업데이트
+  function applyAgeTab(tab: AgeTab) {
+    ageTabRef.current = tab;
+    setAgeTab(tab);
+    priceOverlaysRef.current.forEach(({ div, data }) => {
+      const stats: PriceStats = data[tab];
+      if (!stats || stats.count === 0) {
+        div.style.opacity = '0.25';
+        return;
+      }
+      div.style.opacity = '1';
+      const color = priceColor(stats.avgPerM2);
+      div.style.background = color.bg;
+      div.style.borderColor = color.border;
+      const label = data.name.split(' ').at(-1) ?? data.name;
+      div.innerHTML = `${label}<br><span style="font-size:10px;font-weight:600;opacity:0.92">${fmtW(stats.avgPerM2)}/㎡</span>`;
+      div.title = `${data.name}\n평균 ${fmtW(stats.avgTotal)} (${stats.count}건)\n㎡당 ${fmtW(stats.avgPerM2)}`;
+    });
+  }
+
   // 시세 오버레이 ON/OFF
   function togglePriceMode() {
     const next = !priceModeRef.current;
     priceModeRef.current = next;
     setPriceMode(next);
     if (!next) {
-      priceOverlaysRef.current.forEach(o => o.setMap(null));
+      priceOverlaysRef.current.forEach(({ overlay }) => overlay.setMap(null));
       return;
     }
-    priceOverlaysRef.current.forEach(o => o.setMap(mapInst.current));
+    priceOverlaysRef.current.forEach(({ overlay }) => overlay.setMap(mapInst.current));
     if (priceLoadState === 'idle') loadAllPrices();
   }
 
@@ -237,7 +270,6 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
     const geocoder = new window.kakao.maps.services.Geocoder();
     const SIDOS = Object.keys(LAWD_CODE_MAP);
 
-    // 시도별 순차 요청 (서버 부하 분산), 화면에 즉시 반영
     for (const sido of SIDOS) {
       if (loadedSidosRef.current.has(sido)) continue;
       loadedSidosRef.current.add(sido);
@@ -261,8 +293,11 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
           }
           if (!coords || !mapInst.current) return;
 
-          const color = priceColor(d.avgTotal);
-          const label = d.name.split(' ').at(-1) ?? d.name; // 마지막 토큰만 표시
+          const currentTab = ageTabRef.current;
+          const stats: PriceStats = d[currentTab];
+          const color = (stats?.count > 0) ? priceColor(stats.avgPerM2) : priceColor(0);
+          const label = d.name.split(' ').at(-1) ?? d.name;
+
           const div = document.createElement('div');
           div.style.cssText = [
             `background:${color.bg}`,
@@ -278,9 +313,12 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
             `transform:translate(-50%,-50%)`,
             `line-height:1.4`,
             `text-align:center`,
+            `opacity:${stats?.count > 0 ? '1' : '0.25'}`,
           ].join(';');
-          div.innerHTML = `${label}<br><span style="font-size:10px;font-weight:600;opacity:0.92">${fmtW(d.avgTotal)}</span>`;
-          div.title = `${d.name} · 평균 ${fmtW(d.avgTotal)} (${d.count}건)\n㎡당 ${fmtW(d.avgPerM2)}`;
+
+          const dispStats = stats?.count > 0 ? stats : d.all;
+          div.innerHTML = `${label}<br><span style="font-size:10px;font-weight:600;opacity:0.92">${fmtW(dispStats.avgPerM2)}/㎡</span>`;
+          div.title = `${d.name}\n평균 ${fmtW(dispStats.avgTotal)} (${dispStats.count}건)\n㎡당 ${fmtW(dispStats.avgPerM2)}`;
 
           const overlay = new window.kakao.maps.CustomOverlay({
             position: new window.kakao.maps.LatLng(coords.lat, coords.lng),
@@ -288,7 +326,7 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
             map: priceModeRef.current ? mapInst.current : null,
             zIndex: 5,
           });
-          priceOverlaysRef.current.push(overlay);
+          priceOverlaysRef.current.push({ overlay, div, data: d });
         }));
       } catch { /* 개별 시도 실패 무시 */ }
     }
@@ -464,6 +502,27 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
             <span style={{ fontSize: 10, opacity: 0.8 }}>로딩…</span>
           )}
         </button>
+
+        {/* 건축연식 탭 — 시세 모드 ON일 때만 */}
+        {priceMode && (
+          <>
+            <div style={{ width: 1, height: 16, background: '#e5e7eb' }} />
+            {AGE_TABS.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => applyAgeTab(key)}
+                style={{
+                  padding: '4px 10px', borderRadius: 16, border: 'none', cursor: 'pointer',
+                  background: ageTab === key ? '#7c3aed' : '#ede9fe',
+                  color: ageTab === key ? '#fff' : '#5b21b6',
+                  fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap',
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </>
+        )}
 
         {loading && (
           <span style={{ fontSize: 11, color: '#9ca3af', whiteSpace: 'nowrap' }}>
