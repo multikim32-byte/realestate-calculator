@@ -277,20 +277,21 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
     loadSidoByCenter();
   }
 
-  // 지도 중심 좌표 → 시도명 → 해당 시도 로드
+  // 지도 중심 좌표 → 시도명 → 해당 시도 로드 (실패 시 서울 fallback)
   function loadSidoByCenter() {
-    if (!mapInst.current || !geocoderRef.current) return;
+    if (!mapInst.current) return;
+
+    const tryLoad = (lat: number, lng: number) => {
+      if (!geocoderRef.current) { loadSido('서울'); return; }
+      geocoderRef.current.coord2RegionCode(lng, lat, (result: any[], status: string) => {
+        const region = result?.find((r: any) => r.region_type === 'H');
+        const sido = region ? REGION_NAME_MAP[region.region_1depth_name] : null;
+        loadSido(sido ?? '서울');
+      });
+    };
+
     const center = mapInst.current.getCenter();
-    geocoderRef.current.coord2RegionCode(
-      center.getLng(), center.getLat(),
-      (result: any[], status: string) => {
-        if (status !== window.kakao.maps.services.Status.OK) return;
-        const region = result.find((r: any) => r.region_type === 'H');
-        if (!region) return;
-        const sido = REGION_NAME_MAP[region.region_1depth_name];
-        if (sido) loadSido(sido);
-      },
-    );
+    tryLoad(center.getLat(), center.getLng());
   }
 
   // 단일 시도 데이터 로드 (중복 방지 포함)
@@ -298,15 +299,17 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
     if (loadedSidosRef.current.has(sido)) return;
     loadedSidosRef.current.add(sido);
     setPriceLoadState('loading');
+    console.log('[시세] 로드 시작:', sido);
 
     try {
       const res = await fetch(`/api/map-prices?sido=${encodeURIComponent(sido)}`);
-      if (!res.ok) return;
+      if (!res.ok) { console.warn('[시세] API 실패:', res.status); return; }
       const data: DistrictPrice[] = await res.json();
+      console.log('[시세] 수신:', sido, data.length, '개 구/시');
 
       for (const d of data) {
         const ps = placesRef.current;
-        if (!ps) return;
+        if (!ps) continue; // return → continue 수정 (한 구 실패해도 계속)
 
         const cacheKey = `gc-dist2:${sido}:${d.code}`;
         let coords = getCachedByKey(cacheKey);
@@ -405,11 +408,9 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
       window.kakao.maps.event.addListener(map, 'idle', () => {
         if (!priceModeRef.current) return;
         const center = map.getCenter();
-        geocoder.coord2RegionCode(center.getLng(), center.getLat(), (result: any[], status: string) => {
-          if (status !== window.kakao.maps.services.Status.OK) return;
-          const region = result.find((r: any) => r.region_type === 'H');
-          if (!region) return;
-          const sido = REGION_NAME_MAP[region.region_1depth_name];
+        geocoder.coord2RegionCode(center.getLng(), center.getLat(), (result: any[]) => {
+          const region = result?.find((r: any) => r.region_type === 'H');
+          const sido = region ? REGION_NAME_MAP[region.region_1depth_name] : null;
           if (sido && !loadedSidosRef.current.has(sido)) loadSido(sido);
         });
       });
