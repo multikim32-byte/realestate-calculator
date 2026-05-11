@@ -46,9 +46,8 @@ export default async function MapPage() {
       .from('unsold_listings')
       .select('id, slug, name, location, min_price, max_price, category, benefit, thumbnail_url')
       .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(60),
-    fetchPublicSaleList({ type: 'all', perPage: 80, skipEnrich: true }),
+      .order('created_at', { ascending: false }),
+    fetchPublicSaleList({ type: 'all', perPage: 100, skipEnrich: true }),
   ]).then(([u, s]) => [
     u.status === 'fulfilled' ? u.value : { data: [] },
     s.status === 'fulfilled' ? s.value : { items: [] },
@@ -58,7 +57,6 @@ export default async function MapPage() {
 
   const saleListings: MapSaleItem[] = (saleResult.items ?? [])
     .filter((i: any) => i.status === '청약중' || i.status?.includes('예정'))
-    .slice(0, 60)
     .map((i: any) => ({
       houseManageNo: i.houseManageNo,
       name: i.name,
