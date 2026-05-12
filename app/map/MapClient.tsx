@@ -638,7 +638,7 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
   return (
     <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
       {/* 지도 */}
-      <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
+      <div ref={mapRef} style={{ width: '100%', height: '100%', touchAction: 'none' }} />
 
       {/* 상단 컨트롤 */}
       <div style={{
