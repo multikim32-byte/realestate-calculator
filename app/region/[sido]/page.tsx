@@ -192,12 +192,11 @@ const REGION_INFO: Record<string, RegionInfo> = {
 export const revalidate = 3600; // 1시간 캐시 후 재검증
 
 export function generateStaticParams() {
-  return Object.keys(REGION_LABELS).map(sido => ({ sido: encodeURIComponent(sido) }));
+  return Object.keys(REGION_LABELS).map(sido => ({ sido }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ sido: string }> }): Promise<Metadata> {
-  const { sido: rawSido } = await params;
-  const sido = decodeURIComponent(rawSido);
+  const { sido } = await params;
   const fullName = REGION_LABELS[sido];
   if (!fullName) return { title: '지역 정보' };
   return {
@@ -219,8 +218,7 @@ function fmt만원(v: number) {
 }
 
 export default async function RegionPage({ params }: { params: Promise<{ sido: string }> }) {
-  const { sido: rawSido } = await params;
-  const sido = decodeURIComponent(rawSido);
+  const { sido } = await params;
   const fullName = REGION_LABELS[sido];
   if (!fullName) notFound();
 

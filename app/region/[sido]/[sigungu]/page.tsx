@@ -21,19 +21,14 @@ export function generateStaticParams() {
   for (const sido of Object.keys(REGION_LABELS)) {
     const districts = LAWD_CODE_MAP[sido as keyof typeof LAWD_CODE_MAP] ?? [];
     for (const d of districts) {
-      params.push({
-        sido: encodeURIComponent(sido),
-        sigungu: encodeURIComponent(d.name),
-      });
+      params.push({ sido, sigungu: d.name });
     }
   }
   return params;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ sido: string; sigungu: string }> }): Promise<Metadata> {
-  const { sido: rawSido, sigungu: rawSigungu } = await params;
-  const sido = decodeURIComponent(rawSido);
-  const sigungu = decodeURIComponent(rawSigungu);
+  const { sido, sigungu } = await params;
   const fullSido = REGION_LABELS[sido];
   if (!fullSido) return { title: '지역 정보' };
 
@@ -61,9 +56,7 @@ function fmt만원(v: number) {
 }
 
 export default async function SigunguPage({ params }: { params: Promise<{ sido: string; sigungu: string }> }) {
-  const { sido: rawSido, sigungu: rawSigungu } = await params;
-  const sido = decodeURIComponent(rawSido);
-  const sigungu = decodeURIComponent(rawSigungu);
+  const { sido, sigungu } = await params;
 
   const fullSido = REGION_LABELS[sido];
   if (!fullSido) notFound();
