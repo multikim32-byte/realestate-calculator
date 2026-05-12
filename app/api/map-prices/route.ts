@@ -57,27 +57,31 @@ function calcStats(items: TradeItem[]): PriceStats {
 
 async function fetchDistrictPrice(code: string, name: string): Promise<DistrictPrice | null> {
   const months = getRecentMonths();
+  const allItems: TradeItem[] = [];
+
+  // 3개월 합산 (거래 적은 지역도 충분한 샘플 확보)
   for (const ym of months) {
     try {
-      const { items } = await fetchTradeList(code, ym, 1, 100);
-      if (items.length === 0) continue;
-
-      const groups: Record<string, TradeItem[]> = { y5: [], y10: [], y15: [], y20: [] };
-      for (const it of items) {
-        if (it.builtYear > 0) groups[ageGroup(it.builtYear)].push(it);
-      }
-
-      return {
-        name, code,
-        all: calcStats(items),
-        y5:  calcStats(groups.y5),
-        y10: calcStats(groups.y10),
-        y15: calcStats(groups.y15),
-        y20: calcStats(groups.y20),
-      };
-    } catch { /* 다음 월 시도 */ }
+      const { items } = await fetchTradeList(code, ym, 1, 300);
+      allItems.push(...items);
+    } catch { /* 해당 월 스킵 */ }
   }
-  return null;
+
+  if (allItems.length === 0) return null;
+
+  const groups: Record<string, TradeItem[]> = { y5: [], y10: [], y15: [], y20: [] };
+  for (const it of allItems) {
+    if (it.builtYear > 0) groups[ageGroup(it.builtYear)].push(it);
+  }
+
+  return {
+    name, code,
+    all: calcStats(allItems),
+    y5:  calcStats(groups.y5),
+    y10: calcStats(groups.y10),
+    y15: calcStats(groups.y15),
+    y20: calcStats(groups.y20),
+  };
 }
 
 export async function GET(req: NextRequest) {

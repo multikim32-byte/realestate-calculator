@@ -235,15 +235,14 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
   const loadedSidosRef = useRef(new Set<string>());
   const geocoderRef = useRef<any>(null);
   const placesRef = useRef<any>(null);
+  const unsoldClustererRef = useRef<any>(null);
+  const saleClustererRef   = useRef<any>(null);
 
   function applyFilter(next: typeof filter) {
     filterRef.current = next;
     setFilter(next);
-    markersRef.current.forEach(({ m, type }) => {
-      m.setVisible(
-        (type === 'unsold' && next.unsold) || (type === 'sale' && next.sale),
-      );
-    });
+    unsoldClustererRef.current?.setMap(next.unsold ? mapInst.current : null);
+    saleClustererRef.current?.setMap(next.sale ? mapInst.current : null);
   }
 
   // 탭 변경 시 오버레이 색상/내용 즉시 업데이트
@@ -330,20 +329,38 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
             ? `${parts[0]}시 ${parts.slice(1).join(' ')}`
             : d.name;
 
+          // 1차: addressSearch (행정구역명 직접)
           coords = await new Promise<{ lat: number; lng: number } | null>(resolve => {
-            const timer = setTimeout(() => { console.warn('[시세] 타임아웃:', addr); resolve(null); }, 5000);
+            const timer = setTimeout(() => resolve(null), 4000);
             geocoder.addressSearch(addr, (result: any[], status: string) => {
               clearTimeout(timer);
-              if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
-                resolve({ lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) });
-              } else {
-                console.warn('[시세] 좌표 없음:', addr, status);
-                resolve(null);
-              }
+              resolve(status === window.kakao.maps.services.Status.OK && result.length > 0
+                ? { lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) }
+                : null);
             });
           });
 
+          // 2차: keywordSearch 폴백 ("구청/시청/군청")
+          if (!coords) {
+            const ps = placesRef.current;
+            if (ps) {
+              const shortName = parts.at(-1) ?? d.name;
+              const suffix = shortName.endsWith('군') ? '군청' : shortName.endsWith('시') ? '시청' : '구청';
+              coords = await new Promise<{ lat: number; lng: number } | null>(resolve => {
+                const timer = setTimeout(() => resolve(null), 4000);
+                ps.keywordSearch(shortName + suffix, (places: any[], status: string) => {
+                  clearTimeout(timer);
+                  resolve(status === window.kakao.maps.services.Status.OK && places.length > 0
+                    ? { lat: parseFloat(places[0].y), lng: parseFloat(places[0].x) }
+                    : null);
+                });
+              });
+              await new Promise(r => setTimeout(r, 80));
+            }
+          }
+
           if (coords) saveCache(cacheKey, coords);
+          else console.warn('[시세] 좌표 획득 실패:', d.name);
           await new Promise(r => setTimeout(r, 60));
         }
 
@@ -432,6 +449,20 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
       geocoderRef.current = geocoder;
       placesRef.current   = ps;
 
+      // 핀 클러스터링 (레벨 7 이상에서 자동 묶음)
+      const clusterStyle = (color: string) => [{
+        width: '36px', height: '36px', background: color,
+        borderRadius: '50%', color: '#fff', textAlign: 'center',
+        lineHeight: '36px', fontWeight: '800', fontSize: '12px',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+      }];
+      unsoldClustererRef.current = new window.kakao.maps.MarkerClusterer({
+        map, averageCenter: true, minLevel: 7, styles: clusterStyle(UNSOLD_COLOR),
+      });
+      saleClustererRef.current = new window.kakao.maps.MarkerClusterer({
+        map, averageCenter: true, minLevel: 7, styles: clusterStyle(SALE_COLOR),
+      });
+
       // 지도 이동/줌 시 시세 오버레이 갱신
       window.kakao.maps.event.addListener(map, 'idle', () => {
         if (!priceModeRef.current) return;
@@ -465,14 +496,16 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
         const marker = new window.kakao.maps.Marker({
           position: new window.kakao.maps.LatLng(coords.lat, coords.lng),
           image:    type === 'unsold' ? unsoldImg : saleImg,
-          map,
           title:    (item as any).name,
+          // map 직접 연결 안 함 — clusterer가 관리
         });
         window.kakao.maps.event.addListener(marker, 'click', () => {
           setSelected({ type, item });
           map.panTo(new window.kakao.maps.LatLng(coords.lat, coords.lng));
         });
         markersRef.current.push({ m: marker, type });
+        if (type === 'unsold') unsoldClustererRef.current?.addMarker(marker);
+        else                   saleClustererRef.current?.addMarker(marker);
         setPlaced(p => ({ ...p, [type]: p[type] + 1 }));
       }
 
@@ -524,7 +557,7 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
     }
     const script = document.createElement('script');
     script.id  = scriptId;
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_KEY}&libraries=services&autoload=false`;
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_KEY}&libraries=services,clusterer&autoload=false`;
     script.onload = () => window.kakao.maps.load(initMap);
     document.head.appendChild(script);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -738,9 +771,17 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
       )}
 
       {/* 동별 시세 패널 */}
-      {(dongLoading || dongPanel) && (
-        <div style={{
-          position: 'absolute', top: 70, right: 12,
+      {(dongLoading || dongPanel) && (() => {
+        const mobile = typeof window !== 'undefined' && window.innerWidth < 500;
+        return (
+        <div style={mobile ? {
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          maxHeight: '55dvh', background: '#fff',
+          borderRadius: '16px 16px 0 0',
+          boxShadow: '0 -4px 24px rgba(0,0,0,0.15)',
+          zIndex: 20, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        } : {
+          position: 'absolute', top: 72, right: 12,
           width: 'min(280px, calc(100vw - 24px))',
           maxHeight: 'calc(100dvh - 140px)',
           background: '#fff', borderRadius: 14,
@@ -800,7 +841,8 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
             최근 3개월 실거래 · 2건 미만 제외 · 전용면적 가중평균
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* 우측 하단 범례 */}
       <div style={{
