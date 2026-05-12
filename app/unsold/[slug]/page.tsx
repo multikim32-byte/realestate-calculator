@@ -371,6 +371,16 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ s
 
             {/* 단지 위치 지도 */}
             <KakaoMap address={mapAddress} name={item.name} />
+            <div style={{ marginTop: 8, textAlign: 'right' }}>
+              <a href="/map" style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '8px 18px', borderRadius: 8,
+                background: '#1d4ed8', color: '#fff',
+                textDecoration: 'none', fontSize: 13, fontWeight: 700,
+              }}>
+                🗺️ 분양정보 지도로 보기 →
+              </a>
+            </div>
 
             {/* 섹션별 이미지 탭 */}
             {item.sections?.length > 0 && (

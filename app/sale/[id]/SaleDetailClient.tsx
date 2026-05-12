@@ -608,7 +608,21 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
         )}
 
         {/* 카카오 지도 */}
-        {item.location && <KakaoMap address={item.location} name={item.name} />}
+        {item.location && (
+          <>
+            <KakaoMap address={item.location} name={item.name} />
+            <div style={{ marginTop: 8, textAlign: 'right' }}>
+              <Link href="/map" style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '8px 18px', borderRadius: 8,
+                background: '#1d4ed8', color: '#fff',
+                textDecoration: 'none', fontSize: 13, fontWeight: 700,
+              }}>
+                🗺️ 분양정보 지도로 보기 →
+              </Link>
+            </div>
+          </>
+        )}
 
         {/* 지역 분양 모아보기 배너 */}
         {item.region && (
