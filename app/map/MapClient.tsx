@@ -237,6 +237,8 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
   const placesRef = useRef<any>(null);
   const unsoldClustererRef = useRef<any>(null);
   const saleClustererRef   = useRef<any>(null);
+  const pinLabelsRef    = useRef<{ overlay: any; type: PinType }[]>([]);
+  const labelsVisibleRef = useRef(false);
 
   function applyFilter(next: typeof filter) {
     filterRef.current = next;
@@ -251,6 +253,10 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
         ref.current.addMarkers(markersRef.current.filter(m => m.type === type).map(m => m.m));
       }
     }
+    // 라벨도 함께 토글
+    pinLabelsRef.current.forEach(({ overlay, type }) => {
+      overlay.setMap(next[type] && labelsVisibleRef.current ? mapInst.current : null);
+    });
   }
 
   // 탭 변경 시 오버레이 색상/내용 즉시 업데이트
@@ -471,16 +477,25 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
         map, averageCenter: true, minLevel: 7, styles: clusterStyle(SALE_COLOR),
       });
 
-      // 지도 이동/줌 시 시세 오버레이 갱신
+      // 지도 이동/줌 시 처리
       window.kakao.maps.event.addListener(map, 'idle', () => {
-        if (!priceModeRef.current) return;
         const level = map.getLevel();
-        // 레벨 8 미만: 오버레이 숨김 (너무 줌인돼서 구/시 레이블 의미 없음)
+
+        // 핀 라벨: 레벨 5 이하에서 단지명·가격 표시
+        const showLabels = level <= 5;
+        if (showLabels !== labelsVisibleRef.current) {
+          labelsVisibleRef.current = showLabels;
+          pinLabelsRef.current.forEach(({ overlay, type }) => {
+            overlay.setMap(showLabels && filterRef.current[type] ? map : null);
+          });
+        }
+
+        // 시세 오버레이: 레벨 8 이상에서만 표시
+        if (!priceModeRef.current) return;
         if (level < 8) {
           priceOverlaysRef.current.forEach(({ overlay }) => overlay.setMap(null));
           return;
         }
-        // 레벨 8 이상: 오버레이 복원
         priceOverlaysRef.current.forEach(({ overlay }) => overlay.setMap(map));
         const center = map.getCenter();
         geocoder.coord2RegionCode(center.getLng(), center.getLat(), (result: any[]) => {
@@ -515,6 +530,48 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
         if (type === 'unsold') unsoldClustererRef.current?.addMarker(marker);
         else                   saleClustererRef.current?.addMarker(marker);
         setPlaced(p => ({ ...p, [type]: p[type] + 1 }));
+
+        // 줌인 시 표시할 라벨 (레벨 5 이하)
+        const ld = document.createElement('div');
+        let labelHtml = '';
+        const borderColor = type === 'unsold' ? UNSOLD_COLOR : SALE_COLOR;
+        if (type === 'unsold') {
+          const u = item as MapUnsoldItem;
+          const name = u.name.length > 11 ? u.name.slice(0, 10) + '…' : u.name;
+          const price = u.min_price || u.max_price
+            ? (u.min_price && u.max_price && u.min_price !== u.max_price
+                ? `${fmt(u.min_price)}~${fmt(u.max_price)}`
+                : fmt((u.min_price ?? u.max_price)!))
+            : '';
+          labelHtml = `${name}${price ? `<br><span style="font-size:10px;color:${UNSOLD_COLOR};font-weight:600">${price}</span>` : ''}`;
+        } else {
+          const s = item as MapSaleItem;
+          const name = s.name.length > 11 ? s.name.slice(0, 10) + '…' : s.name;
+          labelHtml = `${name}<br><span style="font-size:10px;color:${SALE_COLOR};font-weight:600">${s.status}</span>`;
+        }
+        ld.style.cssText = [
+          'transform:translate(-50%,calc(-100% - 14px))',
+          `border:1.5px solid ${borderColor}`,
+          'background:#fff',
+          'border-radius:6px',
+          'padding:3px 8px',
+          'font-size:11px',
+          'font-weight:700',
+          'color:#1e293b',
+          'white-space:nowrap',
+          'box-shadow:0 2px 8px rgba(0,0,0,0.15)',
+          'line-height:1.4',
+          'text-align:center',
+          'pointer-events:none',
+        ].join(';');
+        ld.innerHTML = labelHtml;
+        const labelOverlay = new window.kakao.maps.CustomOverlay({
+          position: new window.kakao.maps.LatLng(coords.lat, coords.lng),
+          content: ld,
+          map: labelsVisibleRef.current && filterRef.current[type] ? map : null,
+          zIndex: 4,
+        });
+        pinLabelsRef.current.push({ overlay: labelOverlay, type });
       }
 
       // 병렬 처리 헬퍼: 동시 CONCURRENCY 개씩 실행
