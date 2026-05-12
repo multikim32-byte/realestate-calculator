@@ -158,9 +158,10 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
         src = data.source;
       }
 
-      setItems(merged);
+      // API 오류 시 목 데이터 대신 빈 목록으로 처리
+      setItems(src === 'mock_fallback' ? [] : merged);
       setSource(src);
-    } catch { /* keep existing */ } finally {
+    } catch { setSource('mock_fallback'); setItems([]); } finally {
       setLoading(false);
     }
   }, []);
@@ -500,7 +501,19 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
             총 <strong style={{ color: '#1d4ed8' }}>{filtered.length}</strong>건
             {loading && <span style={{ marginLeft: 8, color: '#aaa', fontSize: 12 }}>불러오는 중...</span>}
           </span>
-          {isLive ? (
+          {source === 'mock_fallback' ? (
+            <span style={{
+              fontSize: 11, padding: '2px 10px', borderRadius: 20,
+              background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5',
+              display: 'flex', alignItems: 'center', gap: 4,
+            }}>
+              ⚠ API 오류
+            </span>
+          ) : source === 'mock' ? (
+            <span style={{ fontSize: 11, padding: '2px 10px', borderRadius: 20, background: '#f3f4f6', color: '#6b7280', border: '1px solid #e5e7eb' }}>
+              샘플 데이터
+            </span>
+          ) : (
             <span style={{
               fontSize: 11, padding: '2px 10px', borderRadius: 20,
               background: '#d1fae5', color: '#065f46', border: '1px solid #6ee7b7',
@@ -508,10 +521,6 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
             }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'pulse 1.5s infinite' }} />
               실시간 공공데이터
-            </span>
-          ) : (
-            <span style={{ fontSize: 11, padding: '2px 10px', borderRadius: 20, background: '#f3f4f6', color: '#6b7280', border: '1px solid #e5e7eb' }}>
-              샘플 데이터
             </span>
           )}
           <button
@@ -523,14 +532,40 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
           </button>
         </div>
 
+        {/* API 오류 안내 */}
+        {!loading && source === 'mock_fallback' && (
+          <div style={{
+            margin: '40px auto', textAlign: 'center',
+            padding: '32px 24px', maxWidth: 400,
+          }}>
+            <p style={{ fontSize: 36, marginBottom: 12 }}>⚠️</p>
+            <p style={{ fontSize: 16, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>
+              청약 API에 일시적인 오류가 발생했습니다
+            </p>
+            <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 20 }}>
+              공공데이터 서버가 응답하지 않거나 지연되고 있습니다.<br />잠시 후 다시 시도해 주세요.
+            </p>
+            <button
+              onClick={() => fetchItems(region, fetchType)}
+              style={{
+                padding: '10px 24px', borderRadius: 8, border: 'none',
+                background: '#1d4ed8', color: '#fff',
+                fontSize: 14, fontWeight: 700, cursor: 'pointer',
+              }}
+            >
+              ↻ 다시 시도
+            </button>
+          </div>
+        )}
+
         {/* 지도뷰 */}
-        {viewMode === 'map' && !loading && <KakaoMapList items={filtered} />}
+        {viewMode === 'map' && !loading && source !== 'mock_fallback' && <KakaoMapList items={filtered} />}
 
         {/* 카드뷰 */}
-        {viewMode === 'card' && renderCards()}
+        {viewMode === 'card' && source !== 'mock_fallback' && renderCards()}
 
         {/* 목록뷰 */}
-        {viewMode === 'list' && renderList()}
+        {viewMode === 'list' && source !== 'mock_fallback' && renderList()}
 
         {/* 더보기 */}
         {viewMode !== 'map' && !loading && filtered.length > displayCount && (
