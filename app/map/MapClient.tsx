@@ -241,8 +241,16 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
   function applyFilter(next: typeof filter) {
     filterRef.current = next;
     setFilter(next);
-    unsoldClustererRef.current?.setMap(next.unsold ? mapInst.current : null);
-    saleClustererRef.current?.setMap(next.sale ? mapInst.current : null);
+    for (const { ref, type, active } of [
+      { ref: unsoldClustererRef, type: 'unsold' as PinType, active: next.unsold },
+      { ref: saleClustererRef,   type: 'sale'   as PinType, active: next.sale   },
+    ]) {
+      if (!ref.current) continue;
+      ref.current.clear();
+      if (active) {
+        ref.current.addMarkers(markersRef.current.filter(m => m.type === type).map(m => m.m));
+      }
+    }
   }
 
   // 탭 변경 시 오버레이 색상/내용 즉시 업데이트
