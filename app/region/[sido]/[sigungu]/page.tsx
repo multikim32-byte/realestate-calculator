@@ -76,7 +76,7 @@ export default async function SigunguPage({ params }: { params: Promise<{ sido: 
     .from('unsold_listings')
     .select('id, slug, name, location, category, min_price, max_price, thumbnail_url, benefit, highlight')
     .eq('is_active', true)
-    .ilike('location', `${sido} ${sigungu}%`)
+    .or(`location.ilike.${sido} ${sigungu}%,location.ilike.${fullSido} ${sigungu}%`)
     .order('created_at', { ascending: false });
 
   const listings = unsoldListings ?? [];

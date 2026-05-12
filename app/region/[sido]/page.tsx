@@ -224,12 +224,12 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
   const fullName = REGION_LABELS[sido];
   if (!fullName) notFound();
 
-  // 분양정보 (Supabase)
+  // 분양정보 (Supabase) — "부산 " 또는 "부산광역시 " 두 형식 모두 매칭
   const { data: unsoldListings } = await supabase
     .from('unsold_listings')
     .select('id, slug, name, location, category, min_price, max_price, thumbnail_url, benefit, highlight')
     .eq('is_active', true)
-    .ilike('location', `${sido} %`)
+    .or(`location.ilike.${sido} %,location.ilike.${fullName} %`)
     .order('created_at', { ascending: false });
 
   // 청약정보는 실시간 API라 별도 링크로 안내
