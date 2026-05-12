@@ -434,6 +434,18 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 지도 페이지에서 body 스크롤 차단 — footer 높이로 인해 페이지가 스크롤 가능해져
+  // 태블릿이 드래그를 페이지 스크롤로 처리하는 문제 방지
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+      document.documentElement.style.overflow = '';
+    };
+  }, []);
+
   useEffect(() => {
     if (!KAKAO_KEY || !mapRef.current) return;
 
