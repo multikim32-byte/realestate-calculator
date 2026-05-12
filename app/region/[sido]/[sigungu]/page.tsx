@@ -28,7 +28,9 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ sido: string; sigungu: string }> }): Promise<Metadata> {
-  const { sido, sigungu } = await params;
+  const { sido: rawSido, sigungu: rawSigungu } = await params;
+  const sido = decodeURIComponent(rawSido);
+  const sigungu = decodeURIComponent(rawSigungu);
   const fullSido = REGION_LABELS[sido];
   if (!fullSido) return { title: '지역 정보' };
 
@@ -56,7 +58,9 @@ function fmt만원(v: number) {
 }
 
 export default async function SigunguPage({ params }: { params: Promise<{ sido: string; sigungu: string }> }) {
-  const { sido, sigungu } = await params;
+  const { sido: rawSido, sigungu: rawSigungu } = await params;
+  const sido = decodeURIComponent(rawSido);
+  const sigungu = decodeURIComponent(rawSigungu);
 
   const fullSido = REGION_LABELS[sido];
   if (!fullSido) notFound();
