@@ -248,7 +248,7 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
     s.status === 'fulfilled' ? s.value : { items: [] },
   ]) as [{ data: any[] | null }, { items: PublicSaleItem[] }];
 
-  const saleListings: PublicSaleItem[] = (saleResult.items ?? []).filter(i => i.region === sido);
+  const saleListings: PublicSaleItem[] = (saleResult.items ?? []).filter(i => i.region === sido && i.status !== '청약마감');
 
   // 실거래가 링크: 시도별 대표 시군구 + 동 선택
   const DEFAULT_SIGUNGU_DONG: Record<string, { sigungu: string; dong: string }> = {
