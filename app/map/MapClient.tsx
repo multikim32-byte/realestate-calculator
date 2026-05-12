@@ -481,8 +481,8 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
       window.kakao.maps.event.addListener(map, 'idle', () => {
         const level = map.getLevel();
 
-        // 핀 라벨: 레벨 5 이하에서 단지명·가격 표시
-        const showLabels = level <= 5;
+        // 핀 라벨: 레벨 6 이하에서 단지명·가격 표시
+        const showLabels = level <= 6;
         if (showLabels !== labelsVisibleRef.current) {
           labelsVisibleRef.current = showLabels;
           pinLabelsRef.current.forEach(({ overlay, type }) => {
@@ -562,9 +562,16 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
           'box-shadow:0 2px 8px rgba(0,0,0,0.15)',
           'line-height:1.4',
           'text-align:center',
-          'pointer-events:none',
+          'cursor:pointer',
         ].join(';');
         ld.innerHTML = labelHtml;
+        ld.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const href = type === 'unsold'
+            ? `/unsold/${(item as MapUnsoldItem).slug ?? (item as MapUnsoldItem).id}`
+            : `/sale/${(item as MapSaleItem).houseManageNo}`;
+          window.location.href = href;
+        });
         const labelOverlay = new window.kakao.maps.CustomOverlay({
           position: new window.kakao.maps.LatLng(coords.lat, coords.lng),
           content: ld,
