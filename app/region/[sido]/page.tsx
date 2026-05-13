@@ -5,6 +5,7 @@ import { fetchPublicSaleList } from '@/lib/publicDataApi';
 import type { PublicSaleItem } from '@/lib/publicDataApi';
 import { unstable_cache } from 'next/cache';
 import Link from 'next/link';
+import Image from 'next/image';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
@@ -387,7 +388,7 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
                   }}>
                     <div style={{ width: '100%', height: 160, background: '#e2e8f0', position: 'relative', overflow: 'hidden' }}>
                       {item.thumbnail_url
-                        ? <img src={item.thumbnail_url} alt={item.name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ? <Image src={item.thumbnail_url} alt={item.name} fill sizes="(max-width: 768px) 100vw, 300px" style={{ objectFit: 'cover' }} />
                         : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 40 }}>🏢</div>
                       }
                       <span style={{

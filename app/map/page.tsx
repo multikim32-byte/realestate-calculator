@@ -26,7 +26,6 @@ export type MapUnsoldItem = {
   max_price: number | null;
   category: string;
   benefit: string | null;
-  thumbnail_url: string | null;
   house_manage_no: string | null;
   lat: number | null;
   lng: number | null;
@@ -47,7 +46,7 @@ export default async function MapPage() {
   const [{ data: unsoldRaw }, saleResult] = await Promise.allSettled([
     supabase
       .from('unsold_listings')
-      .select('id, slug, name, location, min_price, max_price, category, benefit, thumbnail_url, house_manage_no, lat, lng')
+      .select('id, slug, name, location, min_price, max_price, category, benefit, house_manage_no, lat, lng')
       .eq('is_active', true)
       .order('created_at', { ascending: false }),
     fetchPublicSaleList({ type: 'all', perPage: 100, skipEnrich: true }),

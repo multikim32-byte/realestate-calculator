@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import GlobalNav from '../../components/GlobalNav';
 import KakaoMap from '../../components/KakaoMap';
 import NearbyTradeSection from '../../components/NearbyTradeSection';
@@ -593,9 +594,9 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
               boxShadow: '0 2px 12px rgba(245,158,11,0.2)',
             }}>
               {unsoldLink.thumbnail_url && (
-                <img src={unsoldLink.thumbnail_url} alt={unsoldLink.name}
-                  loading="lazy" decoding="async"
-                  style={{ width: 72, height: 56, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+                <Image src={unsoldLink.thumbnail_url} alt={unsoldLink.name}
+                  width={72} height={56}
+                  style={{ objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#92400e', marginBottom: 4 }}>🎁 특별 혜택 매물 등록됨</div>
