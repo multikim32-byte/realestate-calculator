@@ -2,8 +2,14 @@
 
 import type { MetadataRoute } from 'next';
 import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import { fetchPublicSaleList } from '@/lib/publicDataApi';
 import { LAWD_CODE_MAP } from '@/lib/tradeApi';
+
+const serviceDb = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+);
 
 const BASE = 'https://www.aptzipsa.kr';
 
@@ -55,18 +61,54 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   // 청약정보 개별 페이지 /sale/[houseManageNo]
+  // 현재 100건을 sale_history에 upsert → 누적된 전체 목록으로 사이트맵 생성
   let saleItems: import('@/lib/publicDataApi').PublicSaleItem[] = [];
   try {
     const { items } = await fetchPublicSaleList({ type: 'all', perPage: 100, skipEnrich: true });
     saleItems = items;
+
+    // 현재 항목을 sale_history에 누적 저장 (중복 무시)
+    if (items.length > 0) {
+      await serviceDb().from('sale_history').upsert(
+        items.map(item => ({
+          house_manage_no: item.houseManageNo,
+          name: item.name,
+          updated_at: now.toISOString(),
+        })),
+        { onConflict: 'house_manage_no' }
+      );
+    }
   } catch {}
 
-  const saleEntries: MetadataRoute.Sitemap = saleItems.map(item => ({
-    url: `${BASE}/sale/${item.houseManageNo}`,
-    lastModified: now,
-    changeFrequency: 'daily' as const,
-    priority: item.status === '청약중' ? 0.95 : item.status?.includes('예정') ? 0.9 : 0.85,
-  }));
+  // 사이트맵은 현재 100건 + 누적된 전체 history 합산
+  const currentSet = new Set(saleItems.map(i => i.houseManageNo));
+  let historyItems: { house_manage_no: string; updated_at: string }[] = [];
+  try {
+    const { data } = await serviceDb()
+      .from('sale_history')
+      .select('house_manage_no, updated_at')
+      .order('updated_at', { ascending: false });
+    historyItems = data ?? [];
+  } catch {}
+
+  const saleEntries: MetadataRoute.Sitemap = [
+    // 현재 진행 중인 청약 — 높은 priority
+    ...saleItems.map(item => ({
+      url: `${BASE}/sale/${item.houseManageNo}`,
+      lastModified: now,
+      changeFrequency: 'daily' as const,
+      priority: item.status === '청약중' ? 0.95 : item.status?.includes('예정') ? 0.9 : 0.85,
+    })),
+    // 과거 누적 항목 — 현재 100건 제외
+    ...historyItems
+      .filter(h => !currentSet.has(h.house_manage_no))
+      .map(h => ({
+        url: `${BASE}/sale/${h.house_manage_no}`,
+        lastModified: new Date(h.updated_at),
+        changeFrequency: 'monthly' as const,
+        priority: 0.7,
+      })),
+  ];
 
   // 분양정보 개별 매물 (Supabase)
   let unsoldItems: { id: string; slug: string | null; updated_at: string }[] = [];
