@@ -203,11 +203,11 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
                   }}>
                     <div style={{ overflow: 'hidden', paddingRight: px(12) }}>
                       <div style={{
-                        ...sp(Math.round(32 * fs)), fontWeight: 800, color: '#1e293b',
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.3,
+                        ...sp(Math.round(30 * fs)), fontWeight: 800, color: '#1e293b',
+                        lineHeight: 1.3, wordBreak: 'keep-all',
                       }}>{item.name}</div>
                       <div style={{
-                        ...sp(Math.round(21 * fs)), color: '#94a3b8', marginTop: px(5),
+                        ...sp(Math.round(20 * fs)), color: '#94a3b8', marginTop: px(4),
                         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                       }}>{fmtLocation(item.location)}</div>
                     </div>
