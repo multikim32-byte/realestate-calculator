@@ -219,6 +219,32 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
         </div>
       )}
 
+      {/* ── 카카오 채널 배너 ── */}
+      <div style={{ background: '#FEE500', padding: '14px 16px' }}>
+        <div style={{ maxWidth: 860, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <svg width={22} height={22} viewBox="0 0 24 24" fill="#3C1E1E">
+              <path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.7 1.523 5.09 3.857 6.562L4.5 21l4.286-2.143A11.6 11.6 0 0012 18.6c5.523 0 10-3.477 10-7.8S17.523 3 12 3z"/>
+            </svg>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#3C1E1E' }}>
+              오늘의 청약·미분양 소식을 카카오로 받아보세요
+            </span>
+          </div>
+          <a
+            href="https://pf.kakao.com/_WYwjn"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              background: '#3C1E1E', color: '#FEE500',
+              padding: '7px 18px', borderRadius: 20,
+              fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap',
+            }}
+          >
+            채널 추가 →
+          </a>
+        </div>
+      </div>
+
       {/* ── 청약정보 목록 ── */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-6" style={{ textAlign: 'center' }}>

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import ShareButton from './ShareButton';
 import InstallButton from './InstallButton';
+import KakaoChannelButton from './KakaoChannelButton';
 
 const NAV_ITEMS = [
   { href: '/',           label: '청약정보',  icon: ClipboardList, exact: true },
@@ -97,9 +98,10 @@ export default function GlobalNav() {
             })}
 
             <div style={{
-              display: 'flex', gap: 4, marginLeft: 8,
+              display: 'flex', gap: 6, marginLeft: 8, alignItems: 'center',
               paddingLeft: 12, borderLeft: '1px solid #e5e7eb',
             }}>
+              <KakaoChannelButton size="sm" />
               <ShareButton />
               <InstallButton />
             </div>
@@ -155,7 +157,8 @@ export default function GlobalNav() {
             );
           })}
 
-          <div style={{ display: 'flex', gap: 12, padding: '12px 10px 0' }}>
+          <div style={{ display: 'flex', gap: 8, padding: '12px 10px 0', flexWrap: 'wrap' }}>
+            <KakaoChannelButton size="sm" />
             <ShareButton />
             <InstallButton />
           </div>

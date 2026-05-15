@@ -360,6 +360,25 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ s
             {/* 관심 고객 등록 폼 */}
             <UnsoldLeadForm unsoldId={item.id} aptName={item.name} />
 
+            {/* 카카오 채널 */}
+            <a
+              href="https://pf.kakao.com/_WYwjn"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                background: '#FEE500', borderRadius: 10, padding: '13px 20px',
+                textDecoration: 'none', marginTop: 12,
+              }}
+            >
+              <svg width={18} height={18} viewBox="0 0 24 24" fill="#3C1E1E">
+                <path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.7 1.523 5.09 3.857 6.562L4.5 21l4.286-2.143A11.6 11.6 0 0012 18.6c5.523 0 10-3.477 10-7.8S17.523 3 12 3z"/>
+              </svg>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#3C1E1E' }}>
+                카카오 채널 추가 — 새 매물·청약 소식 받기
+              </span>
+            </a>
+
             {/* 관련 도구 */}
             {(() => {
               const parts = item.location.trim().split(/\s+/);
