@@ -20,7 +20,8 @@ type Row = {
   receiptEnd: string;
   winnerDate: string;
   contact: string;
-  url: string;
+  hmpgUrl: string;   // 건설사/분양사 홈페이지
+  pblancUrl: string; // 청약홈 공고
   status?: string;
   buildingType?: string;
   memo: string;
@@ -41,12 +42,12 @@ const EMPTY_FORM = {
 };
 
 function downloadCSV(rows: Row[]) {
-  const headers = ['단지명', '위치', '청약접수 시작', '청약접수 종료', '당첨발표일', '전화번호', '공식링크', '상태', '메모'];
+  const headers = ['단지명', '위치', '청약접수 시작', '청약접수 종료', '당첨발표일', '전화번호', '홈페이지', '청약공고', '상태', '메모'];
   const lines = [
     headers,
     ...rows.map(r => [
       r.name, r.location, r.receiptStart, r.receiptEnd,
-      r.winnerDate, r.contact, r.url, r.status ?? '', r.memo,
+      r.winnerDate, r.contact, r.hmpgUrl, r.pblancUrl, r.status ?? '', r.memo,
     ]),
   ].map(cells => cells.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(','));
   const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
@@ -89,7 +90,8 @@ export default function SaleScheduleClient({ items, notes }: Props) {
       receiptEnd: item.receiptEnd,
       winnerDate: item.winnerDate,
       contact: item.contact,
-      url: item.pblancUrl || item.hmpgUrl || '',
+      hmpgUrl: item.hmpgUrl || '',
+      pblancUrl: item.pblancUrl || '',
       status: item.status,
       buildingType: item.buildingType,
       memo: note?.memo ?? '',
@@ -108,12 +110,23 @@ export default function SaleScheduleClient({ items, notes }: Props) {
     receiptEnd: n.custom_receipt_end ?? '',
     winnerDate: n.custom_winner_date ?? '',
     contact: n.custom_contact ?? '',
-    url: n.custom_url ?? '',
+    hmpgUrl: n.custom_url ?? '',
+    pblancUrl: '',
     memo: n.memo,
     isHidden: n.is_hidden,
   }));
 
-  const allRows = [...customRows, ...apiRows];
+  // 당첨발표일 오름차순 정렬 (날짜 없는 항목은 뒤로)
+  function sortByWinnerDate(rows: Row[]) {
+    return [...rows].sort((a, b) => {
+      if (!a.winnerDate && !b.winnerDate) return 0;
+      if (!a.winnerDate) return 1;
+      if (!b.winnerDate) return -1;
+      return a.winnerDate.localeCompare(b.winnerDate);
+    });
+  }
+
+  const allRows = sortByWinnerDate([...customRows, ...apiRows]);
 
   const filteredRows = useMemo(() => {
     let rows = allRows;
@@ -126,7 +139,8 @@ export default function SaleScheduleClient({ items, notes }: Props) {
         r.memo.toLowerCase().includes(q)
       );
     }
-    return rows;
+    // 필터 후에도 당첨발표일 오름차순 유지
+    return sortByWinnerDate(rows);
   }, [allRows, showHidden, search]);
 
   const hiddenCount = allRows.filter(r => r.isHidden).length;
@@ -411,12 +425,21 @@ export default function SaleScheduleClient({ items, notes }: Props) {
 
                     {/* 공식링크 */}
                     <td style={{ padding: '10px 12px' }}>
-                      {row.url
-                        ? <a href={row.url} target="_blank" rel="noopener noreferrer"
-                            style={{ color: '#059669', textDecoration: 'none', fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' }}>
-                            공고 보기 →
-                          </a>
-                        : <span style={{ color: '#d1d5db' }}>-</span>}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {row.hmpgUrl
+                          ? <a href={row.hmpgUrl} target="_blank" rel="noopener noreferrer"
+                              style={{ color: '#059669', textDecoration: 'none', fontWeight: 700, fontSize: 12, whiteSpace: 'nowrap' }}>
+                              🏠 홈페이지
+                            </a>
+                          : null}
+                        {row.pblancUrl
+                          ? <a href={row.pblancUrl} target="_blank" rel="noopener noreferrer"
+                              style={{ color: '#1d4ed8', textDecoration: 'none', fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' }}>
+                              📋 청약공고
+                            </a>
+                          : null}
+                        {!row.hmpgUrl && !row.pblancUrl && <span style={{ color: '#d1d5db' }}>-</span>}
+                      </div>
                     </td>
 
                     {/* 메모 미리보기 */}
