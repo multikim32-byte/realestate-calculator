@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
   const tomorrowStr = tomorrow.toISOString().split('T')[0]; // YYYY-MM-DD
 
-  const { data: subs } = await admin.from('push_subscriptions').select('*');
+  const { data: subs } = await admin.from('push_subscriptions').select('id, endpoint, p256dh, auth, items');
   if (!subs || subs.length === 0) return NextResponse.json({ sent: 0 });
 
   let sent = 0;
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
   const { title, body, url } = await req.json();
   if (!title || !body) return NextResponse.json({ error: 'title, body required' }, { status: 400 });
 
-  const { data: subs } = await admin.from('push_subscriptions').select('*');
+  const { data: subs } = await admin.from('push_subscriptions').select('id, endpoint, p256dh, auth');
   if (!subs || subs.length === 0) return NextResponse.json({ sent: 0, total: 0 });
 
   const payload = JSON.stringify({ title, body, url: url || '/' });

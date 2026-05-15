@@ -17,7 +17,7 @@ export async function GET() {
   if (!await isAdmin()) return NextResponse.json({ error: '권한 없음' }, { status: 401 });
   const { data, error } = await admin
     .from('mgm_leads')
-    .select('*')
+    .select('id, house_manage_no, name, birth_date, phone, address, memo, status, created_at')
     .order('created_at', { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
