@@ -109,6 +109,11 @@ function extractYoutubeId(url: string | null | undefined): string | null {
   return m?.[1] ?? null;
 }
 
+function sanitizeHeadings(html: string | null): string | null {
+  if (!html) return null;
+  return html.replace(/<h1(\s[^>]*)?>/gi, '<h2$1>').replace(/<\/h1>/gi, '</h2>');
+}
+
 function parseUnitPrices(area: string | null): UnitPriceRow[] {
   if (!area) return [];
   try {
@@ -308,7 +313,7 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ s
                 <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 10 }}>상세 설명</h2>
                 <div
                   className="unsold-content"
-                  dangerouslySetInnerHTML={{ __html: item.description }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHeadings(item.description) ?? '' }}
                   style={{ fontSize: 14, color: '#374151', lineHeight: 1.9 }}
                 />
                 <style>{`
