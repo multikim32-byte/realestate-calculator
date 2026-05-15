@@ -6,6 +6,13 @@ import { createClient } from '@supabase/supabase-js';
 
 const MENUS = [
   {
+    href: '/admin/sale-schedule',
+    emoji: '📋',
+    title: '청약 일정 관리',
+    desc: '청약홈 API 기준 최근 100건. 메모·추가·삭제·엑셀 다운로드.',
+    color: '#f0fdf4', border: '#bbf7d0', titleColor: '#059669',
+  },
+  {
     href: '/admin/unsold',
     emoji: '🏠',
     title: '미분양 매물 관리',
