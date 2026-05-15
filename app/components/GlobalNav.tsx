@@ -75,7 +75,7 @@ export default function GlobalNav() {
           </Link>
 
           {/* 데스크톱 메뉴 */}
-          <nav className="gnav-desktop" style={{ alignItems: 'center', gap: 2 }}>
+          <nav className="gnav-desktop" style={{ alignItems: 'center', gap: 1 }}>
             {NAV_ITEMS.map(item => {
               const active = isActive(item);
               const Icon = item.icon;
@@ -84,24 +84,25 @@ export default function GlobalNav() {
                   key={item.href}
                   href={item.href}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 4,
-                    padding: '6px 9px', borderRadius: 8,
-                    fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                    display: 'flex', alignItems: 'center', gap: 3,
+                    padding: '5px 7px', borderRadius: 7,
+                    fontSize: 12, fontWeight: 600, textDecoration: 'none',
+                    whiteSpace: 'nowrap',
                     color: active ? '#1d4ed8' : '#4b5563',
                     background: active ? '#eff6ff' : 'transparent',
                   }}
                 >
-                  <Icon size={13} strokeWidth={2.2} />
+                  <Icon size={12} strokeWidth={2.2} />
                   {item.label}
                 </Link>
               );
             })}
 
             <div style={{
-              display: 'flex', gap: 6, marginLeft: 8, alignItems: 'center',
-              paddingLeft: 12, borderLeft: '1px solid #e5e7eb',
+              display: 'flex', gap: 5, marginLeft: 6, alignItems: 'center',
+              paddingLeft: 10, borderLeft: '1px solid #e5e7eb', flexShrink: 0,
             }}>
-              <KakaoChannelButton size="sm" />
+              <KakaoChannelButton size="sm" label="카카오" />
               <ShareButton />
               <InstallButton />
             </div>
