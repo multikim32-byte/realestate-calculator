@@ -31,7 +31,7 @@ export default async function UnsoldPage() {
     .order('announcement_date', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
 
-  const listings = raw ?? [];
+  const listings = (raw ?? []) as unknown as import('@/lib/supabase').UnsoldListing[];
 
   const jsonLd = {
     '@context': 'https://schema.org',

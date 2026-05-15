@@ -1,10 +1,14 @@
 ﻿import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import SaleListClient from './components/SaleListClient';
 import GlobalNav from './components/GlobalNav';
 import type { Metadata } from 'next';
 import { Calendar, BarChart2, Calculator, Tag, Map, Building2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: '아파트 분양정보·청약정보·실거래가',
@@ -54,11 +58,37 @@ const QUICK_LINKS = [
 
 const REGIONS = ['서울','경기','인천','부산','대구','광주','대전','울산','세종','강원','충북','충남','전북','전남','경북','경남','제주'];
 
+function fmt만원(v: number) {
+  if (v >= 100000000) return `${(v / 100000000).toFixed(1)}억`;
+  if (v >= 10000) return `${Math.floor(v / 10000).toLocaleString()}만`;
+  return `${v.toLocaleString()}원`;
+}
+
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
   const params = await searchParams;
   if (params.tab) {
     const qs = new URLSearchParams(params).toString();
     redirect(`/calculator?${qs}`);
+  }
+
+  // 주목 미분양 매물 (highlight 우선, 부족하면 최신순 보충)
+  const { data: highlightedRaw } = await supabase
+    .from('unsold_listings')
+    .select('id, slug, name, location, category, min_price, max_price, thumbnail_url, benefit, highlight')
+    .eq('is_active', true)
+    .eq('highlight', true)
+    .order('created_at', { ascending: false })
+    .limit(3);
+
+  let featuredUnsold = highlightedRaw ?? [];
+  if (featuredUnsold.length < 3) {
+    const { data: newestRaw } = await supabase
+      .from('unsold_listings')
+      .select('id, slug, name, location, category, min_price, max_price, thumbnail_url, benefit, highlight')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(3 - featuredUnsold.length);
+    featuredUnsold = [...featuredUnsold, ...(newestRaw ?? [])];
   }
 
   return (
@@ -116,6 +146,78 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
           ))}
         </div>
       </section>
+
+      {/* ── 지도 CTA 배너 ── */}
+      <div style={{ background: 'linear-gradient(90deg, #0f172a 0%, #1d4ed8 100%)', padding: '0 16px' }}>
+        <Link href="/map" style={{ textDecoration: 'none', display: 'block', maxWidth: 860, margin: '0 auto', padding: '18px 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <span style={{ fontSize: 28 }}>🗺️</span>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>전국 부동산 지도로 보기</div>
+                <div style={{ fontSize: 12, color: '#93c5fd', marginTop: 2 }}>미분양·청약 단지를 지도에서 한 번에</div>
+              </div>
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', background: 'rgba(255,255,255,0.15)', padding: '6px 14px', borderRadius: 20, whiteSpace: 'nowrap' }}>
+              지도 보기 →
+            </span>
+          </div>
+        </Link>
+      </div>
+
+      {/* ── 미분양 주목 매물 ── */}
+      {featuredUnsold.length > 0 && (
+        <div style={{ background: '#fff', padding: '32px 16px 24px', borderBottom: '1px solid #e5e7eb' }}>
+          <div style={{ maxWidth: 860, margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1e293b', margin: '0 0 4px' }}>미분양 분양정보</h2>
+                <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>청약 없이 선착순 계약 가능한 매물</p>
+              </div>
+              <Link href="/unsold" style={{ fontSize: 13, fontWeight: 700, color: '#1d4ed8', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                전체보기 →
+              </Link>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14 }}>
+              {featuredUnsold.map(item => (
+                <Link key={item.id} href={`/unsold/${item.slug ?? item.id}`} style={{ textDecoration: 'none' }}>
+                  <div style={{
+                    borderRadius: 12, overflow: 'hidden', border: item.highlight ? '2px solid #f59e0b' : '1px solid #e5e7eb',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)', background: '#fff',
+                  }}>
+                    <div style={{ width: '100%', height: 140, background: '#e2e8f0', position: 'relative', overflow: 'hidden' }}>
+                      {item.thumbnail_url
+                        ? <Image src={item.thumbnail_url} alt={item.name} fill sizes="(max-width: 768px) 100vw, 300px" style={{ objectFit: 'cover' }} />
+                        : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 36 }}>🏢</div>
+                      }
+                      {item.highlight && (
+                        <span style={{ position: 'absolute', top: 8, left: 8, background: '#f59e0b', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>
+                          ⭐ 주목
+                        </span>
+                      )}
+                      <span style={{ position: 'absolute', top: 8, right: 8, background: '#1d4ed8', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>
+                        {item.category}
+                      </span>
+                    </div>
+                    <div style={{ padding: '12px 14px' }}>
+                      <p style={{ fontSize: 14, fontWeight: 800, color: '#1e293b', margin: '0 0 4px' }}>{item.name}</p>
+                      <p style={{ fontSize: 12, color: '#6b7280', margin: '0 0 6px' }}>📍 {item.location}</p>
+                      {(item.min_price || item.max_price) && (
+                        <p style={{ fontSize: 13, fontWeight: 700, color: '#1d4ed8', margin: 0 }}>
+                          {item.min_price && item.max_price && item.min_price !== item.max_price
+                            ? `${fmt만원(item.min_price)} ~ ${fmt만원(item.max_price)}`
+                            : fmt만원((item.min_price ?? item.max_price)!)}
+                        </p>
+                      )}
+                      {item.benefit && <p style={{ fontSize: 12, color: '#059669', margin: '6px 0 0', fontWeight: 600 }}>🎁 {item.benefit}</p>}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── 청약정보 목록 ── */}
       <div className="max-w-7xl mx-auto px-4 py-8">
