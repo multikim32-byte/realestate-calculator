@@ -21,9 +21,15 @@ function getMonthOptions() {
   return options;
 }
 
+const CARD_TYPES = [
+  { key: '오늘의청약' as const, label: '📅 오늘의 청약', desc: '현재 진행·7일 이내 예정' },
+  { key: '청약일정'  as const, label: '📆 월별 청약',   desc: '월별 청약 일정' },
+  { key: '미분양'    as const, label: '🏢 미분양',       desc: '활성 미분양 매물' },
+];
+
 export default function InstaCardPage() {
   const router = useRouter();
-  const [cardType, setCardType] = useState<'청약일정' | '미분양'>('청약일정');
+  const [cardType, setCardType] = useState<'오늘의청약' | '청약일정' | '미분양'>('오늘의청약');
   const [region, setRegion] = useState('전국');
   const monthOptions = getMonthOptions();
   const [month, setMonth] = useState(monthOptions[0].value);
@@ -47,36 +53,57 @@ export default function InstaCardPage() {
   useEffect(() => {
     setCurrentPage(1);
     setLoading(true);
-    if (cardType === '청약일정') {
-      fetch('/api/sale?type=all&perPage=100')
-        .then(r => r.json())
-        .then(data => {
-          const filtered = (data.items ?? []).filter((item: SaleItem & { receiptStart: string }) => {
-            if (!item.receiptStart) return false;
-            const inMonth = item.receiptStart.startsWith(month);
-            const inRegion = region === '전국' || item.location?.includes(region);
-            return inMonth && inRegion;
-          });
-          setSaleItems(filtered);
-        })
-        .catch(() => setSaleItems([]))
-        .finally(() => setLoading(false));
-    } else {
+
+    if (cardType === '미분양') {
       fetch('/api/admin/unsold')
         .then(r => { if (r.status === 401) { router.push('/admin'); return null; } return r.json(); })
         .then(data => {
           if (!data) return;
-          const filtered = (data as UnsoldItem[]).filter(item =>
+          setUnsoldItems((data as UnsoldItem[]).filter(item =>
             region === '전국' || item.location?.includes(region)
-          );
-          setUnsoldItems(filtered);
+          ));
         })
         .catch(() => setUnsoldItems([]))
+        .finally(() => setLoading(false));
+    } else {
+      fetch('/api/sale?type=all&perPage=100')
+        .then(r => r.json())
+        .then(data => {
+          if (cardType === '오늘의청약') {
+            const today = new Date().toISOString().slice(0, 10);
+            const in3 = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
+            const in7 = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+            const classified = (data.items ?? [])
+              .filter((item: SaleItem) => {
+                if (!item.receiptStart || !item.receiptEnd) return false;
+                const ongoing = item.receiptStart <= today && item.receiptEnd >= today;
+                const upcoming = item.receiptStart > today && item.receiptStart <= in7;
+                return (ongoing || upcoming) && (region === '전국' || item.location?.includes(region));
+              })
+              .map((item: SaleItem): SaleItem => ({
+                ...item,
+                statusLabel: item.receiptEnd <= in3 ? '마감임박'
+                  : item.receiptStart <= today ? '청약중' : '청약예정',
+              }))
+              .sort((a: SaleItem, b: SaleItem) => {
+                const order: Record<string, number> = { '마감임박': 0, '청약중': 1, '청약예정': 2 };
+                return (order[a.statusLabel ?? ''] ?? 3) - (order[b.statusLabel ?? ''] ?? 3);
+              });
+            setSaleItems(classified);
+          } else {
+            setSaleItems((data.items ?? []).filter((item: SaleItem) => {
+              if (!item.receiptStart) return false;
+              return item.receiptStart.startsWith(month) &&
+                (region === '전국' || item.location?.includes(region));
+            }));
+          }
+        })
+        .catch(() => setSaleItems([]))
         .finally(() => setLoading(false));
     }
   }, [cardType, region, month, router]);
 
-  const allItems = cardType === '청약일정' ? saleItems : unsoldItems;
+  const allItems = cardType === '미분양' ? unsoldItems : saleItems;
   const totalCount = allItems.length;
   const totalPages = Math.min(MAX_PAGES, Math.ceil(totalCount / PER_PAGE));
 
@@ -94,16 +121,14 @@ export default function InstaCardPage() {
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: isMobile ? '20px 16px' : '32px 20px' }}>
         <h1 style={{ fontSize: isMobile ? 18 : 20, fontWeight: 800, color: '#1e293b', margin: '0 0 4px' }}>인스타 카드 생성</h1>
-        <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>필터 선택 → 페이지별 미리보기 확인 → 새 창에서 캡처</p>
+        <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>카드 유형 선택 → 미리보기 확인 → 새 창에서 캡처</p>
 
         <div style={{
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          gap: isMobile ? 16 : 32,
-          alignItems: 'flex-start',
+          display: 'flex', flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? 16 : 32, alignItems: 'flex-start',
         }}>
 
-          {/* ── 필터 패널 ── */}
+          {/* 필터 패널 */}
           <div style={{
             width: isMobile ? '100%' : 240,
             background: '#fff', borderRadius: 16,
@@ -114,15 +139,16 @@ export default function InstaCardPage() {
 
             <div style={{ marginBottom: 16 }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 8 }}>카드 유형</p>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {(['청약일정', '미분양'] as const).map(t => (
-                  <button key={t} onClick={() => setCardType(t)} style={{
-                    flex: 1, padding: '9px 8px', borderRadius: 8, border: 'none',
-                    cursor: 'pointer', background: cardType === t ? '#1d4ed8' : '#f1f5f9',
-                    color: cardType === t ? '#fff' : '#374151',
-                    fontSize: 13, fontWeight: cardType === t ? 700 : 400,
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {CARD_TYPES.map(({ key, label, desc }) => (
+                  <button key={key} onClick={() => setCardType(key)} style={{
+                    padding: '10px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                    background: cardType === key ? '#1d4ed8' : '#f1f5f9',
+                    color: cardType === key ? '#fff' : '#374151',
+                    textAlign: 'left',
                   }}>
-                    {t === '청약일정' ? '📅 청약' : '🏢 미분양'}
+                    <div style={{ fontSize: 13, fontWeight: 700 }}>{label}</div>
+                    <div style={{ fontSize: 11, opacity: 0.65, marginTop: 2 }}>{desc}</div>
                   </button>
                 ))}
               </div>
@@ -146,7 +172,6 @@ export default function InstaCardPage() {
               </div>
             )}
 
-            {/* 데이터 요약 */}
             <div style={{ background: '#f8fafc', borderRadius: 8, padding: '10px 12px', marginBottom: 16, fontSize: 13, color: '#6b7280' }}>
               전체 <strong style={{ color: '#1e293b' }}>{totalCount}건</strong>
               {totalPages > 1 && (
@@ -161,15 +186,13 @@ export default function InstaCardPage() {
               )}
             </div>
 
-            {/* 페이지 선택 */}
             {totalPages > 1 && (
               <div style={{ marginBottom: 16 }}>
                 <p style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 8 }}>카드 페이지</p>
                 <div style={{ display: 'flex', gap: 6 }}>
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
                     <button key={p} onClick={() => setCurrentPage(p)} style={{
-                      flex: 1, padding: '8px 4px',
-                      borderRadius: 8, border: 'none', cursor: 'pointer',
+                      flex: 1, padding: '8px 4px', borderRadius: 8, border: 'none', cursor: 'pointer',
                       background: currentPage === p ? '#1d4ed8' : '#f1f5f9',
                       color: currentPage === p ? '#fff' : '#374151',
                       fontSize: 13, fontWeight: 700,
@@ -192,7 +215,7 @@ export default function InstaCardPage() {
             </p>
           </div>
 
-          {/* ── 미리보기 ── */}
+          {/* 미리보기 */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontSize: 12, color: '#9ca3af', marginBottom: 12 }}>
               미리보기 (실제 크기의 {Math.round(SCALE * 100)}%)
