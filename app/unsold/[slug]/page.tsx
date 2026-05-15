@@ -66,14 +66,30 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const benefitText = item.benefit ? ` 계약 혜택: ${item.benefit}.` : '';
   const description = `${item.name}(${item.location}) ${item.category} 미분양 분양정보입니다. ${priceText ? `${priceText}.` : ''}${benefitText} 선착순 동·호지정 계약 가능합니다.`.trim();
 
+  const parts = item.location.trim().split(/\s+/);
+  const sido = parts[0].replace(/(특별자치도|특별자치시|특별시|광역시|도)$/, '');
+  const sigungu = parts[1] ?? '';
+  const keywords = [
+    item.name,
+    `${item.name} 미분양`,
+    `${sido} 미분양 아파트`,
+    sigungu ? `${sigungu} 분양정보` : '',
+    `${sido} ${item.category} 분양`,
+    '선착순 계약',
+    '미분양 분양정보',
+    '잔여세대',
+  ].filter(Boolean) as string[];
+
   return {
     title,
     description,
+    keywords,
     alternates: { canonical: `https://www.aptzipsa.kr/unsold/${canonical}` },
     openGraph: {
       title,
       description,
       url: `https://www.aptzipsa.kr/unsold/${canonical}`,
+      siteName: '아파트집사',
       images: item.thumbnail_url ? [{ url: item.thumbnail_url }] : [],
     },
   };

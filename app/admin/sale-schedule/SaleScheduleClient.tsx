@@ -126,7 +126,21 @@ export default function SaleScheduleClient({ items, notes }: Props) {
     });
   }
 
-  const allRows = sortByWinnerDate([...customRows, ...apiRows]);
+  // 동일 단지명 중복 제거 — receiptStart 기준 최신 1건만 유지
+  const deduplicatedApiRows = (() => {
+    const map = new Map<string, Row>();
+    for (const row of apiRows) {
+      const existing = map.get(row.name);
+      const rowDate = row.receiptStart || row.winnerDate || '';
+      const existingDate = existing ? (existing.receiptStart || existing.winnerDate || '') : '';
+      if (!existing || rowDate > existingDate) {
+        map.set(row.name, row);
+      }
+    }
+    return Array.from(map.values());
+  })();
+
+  const allRows = sortByWinnerDate([...customRows, ...deduplicatedApiRows]);
 
   const filteredRows = useMemo(() => {
     let rows = allRows;
