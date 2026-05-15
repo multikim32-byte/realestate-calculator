@@ -64,10 +64,16 @@ const features = [
     link: '/region/서울', linkText: '지역별 보기',
   },
   {
+    icon: Map, color: '#6366f1',
+    title: '전국 부동산 지도',
+    desc: '전국 미분양·분양 단지를 카카오맵 위에서 한눈에 확인합니다. 위치 기반으로 주변 매물을 탐색하고 단지 정보를 바로 확인할 수 있습니다.',
+    link: '/map', linkText: '지도로 보기',
+  },
+  {
     icon: MapPin, color: '#d97706',
     title: '단지 위치 지도',
-    desc: '실거래가 조회에서 단지를 선택하면 카카오맵으로 정확한 위치를 확인할 수 있습니다.',
-    link: '/trade', linkText: '실거래가 조회',
+    desc: '미분양 상세 페이지에서 해당 단지의 카카오맵 위치를 확인합니다. 주소 기반 정확한 위치와 지도 연동을 제공합니다.',
+    link: '/unsold', linkText: '분양정보 보기',
   },
   {
     icon: Calculator, color: '#dc2626',
@@ -107,7 +113,8 @@ const quickLinks = [
   { href: '/rental',     label: 'LH 임대공고', bg: '#059669', color: '#fff' },
   { href: '/trade',      label: '실거래가',    bg: '#059669', color: '#fff' },
   { href: '/calculator', label: '부동산 계산기', bg: '#dc2626', color: '#fff' },
-  { href: '/region/서울', label: '지역별',     bg: '#6366f1', color: '#fff' },
+  { href: '/map',         label: '부동산 지도', bg: '#6366f1', color: '#fff' },
+  { href: '/region/서울', label: '지역별',     bg: '#374151', color: '#fff' },
   { href: '/apt',        label: '부동산 정보', bg: '#f9fafb', color: '#374151', border: '1px solid #e5e7eb' },
 ];
 

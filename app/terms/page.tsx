@@ -27,6 +27,7 @@ const sections = [
       '지역별 청약·분양·실거래가 모아보기',
       '부동산 계산기 (취득세·대출 원리금·중도금 이자·중개수수료·수익률)',
       '관심단지 저장 기능',
+      '전국 부동산 지도 (미분양·분양 단지 위치 조회)',
       '부동산 관련 정보 및 블로그 콘텐츠',
     ],
   },
@@ -36,7 +37,7 @@ const sections = [
   },
   {
     title: '제4조 (서비스 이용)',
-    content: `① 서비스는 별도의 회원가입 없이 누구나 이용할 수 있습니다.\n② 이용자는 서비스를 개인적·비상업적 목적으로만 이용할 수 있습니다.\n③ 서비스의 콘텐츠를 무단으로 복제·배포·상업적으로 이용하는 행위는 금지됩니다.`,
+    content: `① 서비스는 별도의 회원가입 없이 누구나 이용할 수 있습니다.\n② 이용자는 서비스를 개인적·비상업적 목적으로만 이용할 수 있습니다.\n③ 서비스의 콘텐츠를 무단으로 복제·배포·상업적으로 이용하는 행위는 금지됩니다.\n④ 관심 고객 등록 및 MGM 신청 폼 이용 시, 이용자는 제공한 개인정보(이름·전화번호 등)가 해당 분양 단지 담당자에게 전달될 수 있음에 동의하는 것으로 봅니다.`,
   },
   {
     title: '제5조 (정보의 정확성 및 면책)',
@@ -70,7 +71,7 @@ export default function TermsPage() {
       <GlobalNav />
       <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)', padding: '36px 16px 32px', textAlign: 'center' }}>
         <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: '0 0 8px' }}>이용약관</h1>
-        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0 }}>시행일: 2026년 4월 10일</p>
+        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0 }}>시행일: 2026년 5월 15일</p>
       </div>
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px', lineHeight: 1.8, color: '#374151' }}>
 
@@ -95,7 +96,7 @@ export default function TermsPage() {
         </div>
 
         <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid #e5e7eb', color: '#9ca3af', fontSize: 13 }}>
-          <p>본 약관은 2026년 4월 10일부터 시행됩니다.</p>
+          <p>본 약관은 2026년 5월 15일부터 시행됩니다.</p>
           <p style={{ marginTop: 4 }}>운영: 아파트집사 · <a href="mailto:multikim@naver.com" style={{ color: '#6b7280' }}>multikim@naver.com</a></p>
         </div>
 
