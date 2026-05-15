@@ -54,6 +54,13 @@ const MENUS = [
     desc: '청약 상세 페이지의 MGM 신청 폼으로 접수된 지인 추천 신청 목록을 확인합니다.',
     color: '#fff1f2', border: '#fecdd3', titleColor: '#be123c',
   },
+  {
+    href: '/admin/kakao-content',
+    emoji: '💛',
+    title: '카카오 채널 소식 생성',
+    desc: '오늘의 청약·미분양 데이터로 채널 소식 텍스트를 자동 생성합니다. 복사 후 채널 관리자 앱에 붙여넣기.',
+    color: '#fefce8', border: '#fef08a', titleColor: '#854d0e',
+  },
 ];
 
 async function getStats() {
