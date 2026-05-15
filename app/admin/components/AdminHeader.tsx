@@ -4,13 +4,15 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
 const NAV = [
-  { href: '/admin/unsold',       label: '미분양 매물',   icon: '🏠' },
-  { href: '/admin/blog',         label: '블로그',        icon: '📝' },
-  { href: '/admin/sale-content', label: '청약 콘텐츠',   icon: '✍️' },
-  { href: '/admin/unsold/leads', label: '관심고객',      icon: '📞' },
-  { href: '/admin/mgm/leads',    label: 'MGM',           icon: '🤝' },
-  { href: '/admin/push',         label: '푸시 알림',     icon: '🔔' },
-  { href: '/admin/insta-card',   label: '인스타 카드',   icon: '📸' },
+  { href: '/admin/sale-schedule', label: '청약 일정',    icon: '📋' },
+  { href: '/admin/unsold',        label: '미분양 매물',  icon: '🏠' },
+  { href: '/admin/blog',          label: '블로그',       icon: '📝' },
+  { href: '/admin/sale-content',  label: '청약 콘텐츠',  icon: '✍️' },
+  { href: '/admin/unsold/leads',  label: '관심고객',     icon: '📞' },
+  { href: '/admin/mgm/leads',     label: 'MGM',          icon: '🤝' },
+  { href: '/admin/push',          label: '푸시 알림',    icon: '🔔' },
+  { href: '/admin/kakao-content', label: '카카오 소식',  icon: '💛' },
+  { href: '/admin/insta-card',    label: '인스타 카드',  icon: '📸' },
 ];
 
 export default function AdminHeader() {
