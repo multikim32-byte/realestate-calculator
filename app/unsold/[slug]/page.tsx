@@ -90,7 +90,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description,
       url: `https://www.aptzipsa.kr/unsold/${canonical}`,
       siteName: '아파트집사',
-      images: item.thumbnail_url ? [{ url: item.thumbnail_url }] : [],
+      images: item.thumbnail_url
+        ? [{ url: `https://www.aptzipsa.kr/_next/image?url=${encodeURIComponent(item.thumbnail_url)}&w=1200&q=80` }]
+        : [],
     },
   };
 }

@@ -50,7 +50,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     ].filter(Boolean).join(', ');
 
     const ogImages = content?.thumbnail_url
-      ? [{ url: content.thumbnail_url, width: 1200, height: 630, alt: item.name }]
+      ? [{ url: `https://www.aptzipsa.kr/_next/image?url=${encodeURIComponent(content.thumbnail_url)}&w=1200&q=80`, width: 1200, height: 630, alt: item.name }]
       : undefined;
 
     return {
