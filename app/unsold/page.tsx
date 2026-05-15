@@ -25,7 +25,7 @@ export const revalidate = 3600; // 1시간 캐시 (어드민 저장 시 revalida
 export default async function UnsoldPage() {
   const { data: raw } = await supabase
     .from('unsold_listings')
-    .select('*')
+    .select('id, slug, name, location, category, benefit, min_price, max_price, total_units, highlight, thumbnail_url, announcement_date')
     .eq('is_active', true)
     .order('highlight', { ascending: false })
     .order('announcement_date', { ascending: false, nullsFirst: false })
