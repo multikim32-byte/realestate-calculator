@@ -203,9 +203,11 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
                   }}>
                     <div style={{ overflow: 'hidden', paddingRight: px(12) }}>
                       <div style={{
-                        ...sp(Math.round(30 * fs)), fontWeight: 800, color: '#1e293b',
+                        ...sp(Math.round(29 * fs)), fontWeight: 800, color: '#1e293b',
                         lineHeight: 1.3, wordBreak: 'keep-all',
-                      }}>{item.name}</div>
+                        display: '-webkit-box', WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                      } as CSSProperties}>{item.name}</div>
                       <div style={{
                         ...sp(Math.round(20 * fs)), color: '#94a3b8', marginTop: px(4),
                         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -237,9 +239,11 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
                 }}>
                   <div style={{ overflow: 'hidden', paddingRight: px(12) }}>
                     <div style={{
-                      ...sp(Math.round(32 * fs)), fontWeight: 800, color: '#1e293b',
-                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.3,
-                    }}>{item.name}</div>
+                      ...sp(Math.round(30 * fs)), fontWeight: 800, color: '#1e293b',
+                      lineHeight: 1.3, wordBreak: 'keep-all',
+                      display: '-webkit-box', WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                    } as CSSProperties}>{item.name}</div>
                     <div style={{
                       ...sp(Math.round(21 * fs)), color: '#94a3b8', marginTop: px(5),
                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -265,27 +269,23 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
                   <div style={{ overflow: 'hidden', paddingRight: px(16) }}>
                     <div style={{
                       ...sp(Math.round(33 * fs)), fontWeight: 800, color: '#1e293b',
-                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.3,
-                    }}>{item.name}</div>
+                      lineHeight: 1.3, wordBreak: 'keep-all',
+                      display: '-webkit-box', WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                    } as CSSProperties}>{item.name}</div>
                     <div style={{
                       ...sp(Math.round(21 * fs)), color: '#94a3b8', marginTop: px(5),
                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                     }}>{fmtLocation(item.location, 3)}</div>
-                    {item.benefit && (
-                      <div style={{
-                        ...sp(Math.round(19 * fs)), color: '#f59e0b', marginTop: px(6), fontWeight: 700,
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                      }}>✦ {item.benefit.slice(0, 26)}{item.benefit.length > 26 ? '…' : ''}</div>
-                    )}
                   </div>
                   <div>
-                    <div style={{ ...sp(Math.round(48 * fs)), color: accentColor, fontWeight: 900, lineHeight: 1.1 }}>
+                    <div style={{ ...sp(Math.round(50 * fs)), color: accentColor, fontWeight: 900, lineHeight: 1.1 }}>
                       {item.min_price || item.max_price
                         ? fmt만원(item.min_price ?? item.max_price!)
                         : '문의'}
                     </div>
                     {(item.min_price || item.max_price) && (
-                      <div style={{ ...sp(Math.round(19 * fs)), color: '#94a3b8', marginTop: px(3) }}>부터~</div>
+                      <div style={{ ...sp(Math.round(20 * fs)), color: '#94a3b8', marginTop: px(3) }}>부터~</div>
                     )}
                   </div>
                 </div>
