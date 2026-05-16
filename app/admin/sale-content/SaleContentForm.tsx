@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import AdminHeader from '@/app/admin/components/AdminHeader';
-import Image from 'next/image';
 import type { SaleContent } from '@/lib/saleContent';
 
 const RichTextEditor = dynamic(() => import('../unsold/RichTextEditor'), { ssr: false });
@@ -209,8 +208,9 @@ export default function SaleContentForm({
             {uploading && <p style={{ fontSize: 12, color: '#6b7280' }}>업로드 중...</p>}
             {form.thumbnail_url && (
               <div style={{ marginTop: 8 }}>
-                <Image src={form.thumbnail_url} alt="썸네일" width={280} height={180}
-                  style={{ objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb', display: 'block' }} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={form.thumbnail_url} alt="썸네일"
+                  style={{ width: 280, height: 180, objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb', display: 'block' }} />
                 <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
                   <input
                     style={{ ...inputStyle, fontSize: 12 }}
@@ -242,9 +242,10 @@ export default function SaleContentForm({
             {form.image_urls.length > 0 && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8, marginTop: 8 }}>
                 {form.image_urls.map((url, i) => (
-                  <div key={i} style={{ position: 'relative', aspectRatio: '4/3' }}>
-                    <Image src={url} alt={`이미지 ${i + 1}`} fill
-                      style={{ objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb' }} />
+                  <div key={i} style={{ position: 'relative' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt={`이미지 ${i + 1}`}
+                      style={{ width: '100%', height: 105, objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb', display: 'block' }} />
                     <button
                       type="button"
                       onClick={() => removeImage(i)}
