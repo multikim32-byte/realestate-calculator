@@ -4,6 +4,7 @@ export type SaleItem = {
   name: string; location: string;
   receiptStart: string; receiptEnd: string;
   totalUnits: number | null; status: string;
+  minPrice?: number; maxPrice?: number;
   statusLabel?: string;
 };
 
@@ -28,6 +29,17 @@ function fmt만원(v: number) {
   if (v >= 100000000) return `${(v / 100000000).toFixed(1)}억`;
   if (v >= 10000) return `${Math.floor(v / 10000).toLocaleString()}만`;
   return `${v.toLocaleString()}원`;
+}
+
+function fmtSalePrice(min: number | undefined, max: number | undefined): string {
+  if (!min && !max) return '미정';
+  const fmt = (p: number) => {
+    if (p >= 10000) return `${(p / 10000).toFixed(1).replace(/\.0$/, '')}억`;
+    return `${Math.round(p / 1000)}천만`;
+  };
+  const lo = min || max!;
+  const hi = max || min!;
+  return lo === hi ? `${fmt(lo)}` : `${fmt(lo)}~${fmt(hi)}`;
 }
 
 function fmtDateRange(start: string, end: string) {
@@ -92,13 +104,13 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
   const gridCols = isToday
     ? '1fr 180px 210px'
     : isSale
-      ? '1fr 250px 175px'
+      ? '1fr 220px 200px'
       : '1fr 230px';
 
   const colHeaders = isToday
     ? ['단지명 / 지역', '상태', '청약기간']
     : isSale
-      ? ['단지명 / 지역', '청약기간', '세대수']
+      ? ['단지명 / 지역', '청약기간', '분양가']
       : ['단지명 / 지역', '분양가'];
 
   return (
@@ -255,7 +267,7 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
                       : <span style={{ color: '#94a3b8' }}>{item.status}</span>}
                   </div>
                   <div style={{ ...sp(Math.round(26 * fs)), color: '#374151', fontWeight: 700 }}>
-                    {item.totalUnits ? `${item.totalUnits.toLocaleString()}세대` : '-'}
+                    {fmtSalePrice(item.minPrice, item.maxPrice)}
                   </div>
                 </div>
               ))
