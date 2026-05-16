@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import AdminHeader from '@/app/admin/components/AdminHeader';
 import type { SaleContent } from '@/lib/saleContent';
 import DeleteModal from '@/app/admin/components/DeleteModal';
@@ -204,8 +203,9 @@ export default function SaleContentListPage() {
                   {/* 메인 행 */}
                   <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
                     {item.thumbnail_url && (
-                      <Image src={item.thumbnail_url} alt="" width={80} height={56}
-                        style={{ objectFit: 'cover', borderRadius: 8, flexShrink: 0, border: '1px solid #e5e7eb' }} />
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={item.thumbnail_url} alt=""
+                        style={{ width: 80, height: 56, objectFit: 'cover', borderRadius: 8, flexShrink: 0, border: '1px solid #e5e7eb' }} />
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -293,8 +293,9 @@ export default function SaleContentListPage() {
                           <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', marginBottom: 8 }}>이미지 ({item.image_urls.length}장)</div>
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                             {item.image_urls.slice(0, 6).map((url, i) => (
-                              <Image key={i} src={url} alt="" width={80} height={56}
-                                style={{ objectFit: 'cover', borderRadius: 6, border: '1px solid #e5e7eb' }} />
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img key={i} src={url} alt=""
+                                style={{ width: 80, height: 56, objectFit: 'cover', borderRadius: 6, border: '1px solid #e5e7eb' }} />
                             ))}
                             {item.image_urls.length > 6 && (
                               <div style={{ width: 80, height: 56, borderRadius: 6, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#6b7280' }}>
