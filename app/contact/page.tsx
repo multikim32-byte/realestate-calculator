@@ -116,6 +116,7 @@ export default function ContactPage() {
               {[
                 ['서비스명', '아파트집사 (aptzipsa.kr)'],
                 ['운영자', '김경래 공인중개사'],
+                ['사업자등록번호', '465-41-00587'],
                 ['이메일', 'multikim@naver.com'],
                 ['도메인', 'www.aptzipsa.kr'],
                 ['데이터 출처', '국토교통부 공공데이터 API, LH 공공데이터 API'],
