@@ -110,7 +110,7 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
   const colHeaders = isToday
     ? ['단지명 / 지역', '상태', '청약기간']
     : isSale
-      ? ['단지명 / 지역', '청약기간', '분양가']
+      ? ['단지명 / 지역', '청약기간', '세대수 / 분양가']
       : ['단지명 / 지역', '분양가'];
 
   return (
@@ -266,8 +266,15 @@ export default function InstaCard({ type, region, month, saleItems, unsoldItems,
                       ? fmtDateRange(item.receiptStart, item.receiptEnd)
                       : <span style={{ color: '#94a3b8' }}>{item.status}</span>}
                   </div>
-                  <div style={{ ...sp(Math.round(26 * fs)), color: '#374151', fontWeight: 700 }}>
-                    {fmtSalePrice(item.minPrice, item.maxPrice)}
+                  <div>
+                    <div style={{ ...sp(Math.round(26 * fs)), color: '#374151', fontWeight: 700 }}>
+                      {item.totalUnits ? `${item.totalUnits.toLocaleString()}세대` : '-'}
+                    </div>
+                    {(item.minPrice || item.maxPrice) ? (
+                      <div style={{ ...sp(Math.round(20 * fs)), color: accentColor, fontWeight: 700, marginTop: px(3) }}>
+                        {fmtSalePrice(item.minPrice, item.maxPrice)}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               ))
