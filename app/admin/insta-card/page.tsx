@@ -213,6 +213,19 @@ export default function InstaCardPage() {
             <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 8, textAlign: 'center' }}>
               1080×1080 원본 크기로 열림
             </p>
+            <a
+              href="https://business.facebook.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                width: '100%', marginTop: 10, padding: '10px', borderRadius: 8,
+                background: '#f0f4ff', border: '1px solid #c7d2fe',
+                color: '#4338ca', fontSize: 13, fontWeight: 700, textDecoration: 'none',
+              }}
+            >
+              📤 메타 비즈니스 업로드
+            </a>
           </div>
 
           {/* 미리보기 */}
