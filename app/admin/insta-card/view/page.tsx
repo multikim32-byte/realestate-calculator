@@ -2,22 +2,36 @@
 
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
-import InstaCard, { type SaleItem, type UnsoldItem } from '../InstaCard';
+import InstaCard, { type SaleItem, type UnsoldItem, type TradeStats } from '../InstaCard';
 
 const MAX_PAGES = 3;
+const TRADE_TYPES = ['급등TOP10', '급락TOP10', '신고가TOP10', '거래량TOP10'];
+
+type CardType = '오늘의청약' | '청약일정' | '미분양' | '급등TOP10' | '급락TOP10' | '신고가TOP10' | '거래량TOP10';
 
 function CardView() {
   const params = useSearchParams();
-  const type = (params.get('type') ?? '오늘의청약') as '오늘의청약' | '청약일정' | '미분양';
+  const type = (params.get('type') ?? '오늘의청약') as CardType;
   const region = params.get('region') ?? '전국';
   const month = params.get('month') ?? '';
   const page = parseInt(params.get('page') ?? '1', 10);
 
+  const isTrade = TRADE_TYPES.includes(type);
+
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [unsoldItems, setUnsoldItems] = useState<UnsoldItem[]>([]);
+  const [tradeStats, setTradeStats] = useState<TradeStats>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isTrade) {
+      fetch('/api/admin/trade-stats')
+        .then(r => r.json())
+        .then(data => { if (data) setTradeStats(data); })
+        .finally(() => setLoading(false));
+      return;
+    }
+
     if (type === '미분양') {
       fetch('/api/admin/unsold')
         .then(r => r.json())
@@ -62,10 +76,10 @@ function CardView() {
         })
         .finally(() => setLoading(false));
     }
-  }, [type, region, month]);
+  }, [type, region, month, isTrade]);
 
   const allItems = type === '미분양' ? unsoldItems : saleItems;
-  const totalPages = Math.min(MAX_PAGES, Math.ceil(allItems.length / 5));
+  const totalPages = isTrade ? 1 : Math.min(MAX_PAGES, Math.ceil(allItems.length / 5));
 
   if (loading) {
     return (
@@ -79,6 +93,7 @@ function CardView() {
     <InstaCard
       type={type} region={region} month={month}
       saleItems={saleItems} unsoldItems={unsoldItems}
+      tradeStats={tradeStats}
       scale={1} page={page} totalPages={totalPages}
     />
   );

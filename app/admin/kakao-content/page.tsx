@@ -17,13 +17,18 @@ export default async function KakaoContentPage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 
-  const [saleResult, { data: unsoldRaw }] = await Promise.all([
+  const [saleResult, { data: unsoldRaw }, { data: tradeStatsRaw }] = await Promise.all([
     fetchPublicSaleList({ type: 'all', perPage: 100, skipEnrich: true }),
     db.from('unsold_listings')
       .select('id, name, location, category, min_price, max_price, highlight')
       .eq('is_active', true)
       .order('created_at', { ascending: false })
       .limit(10),
+    db.from('trade_stats')
+      .select('*')
+      .order('stat_date', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const today = new Date().toISOString().slice(0, 10);
@@ -57,6 +62,7 @@ export default async function KakaoContentPage() {
             highlight: it.highlight,
           }))}
           today={today}
+          tradeStats={tradeStatsRaw ?? null}
         />
       </div>
     </div>

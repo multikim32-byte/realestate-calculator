@@ -19,17 +19,44 @@ type UnsoldItem = {
   highlight: string | null;
 };
 
+type TradeStatItem = {
+  rank: number;
+  name: string;
+  dong: string;
+  location: string;
+  areaBucket?: number;
+  currentAvg?: number;
+  prevAvg?: number;
+  changePct?: number;
+  count?: number;
+  price?: number;
+  dealDate?: string;
+  area?: number;
+  floor?: number;
+  avgPrice?: number;
+};
+
+type TradeStats = {
+  stat_date: string;
+  current_month: string;
+  prev_month: string;
+  rising: TradeStatItem[];
+  falling: TradeStatItem[];
+  top_price: TradeStatItem[];
+  top_volume: TradeStatItem[];
+} | null;
+
 interface Props {
   ongoingItems: SaleItem[];
   closingSoonItems: SaleItem[];
   upcomingItems: SaleItem[];
   unsoldItems: UnsoldItem[];
   today: string;
+  tradeStats: TradeStats;
 }
 
 function shortLocation(loc: string): string {
-  const parts = loc.trim().split(/\s+/);
-  return parts.slice(0, 2).join(' ');
+  return loc.trim().split(/\s+/).slice(0, 2).join(' ');
 }
 
 function formatPrice(min: number | null, max: number | null): string {
@@ -44,7 +71,13 @@ function formatPrice(min: number | null, max: number | null): string {
   return '';
 }
 
-function generateText(props: Props): string {
+function fmt만원(v: number): string {
+  if (v >= 10000) return `${(v / 10000).toFixed(1).replace(/\.0$/, '')}억`;
+  if (v >= 1000)  return `${Math.round(v / 1000)}천만`;
+  return `${v.toLocaleString()}만`;
+}
+
+function generateSaleText(props: Props): string {
   const { ongoingItems, closingSoonItems, upcomingItems, unsoldItems, today } = props;
   const [, month, day] = today.split('-');
   const dateStr = `${parseInt(month)}월 ${parseInt(day)}일`;
@@ -103,14 +136,84 @@ function generateText(props: Props): string {
   return lines.join('\n');
 }
 
+function generateTradeText(stats: TradeStats): string {
+  if (!stats) return '집계된 실거래 데이터가 없습니다.\nGitHub Actions가 매일 03:00 KST에 자동 집계합니다.';
+
+  const ym = stats.current_month;
+  const monthLabel = `${ym.slice(0, 4)}년 ${parseInt(ym.slice(4))}월`;
+
+  const lines: string[] = [];
+  lines.push(`📊 전국 실거래 동향 (${monthLabel})`);
+  lines.push('');
+
+  // 급등 TOP 5
+  if (stats.rising.length > 0) {
+    lines.push('📈 이번달 급등 단지 TOP 5');
+    for (const it of stats.rising.slice(0, 5)) {
+      const pct = it.changePct != null ? (it.changePct > 0 ? `+${it.changePct}%` : `${it.changePct}%`) : '';
+      lines.push(`  ${it.rank}. ${it.name} (${it.location} ${it.dong}${it.areaBucket ? `, ${it.areaBucket}㎡` : ''})`);
+      if (it.currentAvg && it.prevAvg) {
+        lines.push(`     ${pct} — ${fmt만원(it.prevAvg)} → ${fmt만원(it.currentAvg)}`);
+      }
+    }
+    lines.push('');
+  }
+
+  // 급락 TOP 5
+  if (stats.falling.length > 0) {
+    lines.push('📉 이번달 급락 단지 TOP 5');
+    for (const it of stats.falling.slice(0, 5)) {
+      const pct = it.changePct != null ? `${it.changePct}%` : '';
+      lines.push(`  ${it.rank}. ${it.name} (${it.location} ${it.dong}${it.areaBucket ? `, ${it.areaBucket}㎡` : ''})`);
+      if (it.currentAvg && it.prevAvg) {
+        lines.push(`     ${pct} — ${fmt만원(it.prevAvg)} → ${fmt만원(it.currentAvg)}`);
+      }
+    }
+    lines.push('');
+  }
+
+  // 신고가 TOP 5
+  if (stats.top_price.length > 0) {
+    lines.push('🏆 이번달 신고가 거래 TOP 5');
+    for (const it of stats.top_price.slice(0, 5)) {
+      lines.push(`  ${it.rank}. ${it.name} — ${it.price != null ? fmt만원(it.price) : '-'}`);
+      lines.push(`     ${it.location} ${it.dong}${it.area ? ` · ${it.area}㎡` : ''}${it.floor ? ` · ${it.floor}층` : ''}`);
+    }
+    lines.push('');
+  }
+
+  // 거래량 TOP 5
+  if (stats.top_volume.length > 0) {
+    lines.push('🔥 이번달 거래 많은 단지 TOP 5');
+    for (const it of stats.top_volume.slice(0, 5)) {
+      lines.push(`  ${it.rank}. ${it.name} ${it.count != null ? `${it.count}건` : ''} (${it.location} ${it.dong})`);
+      if (it.avgPrice) lines.push(`     평균 ${fmt만원(it.avgPrice)}`);
+    }
+    lines.push('');
+  }
+
+  lines.push(`집계일: ${stats.stat_date}`);
+  lines.push('👉 실거래가 조회 → https://www.aptzipsa.kr/trade');
+  lines.push('📌 채널 추가하고 매일 받아보기 → https://pf.kakao.com/_WYwjn');
+
+  return lines.join('\n');
+}
+
 export default function KakaoContentClient(props: Props) {
-  const [text, setText] = useState(() => generateText(props));
+  const { tradeStats } = props;
+  const [tab, setTab] = useState<'sale' | 'trade'>('sale');
+  const [saleText, setSaleText] = useState(() => generateSaleText(props));
+  const [tradeText, setTradeText] = useState(() => generateTradeText(tradeStats));
   const [copied, setCopied] = useState(false);
 
+  const text = tab === 'sale' ? saleText : tradeText;
+  const setText = tab === 'sale' ? setSaleText : setTradeText;
+
   const regenerate = useCallback(() => {
-    setText(generateText(props));
+    if (tab === 'sale') setSaleText(generateSaleText(props));
+    else setTradeText(generateTradeText(tradeStats));
     setCopied(false);
-  }, [props]);
+  }, [props, tradeStats, tab]);
 
   const copy = async () => {
     try {
@@ -118,7 +221,6 @@ export default function KakaoContentClient(props: Props) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
-      // fallback for older browsers
       const el = document.createElement('textarea');
       el.value = text;
       document.body.appendChild(el);
@@ -135,44 +237,87 @@ export default function KakaoContentClient(props: Props) {
 
   return (
     <div>
-      {/* 데이터 현황 뱃지 */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-        {props.closingSoonItems.length > 0 && (
-          <span style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 20, padding: '4px 12px', fontSize: 13, fontWeight: 700 }}>
-            🔴 마감임박 {props.closingSoonItems.length}건
-          </span>
-        )}
-        {props.ongoingItems.length > 0 && (
-          <span style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 20, padding: '4px 12px', fontSize: 13, fontWeight: 700 }}>
-            🔵 청약중 {props.ongoingItems.length}건
-          </span>
-        )}
-        {props.upcomingItems.length > 0 && (
-          <span style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', borderRadius: 20, padding: '4px 12px', fontSize: 13, fontWeight: 700 }}>
-            🟢 예정 {props.upcomingItems.length}건
-          </span>
-        )}
-        {props.unsoldItems.length > 0 && (
-          <span style={{ background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa', borderRadius: 20, padding: '4px 12px', fontSize: 13, fontWeight: 700 }}>
-            🏠 미분양 {props.unsoldItems.length}건
-          </span>
-        )}
+      {/* 탭 */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <button
+          onClick={() => { setTab('sale'); setCopied(false); }}
+          style={{
+            padding: '9px 20px', borderRadius: 8, border: 'none', cursor: 'pointer',
+            background: tab === 'sale' ? '#1d4ed8' : '#f1f5f9',
+            color: tab === 'sale' ? '#fff' : '#374151',
+            fontSize: 14, fontWeight: 700,
+          }}
+        >
+          📅 오늘의 청약 소식
+        </button>
+        <button
+          onClick={() => { setTab('trade'); setCopied(false); }}
+          style={{
+            padding: '9px 20px', borderRadius: 8, border: 'none', cursor: 'pointer',
+            background: tab === 'trade' ? '#7c3aed' : '#f5f3ff',
+            color: tab === 'trade' ? '#fff' : '#5b21b6',
+            fontSize: 14, fontWeight: 700,
+          }}
+        >
+          📊 실거래 소식
+          {!tradeStats && <span style={{ marginLeft: 6, fontSize: 11, opacity: 0.7 }}>미집계</span>}
+        </button>
       </div>
+
+      {/* 데이터 현황 뱃지 (청약 탭) */}
+      {tab === 'sale' && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+          {props.closingSoonItems.length > 0 && (
+            <span style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 20, padding: '4px 12px', fontSize: 13, fontWeight: 700 }}>
+              🔴 마감임박 {props.closingSoonItems.length}건
+            </span>
+          )}
+          {props.ongoingItems.length > 0 && (
+            <span style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 20, padding: '4px 12px', fontSize: 13, fontWeight: 700 }}>
+              🔵 청약중 {props.ongoingItems.length}건
+            </span>
+          )}
+          {props.upcomingItems.length > 0 && (
+            <span style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', borderRadius: 20, padding: '4px 12px', fontSize: 13, fontWeight: 700 }}>
+              🟢 예정 {props.upcomingItems.length}건
+            </span>
+          )}
+          {props.unsoldItems.length > 0 && (
+            <span style={{ background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa', borderRadius: 20, padding: '4px 12px', fontSize: 13, fontWeight: 700 }}>
+              🏠 미분양 {props.unsoldItems.length}건
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* 실거래 탭 정보 뱃지 */}
+      {tab === 'trade' && tradeStats && (
+        <div style={{ marginBottom: 16 }}>
+          <span style={{ background: '#f5f3ff', color: '#5b21b6', border: '1px solid #ddd6fe', borderRadius: 20, padding: '4px 12px', fontSize: 13, fontWeight: 700 }}>
+            📊 {tradeStats.current_month.slice(0,4)}년 {parseInt(tradeStats.current_month.slice(4))}월 기준 · 집계일 {tradeStats.stat_date}
+          </span>
+        </div>
+      )}
 
       {/* 텍스트 편집 영역 */}
       <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
         <div style={{
-          background: '#fefce8', padding: '12px 16px',
-          borderBottom: '1px solid #fef08a',
+          background: tab === 'sale' ? '#fefce8' : '#f5f3ff',
+          padding: '12px 16px',
+          borderBottom: `1px solid ${tab === 'sale' ? '#fef08a' : '#ddd6fe'}`,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#854d0e' }}>💛 카카오 채널 소식 텍스트</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: tab === 'sale' ? '#854d0e' : '#5b21b6' }}>
+            {tab === 'sale' ? '💛 카카오 채널 소식 텍스트 (청약)' : '💜 카카오 채널 소식 텍스트 (실거래)'}
+          </span>
           <button
             onClick={regenerate}
             style={{
               fontSize: 12, padding: '4px 12px', borderRadius: 6,
-              border: '1px solid #fef08a', background: '#fff',
-              color: '#854d0e', cursor: 'pointer', fontWeight: 700,
+              border: `1px solid ${tab === 'sale' ? '#fef08a' : '#ddd6fe'}`,
+              background: '#fff',
+              color: tab === 'sale' ? '#854d0e' : '#5b21b6',
+              cursor: 'pointer', fontWeight: 700,
             }}
           >
             ↺ 다시 생성
@@ -243,7 +388,7 @@ export default function KakaoContentClient(props: Props) {
           <li>채널 소식은 팔로워 전체에게 무료 발송됩니다.</li>
           <li>이미지를 함께 첨부하면 클릭률이 높아집니다.</li>
           <li>오전 8~9시 또는 오후 7~9시 발행이 효과적입니다.</li>
-          <li>텍스트를 자유롭게 수정 후 복사하세요.</li>
+          <li>실거래 소식은 인스타 카드(급등/급락/신고가/거래량)와 함께 발행하면 좋습니다.</li>
         </ul>
       </div>
     </div>

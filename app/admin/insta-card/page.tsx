@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminHeader from '@/app/admin/components/AdminHeader';
-import InstaCard, { type SaleItem, type UnsoldItem } from './InstaCard';
+import InstaCard, { type SaleItem, type UnsoldItem, type TradeStats } from './InstaCard';
 
 const REGIONS = ['전국', '서울', '경기', '인천', '부산', '대구', '대전', '광주', '울산', '세종', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'];
 const PER_PAGE = 5;
@@ -21,23 +21,34 @@ function getMonthOptions() {
   return options;
 }
 
-const CARD_TYPES = [
-  { key: '오늘의청약' as const, label: '📅 오늘의 청약', desc: '현재 진행·7일 이내 예정' },
-  { key: '청약일정'  as const, label: '📆 월별 청약',   desc: '월별 청약 일정' },
-  { key: '미분양'    as const, label: '🏢 미분양',       desc: '활성 미분양 매물' },
+type CardType = '오늘의청약' | '청약일정' | '미분양' | '급등TOP10' | '급락TOP10' | '신고가TOP10' | '거래량TOP10';
+
+const CARD_TYPES: { key: CardType; label: string; desc: string }[] = [
+  { key: '오늘의청약', label: '📅 오늘의 청약',   desc: '현재 진행·7일 이내 예정' },
+  { key: '청약일정',   label: '📆 월별 청약',     desc: '월별 청약 일정' },
+  { key: '미분양',     label: '🏢 미분양',         desc: '활성 미분양 매물' },
+  { key: '급등TOP10',  label: '📈 급등 TOP 10',   desc: '전월 대비 급등 아파트' },
+  { key: '급락TOP10',  label: '📉 급락 TOP 10',   desc: '전월 대비 급락 아파트' },
+  { key: '신고가TOP10', label: '🏆 신고가 TOP 10', desc: '이번달 최고가 거래' },
+  { key: '거래량TOP10', label: '🔥 거래량 TOP 10', desc: '이번달 거래 많은 단지' },
 ];
+
+const TRADE_TYPES: CardType[] = ['급등TOP10', '급락TOP10', '신고가TOP10', '거래량TOP10'];
 
 export default function InstaCardPage() {
   const router = useRouter();
-  const [cardType, setCardType] = useState<'오늘의청약' | '청약일정' | '미분양'>('오늘의청약');
+  const [cardType, setCardType] = useState<CardType>('오늘의청약');
   const [region, setRegion] = useState('전국');
   const monthOptions = getMonthOptions();
   const [month, setMonth] = useState(monthOptions[0].value);
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [unsoldItems, setUnsoldItems] = useState<UnsoldItem[]>([]);
+  const [tradeStats, setTradeStats] = useState<TradeStats>(null);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobile, setIsMobile] = useState(false);
+
+  const isTrade = TRADE_TYPES.includes(cardType);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -50,7 +61,21 @@ export default function InstaCardPage() {
     ? Math.min(0.55, (typeof window !== 'undefined' ? window.innerWidth - 40 : 320) / 1080)
     : 0.55;
 
+  // 실거래 통계 fetch
   useEffect(() => {
+    if (!isTrade) return;
+    setLoading(true);
+    fetch('/api/admin/trade-stats')
+      .then(r => { if (r.status === 401) { router.push('/admin'); return null; } return r.json(); })
+      .then(data => { if (data !== null) setTradeStats(data); })
+      .catch(() => setTradeStats(null))
+      .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTrade]);
+
+  // 청약/미분양 fetch
+  useEffect(() => {
+    if (isTrade) return;
     setCurrentPage(1);
     setLoading(true);
 
@@ -101,11 +126,11 @@ export default function InstaCardPage() {
         .catch(() => setSaleItems([]))
         .finally(() => setLoading(false));
     }
-  }, [cardType, region, month, router]);
+  }, [cardType, region, month, router, isTrade]);
 
   const allItems = cardType === '미분양' ? unsoldItems : saleItems;
-  const totalCount = allItems.length;
-  const totalPages = Math.min(MAX_PAGES, Math.ceil(totalCount / PER_PAGE));
+  const totalCount = isTrade ? (tradeStats ? 10 : 0) : allItems.length;
+  const totalPages = isTrade ? 1 : Math.min(MAX_PAGES, Math.ceil(totalCount / PER_PAGE));
 
   const openFullView = () => {
     const params = new URLSearchParams({ type: cardType, region, month, page: String(currentPage) });
@@ -137,31 +162,39 @@ export default function InstaCardPage() {
             boxSizing: 'border-box',
           }}>
 
+            {/* 카드 유형 */}
             <div style={{ marginBottom: 16 }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 8 }}>카드 유형</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {CARD_TYPES.map(({ key, label, desc }) => (
-                  <button key={key} onClick={() => setCardType(key)} style={{
-                    padding: '10px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                    background: cardType === key ? '#1d4ed8' : '#f1f5f9',
-                    color: cardType === key ? '#fff' : '#374151',
-                    textAlign: 'left',
-                  }}>
-                    <div style={{ fontSize: 13, fontWeight: 700 }}>{label}</div>
-                    <div style={{ fontSize: 11, opacity: 0.65, marginTop: 2 }}>{desc}</div>
-                  </button>
-                ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {CARD_TYPES.map(({ key, label, desc }) => {
+                  const isTradeType = TRADE_TYPES.includes(key);
+                  return (
+                    <button key={key} onClick={() => { setCardType(key); setCurrentPage(1); }} style={{
+                      padding: '9px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                      background: cardType === key ? (isTradeType ? '#7c3aed' : '#1d4ed8') : (isTradeType ? '#f5f3ff' : '#f1f5f9'),
+                      color: cardType === key ? '#fff' : (isTradeType ? '#5b21b6' : '#374151'),
+                      textAlign: 'left',
+                    }}>
+                      <div style={{ fontSize: 13, fontWeight: 700 }}>{label}</div>
+                      <div style={{ fontSize: 11, opacity: 0.65, marginTop: 2 }}>{desc}</div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 8 }}>지역</p>
-              <select value={region} onChange={e => setRegion(e.target.value)}
-                style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13 }}>
-                {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
-              </select>
-            </div>
+            {/* 지역 (청약/미분양만) */}
+            {!isTrade && (
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 8 }}>지역</p>
+                <select value={region} onChange={e => setRegion(e.target.value)}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13 }}>
+                  {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+            )}
 
+            {/* 월 (청약일정만) */}
             {cardType === '청약일정' && (
               <div style={{ marginBottom: 16 }}>
                 <p style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 8 }}>월</p>
@@ -172,21 +205,45 @@ export default function InstaCardPage() {
               </div>
             )}
 
-            <div style={{ background: '#f8fafc', borderRadius: 8, padding: '10px 12px', marginBottom: 16, fontSize: 13, color: '#6b7280' }}>
-              전체 <strong style={{ color: '#1e293b' }}>{totalCount}건</strong>
-              {totalPages > 1 && (
-                <span style={{ display: 'block', marginTop: 4, color: '#1d4ed8', fontWeight: 600 }}>
-                  → {totalPages}장 카드 생성 가능
-                </span>
-              )}
-              {totalCount > MAX_PAGES * PER_PAGE && (
-                <span style={{ display: 'block', marginTop: 2, fontSize: 12, color: '#f59e0b' }}>
-                  ⚠️ 최대 {MAX_PAGES * PER_PAGE}건까지 표시
-                </span>
-              )}
-            </div>
+            {/* 실거래 통계 정보 */}
+            {isTrade && (
+              <div style={{ background: '#f5f3ff', borderRadius: 8, padding: '10px 12px', marginBottom: 16, fontSize: 13 }}>
+                {tradeStats ? (
+                  <>
+                    <div style={{ color: '#5b21b6', fontWeight: 700, marginBottom: 4 }}>✅ 집계 완료</div>
+                    <div style={{ color: '#6b7280', fontSize: 12 }}>
+                      집계일: {tradeStats.stat_date}<br />
+                      기준월: {tradeStats.current_month.slice(0,4)}년 {parseInt(tradeStats.current_month.slice(4))}월
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ color: '#9ca3af', fontSize: 12 }}>
+                    아직 집계된 데이터가 없습니다.<br />
+                    GitHub Actions가 매일 03:00 KST에 자동 집계합니다.
+                  </div>
+                )}
+              </div>
+            )}
 
-            {totalPages > 1 && (
+            {/* 데이터 현황 (청약/미분양) */}
+            {!isTrade && (
+              <div style={{ background: '#f8fafc', borderRadius: 8, padding: '10px 12px', marginBottom: 16, fontSize: 13, color: '#6b7280' }}>
+                전체 <strong style={{ color: '#1e293b' }}>{totalCount}건</strong>
+                {totalPages > 1 && (
+                  <span style={{ display: 'block', marginTop: 4, color: '#1d4ed8', fontWeight: 600 }}>
+                    → {totalPages}장 카드 생성 가능
+                  </span>
+                )}
+                {totalCount > MAX_PAGES * PER_PAGE && (
+                  <span style={{ display: 'block', marginTop: 2, fontSize: 12, color: '#f59e0b' }}>
+                    ⚠️ 최대 {MAX_PAGES * PER_PAGE}건까지 표시
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* 페이지 선택 (청약/미분양 다중 페이지) */}
+            {!isTrade && totalPages > 1 && (
               <div style={{ marginBottom: 16 }}>
                 <p style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 8 }}>카드 페이지</p>
                 <div style={{ display: 'flex', gap: 6 }}>
@@ -206,9 +263,10 @@ export default function InstaCardPage() {
 
             <button onClick={openFullView} style={{
               width: '100%', padding: '12px', borderRadius: 8, border: 'none',
-              background: '#1d4ed8', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+              background: isTrade ? '#7c3aed' : '#1d4ed8',
+              color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer',
             }}>
-              📸 {totalPages > 1 ? `${currentPage}장 ` : ''}새 창에서 캡처
+              📸 {!isTrade && totalPages > 1 ? `${currentPage}장 ` : ''}새 창에서 캡처
             </button>
             <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 8, textAlign: 'center' }}>
               1080×1080 원본 크기로 열림
@@ -232,14 +290,14 @@ export default function InstaCardPage() {
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontSize: 12, color: '#9ca3af', marginBottom: 12 }}>
               미리보기 (실제 크기의 {Math.round(SCALE * 100)}%)
-              {totalPages > 1 && <span style={{ marginLeft: 8, color: '#1d4ed8', fontWeight: 600 }}>{currentPage} / {totalPages}장</span>}
+              {!isTrade && totalPages > 1 && <span style={{ marginLeft: 8, color: '#1d4ed8', fontWeight: 600 }}>{currentPage} / {totalPages}장</span>}
             </p>
             <div style={{ width: cardW, height: cardH, position: 'relative' }}>
               {loading ? (
                 <div style={{ width: cardW, height: cardH, background: '#f1f5f9', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#9ca3af' }}>
                   불러오는 중...
                 </div>
-              ) : totalCount === 0 ? (
+              ) : (!isTrade && totalCount === 0) ? (
                 <div style={{ width: cardW, height: cardH, background: '#f1f5f9', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8 }}>
                   <div style={{ fontSize: 32 }}>📭</div>
                   <div style={{ fontSize: 14, color: '#9ca3af' }}>해당 조건의 데이터가 없습니다</div>
@@ -248,6 +306,7 @@ export default function InstaCardPage() {
                 <InstaCard
                   type={cardType} region={region} month={month}
                   saleItems={saleItems} unsoldItems={unsoldItems}
+                  tradeStats={tradeStats}
                   scale={SCALE} page={currentPage} totalPages={totalPages}
                 />
               )}
