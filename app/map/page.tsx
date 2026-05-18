@@ -42,15 +42,9 @@ export type MapSaleItem = {
   totalUnits: number;
 };
 
-// 7초 내 resolve되지 않으면 빈 결과 반환
-function withTimeout<T>(promise: Promise<T>, fallback: T, ms = 7000): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>(resolve => setTimeout(() => resolve(fallback), ms)),
-  ]);
-}
-
 export default async function MapPage() {
+  // fetchPublicSaleList의 각 sub-API는 이미 8초 타임아웃이 적용되어 있음
+  // 외부 withTimeout 제거 → 7초 조기 컷으로 인한 건수 변동 문제 해소
   const [{ data: unsoldRaw }, saleResult] = await Promise.allSettled([
     Promise.resolve(
       supabase
@@ -59,11 +53,7 @@ export default async function MapPage() {
         .eq('is_active', true)
         .order('created_at', { ascending: false })
     ),
-    withTimeout(
-      fetchPublicSaleList({ type: 'all', perPage: 100, skipEnrich: true }),
-      { items: [], total: 0 },
-      7000,
-    ),
+    fetchPublicSaleList({ type: 'all', perPage: 100, skipEnrich: true }),
   ]).then(([u, s]) => [
     u.status === 'fulfilled' ? u.value : { data: [] },
     s.status === 'fulfilled' ? s.value : { items: [] },
