@@ -75,6 +75,7 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
   const [isMobile, setIsMobile] = useState(false);
   const pendingDongRef = useRef<string | null>(null);
   const pendingAptRef  = useRef<string | null>(null);
+  const aptSectionRef  = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -94,7 +95,10 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
       const apt = pendingAptRef.current;
       pendingAptRef.current = null;
       setKeyword(apt);
-      if (items.some(i => i.name === apt)) setSelectedApt(apt);
+      if (items.some(i => i.name === apt)) {
+        setSelectedApt(apt);
+        setTimeout(() => aptSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+      }
     }
   }, [items]);
 
@@ -513,7 +517,7 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
           </div>
 
           {/* 단지별 요약 카드 */}
-          <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1e3a5f', marginBottom: 12 }}>
+          <h3 ref={aptSectionRef} style={{ fontSize: 15, fontWeight: 700, color: '#1e3a5f', marginBottom: 12 }}>
             단지별 거래 요약 ({aptStats.length}개 단지)
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10, marginBottom: aptStats.length > aptCardCount ? 10 : 24 }}>
