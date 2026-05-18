@@ -97,7 +97,13 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
       setKeyword(apt);
       if (items.some(i => i.name === apt)) {
         setSelectedApt(apt);
-        setTimeout(() => aptSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+        setTimeout(() => {
+          const el = aptSectionRef.current;
+          if (el) {
+            const y = el.getBoundingClientRect().top + window.scrollY - 70;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+          }
+        }, 100);
       }
     }
   }, [items]);

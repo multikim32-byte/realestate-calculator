@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { LAWD_CODE_MAP, recentMonths } from '@/lib/tradeApi';
 
 type TradeStatItem = {
@@ -323,9 +324,9 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
 
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              <a href={getTradeLink(item, month)} className="trend-apt-link">
+              <Link href={getTradeLink(item, month)} className="trend-apt-link">
                 {item.name}
-              </a>
+              </Link>
               {item.dong ? <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 400, marginLeft: 5 }}>{item.dong}</span> : null}
             </div>
             <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
