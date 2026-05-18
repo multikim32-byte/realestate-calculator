@@ -596,7 +596,7 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
               {unsoldLink.thumbnail_url && (
                 <Image src={unsoldLink.thumbnail_url} alt={unsoldLink.name}
                   width={72} height={56}
-                  style={{ objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+                  style={{ objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} unoptimized />
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#92400e', marginBottom: 4 }}>🎁 특별 혜택 매물 등록됨</div>

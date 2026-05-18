@@ -124,7 +124,7 @@ export default async function BlogPage() {
                 </div>
                 {post.thumbnail_url && (
                   <div style={{ width: 100, height: 70, borderRadius: 10, overflow: "hidden", flexShrink: 0, position: "relative" }}>
-                    <Image src={post.thumbnail_url} alt="" fill style={{ objectFit: "cover" }} />
+                    <Image src={post.thumbnail_url} alt="" fill style={{ objectFit: "cover" }} unoptimized />
                   </div>
                 )}
               </div>
