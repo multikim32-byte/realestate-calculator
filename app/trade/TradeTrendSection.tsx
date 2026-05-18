@@ -48,6 +48,18 @@ const SIDOS = Object.keys(LAWD_CODE_MAP) as (keyof typeof LAWD_CODE_MAP)[];
 const MONTHS = recentMonths(36); // 최근 3년
 const CURRENT_MONTH = MONTHS[0].value;
 
+function getTradeLink(item: TradeStatItem, month: string): string {
+  const parts = (item.location || '').trim().split(' ');
+  const sido = parts[0] || '';
+  const sigungu = parts.length > 1 ? parts.slice(1).join(' ') : '';
+  const params = new URLSearchParams();
+  if (sido && sido !== '전국') params.set('sido', sido);
+  if (sigungu) params.set('sigungu', sigungu);
+  params.set('month', month);
+  params.set('apt', item.name);
+  return `/trade?${params}`;
+}
+
 function fmt(n?: number) {
   if (!n) return '-';
   if (n >= 10000) return `${(n / 10000).toFixed(1)}억`;
@@ -311,7 +323,9 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
 
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {item.name}
+              <a href={getTradeLink(item, month)} className="trend-apt-link">
+                {item.name}
+              </a>
               {item.dong ? <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 400, marginLeft: 5 }}>{item.dong}</span> : null}
             </div>
             <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
@@ -354,7 +368,11 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
         국토교통부 실거래가 공개시스템 기반 · {usePrebuilt ? '전국 아파트 집계 · 매일 03:00 KST 업데이트' : '실시간 집계'}
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .trend-apt-link { color: inherit; text-decoration: none; }
+        .trend-apt-link:hover { text-decoration: underline; color: #1d4ed8; }
+      `}</style>
     </div>
   );
 }

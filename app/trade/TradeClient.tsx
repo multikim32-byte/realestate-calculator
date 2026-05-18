@@ -74,6 +74,7 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const pendingDongRef = useRef<string | null>(null);
+  const pendingAptRef  = useRef<string | null>(null);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -83,29 +84,43 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
   }, []);
 
   useEffect(() => {
-    if (pendingDongRef.current && items.length > 0) {
+    if (items.length === 0) return;
+    if (pendingDongRef.current) {
       const dong = pendingDongRef.current;
       pendingDongRef.current = null;
-      const exists = items.some(i => i.dong === dong);
-      if (exists) setSelectedDong(dong);
+      if (items.some(i => i.dong === dong)) setSelectedDong(dong);
+    }
+    if (pendingAptRef.current) {
+      const apt = pendingAptRef.current;
+      pendingAptRef.current = null;
+      setKeyword(apt);
+      if (items.some(i => i.name === apt)) setSelectedApt(apt);
     }
   }, [items]);
 
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
-    const sidoParam = sp.get('sido');
+    const sidoParam    = sp.get('sido');
     const sigunguParam = sp.get('sigungu');
-    const dongParam = sp.get('dong');
+    const dongParam    = sp.get('dong');
+    const monthParam   = sp.get('month');
+    const aptParam     = sp.get('apt');
+
     if (dongParam) pendingDongRef.current = dongParam;
-    if (sidoParam && sigunguParam && sidoParam in LAWD_CODE_MAP) {
+    if (aptParam)  pendingAptRef.current  = aptParam;
+
+    // month 파라미터: YYYYMM 형식이면 dealYmd 초기값으로 사용
+    const searchMonth = (monthParam && /^\d{6}$/.test(monthParam)) ? monthParam : dealYmd;
+    if (monthParam && /^\d{6}$/.test(monthParam)) setDealYmd(monthParam);
+
+    if (sidoParam && sidoParam in LAWD_CODE_MAP) {
+      setSido(sidoParam as keyof typeof LAWD_CODE_MAP);
       const districts = LAWD_CODE_MAP[sidoParam as keyof typeof LAWD_CODE_MAP];
-      const found = districts.find(d => d.name === sigunguParam);
-      if (found) {
-        setSido(sidoParam as keyof typeof LAWD_CODE_MAP);
-        setLawdCd(found.code);
-        doTradeSearch(found.code, dealYmd, true);
-        return;
-      }
+      const found = sigunguParam ? districts.find(d => d.name === sigunguParam) : null;
+      const code = found ? found.code : districts[0].code;
+      setLawdCd(code);
+      doTradeSearch(code, searchMonth, true);
+      return;
     }
     if (initialItems.length === 0) handleSearch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
