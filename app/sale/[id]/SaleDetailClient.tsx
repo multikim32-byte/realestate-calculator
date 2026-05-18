@@ -8,6 +8,7 @@ import GlobalNav from '../../components/GlobalNav';
 import KakaoMap from '../../components/KakaoMap';
 import NearbyTradeSection from '../../components/NearbyTradeSection';
 import CompetitionRateSection from '../../components/CompetitionRateSection';
+import SpecialSupplySection from '../../components/SpecialSupplySection';
 import type { SaleContent } from '@/lib/saleContent';
 
 type UnitDetail = { type: string; area: number; supplyArea?: number; count: number; specialCount?: number; price: number };
@@ -584,6 +585,14 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
               ))}
             </div>
           </div>
+        )}
+
+        {/* 특별공급 신청현황 */}
+        {item.houseManageNo && (
+          <SpecialSupplySection
+            houseManageNo={item.houseManageNo}
+            pblancNo={item.pblancNo ?? ''}
+          />
         )}
 
         {/* 청약 경쟁률 결과 */}
