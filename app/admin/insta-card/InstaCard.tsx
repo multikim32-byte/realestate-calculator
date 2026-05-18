@@ -19,6 +19,7 @@ export type TradeStatItem = {
   name: string;
   dong: string;
   location: string;
+  builtYear?: number;
   areaBucket?: number;
   currentAvg?: number;
   prevAvg?: number;

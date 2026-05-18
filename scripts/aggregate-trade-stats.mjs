@@ -327,12 +327,13 @@ function parseItems(xml, sido, gu) {
     const m = xmlVal(block, 'dealMonth').padStart(2, '0');
     const d = xmlVal(block, 'dealDay').padStart(2, '0');
     result.push({
-      name:     xmlVal(block, 'aptNm'),
-      dong:     xmlVal(block, 'umdNm'),
+      name:      xmlVal(block, 'aptNm'),
+      dong:      xmlVal(block, 'umdNm'),
       area,
-      floor:    parseInt(xmlVal(block, 'floor')) || 0,
+      floor:     parseInt(xmlVal(block, 'floor')) || 0,
       price,
-      dealDate: y ? `${y}-${m}-${d}` : '',
+      dealDate:  y ? `${y}-${m}-${d}` : '',
+      builtYear: parseInt(xmlVal(block, 'buildYear')) || 0,
       sido,
       gu,
     });
@@ -426,6 +427,7 @@ async function main() {
       dong:       meta.dong,
       location:   `${meta.sido} ${meta.gu}`,
       areaBucket: bucket(meta.area),
+      builtYear:  meta.builtYear || 0,
       currentAvg: Math.round(cAvg),
       prevAvg:    Math.round(pAvg),
       changePct:  Math.round(pct * 10) / 10,
@@ -455,14 +457,15 @@ async function main() {
     .sort((a, b) => b.price - a.price)
     .slice(0, 10)
     .map((t, i) => ({
-      rank:     i + 1,
-      name:     t.name,
-      dong:     t.dong,
-      location: `${t.sido} ${t.gu}`,
-      area:     Math.round(t.area),
-      price:    t.price,
-      dealDate: t.dealDate,
-      floor:    t.floor,
+      rank:      i + 1,
+      name:      t.name,
+      dong:      t.dong,
+      location:  `${t.sido} ${t.gu}`,
+      area:      Math.round(t.area),
+      price:     t.price,
+      dealDate:  t.dealDate,
+      floor:     t.floor,
+      builtYear: t.builtYear || 0,
     }));
 
   // ── 거래량: 단지별 이번달 거래 건수 ────────────────────────────────────────────
@@ -478,12 +481,13 @@ async function main() {
     .sort((a, b) => b.count - a.count)
     .slice(0, 10)
     .map(({ count, total, meta }, i) => ({
-      rank:     i + 1,
-      name:     meta.name,
-      dong:     meta.dong,
-      location: `${meta.sido} ${meta.gu}`,
+      rank:      i + 1,
+      name:      meta.name,
+      dong:      meta.dong,
+      location:  `${meta.sido} ${meta.gu}`,
+      builtYear: meta.builtYear || 0,
       count,
-      avgPrice: Math.round(total / count),
+      avgPrice:  Math.round(total / count),
     }));
 
   // ── Supabase 저장 (stat_date 기준 upsert) ────────────────────────────────────

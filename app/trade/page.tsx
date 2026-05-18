@@ -1,7 +1,10 @@
 ﻿import GlobalNav from '../components/GlobalNav';
 import TradeClient from './TradeClient';
+import TradeTrendSection from './TradeTrendSection';
+import type { TradeTrendStats } from './TradeTrendSection';
 import type { Metadata } from 'next';
 import { fetchTradeList, recentMonths } from '@/lib/tradeApi';
+import { createClient } from '@supabase/supabase-js';
 
 export const revalidate = 3600; // 실거래가 데이터 1시간 ISR 캐싱
 
@@ -22,10 +25,21 @@ export default async function TradePage() {
   // 서울 강남구(11680) 전월 데이터 SSR 프리로드
   const dealYmd = recentMonths(2)[1].value; // 전달
   let initialItems: import('@/lib/tradeApi').TradeItem[] = [];
-  try {
-    const result = await fetchTradeList('11680', dealYmd, 1, 200);
-    initialItems = result.items ?? [];
-  } catch {}
+  let tradeStats: TradeTrendStats = null;
+
+  const db = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+
+  await Promise.all([
+    fetchTradeList('11680', dealYmd, 1, 200)
+      .then(r => { initialItems = r.items ?? []; })
+      .catch(() => {}),
+    Promise.resolve(
+      db.from('trade_stats').select('*').order('stat_date', { ascending: false }).limit(1).maybeSingle()
+    ).then(({ data }) => { tradeStats = data ?? null; }).catch(() => {}),
+  ]);
 
   return (
     <div>
@@ -37,6 +51,8 @@ export default async function TradePage() {
         </p>
       </div>
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 16px' }}>
+
+        <TradeTrendSection tradeStats={tradeStats} />
 
         <TradeClient initialItems={initialItems} initialDong="개포동" />
 
