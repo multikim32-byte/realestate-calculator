@@ -31,6 +31,7 @@ export type TradeTrendStats = {
   top_volume: TradeStatItem[];
   total_trades_current: number;
   total_trades_prev: number;
+  dongs?: string[];
 } | null;
 
 type TabKey = 'rising' | 'falling' | 'top_price' | 'top_volume';
@@ -56,75 +57,94 @@ function fmtMonth(ym?: string) {
   return `${ym.slice(0, 4)}.${ym.slice(4, 6)}`;
 }
 
+const SEL_STYLE: React.CSSProperties = {
+  padding: '5px 10px', borderRadius: 8, border: '1px solid #e5e7eb',
+  fontSize: 13, color: '#1e293b', background: '#fff', cursor: 'pointer',
+};
+
 export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTrendStats }) {
   const [tab, setTab] = useState<TabKey>('rising');
 
-  // 지역 선택
-  const [sido, setSido] = useState('전국');
+  const [sido, setSido]       = useState('전국');
   const [sigungu, setSigungu] = useState('');
+  const [dong, setDong]       = useState('');
 
-  // 지역별 데이터
   const [regionalStats, setRegionalStats] = useState<TradeTrendStats>(null);
+  const [availableDongs, setAvailableDongs] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const fetchedRef = useRef<string>('');  // 중복 fetch 방지
+  const fetchedRef = useRef('');
 
-  const sigunguList = sido !== '전국' ? LAWD_CODE_MAP[sido as keyof typeof LAWD_CODE_MAP] ?? [] : [];
+  const sigunguList = sido !== '전국'
+    ? (LAWD_CODE_MAP[sido as keyof typeof LAWD_CODE_MAP] as readonly { name: string; code: string }[]) ?? []
+    : [];
 
   useEffect(() => {
     if (sido === '전국') {
       setRegionalStats(null);
+      setAvailableDongs([]);
       fetchedRef.current = '';
       return;
     }
 
-    // 시군구가 선택된 경우: lawdCd 사용 / 시도만 선택된 경우: sido 단위 fetch
     const found = sigungu
-      ? sigunguList.find((s: { name: string; code: string }) => s.name === sigungu)
+      ? sigunguList.find(s => s.name === sigungu)
       : null;
 
-    const cacheKey = found ? found.code : `sido:${sido}`;
+    // 캐시 키: lawdCd(+:동) or sido:이름
+    const cacheKey = found
+      ? (dong ? `${found.code}:${dong}` : found.code)
+      : `sido:${sido}`;
+
     if (fetchedRef.current === cacheKey) return;
     fetchedRef.current = cacheKey;
 
     setLoading(true);
     setRegionalStats(null);
 
-    const url = found
-      ? `/api/trade/trend?lawdCd=${found.code}&sido=${encodeURIComponent(sido)}&sigungu=${encodeURIComponent(sigungu)}`
-      : `/api/trade/trend?sido=${encodeURIComponent(sido)}`;
+    let url: string;
+    if (found) {
+      url = `/api/trade/trend?lawdCd=${found.code}&sido=${encodeURIComponent(sido)}&sigungu=${encodeURIComponent(sigungu)}`;
+      if (dong) url += `&dong=${encodeURIComponent(dong)}`;
+    } else {
+      url = `/api/trade/trend?sido=${encodeURIComponent(sido)}`;
+    }
 
     fetch(url)
       .then(r => r.json())
-      .then(data => setRegionalStats(data))
+      .then(data => {
+        setRegionalStats(data);
+        // 동 목록은 시군구 단위(dong 미선택)일 때만 갱신
+        if (found && !dong && data.dongs?.length) {
+          setAvailableDongs(data.dongs);
+        }
+      })
       .catch(() => setRegionalStats(null))
       .finally(() => setLoading(false));
-  }, [sido, sigungu, sigunguList]);
+  }, [sido, sigungu, dong, sigunguList]);
 
   const handleSidoChange = (v: string) => {
-    setSido(v);
-    setSigungu('');
-    fetchedRef.current = '';
-    setRegionalStats(null);
+    setSido(v); setSigungu(''); setDong('');
+    setAvailableDongs([]); setRegionalStats(null); fetchedRef.current = '';
+  };
+  const handleSigunguChange = (v: string) => {
+    setSigungu(v); setDong('');
+    setAvailableDongs([]); setRegionalStats(null); fetchedRef.current = '';
+  };
+  const handleDongChange = (v: string) => {
+    setDong(v); setRegionalStats(null); fetchedRef.current = '';
   };
 
-  const stats = sido === '전국' ? tradeStats : regionalStats;
   const isNational = sido === '전국';
+  const stats = isNational ? tradeStats : regionalStats;
   const currentTab = TABS.find(t => t.key === tab)!;
   const items: TradeStatItem[] = stats?.[tab] ?? [];
 
-  const title = isNational
-    ? '이번달 전국 실거래 동향'
-    : sigungu
-      ? `이번달 ${sido} ${sigungu} 실거래 동향`
-      : `이번달 ${sido} 실거래 동향`;
+  const titleParts = isNational ? ['전국'] : [sido, sigungu, dong].filter(Boolean);
+  const title = `이번달 ${titleParts.join(' ')} 실거래 동향`;
 
   const subtitle = stats
     ? `${fmtMonth(stats.current_month)} 아파트 · 전달(${fmtMonth(stats.prev_month)}) 대비 분석`
-    : isNational
-      ? '집계 데이터 없음'
-      : loading
-        ? '실시간 집계 중...'
-        : '실시간으로 집계합니다';
+    : loading ? '실시간 집계 중...' : '실시간으로 집계합니다';
 
   return (
     <div style={{ marginBottom: 32, borderRadius: 16, overflow: 'hidden', border: '1px solid #e5e7eb', background: '#fff' }}>
@@ -147,32 +167,26 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
         {/* 지역 선택 */}
         <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap', alignItems: 'center' }}>
           <span style={{ fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap' }}>지역 범위</span>
-          <select
-            value={sido}
-            onChange={e => handleSidoChange(e.target.value)}
-            style={{
-              padding: '5px 10px', borderRadius: 8, border: '1px solid #e5e7eb',
-              fontSize: 13, color: '#1e293b', background: '#fff', cursor: 'pointer',
-              fontWeight: sido === '전국' ? 700 : 500,
-            }}
-          >
+
+          {/* 시도 */}
+          <select value={sido} onChange={e => handleSidoChange(e.target.value)} style={{ ...SEL_STYLE, fontWeight: sido === '전국' ? 700 : 500 }}>
             <option value="전국">전국</option>
             {SIDOS.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
 
+          {/* 시군구 */}
           {sido !== '전국' && (
-            <select
-              value={sigungu}
-              onChange={e => setSigungu(e.target.value)}
-              style={{
-                padding: '5px 10px', borderRadius: 8, border: '1px solid #e5e7eb',
-                fontSize: 13, color: '#1e293b', background: '#fff', cursor: 'pointer',
-              }}
-            >
-              <option value="">시군구 선택</option>
-              {sigunguList.map((s: { name: string; code: string }) => (
-                <option key={s.code} value={s.name}>{s.name}</option>
-              ))}
+            <select value={sigungu} onChange={e => handleSigunguChange(e.target.value)} style={SEL_STYLE}>
+              <option value="">전체</option>
+              {sigunguList.map(s => <option key={s.code} value={s.name}>{s.name}</option>)}
+            </select>
+          )}
+
+          {/* 동 — 시군구 선택 후 데이터 로드 완료 시 표시 */}
+          {sigungu && availableDongs.length > 0 && (
+            <select value={dong} onChange={e => handleDongChange(e.target.value)} style={SEL_STYLE}>
+              <option value="">전체 동</option>
+              {availableDongs.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
           )}
 
@@ -188,9 +202,7 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
       {/* 탭 */}
       <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', overflowX: 'auto' }}>
         {TABS.map(t => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
+          <button key={t.key} onClick={() => setTab(t.key)}
             style={{
               flex: '0 0 auto', padding: '10px 18px', fontSize: 13,
               fontWeight: tab === t.key ? 700 : 500,
@@ -200,9 +212,7 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
               borderBottom: tab === t.key ? `2px solid ${t.color}` : '2px solid transparent',
               cursor: 'pointer', whiteSpace: 'nowrap',
             }}
-          >
-            {t.label}
-          </button>
+          >{t.label}</button>
         ))}
       </div>
 
@@ -217,41 +227,34 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
         </div>
       </div>
 
-      {/* 목록 */}
-      {!stats && !loading && !isNational && (
-        <div style={{ padding: '32px 20px', textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>
-          데이터가 없습니다.
-        </div>
-      )}
-
-      {!stats && !loading && isNational && (
-        <div style={{ padding: '32px 20px', textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>
-          데이터가 없습니다.
-        </div>
-      )}
-
+      {/* 본문 */}
       {loading && (
         <div style={{ padding: '32px 20px', textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>
-          실거래 데이터를 집계하는 중입니다... (5~15초 소요)
+          실거래 데이터를 집계하는 중입니다...
         </div>
       )}
 
-      {stats && items.length === 0 && (
+      {!stats && !loading && (
         <div style={{ padding: '32px 20px', textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>
-          해당 지역의 {TABS.find(t => t.key === tab)?.label} 데이터가 없습니다.
+          데이터가 없습니다.
+        </div>
+      )}
+
+      {stats && items.length === 0 && !loading && (
+        <div style={{ padding: '32px 20px', textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>
+          {TABS.find(t => t.key === tab)?.label} 데이터가 없습니다.
+          {(tab === 'rising' || tab === 'falling') && dong && (
+            <p style={{ fontSize: 12, marginTop: 6 }}>동 단위는 거래량이 적어 전달 대비 비교가 어려울 수 있습니다.</p>
+          )}
         </div>
       )}
 
       {stats && items.length > 0 && items.map((item, idx) => (
-        <div
-          key={idx}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            padding: '11px 20px',
-            borderBottom: idx < items.length - 1 ? '1px solid #f3f4f6' : 'none',
-          }}
-        >
-          {/* 순위 */}
+        <div key={idx} style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: '11px 20px',
+          borderBottom: idx < items.length - 1 ? '1px solid #f3f4f6' : 'none',
+        }}>
           <div style={{
             width: 28, height: 28, borderRadius: '50%',
             background: item.rank <= 3 ? RANK_COLORS[item.rank - 1] : '#f1f5f9',
@@ -262,7 +265,6 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
             {item.rank}
           </div>
 
-          {/* 단지명 + 위치 */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {item.name}
@@ -276,7 +278,6 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
             </div>
           </div>
 
-          {/* 수치 */}
           <div style={{ textAlign: 'right', flexShrink: 0, minWidth: 90 }}>
             {(tab === 'rising' || tab === 'falling') && (
               <>
