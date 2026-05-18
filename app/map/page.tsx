@@ -42,8 +42,8 @@ export type MapSaleItem = {
   totalUnits: number;
 };
 
-// 5초 내 resolve되지 않으면 빈 결과 반환
-function withTimeout<T>(promise: Promise<T>, fallback: T, ms = 5000): Promise<T> {
+// 7초 내 resolve되지 않으면 빈 결과 반환
+function withTimeout<T>(promise: Promise<T>, fallback: T, ms = 7000): Promise<T> {
   return Promise.race([
     promise,
     new Promise<T>(resolve => setTimeout(() => resolve(fallback), ms)),
@@ -62,7 +62,7 @@ export default async function MapPage() {
     withTimeout(
       fetchPublicSaleList({ type: 'all', perPage: 100, skipEnrich: true }),
       { items: [], total: 0 },
-      5000,
+      7000,
     ),
   ]).then(([u, s]) => [
     u.status === 'fulfilled' ? u.value : { data: [] },
@@ -73,7 +73,11 @@ export default async function MapPage() {
   const unsoldListings: MapUnsoldItem[] = (unsoldRaw ?? []).filter(i => i.location);
 
   const saleListings: MapSaleItem[] = (saleResult.items ?? [])
-    .filter((i: any) => i.status === '청약중' || i.status?.includes('예정'))
+    .filter((i: any) =>
+      i.status === '청약중' ||
+      i.status === '선착순분양' ||  // 잔여세대·임의공급(무순위) 포함
+      i.status?.includes('예정')
+    )
     .map((i: any) => ({
       houseManageNo: i.houseManageNo,
       name: i.name,
