@@ -8,6 +8,13 @@ function ym(offsetMonths = 0) {
   return `${t.getFullYear()}${String(t.getMonth() + 1).padStart(2, '0')}`;
 }
 
+function prevYm(month: string) {
+  const y = parseInt(month.slice(0, 4));
+  const m = parseInt(month.slice(4, 6));
+  const d = new Date(y, m - 2, 1); // m-1 월의 첫날 (0-indexed라 m-2)
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
 async function fetchAll(lawdCd: string, dealYmd: string): Promise<TradeItem[]> {
   const items: TradeItem[] = [];
   let page = 1;
@@ -29,7 +36,9 @@ async function fetchSido(sidoName: string, dealYmd: string): Promise<TradeItem[]
     seen.add(d.code);
     return true;
   });
-  const results = await Promise.all(uniq.map(d => fetchAll(d.code, dealYmd).catch(() => [] as TradeItem[])));
+  const results = await Promise.all(
+    uniq.map(d => fetchAll(d.code, dealYmd).catch(() => [] as TradeItem[]))
+  );
   return results.flat();
 }
 
@@ -123,13 +132,14 @@ export async function GET(req: NextRequest) {
   const sido    = req.nextUrl.searchParams.get('sido') || '';
   const sigungu = req.nextUrl.searchParams.get('sigungu') || '';
   const dong    = req.nextUrl.searchParams.get('dong') || '';
+  const month   = req.nextUrl.searchParams.get('month') || ym(0);
 
   if (!lawdCd && !sido) {
     return NextResponse.json({ error: 'lawdCd or sido required' }, { status: 400 });
   }
 
-  const currYm = ym(0);
-  const prevYm = ym(-1);
+  const currYm = month;
+  const pYm    = prevYm(month);
   const location = [sido, sigungu, dong].filter(Boolean).join(' ');
 
   try {
@@ -139,27 +149,26 @@ export async function GET(req: NextRequest) {
     if (lawdCd) {
       [curr, prev] = await Promise.all([
         fetchAll(lawdCd, currYm),
-        fetchAll(lawdCd, prevYm),
+        fetchAll(lawdCd, pYm),
       ]);
     } else {
       [curr, prev] = await Promise.all([
         fetchSido(sido, currYm),
-        fetchSido(sido, prevYm),
+        fetchSido(sido, pYm),
       ]);
     }
 
-    // 동 목록: dong 필터 전에 추출 (시군구 선택 시 드롭다운용)
+    // 동 목록은 dong 필터 전에 추출
     const dongs = lawdCd
       ? [...new Set(curr.map(t => t.dong))].filter(Boolean).sort()
       : [];
 
-    // 동 필터 적용
     if (dong) {
       curr = curr.filter(t => t.dong === dong);
       prev = prev.filter(t => t.dong === dong);
     }
 
-    const stats = computeStats(curr, prev, location, currYm, prevYm);
+    const stats = computeStats(curr, prev, location, currYm, pYm);
     const res = NextResponse.json({ ...stats, dongs });
     res.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
     return res;

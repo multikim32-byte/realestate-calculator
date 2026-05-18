@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { LAWD_CODE_MAP } from '@/lib/tradeApi';
+import { LAWD_CODE_MAP, recentMonths } from '@/lib/tradeApi';
 
 type TradeStatItem = {
   rank: number;
@@ -45,6 +45,8 @@ const TABS: { key: TabKey; label: string; color: string; activeBg: string }[] = 
 
 const RANK_COLORS = ['#f59e0b', '#94a3b8', '#cd7f32'];
 const SIDOS = Object.keys(LAWD_CODE_MAP) as (keyof typeof LAWD_CODE_MAP)[];
+const MONTHS = recentMonths(36); // 최근 3년
+const CURRENT_MONTH = MONTHS[0].value;
 
 function fmt(n?: number) {
   if (!n) return '-';
@@ -57,29 +59,32 @@ function fmtMonth(ym?: string) {
   return `${ym.slice(0, 4)}.${ym.slice(4, 6)}`;
 }
 
-const SEL_STYLE: React.CSSProperties = {
+const SEL: React.CSSProperties = {
   padding: '5px 10px', borderRadius: 8, border: '1px solid #e5e7eb',
   fontSize: 13, color: '#1e293b', background: '#fff', cursor: 'pointer',
 };
 
 export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTrendStats }) {
-  const [tab, setTab] = useState<TabKey>('rising');
-
+  const [tab, setTab]         = useState<TabKey>('rising');
   const [sido, setSido]       = useState('전국');
   const [sigungu, setSigungu] = useState('');
   const [dong, setDong]       = useState('');
+  const [month, setMonth]     = useState(CURRENT_MONTH);
 
-  const [regionalStats, setRegionalStats] = useState<TradeTrendStats>(null);
+  const [regionalStats, setRegionalStats]   = useState<TradeTrendStats>(null);
   const [availableDongs, setAvailableDongs] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading]               = useState(false);
   const fetchedRef = useRef('');
 
   const sigunguList = sido !== '전국'
     ? (LAWD_CODE_MAP[sido as keyof typeof LAWD_CODE_MAP] as readonly { name: string; code: string }[]) ?? []
     : [];
 
+  // 전국 + 이번달 → Supabase 사전집계 사용 (fetch 불필요)
+  const usePrebuilt = sido === '전국' && month === CURRENT_MONTH;
+
   useEffect(() => {
-    if (sido === '전국') {
+    if (usePrebuilt) {
       setRegionalStats(null);
       setAvailableDongs([]);
       fetchedRef.current = '';
@@ -90,10 +95,11 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
       ? sigunguList.find(s => s.name === sigungu)
       : null;
 
-    // 캐시 키: lawdCd(+:동) or sido:이름
-    const cacheKey = found
-      ? (dong ? `${found.code}:${dong}` : found.code)
-      : `sido:${sido}`;
+    const cacheKey = [
+      found ? found.code : (sido !== '전국' ? `sido:${sido}` : 'national'),
+      dong || '',
+      month,
+    ].join(':');
 
     if (fetchedRef.current === cacheKey) return;
     fetchedRef.current = cacheKey;
@@ -101,26 +107,33 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
     setLoading(true);
     setRegionalStats(null);
 
-    let url: string;
+    const params = new URLSearchParams();
     if (found) {
-      url = `/api/trade/trend?lawdCd=${found.code}&sido=${encodeURIComponent(sido)}&sigungu=${encodeURIComponent(sigungu)}`;
-      if (dong) url += `&dong=${encodeURIComponent(dong)}`;
+      params.set('lawdCd', found.code);
+      params.set('sido', sido);
+      params.set('sigungu', sigungu);
+      if (dong) params.set('dong', dong);
+    } else if (sido !== '전국') {
+      params.set('sido', sido);
     } else {
-      url = `/api/trade/trend?sido=${encodeURIComponent(sido)}`;
+      // 전국 + 과거 월: sido 없이 모든 시도를 다 돌리기엔 너무 오래 걸리므로
+      // 전국 과거 데이터는 지원하지 않음 (아래 early return)
+      setLoading(false);
+      return;
     }
+    if (month !== CURRENT_MONTH) params.set('month', month);
 
-    fetch(url)
+    fetch(`/api/trade/trend?${params}`)
       .then(r => r.json())
       .then(data => {
         setRegionalStats(data);
-        // 동 목록은 시군구 단위(dong 미선택)일 때만 갱신
         if (found && !dong && data.dongs?.length) {
           setAvailableDongs(data.dongs);
         }
       })
       .catch(() => setRegionalStats(null))
       .finally(() => setLoading(false));
-  }, [sido, sigungu, dong, sigunguList]);
+  }, [sido, sigungu, dong, month, sigunguList, usePrebuilt]);
 
   const handleSidoChange = (v: string) => {
     setSido(v); setSigungu(''); setDong('');
@@ -133,18 +146,29 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
   const handleDongChange = (v: string) => {
     setDong(v); setRegionalStats(null); fetchedRef.current = '';
   };
+  const handleMonthChange = (v: string) => {
+    setMonth(v); setRegionalStats(null); fetchedRef.current = '';
+    // 과거 월 선택 시 동 목록 초기화 (재fetch 필요)
+    setAvailableDongs([]);
+  };
 
-  const isNational = sido === '전국';
-  const stats = isNational ? tradeStats : regionalStats;
-  const currentTab = TABS.find(t => t.key === tab)!;
+  const isNational   = sido === '전국';
+  const isPastMonth  = month !== CURRENT_MONTH;
+  const stats        = usePrebuilt ? tradeStats : regionalStats;
+  const currentTab   = TABS.find(t => t.key === tab)!;
   const items: TradeStatItem[] = stats?.[tab] ?? [];
 
   const titleParts = isNational ? ['전국'] : [sido, sigungu, dong].filter(Boolean);
-  const title = `이번달 ${titleParts.join(' ')} 실거래 동향`;
+  const selectedMonthLabel = MONTHS.find(m => m.value === month)?.label ?? fmtMonth(month);
+  const title = `${selectedMonthLabel} ${titleParts.join(' ')} 실거래 동향`;
 
   const subtitle = stats
     ? `${fmtMonth(stats.current_month)} 아파트 · 전달(${fmtMonth(stats.prev_month)}) 대비 분석`
-    : loading ? '실시간 집계 중...' : '실시간으로 집계합니다';
+    : loading
+      ? '실시간 집계 중...'
+      : isNational && isPastMonth
+        ? '전국 과거 데이터는 시도를 선택해 주세요'
+        : '실시간으로 집계합니다';
 
   return (
     <div style={{ marginBottom: 32, borderRadius: 16, overflow: 'hidden', border: '1px solid #e5e7eb', background: '#fff' }}>
@@ -157,34 +181,41 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
           </div>
           {stats && (
             <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#6b7280', paddingTop: 2 }}>
-              <span>이번달 <strong style={{ color: '#1e293b' }}>{(stats.total_trades_current ?? 0).toLocaleString()}</strong>건</span>
+              <span>해당월 <strong style={{ color: '#1e293b' }}>{(stats.total_trades_current ?? 0).toLocaleString()}</strong>건</span>
               <span>전달 <strong style={{ color: '#1e293b' }}>{(stats.total_trades_prev ?? 0).toLocaleString()}</strong>건</span>
-              <span style={{ color: '#d1d5db' }}>집계 {stats.stat_date}</span>
+              {!isPastMonth && <span style={{ color: '#d1d5db' }}>집계 {stats.stat_date}</span>}
             </div>
           )}
         </div>
 
-        {/* 지역 선택 */}
+        {/* 필터 행 */}
         <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap' }}>지역 범위</span>
+          {/* 월 선택 */}
+          <select value={month} onChange={e => handleMonthChange(e.target.value)} style={{ ...SEL, fontWeight: 600, color: isPastMonth ? '#7c3aed' : '#1e293b', borderColor: isPastMonth ? '#ddd6fe' : '#e5e7eb' }}>
+            {MONTHS.map(m => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+
+          <span style={{ fontSize: 12, color: '#d1d5db' }}>|</span>
 
           {/* 시도 */}
-          <select value={sido} onChange={e => handleSidoChange(e.target.value)} style={{ ...SEL_STYLE, fontWeight: sido === '전국' ? 700 : 500 }}>
+          <select value={sido} onChange={e => handleSidoChange(e.target.value)} style={{ ...SEL, fontWeight: sido === '전국' ? 700 : 500 }}>
             <option value="전국">전국</option>
             {SIDOS.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
 
           {/* 시군구 */}
           {sido !== '전국' && (
-            <select value={sigungu} onChange={e => handleSigunguChange(e.target.value)} style={SEL_STYLE}>
+            <select value={sigungu} onChange={e => handleSigunguChange(e.target.value)} style={SEL}>
               <option value="">전체</option>
               {sigunguList.map(s => <option key={s.code} value={s.name}>{s.name}</option>)}
             </select>
           )}
 
-          {/* 동 — 시군구 선택 후 데이터 로드 완료 시 표시 */}
+          {/* 동 — 시군구 데이터 로드 후 표시 */}
           {sigungu && availableDongs.length > 0 && (
-            <select value={dong} onChange={e => handleDongChange(e.target.value)} style={SEL_STYLE}>
+            <select value={dong} onChange={e => handleDongChange(e.target.value)} style={SEL}>
               <option value="">전체 동</option>
               {availableDongs.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
@@ -234,7 +265,20 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
         </div>
       )}
 
-      {!stats && !loading && (
+      {!stats && !loading && isNational && isPastMonth && (
+        <div style={{ padding: '28px 20px', textAlign: 'center' }}>
+          <p style={{ fontSize: 14, color: '#6b7280', margin: '0 0 6px' }}>전국 과거 데이터는 집계 시간이 매우 오래 걸립니다.</p>
+          <p style={{ fontSize: 13, color: '#9ca3af', margin: 0 }}>위에서 시도를 선택하면 해당 지역 과거 동향을 확인할 수 있습니다.</p>
+        </div>
+      )}
+
+      {!stats && !loading && !isNational && (
+        <div style={{ padding: '32px 20px', textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>
+          데이터가 없습니다.
+        </div>
+      )}
+
+      {!stats && !loading && isNational && !isPastMonth && (
         <div style={{ padding: '32px 20px', textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>
           데이터가 없습니다.
         </div>
@@ -307,7 +351,7 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
       ))}
 
       <div style={{ padding: '10px 20px', fontSize: 11, color: '#cbd5e1', borderTop: '1px solid #f3f4f6' }}>
-        국토교통부 실거래가 공개시스템 기반 · {isNational ? '전국 아파트 집계 · 매일 03:00 KST 업데이트' : '실시간 집계'}
+        국토교통부 실거래가 공개시스템 기반 · {usePrebuilt ? '전국 아파트 집계 · 매일 03:00 KST 업데이트' : '실시간 집계'}
       </div>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
