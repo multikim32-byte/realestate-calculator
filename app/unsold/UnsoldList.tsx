@@ -241,7 +241,7 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
               {/* 썸네일 */}
               <div style={{ width: '100%', height: 200, background: '#e2e8f0', position: 'relative', overflow: 'hidden' }}>
                 {item.thumbnail_url ? (
-                  <Image src={item.thumbnail_url} alt={item.name} fill sizes="(max-width: 768px) 100vw, 400px" style={{ objectFit: 'cover' }} />
+                  <Image src={item.thumbnail_url} alt={item.name} fill sizes="(max-width: 768px) 100vw, 400px" style={{ objectFit: 'cover' }} unoptimized />
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 48 }}>🏢</div>
                 )}

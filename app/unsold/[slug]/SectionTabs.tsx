@@ -21,6 +21,7 @@ export default function SectionTabs({ sections }: { sections: UnsoldSection[] })
               height={0}
               sizes="(max-width: 860px) 100vw, 860px"
               style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 8, marginBottom: 8 }}
+              unoptimized
             />
           ))}
         </div>

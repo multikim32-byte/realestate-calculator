@@ -91,7 +91,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       url: `https://www.aptzipsa.kr/unsold/${canonical}`,
       siteName: '아파트집사',
       images: item.thumbnail_url
-        ? [{ url: `https://www.aptzipsa.kr/_next/image?url=${encodeURIComponent(item.thumbnail_url)}&w=1200&q=80` }]
+        ? [{ url: item.thumbnail_url }]
         : [],
     },
   };
@@ -199,7 +199,7 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ s
           {/* 썸네일 */}
           <div style={{ width: '100%', height: 320, background: '#e2e8f0', position: 'relative', overflow: 'hidden' }}>
             {item.thumbnail_url ? (
-              <Image src={item.thumbnail_url} alt={item.name} fill sizes="(max-width: 768px) 100vw, 900px" style={{ objectFit: 'cover' }} priority />
+              <Image src={item.thumbnail_url} alt={item.name} fill sizes="(max-width: 768px) 100vw, 900px" style={{ objectFit: 'cover' }} priority unoptimized />
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 72 }}>🏢</div>
             )}
