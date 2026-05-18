@@ -35,7 +35,7 @@ export default async function SaleSchedulePage() {
   );
 
   const [saleResult, { data: notesRaw }] = await Promise.all([
-    fetchPublicSaleList({ type: 'all', perPage: 100, skipEnrich: true }),
+    fetchPublicSaleList({ type: 'all', perPage: 500, skipEnrich: true }),
     db.from('sale_schedule_notes').select('*').order('created_at', { ascending: false }),
   ]);
 
@@ -48,7 +48,7 @@ export default async function SaleSchedulePage() {
       <div style={{ maxWidth: 1400, margin: '0 auto', padding: '32px 20px 80px' }}>
         <div style={{ marginBottom: 24 }}>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1e293b', margin: '0 0 4px' }}>청약 일정 관리</h1>
-          <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>청약홈 API 기준 최근 100건 · 메모·추가·삭제·엑셀 다운로드 지원</p>
+          <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>청약홈 API 기준 최대 500건 · 메모·추가·삭제·엑셀 다운로드 지원</p>
         </div>
         <SaleScheduleClient items={items} notes={notes} />
       </div>
