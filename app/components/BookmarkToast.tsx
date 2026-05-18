@@ -61,6 +61,16 @@ export default function BookmarkToast() {
 
   return (
     <>
+      <style>{`
+        @keyframes mk-slide-up {
+          from { transform: translateY(100px); opacity: 0; }
+          to   { transform: translateY(0);    opacity: 1; }
+        }
+        .mk-toast {
+          animation: mk-slide-up 0.35s ease;
+        }
+      `}</style>
+
       <div style={{
         position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
         zIndex: 9999, width: 'min(360px, calc(100vw - 32px))',

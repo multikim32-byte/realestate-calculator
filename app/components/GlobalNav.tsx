@@ -37,6 +37,17 @@ export default function GlobalNav() {
 
   return (
     <>
+      <style>{`
+        .gnav-desktop { display: flex; }
+        .gnav-hamburger { display: none !important; }
+        .gnav-mobile { display: none; }
+        @media (max-width: 768px) {
+          .gnav-desktop { display: none !important; }
+          .gnav-hamburger { display: flex !important; }
+          .gnav-mobile.open { display: flex; }
+        }
+      `}</style>
+
       <header style={{
         background: '#fff',
         borderBottom: '1px solid #e5e7eb',
