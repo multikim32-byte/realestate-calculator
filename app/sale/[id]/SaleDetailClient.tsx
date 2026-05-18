@@ -7,6 +7,7 @@ import Image from 'next/image';
 import GlobalNav from '../../components/GlobalNav';
 import KakaoMap from '../../components/KakaoMap';
 import NearbyTradeSection from '../../components/NearbyTradeSection';
+import CompetitionRateSection from '../../components/CompetitionRateSection';
 import type { SaleContent } from '@/lib/saleContent';
 
 type UnitDetail = { type: string; area: number; supplyArea?: number; count: number; specialCount?: number; price: number };
@@ -220,93 +221,6 @@ function Row({ label, value }: { label: string; value: string }) {
 
 type UnsoldLink = { id: string; name: string; thumbnail_url: string | null; benefit: string | null; min_price: number | null };
 
-type RatioRow = {
-  주택형: string;
-  순위: number;
-  거주지역: string;
-  거주코드: number;
-  공급세대수: number;
-  접수건수: number;
-  경쟁률: string | null;
-};
-
-function RatioSection({ houseManageNo, winnerDate }: { houseManageNo: string; winnerDate: string }) {
-  const [rows, setRows] = useState<RatioRow[]>([]);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    if (!winnerDate || today < winnerDate) { setLoaded(true); return; }
-    fetch(`/api/sale/ratio?houseManageNo=${houseManageNo}`)
-      .then(r => r.json())
-      .then(d => { setRows(d.ratio ?? []); setLoaded(true); })
-      .catch(() => setLoaded(true));
-  }, [houseManageNo, winnerDate]);
-
-  if (!loaded) return null;
-  if (rows.length === 0) return null;
-
-  // 주택형별 그룹핑
-  const byUnit = new Map<string, RatioRow[]>();
-  for (const r of rows) {
-    if (!byUnit.has(r.주택형)) byUnit.set(r.주택형, []);
-    byUnit.get(r.주택형)!.push(r);
-  }
-
-  function renderRatio(val: string | null) {
-    if (!val) return <span style={{ color: '#9ca3af' }}>-</span>;
-    if (val.startsWith('(△')) {
-      const n = val.replace('(△', '').replace(')', '');
-      return <span style={{ color: '#ef4444', fontWeight: 700 }}>미달 (-{n})</span>;
-    }
-    const num = parseFloat(val);
-    const color = num >= 10 ? '#059669' : num >= 2 ? '#1d4ed8' : '#374151';
-    return <span style={{ color, fontWeight: 700 }}>{num.toFixed(2)}:1</span>;
-  }
-
-  return (
-    <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: '24px', marginTop: 16 }}>
-      <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 800, color: '#1e293b' }}>청약 경쟁률 결과</h2>
-      <p style={{ margin: '0 0 16px', fontSize: 12, color: '#9ca3af' }}>일반공급(1·2순위) 기준 · 특별공급 미포함</p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {[...byUnit.entries()].map(([unitType, unitRows]) => {
-          const rank1 = unitRows.filter(r => r.순위 === 1);
-          const rank2 = unitRows.filter(r => r.순위 === 2);
-          const allRanks = [{ label: '1순위', rows: rank1 }, { label: '2순위', rows: rank2 }];
-          return (
-            <div key={unitType} style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
-              <div style={{ padding: '8px 14px', background: '#eff6ff', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 11, color: '#6b7280', fontWeight: 600 }}>주택형</span>
-                <span style={{ fontSize: 14, fontWeight: 800, color: '#1d4ed8' }}>{unitType}</span>
-                <span style={{ fontSize: 11, color: '#9ca3af', marginLeft: 'auto' }}>공급 {rank1[0]?.공급세대수 ?? '-'}세대</span>
-              </div>
-              <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {allRanks.map(({ label, rows: rankRows }) => (
-                  rankRows.length === 0 ? null : (
-                    <div key={label}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 6, paddingBottom: 4, borderBottom: '1px solid #f3f4f6' }}>{label}</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        {rankRows.sort((a, b) => a.거주코드 - b.거주코드).map(r => (
-                          <div key={r.거주지역} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
-                            <span style={{ color: '#6b7280', minWidth: 70 }}>{r.거주지역}</span>
-                            <span style={{ color: '#374151', marginLeft: 8 }}>
-                              {r.접수건수.toLocaleString()}명 신청
-                            </span>
-                            <span style={{ marginLeft: 'auto' }}>{renderRatio(r.경쟁률)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 export default function SaleDetailClient({ content }: { content: SaleContent | null }) {
   const { id } = useParams<{ id: string }>();
@@ -673,8 +587,14 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
         )}
 
         {/* 청약 경쟁률 결과 */}
-        {item.houseManageNo && item.winnerDate && (
-          <RatioSection houseManageNo={item.houseManageNo} winnerDate={item.winnerDate} />
+        {item.houseManageNo && (
+          <CompetitionRateSection
+            houseManageNo={item.houseManageNo}
+            pblancNo={item.pblancNo ?? ''}
+            status={item.status}
+            buildingType={item.buildingType}
+            recruitType={item.recruitType}
+          />
         )}
 
         {/* 연결된 미분양 매물 */}

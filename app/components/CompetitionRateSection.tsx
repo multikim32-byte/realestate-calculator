@@ -44,8 +44,13 @@ function fmt(v: string | number | undefined) {
 
 function fmtRate(v: string | number | undefined) {
   if (v === undefined || v === null || v === '') return '-';
-  const n = parseFloat(String(v));
-  if (isNaN(n)) return String(v);
+  const s = String(v);
+  if (s.startsWith('(△') || s.startsWith('(▲')) {
+    const n = s.replace(/[()△▲]/g, '');
+    return `미달 (${n})`;
+  }
+  const n = parseFloat(s);
+  if (isNaN(n)) return s;
   return `${n.toFixed(2)} : 1`;
 }
 
@@ -58,7 +63,7 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, buildi
     if (!open || !houseManageNo) return;
     if (rows !== null) return; // 이미 불러옴
     setLoading(true);
-    fetch(`/api/sale/ratio?houseManageNo=${houseManageNo}`)
+    fetch(`/api/sale/ratio?houseManageNo=${houseManageNo}&pblancNo=${pblancNo}`)
       .then(r => r.json())
       .then(data => setRows(data.ratio ?? []))
       .catch(() => setRows([]))
