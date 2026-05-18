@@ -74,9 +74,8 @@ export default async function MapPage() {
 
   const saleListings: MapSaleItem[] = (saleResult.items ?? [])
     .filter((i: any) =>
-      i.status === '청약중' ||
-      i.status === '선착순분양' ||  // 잔여세대·임의공급(무순위) 포함
-      i.status?.includes('예정')
+      i.buildingType === '아파트' &&
+      i.status !== '청약마감'  // 청약예정·청약중·당첨발표까지만 표시
     )
     .map((i: any) => ({
       houseManageNo: i.houseManageNo,
