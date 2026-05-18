@@ -370,11 +370,6 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
         국토교통부 실거래가 공개시스템 기반 · {usePrebuilt ? '전국 아파트 집계 · 매일 03:00 KST 업데이트' : '실시간 집계'}
       </div>
 
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .trend-apt-link { color: inherit; text-decoration: none; }
-        .trend-apt-link:hover { text-decoration: underline; color: #1d4ed8; }
-      `}</style>
     </div>
   );
 }

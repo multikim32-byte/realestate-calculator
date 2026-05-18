@@ -24,3 +24,8 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.trend-apt-link { color: inherit; text-decoration: none; }
+.trend-apt-link:hover { text-decoration: underline; color: #1d4ed8; }
