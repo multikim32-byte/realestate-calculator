@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchTradeList } from '@/lib/tradeApi';
+import { fetchTradeList, LAWD_CODE_MAP } from '@/lib/tradeApi';
 import type { TradeItem } from '@/lib/tradeApi';
 
 function ym(offsetMonths = 0) {
@@ -20,12 +20,28 @@ async function fetchAll(lawdCd: string, dealYmd: string): Promise<TradeItem[]> {
   return items;
 }
 
+// 시도 전체: 해당 시도의 모든 시군구를 병렬 fetch 후 합산
+async function fetchSido(sidoName: string, dealYmd: string): Promise<TradeItem[]> {
+  const districts = LAWD_CODE_MAP[sidoName as keyof typeof LAWD_CODE_MAP];
+  if (!districts) return [];
+
+  // 중복 코드 제거
+  const seen = new Set<string>();
+  const uniq = (districts as readonly { name: string; code: string }[]).filter(d => {
+    if (seen.has(d.code)) return false;
+    seen.add(d.code);
+    return true;
+  });
+
+  const results = await Promise.all(uniq.map(d => fetchAll(d.code, dealYmd).catch(() => [] as TradeItem[])));
+  return results.flat();
+}
+
 function computeStats(
   curr: TradeItem[], prev: TradeItem[],
-  sido: string, sigungu: string,
+  location: string,
   currYm: string, prevYm: string,
 ) {
-  const location = sido && sigungu ? `${sido} ${sigungu}` : '';
   const bucket = (a: number) => Math.round(a / 5) * 5;
 
   type Group = { trades: TradeItem[]; meta: TradeItem };
@@ -111,17 +127,33 @@ export async function GET(req: NextRequest) {
   const sido    = req.nextUrl.searchParams.get('sido') || '';
   const sigungu = req.nextUrl.searchParams.get('sigungu') || '';
 
-  if (!lawdCd) return NextResponse.json({ error: 'lawdCd required' }, { status: 400 });
+  if (!lawdCd && !sido) {
+    return NextResponse.json({ error: 'lawdCd or sido required' }, { status: 400 });
+  }
 
   const currYm = ym(0);
   const prevYm = ym(-1);
+  const location = sigungu ? `${sido} ${sigungu}` : sido;
 
   try {
-    const [curr, prev] = await Promise.all([
-      fetchAll(lawdCd, currYm),
-      fetchAll(lawdCd, prevYm),
-    ]);
-    const stats = computeStats(curr, prev, sido, sigungu, currYm, prevYm);
+    let curr: TradeItem[];
+    let prev: TradeItem[];
+
+    if (lawdCd) {
+      // 시군구 단위: 단일 코드 fetch
+      [curr, prev] = await Promise.all([
+        fetchAll(lawdCd, currYm),
+        fetchAll(lawdCd, prevYm),
+      ]);
+    } else {
+      // 시도 단위: 해당 시도 전체 병렬 fetch
+      [curr, prev] = await Promise.all([
+        fetchSido(sido, currYm),
+        fetchSido(sido, prevYm),
+      ]);
+    }
+
+    const stats = computeStats(curr, prev, location, currYm, prevYm);
     const res = NextResponse.json(stats);
     res.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
     return res;

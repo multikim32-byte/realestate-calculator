@@ -71,21 +71,29 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
   const sigunguList = sido !== '전국' ? LAWD_CODE_MAP[sido as keyof typeof LAWD_CODE_MAP] ?? [] : [];
 
   useEffect(() => {
-    if (sido === '전국' || !sigungu) {
+    if (sido === '전국') {
       setRegionalStats(null);
       fetchedRef.current = '';
       return;
     }
-    const found = sigunguList.find((s: { name: string; code: string }) => s.name === sigungu);
-    if (!found) return;
 
-    const cacheKey = `${found.code}`;
+    // 시군구가 선택된 경우: lawdCd 사용 / 시도만 선택된 경우: sido 단위 fetch
+    const found = sigungu
+      ? sigunguList.find((s: { name: string; code: string }) => s.name === sigungu)
+      : null;
+
+    const cacheKey = found ? found.code : `sido:${sido}`;
     if (fetchedRef.current === cacheKey) return;
     fetchedRef.current = cacheKey;
 
     setLoading(true);
     setRegionalStats(null);
-    fetch(`/api/trade/trend?lawdCd=${found.code}&sido=${encodeURIComponent(sido)}&sigungu=${encodeURIComponent(sigungu)}`)
+
+    const url = found
+      ? `/api/trade/trend?lawdCd=${found.code}&sido=${encodeURIComponent(sido)}&sigungu=${encodeURIComponent(sigungu)}`
+      : `/api/trade/trend?sido=${encodeURIComponent(sido)}`;
+
+    fetch(url)
       .then(r => r.json())
       .then(data => setRegionalStats(data))
       .catch(() => setRegionalStats(null))
@@ -114,7 +122,9 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
     ? `${fmtMonth(stats.current_month)} 아파트 · 전달(${fmtMonth(stats.prev_month)}) 대비 분석`
     : isNational
       ? '집계 데이터 없음'
-      : sigungu ? '시군구를 선택하면 실시간으로 집계합니다' : '시군구를 선택해 주세요';
+      : loading
+        ? '실시간 집계 중...'
+        : '실시간으로 집계합니다';
 
   return (
     <div style={{ marginBottom: 32, borderRadius: 16, overflow: 'hidden', border: '1px solid #e5e7eb', background: '#fff' }}>
@@ -210,7 +220,7 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
       {/* 목록 */}
       {!stats && !loading && !isNational && (
         <div style={{ padding: '32px 20px', textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>
-          {sigungu ? '데이터가 없습니다.' : '위에서 시군구를 선택해 주세요.'}
+          데이터가 없습니다.
         </div>
       )}
 
