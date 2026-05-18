@@ -20,9 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   try {
     const content = await fetchSaleContent(id);
-    const title = content?.title
-      ? `${content.title} 청약정보 | 아파트집사`
-      : '청약 상세정보 | 아파트집사';
+    const title = '청약 상세정보 | 아파트집사';
     const description = content?.summary || '청약 일정·분양가·경쟁률·인근 실거래가를 한눈에 확인하세요.';
     const ogImages = content?.thumbnail_url
       ? [{ url: content.thumbnail_url, width: 1200, height: 630 }]
