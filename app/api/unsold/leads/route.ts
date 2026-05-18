@@ -7,9 +7,25 @@ export async function POST(req: NextRequest) {
   if (!unsold_id || !name?.trim() || !phone?.trim()) {
     return NextResponse.json({ error: '필수 항목 누락' }, { status: 400 });
   }
+
+  const trimmedPhone = phone.trim();
+
+  // 같은 번호로 같은 매물에 24시간 내 중복 문의 차단
+  const oneDayAgo = new Date(Date.now() - 86_400_000).toISOString();
+  const { data: dup } = await supabase
+    .from('unsold_leads')
+    .select('id')
+    .eq('unsold_id', unsold_id)
+    .eq('phone', trimmedPhone)
+    .gte('created_at', oneDayAgo)
+    .maybeSingle();
+  if (dup) {
+    return NextResponse.json({ error: '이미 문의하셨습니다. 24시간 후 다시 시도해주세요.' }, { status: 429 });
+  }
+
   const { error } = await supabase
     .from('unsold_leads')
-    .insert({ unsold_id, name: name.trim(), phone: phone.trim() });
+    .insert({ unsold_id, name: name.trim(), phone: trimmedPhone });
   if (error) return NextResponse.json({ error: '저장 실패' }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
@@ -23,7 +39,8 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from('unsold_leads')
     .select('*, unsold_listings(name)')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(1000);
   if (unsoldId) query = query.eq('unsold_id', unsoldId);
 
   const { data, error } = await query;
