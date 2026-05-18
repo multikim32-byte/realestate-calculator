@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { LAWD_CODE_MAP, recentMonths } from '@/lib/tradeApi';
 
 type TradeStatItem = {
@@ -49,13 +48,15 @@ const SIDOS = Object.keys(LAWD_CODE_MAP) as (keyof typeof LAWD_CODE_MAP)[];
 const MONTHS = recentMonths(36); // 최근 3년
 const CURRENT_MONTH = MONTHS[0].value;
 
-function getTradeLink(item: TradeStatItem, month: string): string {
+// sigungu 정보가 없으면 어느 구를 검색해야 할지 알 수 없어 null 반환
+function getTradeLink(item: TradeStatItem, month: string): string | null {
   const parts = (item.location || '').trim().split(' ');
   const sido = parts[0] || '';
   const sigungu = parts.length > 1 ? parts.slice(1).join(' ') : '';
+  if (!sido || sido === '전국' || !sigungu) return null;
   const params = new URLSearchParams();
-  if (sido && sido !== '전국') params.set('sido', sido);
-  if (sigungu) params.set('sigungu', sigungu);
+  params.set('sido', sido);
+  params.set('sigungu', sigungu);
   params.set('month', month);
   params.set('apt', item.name);
   return `/trade?${params}`;
@@ -324,9 +325,9 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
 
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              <Link href={getTradeLink(item, month)} className="trend-apt-link">
-                {item.name}
-              </Link>
+              {(() => { const link = getTradeLink(item, month); return link
+                ? <a href={link} className="trend-apt-link">{item.name}</a>
+                : <span>{item.name}</span>; })()}
               {item.dong ? <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 400, marginLeft: 5 }}>{item.dong}</span> : null}
             </div>
             <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
