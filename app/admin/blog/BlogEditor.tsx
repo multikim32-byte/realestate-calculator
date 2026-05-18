@@ -332,7 +332,7 @@ export default function BlogEditor({ initial }: { initial: BlogPostData }) {
               <label style={labelStyle}>썸네일 이미지</label>
               {form.thumbnail_url && (
                 <div style={{ marginBottom: 10, position: 'relative', borderRadius: 8, overflow: 'hidden', aspectRatio: '16/9' }}>
-                  <Image src={form.thumbnail_url} alt="" fill style={{ objectFit: 'cover' }} />
+                  <Image src={form.thumbnail_url} alt="" fill style={{ objectFit: 'cover' }} unoptimized />
                   <button
                     onClick={() => set('thumbnail_url', null)}
                     style={{

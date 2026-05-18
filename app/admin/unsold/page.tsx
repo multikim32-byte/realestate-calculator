@@ -292,7 +292,7 @@ export default function AdminUnsoldListPage() {
                 <input type="checkbox" checked={selected.has(item.id)} onChange={() => toggleSelect(item.id)} style={{ cursor: 'pointer', flexShrink: 0 }} />
                 <div style={{ width: 60, height: 60, borderRadius: 8, background: '#e2e8f0', overflow: 'hidden', flexShrink: 0 }}>
                   {item.thumbnail_url
-                    ? <Image src={item.thumbnail_url} alt={item.name} width={60} height={60} style={{ objectFit: 'cover' }} />
+                    ? <Image src={item.thumbnail_url} alt={item.name} width={60} height={60} style={{ objectFit: 'cover' }} unoptimized />
                     : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 24 }}>🏢</div>
                   }
                 </div>

@@ -591,7 +591,7 @@ export default function UnsoldForm({ initial, id }: { initial?: Partial<FormData
             {form.thumbnail_url && (
               <div style={{ marginTop: 8 }}>
                 <Image src={form.thumbnail_url} alt="썸네일" width={200} height={120}
-                style={{ objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb' }} />
+                style={{ objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb' }} unoptimized />
                 <button type="button" onClick={() => set('thumbnail_url', null)} style={{ display: 'block', marginTop: 6, fontSize: 12, color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}>이미지 제거</button>
               </div>
             )}
