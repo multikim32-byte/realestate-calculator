@@ -243,17 +243,17 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
       </div>
 
       {/* 탭 */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', overflowX: 'auto' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb' }}>
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             style={{
-              flex: '0 0 auto', padding: '10px 18px', fontSize: 13,
+              flex: 1, padding: '9px 4px', fontSize: 12,
               fontWeight: tab === t.key ? 700 : 500,
               color: tab === t.key ? t.color : '#6b7280',
               background: tab === t.key ? t.activeBg : 'transparent',
               border: 'none',
               borderBottom: tab === t.key ? `2px solid ${t.color}` : '2px solid transparent',
-              cursor: 'pointer', whiteSpace: 'nowrap',
+              cursor: 'pointer', textAlign: 'center', whiteSpace: 'nowrap',
             }}
           >{t.label}</button>
         ))}
