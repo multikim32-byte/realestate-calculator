@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabaseAdmin';
 import { cookies } from 'next/headers';
 import { optimizeToWebP } from '@/lib/imageOptimize';
+import { uploadToR2 } from '@/lib/r2';
 
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies();
@@ -28,17 +28,13 @@ export async function POST(req: NextRequest) {
   const quality = type === 'thumbnail' ? 82 : 85;
   const optimized = isGif ? raw : await optimizeToWebP(raw, { maxWidth, quality });
   const ext = isGif ? 'gif' : 'webp';
-  const fileName = `${type}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const key = `blog/${type}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-  const supabase = createAdminClient();
-  const { error } = await supabase.storage
-    .from('blog-images')
-    .upload(fileName, optimized, { contentType: isGif ? 'image/gif' : 'image/webp', upsert: false });
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  const { data: urlData } = supabase.storage.from('blog-images').getPublicUrl(fileName);
-  if (!urlData?.publicUrl) return NextResponse.json({ error: 'URL 생성 실패' }, { status: 500 });
-
-  return NextResponse.json({ url: urlData.publicUrl });
+  try {
+    const url = await uploadToR2(key, optimized, isGif ? 'image/gif' : 'image/webp');
+    return NextResponse.json({ url });
+  } catch (e) {
+    console.error('R2 업로드 실패:', e);
+    return NextResponse.json({ error: '업로드 실패' }, { status: 500 });
+  }
 }
