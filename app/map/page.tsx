@@ -2,7 +2,7 @@ import GlobalNav from '@/app/components/GlobalNav';
 import MapClient from './MapClient';
 import type { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
-import { fetchPublicSaleList, fetchSaleDetail } from '@/lib/publicDataApi';
+import { fetchPublicSaleList } from '@/lib/publicDataApi';
 
 export const revalidate = 1800; // 30분
 
@@ -42,33 +42,35 @@ export type MapSaleItem = {
   totalUnits: number;
 };
 
+// 5초 내 resolve되지 않으면 빈 결과 반환
+function withTimeout<T>(promise: Promise<T>, fallback: T, ms = 5000): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>(resolve => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
 export default async function MapPage() {
   const [{ data: unsoldRaw }, saleResult] = await Promise.allSettled([
-    supabase
-      .from('unsold_listings')
-      .select('id, slug, name, location, min_price, max_price, category, benefit, house_manage_no, lat, lng')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false }),
-    fetchPublicSaleList({ type: 'all', perPage: 100, skipEnrich: true }),
+    Promise.resolve(
+      supabase
+        .from('unsold_listings')
+        .select('id, slug, name, location, min_price, max_price, category, benefit, house_manage_no, lat, lng')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+    ),
+    withTimeout(
+      fetchPublicSaleList({ type: 'all', perPage: 100, skipEnrich: true }),
+      { items: [], total: 0 },
+      5000,
+    ),
   ]).then(([u, s]) => [
     u.status === 'fulfilled' ? u.value : { data: [] },
     s.status === 'fulfilled' ? s.value : { items: [] },
   ]) as [{ data: MapUnsoldItem[] | null }, { items: any[] }];
 
-  // 좌표 없는 + 주소 모호한 매물만 청약홈 API로 주소 보완
-  const unsoldListings: MapUnsoldItem[] = await Promise.all(
-    (unsoldRaw ?? []).filter(i => i.location).map(async (item: any) => {
-      if (item.lat && item.lng) return item; // 저장된 좌표 있으면 그대로
-      const isVague = !/[동읍면리]|번지/.test(item.location.replace(/\(.*?\)/g, ''));
-      if (isVague && item.house_manage_no) {
-        try {
-          const detail = await fetchSaleDetail(item.house_manage_no);
-          if (detail?.location) return { ...item, location: detail.location };
-        } catch { /* 실패 시 원본 주소 유지 */ }
-      }
-      return item;
-    })
-  );
+  // 저장된 좌표가 있는 매물만 표시 (fetchSaleDetail 루프 제거 — Vercel 10초 제한 초과 방지)
+  const unsoldListings: MapUnsoldItem[] = (unsoldRaw ?? []).filter(i => i.location);
 
   const saleListings: MapSaleItem[] = (saleResult.items ?? [])
     .filter((i: any) => i.status === '청약중' || i.status?.includes('예정'))
