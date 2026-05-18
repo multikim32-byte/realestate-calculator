@@ -72,13 +72,10 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
   const [selectedDong, setSelectedDong] = useState(initialItems.length > 0 ? initialDong : '전체');
   const [areaRange, setAreaRange] = useState<AreaRange>('전체');
   const [showMapPicker, setShowMapPicker] = useState(false);
-  const [showMap, setShowMap] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const pendingDongRef = useRef<string | null>(null);
   const pendingAptRef  = useRef<string | null>(null);
   const aptSectionRef  = useRef<HTMLDivElement>(null);
-
-  useEffect(() => { setShowMap(false); }, [selectedApt]);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -100,13 +97,6 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
       setKeyword(apt);
       if (items.some(i => i.name === apt)) {
         setSelectedApt(apt);
-        setTimeout(() => {
-          const el = aptSectionRef.current;
-          if (el) {
-            const y = el.getBoundingClientRect().top + window.scrollY - 70;
-            window.scrollTo({ top: y });
-          }
-        }, 100);
       }
     }
   }, [items]);
@@ -722,21 +712,7 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
             const mapAddress = `${sido} ${sigunguName} ${dong}`.trim();
             return (
               <div style={{ marginTop: 16 }}>
-                {showMap
-                  ? <KakaoMap address={mapAddress} name={selectedApt} />
-                  : (
-                    <button
-                      onClick={() => setShowMap(true)}
-                      style={{
-                        width: '100%', padding: '14px', borderRadius: 16,
-                        border: '1px dashed #bae6fd', background: '#f0f9ff',
-                        cursor: 'pointer', fontSize: 14, fontWeight: 600, color: '#0369a1',
-                      }}
-                    >
-                      📍 {selectedApt} 위치 지도 보기
-                    </button>
-                  )
-                }
+                <KakaoMap address={mapAddress} name={selectedApt} />
                 {sido && (
                   <div style={{ marginTop: 12, background: '#1e3a5f', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                     <p style={{ margin: 0, color: '#fff', fontWeight: 700, fontSize: 15 }}>📋 {sido} 청약·분양 매물 모아보기</p>
@@ -1065,21 +1041,7 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
             const mapAddress = `${sido} ${sigunguName} ${dong}`.trim();
             return (
               <div style={{ marginTop: 16 }}>
-                {showMap
-                  ? <KakaoMap address={mapAddress} name={selectedApt} />
-                  : (
-                    <button
-                      onClick={() => setShowMap(true)}
-                      style={{
-                        width: '100%', padding: '14px', borderRadius: 16,
-                        border: '1px dashed #bae6fd', background: '#f0f9ff',
-                        cursor: 'pointer', fontSize: 14, fontWeight: 600, color: '#0369a1',
-                      }}
-                    >
-                      📍 {selectedApt} 위치 지도 보기
-                    </button>
-                  )
-                }
+                <KakaoMap address={mapAddress} name={selectedApt} />
               </div>
             );
           })()}
