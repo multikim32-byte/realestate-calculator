@@ -9,6 +9,8 @@
  *  - numOfRows: 페이지당 행수
  */
 
+import { fetchWithTimeout } from './fetchWithTimeout';
+
 const RENT_URL =
   'https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent';
 
@@ -88,7 +90,7 @@ export async function fetchRentList(
   const qs = `serviceKey=${key}&pageNo=${page}&numOfRows=${numOfRows}&LAWD_CD=${lawdCd}&DEAL_YMD=${dealYmd}`;
   const url = `${RENT_URL}?${qs}`;
 
-  const res = await fetch(url, { cache: 'no-store' });
+  const res = await fetchWithTimeout(url, { cache: 'no-store' });
   const xml = await res.text();
 
   if (!res.ok) {

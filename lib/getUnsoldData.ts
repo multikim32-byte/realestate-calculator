@@ -1,3 +1,5 @@
+import { fetchWithTimeout } from './fetchWithTimeout';
+
 export type UnsoldItem = {
   sido: string;
   sigungu: string;
@@ -31,9 +33,10 @@ export async function getUnsoldData(): Promise<UnsoldData> {
   });
 
   try {
-    const res = await fetch(
+    const res = await fetchWithTimeout(
       `https://kosis.kr/openapi/Param/statisticsParameterData.do?${params}`,
-      { next: { revalidate: 86400 } }
+      { next: { revalidate: 86400 } },
+      10_000,
     );
     if (!res.ok) return { items: [], basePeriod: '' };
     const json = await res.json();

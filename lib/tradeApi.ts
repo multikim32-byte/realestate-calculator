@@ -9,6 +9,8 @@
  *  - numOfRows: 페이지당 행수
  */
 
+import { fetchWithTimeout } from './fetchWithTimeout';
+
 const TRADE_URL =
   'https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev';
 
@@ -91,7 +93,7 @@ export async function fetchTradeList(
   const qs = `serviceKey=${key}&pageNo=${page}&numOfRows=${numOfRows}&LAWD_CD=${lawdCd}&DEAL_YMD=${dealYmd}`;
   const url = `${TRADE_URL}?${qs}`;
 
-  const res = await fetch(url, { cache: 'no-store' });
+  const res = await fetchWithTimeout(url, { cache: 'no-store' });
   const xml = await res.text();
 
   if (!res.ok) {

@@ -15,6 +15,8 @@
  *  - getOPTLttotPblancMdl             임의공급 주택형별 상세
  */
 
+import { fetchWithTimeout } from './fetchWithTimeout';
+
 const BASE_URL = 'https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1';
 
 // 청약홈 API 응답의 개별 데이터 행 타입 (필드명이 API마다 다름)
@@ -184,9 +186,9 @@ async function callApi(
   }
   const fullUrl = `${BASE_URL}/${endpoint}?${qs}`;
 
-  const res = await fetch(fullUrl, {
+  const res = await fetchWithTimeout(fullUrl, {
     headers: { Accept: 'application/json' },
-    cache: 'no-store',  // 항상 최신 데이터 (캐시 없음)
+    cache: 'no-store',
   });
 
   if (!res.ok) throw new Error(`청약홈 API 오류 [${endpoint}]: ${res.status}`);

@@ -11,6 +11,8 @@
  *  [{dsSch:[...]}, {dsList:[...]}, {resHeader:[...]}]
  */
 
+import { fetchWithTimeout } from './fetchWithTimeout';
+
 const BASE_URL = 'https://apis.data.go.kr/B552555';
 
 function toYmd(d: Date): string {
@@ -214,7 +216,7 @@ async function callLhApi(
   });
   const url = `${BASE_URL}/${service}/${endpoint}?${params.toString()}`;
 
-  const res = await fetch(url, {
+  const res = await fetchWithTimeout(url, {
     headers: { Accept: 'application/json' },
     cache: 'no-store',
   });
