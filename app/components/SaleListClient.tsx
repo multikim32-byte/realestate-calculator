@@ -237,6 +237,7 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
               {/* 썸네일 이미지 */}
               {thumbnail && (
                 <div style={{ width: '100%', aspectRatio: '16/9', overflow: 'hidden', flexShrink: 0 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={thumbnail}
                     alt={item.name}

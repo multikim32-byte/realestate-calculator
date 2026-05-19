@@ -60,21 +60,10 @@ export default function BookmarkToast() {
   if (!visible) return null;
 
   return (
-    <>
-      <style>{`
-        @keyframes mk-slide-up {
-          from { transform: translateY(100px); opacity: 0; }
-          to   { transform: translateY(0);    opacity: 1; }
-        }
-        .mk-toast {
-          animation: mk-slide-up 0.35s ease;
-        }
-      `}</style>
-
-      <div style={{
-        position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-        zIndex: 9999, width: 'min(360px, calc(100vw - 32px))',
-      }}>
+    <div style={{
+      position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+      zIndex: 9999, width: 'min(360px, calc(100vw - 32px))',
+    }}>
       <div className="mk-toast" style={{
         background: '#1e3a5f', borderRadius: 16,
         boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
@@ -169,7 +158,6 @@ export default function BookmarkToast() {
           </>
         )}
       </div>
-      </div>
-    </>
+    </div>
   );
 }

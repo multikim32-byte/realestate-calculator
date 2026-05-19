@@ -448,6 +448,7 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
         {content && (content.thumbnail_url || content.summary || content.description || (content.pros?.length ?? 0) > 0 || (content.cons?.length ?? 0) > 0 || (content.image_urls?.length ?? 0) > 0) && (
           <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: '28px', marginTop: 16 }}>
             {content.thumbnail_url && (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={content.thumbnail_url}
                 alt={item.name}
@@ -488,6 +489,7 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
             {(content.image_urls?.length ?? 0) > 0 && (
               <div style={{ marginTop: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
                 {content.image_urls!.map((url, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     key={i}
                     src={url}
@@ -702,6 +704,7 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
         )}
 
         {/* 이미지 */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={lightbox.urls[lightbox.idx]}
           alt={`이미지 ${lightbox.idx + 1}`}
