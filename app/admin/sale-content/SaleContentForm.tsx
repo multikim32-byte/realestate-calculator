@@ -74,19 +74,26 @@ export default function SaleContentForm({
   const uploadImage = async (file: File): Promise<string | null> => {
     const fd = new FormData();
     fd.append('file', file);
-    const res = await fetch('/api/admin/unsold/upload', { method: 'POST', body: fd });
-    const data = await res.json();
-    return data.url ?? null;
+    try {
+      const res = await fetch('/api/admin/unsold/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.url) return data.url;
+      setError(data.error || '업로드 실패');
+      return null;
+    } catch {
+      setError('업로드 중 오류가 발생했습니다.');
+      return null;
+    }
   };
 
   const handleThumbnail = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
+    setError('');
     try {
       const url = await uploadImage(file);
       if (url) set('thumbnail_url', url);
-      else setError('썸네일 업로드 실패');
     } finally { setUploading(false); }
   };
 
@@ -94,6 +101,7 @@ export default function SaleContentForm({
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
     setUploading(true);
+    setError('');
     try {
       const urls = await Promise.all(files.map(uploadImage));
       const valid = urls.filter(Boolean) as string[];

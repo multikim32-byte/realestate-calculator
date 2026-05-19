@@ -22,19 +22,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '파일 크기는 10MB 이하여야 합니다' }, { status: 400 });
   }
 
-  const raw = Buffer.from(await file.arrayBuffer());
-  const isGif = file.type === 'image/gif';
-  const maxWidth = type === 'thumbnail' ? 800 : 1200;
-  const quality = type === 'thumbnail' ? 82 : 85;
-  const optimized = isGif ? raw : await optimizeToWebP(raw, { maxWidth, quality });
-  const ext = isGif ? 'gif' : 'webp';
-  const key = `blog/${type}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-
   try {
+    const raw = Buffer.from(await file.arrayBuffer());
+    const isGif = file.type === 'image/gif';
+    const maxWidth = type === 'thumbnail' ? 800 : 1200;
+    const quality = type === 'thumbnail' ? 82 : 85;
+    const optimized = isGif ? raw : await optimizeToWebP(raw, { maxWidth, quality });
+    const ext = isGif ? 'gif' : 'webp';
+    const key = `blog/${type}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const url = await uploadToR2(key, optimized, isGif ? 'image/gif' : 'image/webp');
     return NextResponse.json({ url });
   } catch (e) {
-    console.error('R2 업로드 실패:', e);
-    return NextResponse.json({ error: '업로드 실패' }, { status: 500 });
+    console.error('업로드 실패:', e);
+    return NextResponse.json({ error: `업로드 실패: ${e instanceof Error ? e.message : String(e)}` }, { status: 500 });
   }
 }

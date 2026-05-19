@@ -21,16 +21,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '파일 크기는 10MB 이하여야 합니다' }, { status: 400 });
   }
 
-  const raw = Buffer.from(await file.arrayBuffer());
-  const isGif = file.type === 'image/gif';
-  const optimized = isGif ? raw : await optimizeToWebP(raw, { maxWidth: 900, quality: 82 });
-  const key = `unsold/${Date.now()}-${Math.random().toString(36).slice(2)}.${isGif ? 'gif' : 'webp'}`;
-
   try {
+    const raw = Buffer.from(await file.arrayBuffer());
+    const isGif = file.type === 'image/gif';
+    const optimized = isGif ? raw : await optimizeToWebP(raw, { maxWidth: 900, quality: 82 });
+    const key = `unsold/${Date.now()}-${Math.random().toString(36).slice(2)}.${isGif ? 'gif' : 'webp'}`;
     const url = await uploadToR2(key, optimized, isGif ? 'image/gif' : 'image/webp');
     return NextResponse.json({ url });
   } catch (e) {
-    console.error('R2 업로드 실패:', e);
-    return NextResponse.json({ error: '업로드 실패' }, { status: 500 });
+    console.error('업로드 실패:', e);
+    return NextResponse.json({ error: `업로드 실패: ${e instanceof Error ? e.message : String(e)}` }, { status: 500 });
   }
 }
