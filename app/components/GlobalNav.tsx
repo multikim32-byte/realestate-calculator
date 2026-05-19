@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ClipboardList, Calendar, BarChart2, Calculator,
   Tag, Building2, Map, BookOpen, Star, Mail, Menu, X,
@@ -28,6 +28,14 @@ const NAV_ITEMS = [
 export default function GlobalNav() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   function isActive(item: typeof NAV_ITEMS[0]) {
     if (item.exact) return pathname === '/';
@@ -36,104 +44,90 @@ export default function GlobalNav() {
   }
 
   return (
-    <>
-      <style>{`
-        .gnav-desktop { display: flex; }
-        .gnav-hamburger { display: none !important; }
-        .gnav-mobile { display: none; }
-        @media (max-width: 768px) {
-          .gnav-desktop { display: none !important; }
-          .gnav-hamburger { display: flex !important; }
-          .gnav-mobile.open { display: flex; }
-        }
-      `}</style>
-
-      <header style={{
-        background: '#fff',
-        borderBottom: '1px solid #e5e7eb',
-        position: 'sticky', top: 0, zIndex: 100,
+    <header style={{
+      background: '#fff',
+      borderBottom: '1px solid #e5e7eb',
+      position: 'sticky', top: 0, zIndex: 100,
+    }}>
+      {/* 메인 바 */}
+      <div style={{
+        maxWidth: 1100, margin: '0 auto', padding: '0 16px',
+        height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        {/* 메인 바 */}
-        <div style={{
-          maxWidth: 1100, margin: '0 auto', padding: '0 16px',
-          height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
 
-          {/* 로고 */}
-          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{
-              background: '#1d4ed8', borderRadius: 8,
-              width: 36, height: 30,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0, gap: 1,
-            }}>
-              <span style={{ color: '#fff', fontSize: 14, fontWeight: 900, letterSpacing: '-1px' }}>AZ</span>
-            </div>
-            <span style={{ fontSize: 16, fontWeight: 800, color: '#1e3a5f', letterSpacing: '-0.3px' }}>
-              아파트집사
-            </span>
-          </Link>
+        {/* 로고 */}
+        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            background: '#1d4ed8', borderRadius: 8,
+            width: 36, height: 30,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0, gap: 1,
+          }}>
+            <span style={{ color: '#fff', fontSize: 14, fontWeight: 900, letterSpacing: '-1px' }}>AZ</span>
+          </div>
+          <span style={{ fontSize: 16, fontWeight: 800, color: '#1e3a5f', letterSpacing: '-0.3px' }}>
+            아파트집사
+          </span>
+        </Link>
 
-          {/* 데스크톱 메뉴 */}
-          <nav className="gnav-desktop" style={{ alignItems: 'center', gap: 1 }}>
-            {NAV_ITEMS.map(item => {
-              const active = isActive(item);
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 3,
-                    padding: '5px 7px', borderRadius: 7,
-                    fontSize: 12, fontWeight: 600, textDecoration: 'none',
-                    whiteSpace: 'nowrap',
-                    color: active ? '#1d4ed8' : '#4b5563',
-                    background: active ? '#eff6ff' : 'transparent',
-                  }}
-                >
-                  <Icon size={12} strokeWidth={2.2} />
-                  {item.label}
-                </Link>
-              );
-            })}
+        {/* 데스크톱 메뉴 */}
+        <nav style={{ display: isMobile ? 'none' : 'flex', alignItems: 'center', gap: 1 }}>
+          {NAV_ITEMS.map(item => {
+            const active = isActive(item);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 3,
+                  padding: '5px 7px', borderRadius: 7,
+                  fontSize: 12, fontWeight: 600, textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                  color: active ? '#1d4ed8' : '#4b5563',
+                  background: active ? '#eff6ff' : 'transparent',
+                }}
+              >
+                <Icon size={12} strokeWidth={2.2} />
+                {item.label}
+              </Link>
+            );
+          })}
 
-            <div style={{
-              display: 'flex', gap: 5, marginLeft: 6, alignItems: 'center',
-              paddingLeft: 10, borderLeft: '1px solid #e5e7eb', flexShrink: 0,
-            }}>
-              <KakaoChannelButton size="sm" label="카카오" />
-              <ShareButton />
-              <InstallButton />
-            </div>
-          </nav>
+          <div style={{
+            display: 'flex', gap: 5, marginLeft: 6, alignItems: 'center',
+            paddingLeft: 10, borderLeft: '1px solid #e5e7eb', flexShrink: 0,
+          }}>
+            <KakaoChannelButton size="sm" label="카카오" />
+            <ShareButton />
+            <InstallButton />
+          </div>
+        </nav>
 
-          {/* 모바일 햄버거 */}
-          <button
-            className="gnav-hamburger"
-            onClick={() => setMobileOpen(v => !v)}
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              padding: 6, color: '#374151',
-              alignItems: 'center', justifyContent: 'center',
-            }}
-            aria-label="메뉴"
-          >
-            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
-        </div>
-
-        {/* 모바일 드롭다운 */}
-        <div
-          className={`gnav-mobile${mobileOpen ? ' open' : ''}`}
+        {/* 모바일 햄버거 */}
+        <button
+          onClick={() => setMobileOpen(v => !v)}
           style={{
-            flexDirection: 'column',
-            borderTop: '1px solid #e5e7eb',
-            background: '#fff',
-            padding: '4px 12px 12px',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+            display: isMobile ? 'flex' : 'none',
+            background: 'none', border: 'none', cursor: 'pointer',
+            padding: 6, color: '#374151',
+            alignItems: 'center', justifyContent: 'center',
           }}
+          aria-label="메뉴"
         >
+          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+      </div>
+
+      {/* 모바일 드롭다운 */}
+      {isMobile && mobileOpen && (
+        <div style={{
+          display: 'flex', flexDirection: 'column',
+          borderTop: '1px solid #e5e7eb',
+          background: '#fff',
+          padding: '4px 12px 12px',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+        }}>
           {NAV_ITEMS.map(item => {
             const active = isActive(item);
             const Icon = item.icon;
@@ -164,7 +158,7 @@ export default function GlobalNav() {
             <InstallButton />
           </div>
         </div>
-      </header>
-    </>
+      )}
+    </header>
   );
 }
