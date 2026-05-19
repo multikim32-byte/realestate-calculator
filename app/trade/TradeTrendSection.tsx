@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { LAWD_CODE_MAP, recentMonths } from '@/lib/tradeApi';
 
 type TradeStatItem = {
@@ -90,9 +90,13 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
   const [loading, setLoading]               = useState(false);
   const fetchedRef = useRef('');
 
-  const sigunguList = sido !== '전국'
-    ? (LAWD_CODE_MAP[sido as keyof typeof LAWD_CODE_MAP] as readonly { name: string; code: string }[]) ?? []
-    : [];
+  // useMemo로 안정적 참조 유지 — sido가 바뀔 때만 재생성 (매 렌더마다 새 []를 만들면 useEffect 무한 루프 발생)
+  const sigunguList = useMemo(
+    () => sido !== '전국'
+      ? (LAWD_CODE_MAP[sido as keyof typeof LAWD_CODE_MAP] as readonly { name: string; code: string }[]) ?? []
+      : [],
+    [sido]
+  );
 
   // 전국 + 이번달 → Supabase 사전집계 사용 (fetch 불필요)
   const usePrebuilt = sido === '전국' && month === CURRENT_MONTH;
@@ -100,7 +104,7 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
   useEffect(() => {
     if (usePrebuilt) {
       setRegionalStats(null);
-      setAvailableDongs([]);
+      setAvailableDongs(prev => prev.length > 0 ? [] : prev); // 이미 빈 배열이면 참조 유지 → 불필요한 리렌더 방지
       fetchedRef.current = '';
       return;
     }
