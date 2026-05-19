@@ -51,6 +51,9 @@ interface Props {
   closingSoonItems: SaleItem[];
   upcomingItems: SaleItem[];
   unsoldItems: UnsoldItem[];
+  weeklyItems: SaleItem[];
+  thisWeekStart: string;
+  thisWeekEnd: string;
   today: string;
   tradeStats: TradeStats;
 }
@@ -136,6 +139,82 @@ function generateSaleText(props: Props): string {
   return lines.join('\n');
 }
 
+function fmtWeekDay(d: string): string {
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  const [, m, day] = d.split('-');
+  const date = new Date(d + 'T00:00:00');
+  return `${parseInt(m)}/${parseInt(day)}(${days[date.getDay()]})`;
+}
+
+function generateWeeklyText(items: SaleItem[], thisWeekStart: string, thisWeekEnd: string, today: string): string {
+  const weekLabel = `${fmtWeekDay(thisWeekStart)}~${fmtWeekDay(thisWeekEnd)}`;
+
+  const lines: string[] = [];
+  lines.push(`📋 이번주 청약 소식 (${weekLabel})`);
+  lines.push('');
+
+  const closingThisWeek = items
+    .filter(it => it.receiptEnd && it.receiptEnd >= thisWeekStart && it.receiptEnd <= thisWeekEnd)
+    .sort((a, b) => (a.receiptEnd ?? '').localeCompare(b.receiptEnd ?? ''));
+
+  const startingThisWeek = items
+    .filter(it => it.receiptStart && it.receiptStart >= today && it.receiptStart <= thisWeekEnd)
+    .sort((a, b) => (a.receiptStart ?? '').localeCompare(b.receiptStart ?? ''));
+
+  const alreadyStartedThisWeek = items
+    .filter(it => it.receiptStart && it.receiptStart >= thisWeekStart && it.receiptStart < today)
+    .sort((a, b) => (a.receiptStart ?? '').localeCompare(b.receiptStart ?? ''));
+
+  const ongoingAllWeek = items
+    .filter(it => (it.receiptStart ?? '') < thisWeekStart && (it.receiptEnd ?? '') > thisWeekEnd);
+
+  if (closingThisWeek.length > 0) {
+    lines.push('🔴 이번주 마감');
+    for (const it of closingThisWeek) {
+      lines.push(`  · ${it.name} — ${shortLocation(it.location)}`);
+      if (it.receiptEnd) lines.push(`    ⏰ ${fmtWeekDay(it.receiptEnd)} 마감`);
+    }
+    lines.push('');
+  }
+
+  if (startingThisWeek.length > 0) {
+    lines.push('🟢 이번주 청약 시작 예정');
+    for (const it of startingThisWeek) {
+      lines.push(`  · ${it.name} — ${shortLocation(it.location)}`);
+      if (it.receiptStart) lines.push(`    📅 ${fmtWeekDay(it.receiptStart)} 시작`);
+    }
+    lines.push('');
+  }
+
+  if (alreadyStartedThisWeek.length > 0) {
+    lines.push('🟡 이번주 청약 시작');
+    for (const it of alreadyStartedThisWeek) {
+      lines.push(`  · ${it.name} — ${shortLocation(it.location)}`);
+      if (it.receiptStart) lines.push(`    📅 ${fmtWeekDay(it.receiptStart)} 시작`);
+    }
+    lines.push('');
+  }
+
+  if (ongoingAllWeek.length > 0) {
+    lines.push('🔵 계속 진행 중');
+    for (const it of ongoingAllWeek) {
+      lines.push(`  · ${it.name} — ${shortLocation(it.location)}`);
+      if (it.receiptEnd) lines.push(`    ${fmtWeekDay(it.receiptEnd)} 마감`);
+    }
+    lines.push('');
+  }
+
+  if (items.length === 0) {
+    lines.push('이번주 청약 일정이 없습니다.');
+    lines.push('');
+  }
+
+  lines.push('👉 전체 청약 정보 → https://www.aptzipsa.kr');
+  lines.push('📌 채널 추가하고 매일 받아보기 → https://pf.kakao.com/_WYwjn');
+
+  return lines.join('\n');
+}
+
 function generateTradeText(stats: TradeStats): string {
   if (!stats) return '집계된 실거래 데이터가 없습니다.\nGitHub Actions가 매일 03:00 KST에 자동 집계합니다.';
 
@@ -200,20 +279,22 @@ function generateTradeText(stats: TradeStats): string {
 }
 
 export default function KakaoContentClient(props: Props) {
-  const { tradeStats } = props;
-  const [tab, setTab] = useState<'sale' | 'trade'>('sale');
+  const { tradeStats, weeklyItems, thisWeekStart, thisWeekEnd, today } = props;
+  const [tab, setTab] = useState<'sale' | 'weekly' | 'trade'>('sale');
   const [saleText, setSaleText] = useState(() => generateSaleText(props));
+  const [weeklyText, setWeeklyText] = useState(() => generateWeeklyText(weeklyItems, thisWeekStart, thisWeekEnd, today));
   const [tradeText, setTradeText] = useState(() => generateTradeText(tradeStats));
   const [copied, setCopied] = useState(false);
 
-  const text = tab === 'sale' ? saleText : tradeText;
-  const setText = tab === 'sale' ? setSaleText : setTradeText;
+  const text = tab === 'sale' ? saleText : tab === 'weekly' ? weeklyText : tradeText;
+  const setText = tab === 'sale' ? setSaleText : tab === 'weekly' ? setWeeklyText : setTradeText;
 
   const regenerate = useCallback(() => {
     if (tab === 'sale') setSaleText(generateSaleText(props));
+    else if (tab === 'weekly') setWeeklyText(generateWeeklyText(weeklyItems, thisWeekStart, thisWeekEnd, today));
     else setTradeText(generateTradeText(tradeStats));
     setCopied(false);
-  }, [props, tradeStats, tab]);
+  }, [props, tradeStats, weeklyItems, thisWeekStart, thisWeekEnd, today, tab]);
 
   const copy = async () => {
     try {
@@ -238,7 +319,7 @@ export default function KakaoContentClient(props: Props) {
   return (
     <div>
       {/* 탭 */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         <button
           onClick={() => { setTab('sale'); setCopied(false); }}
           style={{
@@ -249,6 +330,18 @@ export default function KakaoContentClient(props: Props) {
           }}
         >
           📅 오늘의 청약 소식
+        </button>
+        <button
+          onClick={() => { setTab('weekly'); setCopied(false); }}
+          style={{
+            padding: '9px 20px', borderRadius: 8, border: 'none', cursor: 'pointer',
+            background: tab === 'weekly' ? '#0891b2' : '#ecfeff',
+            color: tab === 'weekly' ? '#fff' : '#0e7490',
+            fontSize: 14, fontWeight: 700,
+          }}
+        >
+          🗓️ 이번주 청약 소식
+          <span style={{ marginLeft: 6, fontSize: 11, opacity: 0.8 }}>{weeklyItems.length}건</span>
         </button>
         <button
           onClick={() => { setTab('trade'); setCopied(false); }}
@@ -290,6 +383,20 @@ export default function KakaoContentClient(props: Props) {
         </div>
       )}
 
+      {/* 이번주 청약 탭 뱃지 */}
+      {tab === 'weekly' && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+          <span style={{ background: '#ecfeff', color: '#0e7490', border: '1px solid #a5f3fc', borderRadius: 20, padding: '4px 12px', fontSize: 13, fontWeight: 700 }}>
+            🗓️ {fmtWeekDay(thisWeekStart)} ~ {fmtWeekDay(thisWeekEnd)}
+          </span>
+          {weeklyItems.length > 0 && (
+            <span style={{ background: '#f0f9ff', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 20, padding: '4px 12px', fontSize: 13, fontWeight: 700 }}>
+              총 {weeklyItems.length}건
+            </span>
+          )}
+        </div>
+      )}
+
       {/* 실거래 탭 정보 뱃지 */}
       {tab === 'trade' && tradeStats && (
         <div style={{ marginBottom: 16 }}>
@@ -302,21 +409,21 @@ export default function KakaoContentClient(props: Props) {
       {/* 텍스트 편집 영역 */}
       <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
         <div style={{
-          background: tab === 'sale' ? '#fefce8' : '#f5f3ff',
+          background: tab === 'sale' ? '#fefce8' : tab === 'weekly' ? '#ecfeff' : '#f5f3ff',
           padding: '12px 16px',
-          borderBottom: `1px solid ${tab === 'sale' ? '#fef08a' : '#ddd6fe'}`,
+          borderBottom: `1px solid ${tab === 'sale' ? '#fef08a' : tab === 'weekly' ? '#a5f3fc' : '#ddd6fe'}`,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: tab === 'sale' ? '#854d0e' : '#5b21b6' }}>
-            {tab === 'sale' ? '💛 카카오 채널 소식 텍스트 (청약)' : '💜 카카오 채널 소식 텍스트 (실거래)'}
+          <span style={{ fontSize: 13, fontWeight: 700, color: tab === 'sale' ? '#854d0e' : tab === 'weekly' ? '#0e7490' : '#5b21b6' }}>
+            {tab === 'sale' ? '💛 카카오 채널 소식 텍스트 (오늘 청약)' : tab === 'weekly' ? '🩵 카카오 채널 소식 텍스트 (이번주 청약)' : '💜 카카오 채널 소식 텍스트 (실거래)'}
           </span>
           <button
             onClick={regenerate}
             style={{
               fontSize: 12, padding: '4px 12px', borderRadius: 6,
-              border: `1px solid ${tab === 'sale' ? '#fef08a' : '#ddd6fe'}`,
+              border: `1px solid ${tab === 'sale' ? '#fef08a' : tab === 'weekly' ? '#a5f3fc' : '#ddd6fe'}`,
               background: '#fff',
-              color: tab === 'sale' ? '#854d0e' : '#5b21b6',
+              color: tab === 'sale' ? '#854d0e' : tab === 'weekly' ? '#0e7490' : '#5b21b6',
               cursor: 'pointer', fontWeight: 700,
             }}
           >

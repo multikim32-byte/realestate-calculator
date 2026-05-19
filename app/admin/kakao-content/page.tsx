@@ -35,11 +35,22 @@ export default async function KakaoContentPage() {
   const in3Days = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
   const in7Days = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
 
+  // 이번주 월~일 계산
+  const todayDate = new Date();
+  const daysFromMonday = todayDate.getDay() === 0 ? 6 : todayDate.getDay() - 1;
+  const monday = new Date(todayDate);
+  monday.setDate(todayDate.getDate() - daysFromMonday);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const thisWeekStart = monday.toISOString().slice(0, 10);
+  const thisWeekEnd = sunday.toISOString().slice(0, 10);
+
   const active = (saleResult.items ?? []).filter(it => it.receiptStart && it.receiptEnd);
   const ongoing = active.filter(it => it.receiptStart <= today && it.receiptEnd >= today);
   const closingSoon = ongoing.filter(it => it.receiptEnd <= in3Days);
   const ongoingOnly = ongoing.filter(it => it.receiptEnd > in3Days);
   const upcoming = active.filter(it => it.receiptStart > today && it.receiptStart <= in7Days);
+  const weeklyItems = active.filter(it => it.receiptStart <= thisWeekEnd && it.receiptEnd >= thisWeekStart);
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
@@ -61,6 +72,9 @@ export default async function KakaoContentPage() {
             max_price: it.max_price,
             highlight: it.highlight,
           }))}
+          weeklyItems={weeklyItems.map(it => ({ name: it.name, location: it.location, receiptStart: it.receiptStart, receiptEnd: it.receiptEnd }))}
+          thisWeekStart={thisWeekStart}
+          thisWeekEnd={thisWeekEnd}
           today={today}
           tradeStats={tradeStatsRaw ?? null}
         />
