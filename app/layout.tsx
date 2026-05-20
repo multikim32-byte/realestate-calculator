@@ -19,11 +19,11 @@ const BASE_URL = 'https://www.aptzipsa.kr';
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: "아파트 분양정보·청약정보·실거래가 | 아파트집사",
+    default: "아파트 청약·분양정보·실거래가·부동산 계산기 | 아파트집사",
     template: "%s | 아파트집사",
   },
-  description: "전국 아파트 분양정보, 청약 일정, 실거래가를 한눈에. 취득세·대출 계산기 무료 제공. 집 살 때, 아파트집사.",
-  keywords: ["아파트 분양정보", "청약정보", "실거래가", "청약 일정", "취득세 계산기", "주택담보대출", "아파트집사"],
+  description: "전국 아파트 청약정보·분양정보·실거래가를 한눈에. 취득세·대출·중개수수료 계산기, 부동산 지도, LH 임대공고, 청약달력 무료 제공. 집 살 때, 아파트집사.",
+  keywords: ["아파트 청약정보", "분양정보", "실거래가", "청약 일정", "취득세 계산기", "주택담보대출", "중개수수료 계산기", "부동산 지도", "LH 임대공고", "청약달력", "미분양", "아파트집사"],
   authors: [{ name: "아파트집사" }],
   creator: "아파트집사",
   openGraph: {
@@ -31,14 +31,14 @@ export const metadata: Metadata = {
     locale: "ko_KR",
     url: BASE_URL,
     siteName: "아파트집사",
-    title: "아파트 분양정보·청약정보·실거래가 | 아파트집사",
-    description: "전국 아파트 분양·청약 정보와 실거래가를 무료로. 집 살 때, 아파트집사.",
-    images: [{ url: '/opengraph-image?v=2', width: 1200, height: 630, alt: '아파트집사 — 분양정보·청약·실거래가' }],
+    title: "아파트 청약·분양정보·실거래가·부동산 계산기 | 아파트집사",
+    description: "전국 아파트 청약·분양정보·실거래가를 한눈에. 취득세·대출·중개수수료 계산기, 부동산 지도, LH 임대공고 무료 제공.",
+    images: [{ url: '/opengraph-image?v=2', width: 1200, height: 630, alt: '아파트집사 — 청약·분양정보·실거래가·부동산 계산기' }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "아파트 분양정보·청약정보·실거래가 | 아파트집사",
-    description: "전국 아파트 분양·청약 정보와 실거래가를 무료로. 집 살 때, 아파트집사.",
+    title: "아파트 청약·분양정보·실거래가·부동산 계산기 | 아파트집사",
+    description: "전국 아파트 청약·분양정보·실거래가를 한눈에. 취득세·대출·중개수수료 계산기, 부동산 지도, LH 임대공고 무료 제공.",
     images: ['/opengraph-image?v=2'],
   },
   verification: {
@@ -95,7 +95,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <style>{`@media (max-width: 899px) { body { padding-bottom: calc(56px + env(safe-area-inset-bottom)); } }`}</style>
         <footer style={{ background: '#f9fafb', borderTop: '1px solid #e5e7eb', padding: '24px 16px', marginTop: 40 }}>
           <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'space-between', alignItems: 'center' }}>
-            <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>© 2026 아파트집사 · 전국 아파트·오피스텔 분양 청약 정보 &amp; 실거래가 | 아파트집사</p>
+            <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>© 2026 아파트집사 · 전국 아파트 청약·분양정보·실거래가·부동산 계산기 무료 제공</p>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <a href="/about" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>서비스 소개</a>
               <a href="/terms" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>이용약관</a>

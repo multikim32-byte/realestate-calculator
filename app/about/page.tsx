@@ -3,14 +3,14 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import {
   ClipboardList, Calendar, BarChart2, TrendingUp, MapPin,
-  Calculator, BookOpen, Tag, Building2, Map, Star, Trophy,
+  Calculator, BookOpen, Tag, Building2, Map, Star, Trophy, Bell,
 } from 'lucide-react';
 
 export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
   title: '서비스 소개',
-  description: '전국 아파트·오피스텔 청약 정보, 실거래가 조회, LH 임대공고, 부동산 계산기(취득세·대출·중도금·중개수수료)를 무료로 제공합니다.',
+  description: '전국 아파트 청약정보·분양정보·실거래가·LH 임대공고·부동산 지도와 취득세·대출·중개수수료 계산기를 무료 제공합니다. 카카오 채널 알림도 지원합니다.',
   alternates: { canonical: 'https://www.aptzipsa.kr/about' },
 };
 
@@ -93,6 +93,12 @@ const features = [
     desc: '취득세·양도소득세·주택담보대출·청약 전략 등 부동산 거래에 필요한 핵심 정보를 알기 쉽게 정리합니다.',
     link: '/apt', linkText: '정보 보기',
   },
+  {
+    icon: Bell, color: '#FAE100',
+    title: '카카오 채널 알림',
+    desc: '아파트집사 카카오 채널을 친구 추가하면 이번 주 청약 소식·실거래 트렌드 등 핵심 부동산 정보를 카카오톡으로 받아볼 수 있습니다.',
+    link: 'https://pf.kakao.com/_WYwjn', linkText: '채널 추가하기',
+  },
 ];
 
 const dataSources = [
@@ -116,6 +122,7 @@ const quickLinks = [
   { href: '/map',         label: '부동산 지도', bg: '#6366f1', color: '#fff' },
   { href: '/region/서울', label: '지역별',     bg: '#374151', color: '#fff' },
   { href: '/apt',        label: '부동산 정보', bg: '#f9fafb', color: '#374151', border: '1px solid #e5e7eb' },
+  { href: 'https://pf.kakao.com/_WYwjn', label: '카카오 채널', bg: '#FAE100', color: '#3A1D1D' },
 ];
 
 export default function AboutPage() {
@@ -127,7 +134,7 @@ export default function AboutPage() {
       <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)', padding: '36px 16px 32px', textAlign: 'center' }}>
         <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: '0 0 8px' }}>서비스 소개</h1>
         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0 }}>
-          청약·실거래가·임대공고·계산기를 한 곳에서 — 아파트집사
+          청약·분양·실거래가·지도·계산기·카카오 알림을 한 곳에서 — 아파트집사
         </p>
       </div>
 
@@ -136,8 +143,9 @@ export default function AboutPage() {
         {/* 한줄 소개 */}
         <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 12, padding: '20px 24px', marginBottom: 48 }}>
           <p style={{ margin: 0, fontSize: 15, color: '#1e3a8a', lineHeight: 1.9 }}>
-            부동산 거래에 필요한 <strong>청약 정보·실거래가·LH 임대공고·계산기</strong>를 하나의 서비스에서 무료로 제공합니다.
+            부동산 거래에 필요한 <strong>청약 정보·분양정보·실거래가·LH 임대공고·부동산 지도·계산기</strong>를 하나의 서비스에서 무료로 제공합니다.
             공공데이터 API를 활용해 매일 최신 정보를 반영하며, 복잡한 계산도 숫자만 입력하면 즉시 결과를 확인할 수 있습니다.
+            카카오 채널을 통해 이번 주 청약 소식과 실거래 트렌드도 알림으로 받아보세요.
           </p>
         </div>
 

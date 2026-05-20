@@ -50,7 +50,7 @@ export default function PrivacyPage() {
       <GlobalNav />
       <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)', padding: '36px 16px 32px', textAlign: 'center' }}>
         <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: '0 0 8px' }}>개인정보처리방침</h1>
-        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0 }}>최종 수정일: 2026년 5월 15일</p>
+        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0 }}>최종 수정일: 2026년 5월 20일</p>
       </div>
 
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px 80px', lineHeight: 1.8, color: '#374151' }}>
@@ -171,7 +171,7 @@ export default function PrivacyPage() {
         ]} />
 
         <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid #e5e7eb', color: '#9ca3af', fontSize: 13, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-          <span>본 방침은 2026년 5월 15일부터 시행됩니다.</span>
+          <span>본 방침은 2026년 5월 20일부터 시행됩니다.</span>
           <a href="/terms" style={{ color: '#6b7280', textDecoration: 'none' }}>이용약관</a>
           <a href="/about" style={{ color: '#6b7280', textDecoration: 'none' }}>서비스 소개</a>
           <Link href="/" style={{ color: '#6b7280', textDecoration: 'none' }}>홈으로</Link>
