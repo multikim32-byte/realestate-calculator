@@ -203,20 +203,31 @@ export default function KakaoMap({ address, name }: Props) {
       geocodeAndPlace();
     }
 
+    // 15초 내 initMap 미호출 시 에러 표시
+    const timeout = setTimeout(() => { setError(true); setLoadingMap(false); }, 15000);
+    const safeInitMap = () => { clearTimeout(timeout); initMap(); };
+
     const scriptId = 'kakao-map-sdk';
-    if (document.getElementById(scriptId)) {
-      // Map 생성자가 있으면 완전히 초기화된 상태
-      if (window.kakao?.maps?.Map) initMap();
-      else window.kakao?.maps?.load?.(initMap);
-      return;
+    const existing = document.getElementById(scriptId);
+    if (existing) {
+      if (window.kakao?.maps?.Map) {
+        safeInitMap();
+      } else if (window.kakao?.maps?.load) {
+        window.kakao.maps.load(safeInitMap);
+      } else {
+        // 스크립트 태그는 있지만 아직 로드 중 — onload 이벤트 체인에 합류
+        existing.addEventListener('load', () => window.kakao.maps.load(safeInitMap), { once: true });
+      }
+      return () => clearTimeout(timeout);
     }
 
     const script = document.createElement('script');
     script.id = scriptId;
     script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&libraries=services&autoload=false`;
-    script.onload = () => window.kakao.maps.load(initMap);
-    script.onerror = () => { setError(true); setLoadingMap(false); };
+    script.onload = () => window.kakao.maps.load(safeInitMap);
+    script.onerror = () => { clearTimeout(timeout); setError(true); setLoadingMap(false); };
     document.head.appendChild(script);
+    return () => clearTimeout(timeout);
   }, [address, name, apiKey]);
 
   if (!apiKey) return null;

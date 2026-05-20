@@ -632,15 +632,22 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
     }
 
     const scriptId = 'kakao-map-sdk';
-    if (document.getElementById(scriptId)) {
-      if (window.kakao?.maps?.Map) initMap();
-      else window.kakao?.maps?.load?.(initMap);
+    const existing = document.getElementById(scriptId);
+    if (existing) {
+      if (window.kakao?.maps?.Map) {
+        initMap();
+      } else if (window.kakao?.maps?.load) {
+        window.kakao.maps.load(initMap);
+      } else {
+        existing.addEventListener('load', () => window.kakao.maps.load(initMap), { once: true });
+      }
       return;
     }
     const script = document.createElement('script');
     script.id  = scriptId;
     script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_KEY}&libraries=services,clusterer&autoload=false`;
     script.onload = () => window.kakao.maps.load(initMap);
+    script.onerror = () => setLoading(false);
     document.head.appendChild(script);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
