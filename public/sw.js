@@ -1,4 +1,4 @@
-const CACHE_NAME = 'realestate-v4';
+const CACHE_NAME = 'realestate-v5';
 const STATIC_ASSETS = ['/', '/unsold', '/calendar', '/trade', '/calculator', '/rental', '/apt', '/about', '/map', '/favorites'];
 
 self.addEventListener('install', (e) => {
@@ -44,6 +44,8 @@ self.addEventListener('notificationclick', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
+  // 동일 출처(same-origin) 요청만 처리 — 외부 CDN(Kakao Maps, Google 등) 제외
+  if (!e.request.url.startsWith(self.location.origin)) return;
   // API 요청은 캐시하지 않음
   if (e.request.url.includes('/api/')) return;
 
@@ -54,6 +56,8 @@ self.addEventListener('fetch', (e) => {
         caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
         return res;
       })
-      .catch(() => caches.match(e.request))
+      .catch(() =>
+        caches.match(e.request).then((cached) => cached ?? new Response('', { status: 503 }))
+      )
   );
 });
