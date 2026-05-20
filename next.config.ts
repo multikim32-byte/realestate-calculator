@@ -11,14 +11,30 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
+    // AdSense/GA/Kakao Maps 등 외부 스크립트 허용 + 기본 XSS 방어
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.googleadservices.com https://adservice.google.com https://dapi.kakao.com https://t1.kakaocdn.net https://t1.daumcdn.net https://ssl.gstatic.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' data: https://fonts.gstatic.com",
+      "img-src 'self' data: blob: https:",
+      "connect-src 'self' https://*.supabase.co https://*.supabase.com https://www.google-analytics.com https://analytics.google.com https://dapi.kakao.com https://pub-850f6f7273f44951a2bc7d320cd99166.r2.dev",
+      "frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "upgrade-insecure-requests",
+    ].join('; ');
+
     return [
       {
         source: '/(.*)',
         headers: [
-          { key: 'X-Frame-Options',         value: 'DENY' },
-          { key: 'X-Content-Type-Options',   value: 'nosniff' },
-          { key: 'Referrer-Policy',          value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy',       value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'X-Frame-Options',           value: 'SAMEORIGIN' },
+          { key: 'X-Content-Type-Options',     value: 'nosniff' },
+          { key: 'Referrer-Policy',            value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy',         value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Content-Security-Policy',    value: csp },
         ],
       },
     ];

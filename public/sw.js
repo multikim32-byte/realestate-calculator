@@ -1,5 +1,5 @@
-const CACHE_NAME = 'realestate-v3';
-const STATIC_ASSETS = ['/', '/unsold', '/calendar', '/trade', '/calculator', '/rental', '/apt', '/about'];
+const CACHE_NAME = 'realestate-v4';
+const STATIC_ASSETS = ['/', '/unsold', '/calendar', '/trade', '/calculator', '/rental', '/apt', '/about', '/map', '/favorites'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
