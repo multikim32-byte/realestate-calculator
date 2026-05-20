@@ -1,8 +1,8 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   ClipboardList, Calendar, BarChart2, Calculator,
   Tag, Building2, Map, BookOpen, Star, Mail, Menu, X,
@@ -28,14 +28,6 @@ const NAV_ITEMS = [
 export default function GlobalNav() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth <= 768);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
 
   function isActive(item: typeof NAV_ITEMS[0]) {
     if (item.exact) return pathname === '/';
@@ -70,8 +62,8 @@ export default function GlobalNav() {
           </span>
         </Link>
 
-        {/* 데스크톱 메뉴 */}
-        <nav style={{ display: isMobile ? 'none' : 'flex', alignItems: 'center', gap: 1 }}>
+        {/* 데스크톱 메뉴 — CSS로 모바일에서 숨김 */}
+        <nav className="gnav-desktop" style={{ alignItems: 'center', gap: 1 }}>
           {NAV_ITEMS.map(item => {
             const active = isActive(item);
             const Icon = item.icon;
@@ -104,11 +96,11 @@ export default function GlobalNav() {
           </div>
         </nav>
 
-        {/* 모바일 햄버거 */}
+        {/* 모바일 햄버거 — CSS로 데스크톱에서 숨김 */}
         <button
+          className="gnav-hamburger"
           onClick={() => setMobileOpen(v => !v)}
           style={{
-            display: isMobile ? 'flex' : 'none',
             background: 'none', border: 'none', cursor: 'pointer',
             padding: 6, color: '#374151',
             alignItems: 'center', justifyContent: 'center',
@@ -120,7 +112,7 @@ export default function GlobalNav() {
       </div>
 
       {/* 모바일 드롭다운 */}
-      {isMobile && mobileOpen && (
+      {mobileOpen && (
         <div style={{
           display: 'flex', flexDirection: 'column',
           borderTop: '1px solid #e5e7eb',
