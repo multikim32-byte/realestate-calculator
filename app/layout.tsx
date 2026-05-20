@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Script from "next/script";
 import BookmarkToast from "./components/BookmarkToast";
 import WebVitals from "./components/WebVitals";
+import BottomNav from "./components/BottomNav";
 
 const notoSansKr = Noto_Sans_KR({
   weight: ['400', '700', '800'],
@@ -89,6 +90,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <WebVitals />
         <BookmarkToast />
+        <BottomNav />
+        {/* 모바일 탭바 높이만큼 푸터 위 여백 — PC에서는 미적용 */}
+        <style>{`@media (max-width: 899px) { body { padding-bottom: calc(56px + env(safe-area-inset-bottom)); } }`}</style>
         <footer style={{ background: '#f9fafb', borderTop: '1px solid #e5e7eb', padding: '24px 16px', marginTop: 40 }}>
           <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'space-between', alignItems: 'center' }}>
             <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>© 2026 아파트집사 · 전국 아파트·오피스텔 분양 청약 정보 &amp; 실거래가 | 아파트집사</p>
