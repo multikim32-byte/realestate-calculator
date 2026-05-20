@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, startTransition } from 'react';
 
 type SpsplyRow = {
   주택형: string;
@@ -32,7 +32,7 @@ export default function SpecialSupplySection({ houseManageNo, pblancNo }: Props)
   useEffect(() => {
     if (!open || !houseManageNo) return;
     if (rows !== null) return;
-    setLoading(true);
+    startTransition(() => setLoading(true));
     fetch(`/api/sale/spsply?houseManageNo=${houseManageNo}&pblancNo=${pblancNo}`)
       .then(r => r.json())
       .then(d => setRows(d.rows ?? []))

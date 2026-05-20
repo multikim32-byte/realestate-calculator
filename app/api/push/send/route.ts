@@ -44,9 +44,10 @@ export async function GET(req: NextRequest) {
           payload
         );
         sent++;
-      } catch (err: any) {
+      } catch (err: unknown) {
         // 410/404 = 구독 만료 → 삭제 대상
-        if (err.statusCode === 410 || err.statusCode === 404) expired.push(sub.id);
+        const code = (err as { statusCode?: number }).statusCode;
+        if (code === 410 || code === 404) expired.push(sub.id);
       }
     }
   }
@@ -82,8 +83,9 @@ export async function POST(req: NextRequest) {
         payload
       );
       sent++;
-    } catch (err: any) {
-      if (err.statusCode === 410 || err.statusCode === 404) expired.push(sub.id);
+    } catch (err: unknown) {
+      const code = (err as { statusCode?: number }).statusCode;
+      if (code === 410 || code === 404) expired.push(sub.id);
     }
   }
 

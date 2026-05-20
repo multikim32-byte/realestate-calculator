@@ -1,4 +1,5 @@
-﻿import GlobalNav from '../components/GlobalNav';
+﻿import Link from 'next/link';
+import GlobalNav from '../components/GlobalNav';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-static';
@@ -103,7 +104,7 @@ export default function TermsPage() {
         <div style={{ marginTop: 24, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <a href="/privacy" style={{ fontSize: 13, color: '#1d4ed8', textDecoration: 'none' }}>개인정보처리방침</a>
           <a href="/about" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>서비스 소개</a>
-          <a href="/" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>홈으로</a>
+          <Link href="/" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>홈으로</Link>
         </div>
 
       </div>

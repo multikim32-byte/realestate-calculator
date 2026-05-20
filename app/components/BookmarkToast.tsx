@@ -5,6 +5,11 @@ import { X, Star, Smartphone } from 'lucide-react';
 
 type DeviceType = 'android' | 'ios' | 'pc';
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): void;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 function getDevice(): DeviceType {
   const ua = navigator.userAgent;
   if (/iPhone|iPad|iPod/.test(ua)) return 'ios';
@@ -17,20 +22,19 @@ const DELAY_MS = 15000; // 15초 후 표시
 
 export default function BookmarkToast() {
   const [visible, setVisible] = useState(false);
-  const [device, setDevice] = useState<DeviceType>('pc');
-  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [device] = useState<DeviceType>(() =>
+    typeof window !== 'undefined' ? getDevice() : 'pc'
+  );
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
     // 이미 닫은 적 있으면 표시 안 함
     if (localStorage.getItem(STORAGE_KEY)) return;
 
-    const d = getDevice();
-    setDevice(d);
-
     // Android: beforeinstallprompt 이벤트 캐치
     const handler = (e: Event) => {
       e.preventDefault();
-      setInstallPrompt(e);
+      setInstallPrompt(e as BeforeInstallPromptEvent);
     };
     window.addEventListener('beforeinstallprompt', handler);
 

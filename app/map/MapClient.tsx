@@ -5,10 +5,9 @@ import Link from 'next/link';
 import type { MapUnsoldItem, MapSaleItem } from './page';
 import type { DistrictPrice, PriceStats } from '@/app/api/map-prices/route';
 import type { DongPrice } from '@/app/api/map-prices/dong/route';
-import { LAWD_CODE_MAP } from '@/lib/tradeApi';
 
 type AgeTab = 'all' | 'y5' | 'y10' | 'y15' | 'y20';
-type PriceOverlayItem = { overlay: any; div: HTMLDivElement; data: DistrictPrice };
+type PriceOverlayItem = { overlay: KakaoCustomOverlay; div: HTMLDivElement; data: DistrictPrice };
 
 interface Props {
   unsoldListings: MapUnsoldItem[];
@@ -87,11 +86,11 @@ function getCachedByKey(key: string): { lat: number; lng: number } | null {
   try { const h = localStorage.getItem(key); return h ? JSON.parse(h) : null; } catch { return null; }
 }
 
-function bestMatch(places: any[], name: string): any | null {
+function bestMatch(places: KakaoPlaceResult[], name: string): KakaoPlaceResult | null {
   if (!places.length) return null;
   const norm = (s: string) => s.replace(/\s/g, '').toLowerCase();
   const target = norm(name);
-  let best: any = null, bestScore = 0;
+  let best: KakaoPlaceResult | null = null, bestScore = 0;
   for (const p of places) {
     const pn = norm(p.place_name);
     const score = pn === target ? 100 : (target.includes(pn) || pn.includes(target)) ? 50 : 0;
@@ -129,8 +128,8 @@ function parseAddress(raw: string) {
 // 미분양: 주소 우선(실제 사업지), 이름 검색은 주소가 완전 실패할 때만
 // 청약: 주소→중심점 확보 후 단지명 근방 검색
 function geocodePin(
-  geocoder: any,
-  ps: any,
+  geocoder: KakaoGeocoder,
+  ps: KakaoPlaces,
   address: string,
   name: string,
   type: PinType,
@@ -155,7 +154,7 @@ function geocodePin(
   ) {
     const [head, ...tail] = addrs.filter(Boolean);
     if (!head) { onFail(); return; }
-    geocoder.addressSearch(head, (result: any[], status: string) => {
+    geocoder.addressSearch(head, (result: KakaoAddressResult[], status: string) => {
       if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
         onFound({ lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) });
       } else {
@@ -168,14 +167,14 @@ function geocodePin(
   function nameSearchNear(center: { lat: number; lng: number } | null): Promise<{ lat: number; lng: number } | null> {
     return new Promise(res => {
       if (!searchName) { res(center); return; }
-      ps.keywordSearch(searchName, (places: any[], st: string) => {
+      ps.keywordSearch(searchName, (places: KakaoPlaceResult[], st: string) => {
         if (st === window.kakao.maps.services.Status.OK) {
           const hit = bestMatch(places, searchName);
           if (hit) { res(save({ lat: parseFloat(hit.y), lng: parseFloat(hit.x) })); return; }
         }
         if (center) {
           const latLng = new window.kakao.maps.LatLng(center.lat, center.lng);
-          ps.keywordSearch(searchName, (p2: any[], s2: string) => {
+          ps.keywordSearch(searchName, (p2: KakaoPlaceResult[], s2: string) => {
             const hit2 = s2 === window.kakao.maps.services.Status.OK ? p2[0] : null;
             res(save(hit2 ? { lat: parseFloat(hit2.y), lng: parseFloat(hit2.x) } : center));
           }, { location: latLng, radius: 5000 });
@@ -212,8 +211,8 @@ function geocodePin(
 
 export default function MapClient({ unsoldListings, saleListings }: Props) {
   const mapRef     = useRef<HTMLDivElement>(null);
-  const mapInst    = useRef<any>(null);
-  const markersRef = useRef<{ m: any; type: PinType }[]>([]);
+  const mapInst    = useRef<KakaoMapInstance | null>(null);
+  const markersRef = useRef<{ m: KakaoMarker; type: PinType }[]>([]);
 
   const [filter, setFilter]   = useState({ unsold: true, sale: true });
   const filterRef = useRef({ unsold: true, sale: true });
@@ -233,11 +232,11 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
   const ageTabRef = useRef<AgeTab>('all');
   const priceOverlaysRef = useRef<PriceOverlayItem[]>([]);
   const loadedSidosRef = useRef(new Set<string>());
-  const geocoderRef = useRef<any>(null);
-  const placesRef = useRef<any>(null);
-  const unsoldClustererRef = useRef<any>(null);
-  const saleClustererRef   = useRef<any>(null);
-  const pinLabelsRef    = useRef<{ overlay: any; type: PinType }[]>([]);
+  const geocoderRef = useRef<KakaoGeocoder | null>(null);
+  const placesRef = useRef<KakaoPlaces | null>(null);
+  const unsoldClustererRef = useRef<{ clear(): void; addMarker(m: KakaoMarker): void; addMarkers(m: KakaoMarker[]): void } | null>(null);
+  const saleClustererRef   = useRef<{ clear(): void; addMarker(m: KakaoMarker): void; addMarkers(m: KakaoMarker[]): void } | null>(null);
+  const pinLabelsRef    = useRef<{ overlay: KakaoCustomOverlay; type: PinType }[]>([]);
   const labelsVisibleRef = useRef(false);
 
   function applyFilter(next: typeof filter) {
@@ -302,8 +301,8 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
 
     const tryLoad = (lat: number, lng: number) => {
       if (!geocoderRef.current) { loadSido('서울'); return; }
-      geocoderRef.current.coord2RegionCode(lng, lat, (result: any[], status: string) => {
-        const region = result?.find((r: any) => r.region_type === 'H');
+      geocoderRef.current.coord2RegionCode(lng, lat, (result: KakaoRegionResult[]) => {
+        const region = result?.find((r: KakaoRegionResult) => r.region_type === 'H');
         const sido = region ? REGION_NAME_MAP[region.region_1depth_name] : null;
         loadSido(sido ?? '서울');
       });
@@ -346,7 +345,7 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
           // 1차: addressSearch (행정구역명 직접)
           coords = await new Promise<{ lat: number; lng: number } | null>(resolve => {
             const timer = setTimeout(() => resolve(null), 4000);
-            geocoder.addressSearch(addr, (result: any[], status: string) => {
+            geocoder.addressSearch(addr, (result: KakaoAddressResult[], status: string) => {
               clearTimeout(timer);
               resolve(status === window.kakao.maps.services.Status.OK && result.length > 0
                 ? { lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) }
@@ -362,7 +361,7 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
               const suffix = shortName.endsWith('군') ? '군청' : shortName.endsWith('시') ? '시청' : '구청';
               coords = await new Promise<{ lat: number; lng: number } | null>(resolve => {
                 const timer = setTimeout(() => resolve(null), 4000);
-                ps.keywordSearch(shortName + suffix, (places: any[], status: string) => {
+                ps.keywordSearch(shortName + suffix, (places: KakaoPlaceResult[], status: string) => {
                   clearTimeout(timer);
                   resolve(status === window.kakao.maps.services.Status.OK && places.length > 0
                     ? { lat: parseFloat(places[0].y), lng: parseFloat(places[0].x) }
@@ -431,7 +430,6 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
 
     setPriceLoadState('done');
     console.log('[시세] 완료. 총 오버레이:', priceOverlaysRef.current.length);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 지도 페이지에서 body 스크롤 차단 — footer 높이로 인해 페이지가 스크롤 가능해져
@@ -510,8 +508,8 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
         }
         priceOverlaysRef.current.forEach(({ overlay }) => overlay.setMap(map));
         const center = map.getCenter();
-        geocoder.coord2RegionCode(center.getLng(), center.getLat(), (result: any[]) => {
-          const region = result?.find((r: any) => r.region_type === 'H');
+        geocoder.coord2RegionCode(center.getLng(), center.getLat(), (result: KakaoRegionResult[]) => {
+          const region = result?.find((r: KakaoRegionResult) => r.region_type === 'H');
           const sido = region ? REGION_NAME_MAP[region.region_1depth_name] : null;
           if (sido && !loadedSidosRef.current.has(sido)) loadSido(sido);
         });
@@ -531,7 +529,7 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
         const marker = new window.kakao.maps.Marker({
           position: new window.kakao.maps.LatLng(coords.lat, coords.lng),
           image:    type === 'unsold' ? unsoldImg : saleImg,
-          title:    (item as any).name,
+          title:    (item as MapUnsoldItem | MapSaleItem).name,
           // map 직접 연결 안 함 — clusterer가 관리
         });
         window.kakao.maps.event.addListener(marker, 'click', () => {
@@ -617,7 +615,7 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
             continue;
           }
           // 1패스: localStorage 캐시
-          const cacheKey = `gc5:${pin.address}|${(pin.item as any).name}`;
+          const cacheKey = `gc5:${pin.address}|${pin.item.name}`;
           const coords = getCachedByKey(cacheKey);
           if (coords) placeMarker(pin.type, pin.item, coords);
           else uncachedPins.push(pin);
@@ -625,7 +623,7 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
 
         // 2패스: 미캐시 항목 병렬 geocoding
         await runParallel(uncachedPins, async pin => {
-          const coords = await geocodePin(geocoder, ps, pin.address, (pin.item as any).name, pin.type);
+          const coords = await geocodePin(geocoder, ps, pin.address, pin.item.name, pin.type);
           if (coords) placeMarker(pin.type, pin.item, coords);
         });
 
@@ -780,10 +778,10 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
 
             <div style={{ padding: '14px 16px' }}>
               <p style={{ fontSize: 15, fontWeight: 800, color: '#1e293b', margin: '0 0 6px', lineHeight: 1.3 }}>
-                {(selected.item as any).name}
+                {selected.item.name}
               </p>
               <p style={{ fontSize: 12, color: '#6b7280', margin: '0 0 10px' }}>
-                📍 {(selected.item as any).location}
+                📍 {selected.item.location}
               </p>
 
               {selected.type === 'unsold' && (() => {

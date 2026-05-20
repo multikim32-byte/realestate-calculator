@@ -1,4 +1,5 @@
-﻿import GlobalNav from '../components/GlobalNav';
+﻿import Link from 'next/link';
+import GlobalNav from '../components/GlobalNav';
 import TradeClient from './TradeClient';
 import TradeTrendSection from './TradeTrendSection';
 import type { TradeTrendStats } from './TradeTrendSection';
@@ -110,14 +111,14 @@ export default async function TradePage() {
               <div style={{ fontSize: 13, fontWeight: 700, color: '#92400e', marginBottom: 4 }}>🧾 취득세 계산기</div>
               <div style={{ fontSize: 12, color: '#6b7280' }}>주택 수·가격별 세금 확인</div>
             </a>
-            <a href="/apt/mortgage-loan-guide" style={{ padding: '16px 20px', background: '#f0fdf4', borderRadius: 12, textDecoration: 'none', border: '1px solid #bbf7d0' }}>
+            <Link href="/apt/mortgage-loan-guide" style={{ padding: '16px 20px', background: '#f0fdf4', borderRadius: 12, textDecoration: 'none', border: '1px solid #bbf7d0' }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#166534', marginBottom: 4 }}>📖 주담대 완벽 가이드</div>
               <div style={{ fontSize: 12, color: '#6b7280' }}>LTV·DSR 한도 총정리</div>
-            </a>
-            <a href="/apt/capital-gains-tax-real-estate" style={{ padding: '16px 20px', background: '#fdf4ff', borderRadius: 12, textDecoration: 'none', border: '1px solid #e9d5ff' }}>
+            </Link>
+            <Link href="/apt/capital-gains-tax-real-estate" style={{ padding: '16px 20px', background: '#fdf4ff', borderRadius: 12, textDecoration: 'none', border: '1px solid #e9d5ff' }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#7c3aed', marginBottom: 4 }}>📊 양도소득세 가이드</div>
               <div style={{ fontSize: 12, color: '#6b7280' }}>매도 전 세금 미리 확인</div>
-            </a>
+            </Link>
           </section>
         </div>
       </div>

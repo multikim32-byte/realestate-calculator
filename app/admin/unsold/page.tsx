@@ -23,14 +23,14 @@ function loadKakaoMaps(): Promise<void> {
   });
 }
 
-function geocodeAddress(geocoder: any, ps: any, address: string, name: string): Promise<{ lat: number; lng: number } | null> {
+function geocodeAddress(geocoder: KakaoGeocoder, ps: KakaoPlaces, address: string, name: string): Promise<{ lat: number; lng: number } | null> {
   const noParens = address.replace(/\(.*?\)/g, '').trim();
   const isPrecise = /[동읍면리]$|[동읍면리]\s+\d|[로길]\s+\d|번지/.test(noParens);
   const searchName = name.replace(/\s*\([^)]*\)\s*/g, '').trim();
 
   function addrSearch(addr: string): Promise<{ lat: number; lng: number } | null> {
     return new Promise(res => {
-      geocoder.addressSearch(addr, (result: any[], status: string) => {
+      geocoder.addressSearch(addr, (result: KakaoAddressResult[], status: string) => {
         if (status === window.kakao.maps.services.Status.OK && result.length > 0)
           res({ lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) });
         else res(null);
@@ -41,7 +41,7 @@ function geocodeAddress(geocoder: any, ps: any, address: string, name: string): 
   function nameSearch(center?: { lat: number; lng: number }): Promise<{ lat: number; lng: number } | null> {
     return new Promise(res => {
       if (!searchName) { res(center ?? null); return; }
-      ps.keywordSearch(searchName, (places: any[], st: string) => {
+      ps.keywordSearch(searchName, (places: KakaoPlaceResult[], st: string) => {
         if (st === window.kakao.maps.services.Status.OK && places.length > 0) {
           res({ lat: parseFloat(places[0].y), lng: parseFloat(places[0].x) });
         } else res(center ?? null);
@@ -68,6 +68,14 @@ function useToast() {
 }
 
 type SortKey = 'created_at' | 'name' | 'location';
+
+function SortBtn({ k, label, sortKey, sortAsc, onSort }: { k: SortKey; label: string; sortKey: SortKey; sortAsc: boolean; onSort: (k: SortKey) => void }) {
+  return (
+    <button onClick={() => onSort(k)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: sortKey === k ? '#1d4ed8' : '#374151', fontWeight: sortKey === k ? 700 : 400, padding: '4px 6px', borderRadius: 6 }}>
+      {label} {sortKey === k ? (sortAsc ? '↑' : '↓') : ''}
+    </button>
+  );
+}
 
 export default function AdminUnsoldListPage() {
   const [listings, setListings] = useState<UnsoldListing[]>([]);
@@ -193,7 +201,7 @@ export default function AdminUnsoldListPage() {
 
   const toggleSelect = (id: string) => setSelected(prev => {
     const next = new Set(prev);
-    next.has(id) ? next.delete(id) : next.add(id);
+    if (next.has(id)) next.delete(id); else next.add(id);
     return next;
   });
 
@@ -203,11 +211,6 @@ export default function AdminUnsoldListPage() {
     else setSelected(prev => { const n = new Set(prev); paged.forEach(l => n.add(l.id)); return n; });
   };
 
-  const SortBtn = ({ k, label }: { k: SortKey; label: string }) => (
-    <button onClick={() => handleSort(k)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: sortKey === k ? '#1d4ed8' : '#374151', fontWeight: sortKey === k ? 700 : 400, padding: '4px 6px', borderRadius: 6 }}>
-      {label} {sortKey === k ? (sortAsc ? '↑' : '↓') : ''}
-    </button>
-  );
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
@@ -245,9 +248,9 @@ export default function AdminUnsoldListPage() {
               style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, width: 180 }} />
             <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
               <span style={{ fontSize: 12, color: '#9ca3af' }}>정렬:</span>
-              <SortBtn k="created_at" label="등록일" />
-              <SortBtn k="name" label="단지명" />
-              <SortBtn k="location" label="지역" />
+              <SortBtn k="created_at" label="등록일" sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+              <SortBtn k="name" label="단지명" sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+              <SortBtn k="location" label="지역" sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort} />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>

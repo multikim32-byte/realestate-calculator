@@ -3,13 +3,18 @@
 import { useEffect, useState } from 'react';
 import { Download } from 'lucide-react';
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): void;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 export default function InstallButton() {
-  const [prompt, setPrompt] = useState<any>(null);
+  const [prompt, setPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
     const handler = (e: Event) => {
       e.preventDefault();
-      setPrompt(e);
+      setPrompt(e as BeforeInstallPromptEvent);
     };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -18,8 +23,9 @@ export default function InstallButton() {
   if (!prompt) return null;
 
   async function handleInstall() {
-    prompt.prompt();
-    const { outcome } = await prompt.userChoice;
+    const p = prompt!;
+    p.prompt();
+    const { outcome } = await p.userChoice;
     if (outcome === 'accepted') setPrompt(null);
   }
 

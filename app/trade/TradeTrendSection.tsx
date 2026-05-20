@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, startTransition } from 'react';
 import { LAWD_CODE_MAP, recentMonths } from '@/lib/tradeApi';
 
 type TradeStatItem = {
@@ -103,8 +103,7 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
 
   useEffect(() => {
     if (usePrebuilt) {
-      setRegionalStats(null);
-      setAvailableDongs(prev => prev.length > 0 ? [] : prev); // 이미 빈 배열이면 참조 유지 → 불필요한 리렌더 방지
+      startTransition(() => { setRegionalStats(null); setAvailableDongs(prev => prev.length > 0 ? [] : prev); }); // 이미 빈 배열이면 참조 유지 → 불필요한 리렌더 방지
       fetchedRef.current = '';
       return;
     }
@@ -122,8 +121,7 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
     if (fetchedRef.current === cacheKey) return;
     fetchedRef.current = cacheKey;
 
-    setLoading(true);
-    setRegionalStats(null);
+    startTransition(() => { setLoading(true); setRegionalStats(null); });
 
     const params = new URLSearchParams();
     if (found) {
@@ -136,7 +134,7 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
     } else {
       // 전국 + 과거 월: sido 없이 모든 시도를 다 돌리기엔 너무 오래 걸리므로
       // 전국 과거 데이터는 지원하지 않음 (아래 early return)
-      setLoading(false);
+      startTransition(() => setLoading(false));
       return;
     }
     if (month !== CURRENT_MONTH) params.set('month', month);

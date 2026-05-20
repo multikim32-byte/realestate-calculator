@@ -3,11 +3,12 @@
 import { SaleItem } from '@/lib/types';
 import { MapPin, Calendar, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, startTransition } from 'react';
 import { formatPrice } from '@/lib/formatUtils';
 
 const FAV_KEY = 'mk_favorites';
-function loadFavs() {
+interface FavItem { id: string; type: string }
+function loadFavs(): FavItem[] {
   try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); } catch { return []; }
 }
 
@@ -28,12 +29,12 @@ const statusColors: Record<string, string> = {
 
 
 export default function SaleCard({ item }: SaleCardProps) {
-  const floors = (item as any).floors;
+  const floors = item.floors;
   const router = useRouter();
   const [fav, setFav] = useState(false);
 
   useEffect(() => {
-    setFav(loadFavs().some((f: any) => f.id === item.id && f.type === 'sale'));
+    startTransition(() => setFav(loadFavs().some(f => f.id === item.id && f.type === 'sale')));
   }, [item.id]);
 
   function handleClick() {
@@ -46,9 +47,9 @@ export default function SaleCard({ item }: SaleCardProps) {
   function toggleFav(e: React.MouseEvent) {
     e.stopPropagation();
     const favs = loadFavs();
-    const exists = favs.some((f: any) => f.id === item.id && f.type === 'sale');
+    const exists = favs.some(f => f.id === item.id && f.type === 'sale');
     const next = exists
-      ? favs.filter((f: any) => !(f.id === item.id && f.type === 'sale'))
+      ? favs.filter(f => !(f.id === item.id && f.type === 'sale'))
       : [...favs, { id: item.id, type: 'sale', name: item.name, location: item.location || item.region, savedAt: new Date().toISOString() }];
     try { localStorage.setItem(FAV_KEY, JSON.stringify(next)); } catch {}
     setFav(!exists);

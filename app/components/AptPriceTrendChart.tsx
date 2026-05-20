@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, startTransition } from 'react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, ReferenceLine, Area, AreaChart,
+  XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, Area, AreaChart,
 } from 'recharts';
 
 interface TradeItem {
@@ -44,7 +44,7 @@ function recentYms(n = 36): string[] {
   return result;
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { payload: MonthStat }[] }) => {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload as MonthStat;
   return (
@@ -62,17 +62,13 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function AptPriceTrendChart({ aptName, lawdCd }: Props) {
-  const [stats, setStats]     = useState<MonthStat[]>([]);
   const [loading, setLoading] = useState(true);
   const [areaFilter, setAreaFilter] = useState<string>('전체');
   const [allTrades, setAllTrades] = useState<TradeItem[]>([]);
 
   useEffect(() => {
     if (!aptName || !lawdCd) return;
-    setLoading(true);
-    setStats([]);
-    setAllTrades([]);
-    setAreaFilter('전체');
+    startTransition(() => { setLoading(true); setAllTrades([]); setAreaFilter('전체'); });
 
     const yms = recentYms(36);
     // 36개월을 12개씩 3묶음으로 병렬 요청

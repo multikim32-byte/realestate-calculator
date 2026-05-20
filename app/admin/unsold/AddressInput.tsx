@@ -1,25 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-
-declare global {
-  interface Window {
-    daum: {
-      Postcode: new (options: { oncomplete: (data: DaumResult) => void; onresize?: (size: { width: number; height: number }) => void }) => { open: () => void };
-    };
-  }
-}
-
-interface DaumResult {
-  roadAddress: string;
-  jibunAddress: string;
-  autoJibunAddress: string;
-  sido: string;    // 단축 시도명 예) 서울, 경기, 전북
-  sigungu: string; // 시군구명 예) 강남구, 양주시
-  bname: string;
-  buildingName: string;
-  apartment: string;
-}
+import { useEffect, useRef, useState, startTransition } from 'react';
 
 interface Props {
   value: string;
@@ -59,17 +40,15 @@ export default function AddressInput({ value, onChange, onGeocode }: Props) {
     lastEmitted.current = value;
     const parts = value.trim().split(/\s+/);
     if (parts.length > 2) {
-      setBase(parts.slice(0, 2).join(' '));
-      setDetail(parts.slice(2).join(' '));
+      startTransition(() => { setBase(parts.slice(0, 2).join(' ')); setDetail(parts.slice(2).join(' ')); });
     } else {
-      setBase(value);
-      setDetail('');
+      startTransition(() => { setBase(value); setDetail(''); });
     }
   }, [value]);
 
   useEffect(() => {
     if (document.querySelector('script[src*="postcode.v2.js"]')) {
-      setScriptLoaded(true);
+      startTransition(() => setScriptLoaded(true));
       return;
     }
     const script = document.createElement('script');
@@ -98,7 +77,7 @@ export default function AddressInput({ value, onChange, onGeocode }: Props) {
         if (onGeocode && KAKAO_KEY && full) {
           loadKakaoMaps().then(() => {
             const geocoder = new window.kakao.maps.services.Geocoder();
-            geocoder.addressSearch(full, (result: any[], status: string) => {
+            geocoder.addressSearch(full, (result: KakaoAddressResult[], status: string) => {
               if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
                 onGeocode(parseFloat(result[0].y), parseFloat(result[0].x));
               }

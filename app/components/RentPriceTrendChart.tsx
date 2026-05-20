@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, startTransition } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
@@ -43,7 +43,7 @@ function recentYms(n = 24): string[] {
   return result;
 }
 
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { payload: MonthStat }[] }) => {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload as MonthStat;
   return (
@@ -67,9 +67,7 @@ export default function RentPriceTrendChart({ aptName, lawdCd, mode }: Props) {
 
   useEffect(() => {
     if (!aptName || !lawdCd) return;
-    setLoading(true);
-    setAllTrades([]);
-    setAreaFilter('전체');
+    startTransition(() => { setLoading(true); setAllTrades([]); setAreaFilter('전체'); });
 
     const yms = recentYms(24);
     const chunks: string[][] = [];

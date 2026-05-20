@@ -327,7 +327,6 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
 
   const isRentTab = tab === '전세' || tab === '월세';
   const activeLoading = isRentTab ? rentLoading : loading;
-  const activeSearched = isRentTab ? rentSearched : searched;
   const activeError = isRentTab ? rentError : error;
   const activeCount = isRentTab ? filteredRent.length : filtered.length;
 

@@ -1,14 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, startTransition } from 'react';
 
 interface Props {
   address: string;
   name: string;
-}
-
-declare global {
-  interface Window { kakao: any; }
 }
 
 // 지오코딩 결과 캐시 (주소 → 좌표) — 같은 단지 재클릭 시 API 호출 생략
@@ -16,7 +12,7 @@ const geocodeCache = new Map<string, { y: string; x: string } | null>();
 
 export default function KakaoMap({ address, name }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<any>(null);
+  const mapInstance = useRef<KakaoMapInstance | null>(null);
   const [error, setError] = useState(false);
   const [loadingMap, setLoadingMap] = useState(true);
   const apiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
@@ -24,8 +20,7 @@ export default function KakaoMap({ address, name }: Props) {
   useEffect(() => {
     if (!apiKey || !mapRef.current) return;
 
-    setError(false);
-    setLoadingMap(true);
+    startTransition(() => { setError(false); setLoadingMap(true); });
 
     // 블록지번 감지: "회천지구 A10-1BL", "계양지구 A9블록", "왕숙2 A-3블록"
     const blockRe = /([가-힣A-Za-z0-9]+)\s+([A-Za-z]{1,3}[-]?\d+(?:-\d+)?[A-Za-z]{0,2}(?:블록|BL))/i;
@@ -105,11 +100,11 @@ export default function KakaoMap({ address, name }: Props) {
       const searchName = (name ?? '').replace(/\s*\([^)]*\)\s*/g, '').trim();
 
       // 이름 유사도 — 매칭 없으면 null 반환해 틀린 POI 방지
-      function bestMatch(places: any[]): any | null {
+      function bestMatch(places: KakaoPlaceResult[]): KakaoPlaceResult | null {
         if (!places.length) return null;
         const normalize = (s: string) => s.replace(/\s/g, '').toLowerCase();
         const target = normalize(searchName);
-        let best: any = null;
+        let best: KakaoPlaceResult | null = null;
         let bestScore = 0;
         for (const p of places) {
           const pn = normalize(p.place_name);
@@ -122,7 +117,7 @@ export default function KakaoMap({ address, name }: Props) {
       // 이름 전국 검색 (주소 geocoding 전부 실패 시 최후 수단)
       function nameSearchDirect() {
         if (!searchName) { setError(true); setLoadingMap(false); return; }
-        ps.keywordSearch(searchName, (places: any, st: any) => {
+        ps.keywordSearch(searchName, (places: KakaoPlaceResult[], st: string) => {
           const hit = st === window.kakao.maps.services.Status.OK ? bestMatch(places) : null;
           if (hit) {
             geocodeCache.set(cacheKey, { y: hit.y, x: hit.x });
@@ -139,7 +134,7 @@ export default function KakaoMap({ address, name }: Props) {
         const latLng = new window.kakao.maps.LatLng(center.y, center.x);
 
         // 1차: 전국 검색 (이름이 고유하면 가장 정확)
-        ps.keywordSearch(searchName, (places: any, st: any) => {
+        ps.keywordSearch(searchName, (places: KakaoPlaceResult[], st: string) => {
           const hit = st === window.kakao.maps.services.Status.OK ? bestMatch(places) : null;
           if (hit) {
             geocodeCache.set(cacheKey, { y: hit.y, x: hit.x });
@@ -147,7 +142,7 @@ export default function KakaoMap({ address, name }: Props) {
             return;
           }
           // 2차: 중심 근처 5km (블록지번 등 넓은 개발지구 대응)
-          ps.keywordSearch(searchName, (p2: any, s2: any) => {
+          ps.keywordSearch(searchName, (p2: KakaoPlaceResult[], s2: string) => {
             const hit2 = s2 === window.kakao.maps.services.Status.OK ? bestMatch(p2) : null;
             geocodeCache.set(cacheKey, hit2 ? { y: hit2.y, x: hit2.x } : center);
             placeMarker(hit2 ? { y: hit2.y, x: hit2.x } : center);
@@ -163,7 +158,7 @@ export default function KakaoMap({ address, name }: Props) {
       ) {
         const [head, ...tail] = addrs;
         if (!head) { onFail(); return; }
-        geocoder.addressSearch(head, (result: any, status: any) => {
+        geocoder.addressSearch(head, (result: KakaoAddressResult[], status: string) => {
           if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
             onFound({ y: result[0].y, x: result[0].x });
           } else {
@@ -180,7 +175,7 @@ export default function KakaoMap({ address, name }: Props) {
 
       if (lotAddress) {
         // 번지 주소 → 직접 geocoding → 성공 시 마커, 실패 시 이름 검색으로
-        geocoder.addressSearch(lotAddress, (result: any, status: any) => {
+        geocoder.addressSearch(lotAddress, (result: KakaoAddressResult[], status: string) => {
           if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
             const coords = { y: result[0].y, x: result[0].x };
             geocodeCache.set(cacheKey, coords);

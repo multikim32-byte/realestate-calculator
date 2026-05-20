@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 
 export interface Favorite {
   id: string;
@@ -23,9 +23,7 @@ function save(items: Favorite[]) {
 }
 
 export function useFavorites() {
-  const [favorites, setFavorites] = useState<Favorite[]>([]);
-
-  useEffect(() => { setFavorites(load()); }, []);
+  const [favorites, setFavorites] = useState<Favorite[]>(() => load());
 
   const toggle = useCallback((item: Omit<Favorite, 'savedAt'>) => {
     setFavorites(prev => {

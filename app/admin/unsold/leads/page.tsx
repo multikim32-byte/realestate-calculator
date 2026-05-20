@@ -184,7 +184,6 @@ export default function AdminLeadsPage() {
     setDeleteTarget(null);
   };
 
-  const handleLogout = async () => { await fetch('/api/admin/logout', { method: 'POST' }); router.push('/admin'); };
 
   const handleCSV = () => {
     const rows = [['단지명', '이름', '전화번호', '상태', '메모', '등록일시']];

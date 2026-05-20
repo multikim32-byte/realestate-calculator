@@ -63,7 +63,12 @@ function computeStats(
   const cg = buildGroups(curr);
   const pg = buildGroups(prev);
 
-  const changeList: object[] = [];
+  interface ChangeItem {
+    name: string; dong: string; location: string;
+    areaBucket: number; builtYear: number;
+    currentAvg: number; prevAvg: number; changePct: number; count: number;
+  }
+  const changeList: ChangeItem[] = [];
   for (const [k, { trades: ct, meta }] of cg) {
     if (ct.length < 2) continue;
     const pv = pg.get(k);
@@ -80,13 +85,13 @@ function computeStats(
   }
 
   const rising = changeList
-    .filter((v: any) => v.changePct > 0)
-    .sort((a: any, b: any) => b.changePct - a.changePct)
+    .filter(v => v.changePct > 0)
+    .sort((a, b) => b.changePct - a.changePct)
     .slice(0, 10).map((v, i) => ({ rank: i + 1, ...v }));
 
   const falling = changeList
-    .filter((v: any) => v.changePct < 0)
-    .sort((a: any, b: any) => a.changePct - b.changePct)
+    .filter(v => v.changePct < 0)
+    .sort((a, b) => a.changePct - b.changePct)
     .slice(0, 10).map((v, i) => ({ rank: i + 1, ...v }));
 
   const priceMap = new Map<string, TradeItem>();

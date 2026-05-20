@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, startTransition } from "react";
 
 const tabs = [
   { id: "loan", label: "대출 상환" },
@@ -113,6 +113,17 @@ function ShareResultBtn({ params }: { params: Record<string, string> }) {
 type ScheduleRow = { month: number; payment: number; principal: number; interest: number; balance: number };
 type YearRow = { month: number; label: string; payment: number; principal: number; interest: number; balance: number };
 type IntermPaymentRow = { round: number; amount: number; date: string; days: number | null; interest: number | null; loan: boolean };
+type LoanResult =
+  | { type: 'equal'; monthly: number; total: number; interest: number; schedule: ScheduleRow[] }
+  | { type: 'reducing'; principal: number; firstMonth: number; lastMonth: number; totalInterest: number; total: number; schedule: ScheduleRow[] };
+type IntermResult = { perAmount: number; totalAmount: number; totalInterest: number; payments: IntermPaymentRow[] };
+type AcqResult = { acquisitionTax: number; localEduTax: number; specialTax: number; total: number; acqRate: number; eduRate: number; specRate: number; note: string };
+type BrokerageResult = { fee: number; rate: number; vat: number; total: number; note: string; tt: string; pr: string; dep: string; mo: string };
+type ROIResult = { buy: number; eq: number; ln: number; annualLoanInterest: number; dep: number; rent: number; netIncome: number; grossYield: number; netYield: number; bp: string; eqStr: string; lnStr: string; lr: string; td: string; mr: string };
+type ConvResult =
+  | { mode: 'toMonthly'; diff: number; rate: number; monthlyRent: number }
+  | { mode: 'toJeonse'; jeonseAmt: number; rate: number }
+  | { mode: 'calcRate'; diff: number; calcRate: number };
 
 function AmortizationTable({ schedule }: { schedule: ScheduleRow[] }) {
   const [page, setPage] = useState(1);
@@ -201,12 +212,12 @@ function LoanCalc() {
   const [rate, setRate] = useState("");
   const [years, setYears] = useState("");
   const [type, setType] = useState("equal");
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<LoanResult | null>(null);
 
   function computeLoan(a: string, r: string, y: string, t: string) {
     const P = parseWon(a), mr = parseFloat(r) / 100 / 12, n = parseFloat(y) * 12;
     if (!P || !mr || !n) return;
-    let schedule: ScheduleRow[] = [];
+    const schedule: ScheduleRow[] = [];
     if (t === "equal") {
       const monthly = P * mr * Math.pow(1 + mr, n) / (Math.pow(1 + mr, n) - 1);
       let balance = P;
@@ -232,8 +243,7 @@ function LoanCalc() {
     if (sp.get('tab') !== 'loan') return;
     const a = sp.get('amt') || '', r = sp.get('rate') || '', y = sp.get('years') || '', t = sp.get('type') || 'equal';
     if (!a && !r && !y) return;
-    setAmt(a); setRate(r); setYears(y); setType(t);
-    computeLoan(a, r, y, t);
+    startTransition(() => { setAmt(a); setRate(r); setYears(y); setType(t); computeLoan(a, r, y, t); });
   }, []);
 
   const calc = () => computeLoan(amt, rate, years, type);
@@ -279,7 +289,7 @@ function IntermediateCalc() {
   const [count, setCount] = useState("6");
   const [payDates, setPayDates] = useState(Array(6).fill(""));
   const [loanFlags, setLoanFlags] = useState(Array(6).fill(true));
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<IntermResult | null>(null);
   const cnt = parseInt(count);
 
   useEffect(() => {
@@ -292,23 +302,28 @@ function IntermediateCalc() {
     if (!sp_ && !pa) return;
     const parsedDates = dates ? dates.split(',') : Array(parseInt(ct)).fill('');
     const parsedFlags = flags ? flags.split(',').map(f => f === '1') : Array(parseInt(ct)).fill(true);
-    setSalePrice(sp_); setPerAmount(pa); setRate(r); setBalanceDate(bd); setCount(ct);
-    setPayDates(parsedDates); setLoanFlags(parsedFlags);
     // 자동 계산
     const per = parseWon(pa), rv = parseFloat(r) / 100;
-    if (!bd || !per || !rv) return;
-    const balDay = new Date(bd);
-    let totalInterest = 0;
-    const payments = [];
-    for (let i = 0; i < parseInt(ct); i++) {
-      const loan = parsedFlags[i];
-      const pd = parsedDates[i] ? new Date(parsedDates[i]) : null;
-      const days = pd ? Math.max(0, Math.round((balDay.getTime() - pd.getTime()) / 86400000)) : null;
-      const interest = (loan && days !== null) ? Math.round(per * rv * days / 365) : null;
-      if (interest !== null) totalInterest += interest;
-      payments.push({ round: i + 1, amount: per, date: parsedDates[i], days, interest, loan });
-    }
-    setResult({ perAmount: per, totalAmount: per * parseInt(ct), totalInterest, payments });
+    const autoResult = (() => {
+      if (!bd || !per || !rv) return null;
+      const balDay = new Date(bd);
+      let totalInterest = 0;
+      const payments = [];
+      for (let i = 0; i < parseInt(ct); i++) {
+        const loan = parsedFlags[i];
+        const pd = parsedDates[i] ? new Date(parsedDates[i]) : null;
+        const days = pd ? Math.max(0, Math.round((balDay.getTime() - pd.getTime()) / 86400000)) : null;
+        const interest = (loan && days !== null) ? Math.round(per * rv * days / 365) : null;
+        if (interest !== null) totalInterest += interest;
+        payments.push({ round: i + 1, amount: per, date: parsedDates[i], days, interest, loan });
+      }
+      return { perAmount: per, totalAmount: per * parseInt(ct), totalInterest, payments };
+    })();
+    startTransition(() => {
+      setSalePrice(sp_); setPerAmount(pa); setRate(r); setBalanceDate(bd); setCount(ct);
+      setPayDates(parsedDates); setLoanFlags(parsedFlags);
+      if (autoResult) setResult(autoResult);
+    });
   }, []);
 
   // 총 분양가 변경 시 회차별 중도금 자동 계산 (60% / 회차수)
@@ -456,10 +471,10 @@ function IntermediateCalc() {
 // 3. 취득세
 function calcAcqRate(p: number, houseCount: string, isAdjusted: boolean, houseType: string) {
   if (houseType === "commercial") return { acqRate: 0.04, eduRate: 0.004, note: "상가·오피스텔·토지 (4%)" };
-  let baseRate: number, baseEduRate: number;
-  if (p <= 600000000) { baseRate = 0.01; baseEduRate = 0.001; }
-  else if (p <= 900000000) { baseRate = (p / 100000000 * 2 / 3 - 3) * (1 / 100); baseEduRate = baseRate * 0.1; }
-  else { baseRate = 0.03; baseEduRate = 0.003; }
+  let baseRate: number;
+  if (p <= 600000000) { baseRate = 0.01; }
+  else if (p <= 900000000) { baseRate = (p / 100000000 * 2 / 3 - 3) * (1 / 100); }
+  else { baseRate = 0.03; }
   const n = parseInt(houseCount);
   let acqRate = baseRate, note = "";
   if (n === 1) { acqRate = baseRate; note = p <= 600000000 ? "1주택 6억 이하 (1%)" : p <= 900000000 ? `1주택 6~9억 (${(baseRate * 100).toFixed(2)}%)` : "1주택 9억 초과 (3%)"; }
@@ -476,7 +491,7 @@ function AcquisitionCalc() {
   const [houseType, setHouseType] = useState("general");
   const [isAdjusted, setIsAdjusted] = useState(false);
   const [isOver85, setIsOver85] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<AcqResult | null>(null);
 
   function computeAcq(pr: string, hc: string, ht: string, adj: boolean, o85: boolean) {
     const p = parseWon(pr); if (!p) return;
@@ -493,8 +508,7 @@ function AcquisitionCalc() {
     const pr = sp.get('price') || '', hc = sp.get('houseCount') || '1', ht = sp.get('houseType') || 'general';
     const adj = sp.get('isAdjusted') === 'true', o85 = sp.get('isOver85') === 'true';
     if (!pr) return;
-    setPrice(pr); setHouseCount(hc); setHouseType(ht); setIsAdjusted(adj); setIsOver85(o85);
-    computeAcq(pr, hc, ht, adj, o85);
+    startTransition(() => { setPrice(pr); setHouseCount(hc); setHouseType(ht); setIsAdjusted(adj); setIsOver85(o85); computeAcq(pr, hc, ht, adj, o85); });
   }, []);
 
   const calc = () => computeAcq(price, houseCount, houseType, isAdjusted, isOver85);
@@ -589,7 +603,7 @@ function BrokerageCalc() {
   const [price, setPrice] = useState("");
   const [deposit, setDeposit] = useState("");
   const [monthly, setMonthly] = useState("");
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<BrokerageResult | null>(null);
 
   function computeBrokerage(tt: string, pr: string, dep: string, mo: string) {
     if (tt === "sale") {
@@ -615,8 +629,7 @@ function BrokerageCalc() {
     if (sp.get('tab') !== 'brokerage') return;
     const tt = sp.get('tradeType') || 'sale', pr = sp.get('price') || '', dep = sp.get('deposit') || '', mo = sp.get('monthly') || '';
     if (!pr && !dep && !mo) return;
-    setTradeType(tt); setPrice(pr); setDeposit(dep); setMonthly(mo);
-    computeBrokerage(tt, pr, dep, mo);
+    startTransition(() => { setTradeType(tt); setPrice(pr); setDeposit(dep); setMonthly(mo); computeBrokerage(tt, pr, dep, mo); });
   }, []);
 
   const calc = () => computeBrokerage(tradeType, price, deposit, monthly);
@@ -662,7 +675,7 @@ function ROICalc() {
   const [loanRate, setLoanRate] = useState("");
   const [tenantDeposit, setTenantDeposit] = useState("");
   const [monthlyRent, setMonthlyRent] = useState("");
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<ROIResult | null>(null);
 
   function computeROI(bp: string, eq: string, ln: string, lr: string, td: string, mr: string) {
     const buy = parseWon(bp), eqV = parseWon(eq), lnV = parseWon(ln);
@@ -680,8 +693,7 @@ function ROICalc() {
     const bp = sp.get('buyPrice') || '', eq = sp.get('equity') || '', ln = sp.get('loan') || '';
     const lr = sp.get('loanRate') || '', td = sp.get('tenantDeposit') || '', mr = sp.get('monthlyRent') || '';
     if (!bp) return;
-    setBuyPrice(bp); setEquity(eq); setLoan(ln); setLoanRate(lr); setTenantDeposit(td); setMonthlyRent(mr);
-    computeROI(bp, eq, ln, lr, td, mr);
+    startTransition(() => { setBuyPrice(bp); setEquity(eq); setLoan(ln); setLoanRate(lr); setTenantDeposit(td); setMonthlyRent(mr); computeROI(bp, eq, ln, lr, td, mr); });
   }, []);
 
   const calc = () => computeROI(buyPrice, equity, loan, loanRate, tenantDeposit, monthlyRent);
@@ -734,10 +746,6 @@ function getAccountScore(years: number) {
   if (years < 1) return 2;
   return ACCOUNT_SCORE[Math.min(Math.floor(years), 15) + 1];
 }
-function getDependentScore(n: number) {
-  return Math.min(n + 1, 6) * 5 + (n === 0 ? 0 : 0);
-  // 0명:5 1명:10 2명:15 3명:20 4명:25 5명:30 6명이상:35
-}
 
 function SubscriptionCalc() {
   const [homelessYears, setHomelessYears] = useState('');
@@ -758,8 +766,7 @@ function SubscriptionCalc() {
     if (sp.get('tab') !== 'subscription') return;
     const hy = sp.get('homelessYears') || '', dep0 = sp.get('dependents') || '0', ay = sp.get('accountYears') || '';
     if (!hy && !ay) return;
-    setHomelessYears(hy); setDependents(dep0); setAccountYears(ay);
-    computeSub(hy, dep0, ay);
+    startTransition(() => { setHomelessYears(hy); setDependents(dep0); setAccountYears(ay); computeSub(hy, dep0, ay); });
   }, []);
 
   function calc() {
@@ -859,14 +866,14 @@ function ConversionCalc() {
   const [deposit, setDeposit] = useState('');
   const [monthly, setMonthly] = useState('');
   const [rate, setRate] = useState('');
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<ConvResult | null>(null);
 
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
     if (sp.get('tab') !== 'conversion') return;
     const m = (sp.get('mode') || 'toMonthly') as ConversionMode;
     const j = sp.get('jeonse') || '', d = sp.get('deposit') || '', mo = sp.get('monthly') || '', r = sp.get('rate') || '';
-    setMode(m); setJeonse(j); setDeposit(d); setMonthly(mo); setRate(r);
+    startTransition(() => { setMode(m); setJeonse(j); setDeposit(d); setMonthly(mo); setRate(r); });
   }, []);
 
   function calc() {
@@ -875,17 +882,17 @@ function ConversionCalc() {
       if (!j || !r) return;
       const diff = j - d;
       if (diff <= 0) return;
-      setResult({ mode, monthlyRent: Math.round(diff * (r / 100) / 12), diff, rate: r, j, d, r: rate });
+      setResult({ mode, monthlyRent: Math.round(diff * (r / 100) / 12), diff, rate: r });
     } else if (mode === 'toJeonse') {
       const d = parseWon(deposit), m = parseWon(monthly), r = parseFloat(rate);
       if (!m || !r) return;
-      setResult({ mode, jeonseAmt: d + Math.round(m * 12 / (r / 100)), rate: r, d, m: monthly, r: rate });
+      setResult({ mode, jeonseAmt: d + Math.round(m * 12 / (r / 100)), rate: r });
     } else {
       const j = parseWon(jeonse), d = parseWon(deposit), m = parseWon(monthly);
       if (!j || !m) return;
       const diff = j - d;
       if (diff <= 0) return;
-      setResult({ mode, calcRate: m * 12 / diff * 100, diff, j, d, m: monthly });
+      setResult({ mode, calcRate: m * 12 / diff * 100, diff });
     }
   }
 
@@ -989,7 +996,7 @@ export default function Calculator() {
 
   useEffect(() => {
     const tab = new URLSearchParams(window.location.search).get('tab');
-    if (tab && COMPS[tab]) setActive(tab);
+    if (tab && COMPS[tab]) startTransition(() => setActive(tab));
   }, []);
   const Comp = COMPS[active];
   return (

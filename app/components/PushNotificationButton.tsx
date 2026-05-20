@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, startTransition } from 'react';
 import { Bell, BellOff } from 'lucide-react';
 
 const PUSH_KEY = 'mk_push_subscribed'; // ["sale:id1", "sale:id2"]
@@ -35,7 +35,7 @@ export default function PushNotificationButton({ item }: Props) {
     if (new Date(item.receiptStart) < today) return;
 
     const stored: string[] = JSON.parse(localStorage.getItem(PUSH_KEY) || '[]');
-    setState(stored.includes(itemKey) ? 'on' : 'idle');
+    startTransition(() => setState(stored.includes(itemKey) ? 'on' : 'idle'));
   }, [itemKey, item.receiptStart]);
 
   if (state === 'hidden') return null;

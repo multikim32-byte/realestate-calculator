@@ -247,7 +247,7 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
   ]).then(([u, s]) => [
     u.status === 'fulfilled' ? u.value : { data: [] },
     s.status === 'fulfilled' ? s.value : { items: [] },
-  ]) as [{ data: any[] | null }, { items: PublicSaleItem[] }];
+  ]) as [{ data: { id: string; slug: string | null; name: string; location: string; min_price: number | null; max_price: number | null; category: string; thumbnail_url: string | null; benefit: string | null; highlight: string | null }[] | null }, { items: PublicSaleItem[] }];
 
   const saleListings: PublicSaleItem[] = (saleResult.items ?? []).filter(i => i.region === sido && i.status !== '청약마감');
 
@@ -272,10 +272,10 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
     '제주': { sigungu: '제주시', dong: '노형동' },
   };
   const defaultArea = DEFAULT_SIGUNGU_DONG[sido];
+  const sidoDistricts = (LAWD_CODE_MAP as unknown as Record<string, { name: string; code: string }[]>)[sido];
   const firstDistrict = defaultArea
-    ? (LAWD_CODE_MAP as any)[sido]?.find((d: any) => d.name === defaultArea.sigungu)
-      ?? (LAWD_CODE_MAP as any)[sido]?.[0]
-    : (LAWD_CODE_MAP as any)[sido]?.[0];
+    ? sidoDistricts?.find(d => d.name === defaultArea.sigungu) ?? sidoDistricts?.[0]
+    : sidoDistricts?.[0];
   const tradeUrl = firstDistrict
     ? `/trade?sido=${encodeURIComponent(sido)}&sigungu=${encodeURIComponent(firstDistrict.name)}${defaultArea ? `&dong=${encodeURIComponent(defaultArea.dong)}` : ''}`
     : '/trade';
@@ -494,7 +494,7 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
 
         {/* ── 시/군/구별 바로가기 ── */}
         {(() => {
-          const districts = (LAWD_CODE_MAP as any)[sido] as { name: string; code: string }[] | undefined;
+          const districts = (LAWD_CODE_MAP as unknown as Record<string, { name: string; code: string }[]>)[sido];
           if (!districts?.length) return null;
           return (
             <section style={{ marginBottom: 40 }}>

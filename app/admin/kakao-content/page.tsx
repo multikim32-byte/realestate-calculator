@@ -32,8 +32,9 @@ export default async function KakaoContentPage() {
   ]);
 
   const today = new Date().toISOString().slice(0, 10);
-  const in3Days = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
-  const in7Days = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+  const todayMs = new Date(today).getTime();
+  const in3Days = new Date(todayMs + 3 * 86400000).toISOString().slice(0, 10);
+  const in7Days = new Date(todayMs + 7 * 86400000).toISOString().slice(0, 10);
 
   // 이번주 월~일 계산
   const todayDate = new Date();

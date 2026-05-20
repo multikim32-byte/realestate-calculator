@@ -313,19 +313,6 @@ function sortByAnnouncementDesc(items: PublicSaleItem[], limit: number): PublicS
     .slice(0, limit);
 }
 
-// 접수시작일(없으면 공고일) 기준 내림차순 정렬 — 잔여세대·무순위에 사용
-// 이유: 무순위/잔여세대의 RCRIT_PBLANC_DE는 원사업 공고일(수년 전)이어서
-//       announcementDate 기준으로 정렬하면 신규 항목이 50건 커트라인 밖으로 밀림
-function sortByReceiptDesc(items: PublicSaleItem[], limit: number): PublicSaleItem[] {
-  return items
-    .sort((a, b) => {
-      const da = a.receiptStart || a.announcementDate || '';
-      const db = b.receiptStart || b.announcementDate || '';
-      return db.localeCompare(da);
-    })
-    .slice(0, limit);
-}
-
 /**
  * APT 분양정보 목록 조회
  */

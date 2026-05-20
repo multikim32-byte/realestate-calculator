@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, startTransition } from 'react';
 import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Legend,
+  Tooltip, ResponsiveContainer,
 } from 'recharts';
 
 interface MonthData {
@@ -36,10 +36,10 @@ function recentYmds(n: number, currentYmd: string): string[] {
   return result;
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: { dataKey: string; value: number }[]; label?: string }) => {
   if (!active || !payload?.length) return null;
-  const count = payload.find((p: any) => p.dataKey === 'count')?.value ?? 0;
-  const avg   = payload.find((p: any) => p.dataKey === 'avg')?.value ?? 0;
+  const count = payload.find(p => p.dataKey === 'count')?.value ?? 0;
+  const avg   = payload.find(p => p.dataKey === 'avg')?.value ?? 0;
   return (
     <div style={{
       background: '#1e293b', borderRadius: 10, padding: '10px 14px',
@@ -61,7 +61,7 @@ export default function VolumeChart({ lawdCd, currentYmd, sigunguName }: Props) 
     const key = `${lawdCd}-${currentYmd}`;
     if (!lawdCd || !currentYmd || loadedKey === key) return;
 
-    setLoading(true);
+    startTransition(() => setLoading(true));
     const ymds = recentYmds(12, currentYmd);
 
     Promise.all(

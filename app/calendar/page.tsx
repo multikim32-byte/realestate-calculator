@@ -75,7 +75,7 @@ export default function CalendarPage() {
             <div style={{ padding: 20, background: '#f0fdf4', borderRadius: 12 }}>
               <h3 style={{ fontSize: 15, fontWeight: 700, color: '#166534', marginBottom: 6 }}>진행 중인 청약</h3>
               <p style={{ fontSize: 13, lineHeight: 1.7, color: '#374151' }}>
-                이전 달에 시작해 현재 접수 중인 청약은 달력 하단 "진행 중인 청약" 섹션에서 확인할 수 있습니다.
+                이전 달에 시작해 현재 접수 중인 청약은 달력 하단 &quot;진행 중인 청약&quot; 섹션에서 확인할 수 있습니다.
               </p>
             </div>
             <div style={{ padding: 20, background: '#fdf4ff', borderRadius: 12 }}>

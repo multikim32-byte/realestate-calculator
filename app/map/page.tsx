@@ -57,17 +57,17 @@ export default async function MapPage() {
   ]).then(([u, s]) => [
     u.status === 'fulfilled' ? u.value : { data: [] },
     s.status === 'fulfilled' ? s.value : { items: [] },
-  ]) as [{ data: MapUnsoldItem[] | null }, { items: any[] }];
+  ]) as [{ data: MapUnsoldItem[] | null }, { items: MapSaleItem[] }];
 
   // 저장된 좌표가 있는 매물만 표시 (fetchSaleDetail 루프 제거 — Vercel 10초 제한 초과 방지)
   const unsoldListings: MapUnsoldItem[] = (unsoldRaw ?? []).filter(i => i.location);
 
   const saleListings: MapSaleItem[] = (saleResult.items ?? [])
-    .filter((i: any) =>
+    .filter((i: MapSaleItem) =>
       i.buildingType === '아파트' &&
       i.status !== '청약마감'  // 청약예정·청약중·당첨발표까지만 표시
     )
-    .map((i: any) => ({
+    .map((i: MapSaleItem) => ({
       houseManageNo: i.houseManageNo,
       name: i.name,
       location: i.location,

@@ -24,9 +24,14 @@ export async function GET() {
   return NextResponse.json({ count: count ?? 0 });
 }
 
+interface PushSubscription {
+  endpoint: string;
+  keys?: { p256dh?: string; auth?: string };
+}
+
 // POST /api/push/subscribe — 구독 추가 또는 아이템 추가
 export async function POST(req: NextRequest) {
-  const { subscription, item } = await req.json() as { subscription: any; item: PushItem };
+  const { subscription, item } = await req.json() as { subscription: PushSubscription; item: PushItem };
 
   if (!subscription?.endpoint || !item?.id || !item?.receiptStart) {
     return NextResponse.json({ error: 'invalid' }, { status: 400 });
@@ -59,7 +64,7 @@ export async function POST(req: NextRequest) {
 
 // DELETE /api/push/subscribe — 아이템 구독 해제
 export async function DELETE(req: NextRequest) {
-  const { subscription, itemId } = await req.json() as { subscription: any; itemId: string };
+  const { subscription, itemId } = await req.json() as { subscription: PushSubscription; itemId: string };
 
   if (!subscription?.endpoint) {
     return NextResponse.json({ error: 'invalid' }, { status: 400 });

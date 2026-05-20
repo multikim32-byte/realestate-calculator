@@ -66,8 +66,8 @@ function findSigungu(sido: string, regionName: string): { name: string; code: st
 
 export default function MapRegionPicker({ onSelect, onClose }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<any>(null);
-  const markerRef = useRef<any>(null);
+  const mapInstance = useRef<KakaoMapInstance | null>(null);
+  const markerRef = useRef<KakaoMarker | null>(null);
   const [found, setFound] = useState<SelectedRegion | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [clicking, setClicking] = useState(false);
@@ -87,9 +87,10 @@ export default function MapRegionPicker({ onSelect, onClose }: Props) {
 
       const geocoder = new window.kakao.maps.services.Geocoder();
 
-      window.kakao.maps.event.addListener(map, 'click', (e: any) => {
-        const lat = e.latLng.getLat();
-        const lng = e.latLng.getLng();
+      window.kakao.maps.event.addListener(map, 'click', (e: unknown) => {
+        const ev = e as { latLng: KakaoLatLng };
+        const lat = ev.latLng.getLat();
+        const lng = ev.latLng.getLng();
 
         setFound(null);
         setNotFound(false);
@@ -101,7 +102,7 @@ export default function MapRegionPicker({ onSelect, onClose }: Props) {
           markerRef.current = null;
         }
 
-        geocoder.coord2RegionCode(lng, lat, (result: any, status: any) => {
+        geocoder.coord2RegionCode(lng, lat, (result: KakaoRegionResult[], status: string) => {
           setClicking(false);
           if (status !== window.kakao.maps.services.Status.OK || !result.length) {
             setNotFound(true);
@@ -109,7 +110,7 @@ export default function MapRegionPicker({ onSelect, onClose }: Props) {
           }
 
           // 법정구역(H) 우선
-          const region = result.find((r: any) => r.region_type === 'H') ?? result[0];
+          const region = result.find((r: KakaoRegionResult) => r.region_type === 'H') ?? result[0];
           const sido = SIDO_MAP[region.region_1depth_name];
 
           if (!sido) { setNotFound(true); return; }
@@ -120,7 +121,7 @@ export default function MapRegionPicker({ onSelect, onClose }: Props) {
           // 선택 마커 표시
           const marker = new window.kakao.maps.Marker({
             map,
-            position: e.latLng,
+            position: ev.latLng,
           });
           markerRef.current = marker;
 

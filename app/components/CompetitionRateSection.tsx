@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, startTransition } from 'react';
 
 type RatioRow = {
   주택형?: string;
@@ -62,13 +62,13 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, buildi
   useEffect(() => {
     if (!open || !houseManageNo) return;
     if (rows !== null) return; // 이미 불러옴
-    setLoading(true);
+    startTransition(() => setLoading(true));
     fetch(`/api/sale/ratio?houseManageNo=${houseManageNo}&pblancNo=${pblancNo}`)
       .then(r => r.json())
       .then(data => setRows(data.ratio ?? []))
       .catch(() => setRows([]))
       .finally(() => setLoading(false));
-  }, [open, houseManageNo, rows]);
+  }, [open, houseManageNo, pblancNo, rows]);
 
   // 주택형별로 그룹핑
   const grouped: Record<string, RatioRow[]> = {};

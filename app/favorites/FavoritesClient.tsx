@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect, startTransition } from 'react';
 import Link from 'next/link';
 import GlobalNav from '@/app/components/GlobalNav';
 import PushNotificationButton from '@/app/components/PushNotificationButton';
@@ -9,16 +9,16 @@ import type { Favorite } from '@/lib/useFavorites';
 const FAV_KEY = 'mk_favorites';
 
 export default function FavoritesClient() {
-  const [favs, setFavs] = useState<Favorite[]>([]);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
+  const [favs, setFavs] = useState<Favorite[]>(() => {
+    if (typeof window === 'undefined') return [];
     try {
       const data = JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
-      setFavs(data.sort((a: Favorite, b: Favorite) => b.savedAt.localeCompare(a.savedAt)));
-    } catch {}
-    setMounted(true);
-  }, []);
+      return data.sort((a: Favorite, b: Favorite) => b.savedAt.localeCompare(a.savedAt));
+    } catch { return []; }
+  });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { startTransition(() => setMounted(true)); }, []);
 
   function remove(id: string, type: string) {
     const next = favs.filter(f => !(f.id === id && f.type === type));

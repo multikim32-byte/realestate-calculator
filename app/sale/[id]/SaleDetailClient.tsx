@@ -714,7 +714,7 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
             if (zoom > 1) dragRef.current = { startX: e.clientX, startY: e.clientY, ox: offset.x, oy: offset.y };
           }}
           onClick={e => e.stopPropagation()}
-          onDoubleClick={e => { e.stopPropagation(); zoom > 1 ? (resetZoom()) : (setZoom(2)); }}
+          onDoubleClick={e => { e.stopPropagation(); if (zoom > 1) resetZoom(); else setZoom(2); }}
           style={{
             maxWidth: '90vw', maxHeight: '88vh',
             objectFit: 'contain', borderRadius: zoom > 1 ? 0 : 10,
@@ -756,7 +756,7 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
             style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', fontSize: 20, cursor: 'pointer' }}
           >+</button>
           <button
-            onClick={e => { e.stopPropagation(); zoom > 1 ? (zoom - 0.5 <= 1 ? resetZoom() : setZoom(z => z - 0.5)) : undefined; }}
+            onClick={e => { e.stopPropagation(); if (zoom > 1) { if (zoom - 0.5 <= 1) resetZoom(); else setZoom(z => z - 0.5); } }}
             style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', fontSize: 20, cursor: 'pointer', opacity: zoom > 1 ? 1 : 0.4 }}
           >−</button>
           {zoom > 1 && (

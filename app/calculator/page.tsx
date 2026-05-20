@@ -211,7 +211,7 @@ export default function CalculatorPage() {
           <div style={{ borderBottom: "1px solid #e5e7eb", paddingBottom: 20, marginBottom: 20 }}>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: "#374151", marginBottom: 8 }}>Q. 중도금 대출 이자는 누가 내나요?</h3>
             <p style={{ fontSize: 14, lineHeight: 1.8, color: "#6b7280" }}>
-              원칙적으로 계약자(분양자)가 부담합니다. 다만 시행사·건설사가 이자 일부를 지원하는 "이자 후불제" 또는 "무이자" 조건을
+              원칙적으로 계약자(분양자)가 부담합니다. 다만 시행사·건설사가 이자 일부를 지원하는 &quot;이자 후불제&quot; 또는 &quot;무이자&quot; 조건을
               제공하는 경우도 있습니다. 분양 계약서와 입주자 모집공고를 반드시 확인하세요.
             </p>
           </div>

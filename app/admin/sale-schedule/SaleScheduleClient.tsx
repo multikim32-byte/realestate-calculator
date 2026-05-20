@@ -192,7 +192,7 @@ export default function SaleScheduleClient({ items, notes }: Props) {
       } else {
         setNotesMap(prev => ({
           ...prev,
-          [row.houseManageNo!]: { ...(prev[row.houseManageNo!] ?? {} as any), is_hidden: true },
+          [row.houseManageNo!]: { ...(prev[row.houseManageNo!] ?? {}), is_hidden: true },
         }));
       }
     } finally {
@@ -310,7 +310,7 @@ export default function SaleScheduleClient({ items, notes }: Props) {
               <div key={key}>
                 <label style={{ fontSize: 11, color: '#6b7280', fontWeight: 600, display: 'block', marginBottom: 4 }}>{label}</label>
                 <input
-                  value={(addForm as any)[key]}
+                  value={(addForm as Record<string, string>)[key]}
                   onChange={e => setAddForm(prev => ({ ...prev, [key]: e.target.value }))}
                   style={inputStyle}
                 />

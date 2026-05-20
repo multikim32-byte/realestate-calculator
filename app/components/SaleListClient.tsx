@@ -13,7 +13,6 @@ type ViewMode = 'card' | 'list' | 'map';
 
 interface Props {
   initialItems: SaleItem[];
-  initialTotal: number;
   dataSource: string;
 }
 
@@ -68,7 +67,7 @@ function getCardStatusBadge(item: SaleItem): { label: string; bg: string; color:
   return { label: item.status, bg: '#f3f4f6', color: '#6b7280' };
 }
 
-export default function SaleListClient({ initialItems, initialTotal, dataSource }: Props) {
+export default function SaleListClient({ initialItems, dataSource }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -94,7 +93,7 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
   useEffect(() => {
     try {
       const favs = JSON.parse(localStorage.getItem('mk_favorites') || '[]');
-      setFavIds(new Set(favs.filter((f: any) => f.type === 'sale').map((f: any) => f.id)));
+      setFavIds(new Set(favs.filter((f: { type: string }) => f.type === 'sale').map((f: { id: string }) => f.id)));
     } catch {}
   }, []);
 
@@ -107,13 +106,13 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
 
   function toggleFav(e: React.MouseEvent, item: SaleItem) {
     e.stopPropagation();
-    const favs: any[] = JSON.parse(localStorage.getItem('mk_favorites') || '[]');
+    const favs: { id: string; type: string }[] = JSON.parse(localStorage.getItem('mk_favorites') || '[]');
     const exists = favs.some(f => f.id === item.id && f.type === 'sale');
     const next = exists
       ? favs.filter(f => !(f.id === item.id && f.type === 'sale'))
       : [...favs, { id: item.id, type: 'sale', name: item.name, location: item.location || item.region, savedAt: new Date().toISOString(), receiptStart: item.receiptStart }];
     try { localStorage.setItem('mk_favorites', JSON.stringify(next)); } catch {}
-    setFavIds(prev => { const s = new Set(prev); exists ? s.delete(item.id) : s.add(item.id); return s; });
+    setFavIds(prev => { const s = new Set(prev); if (exists) s.delete(item.id); else s.add(item.id); return s; });
   }
 
   function updateUrl(params: Record<string, string>) {
@@ -177,8 +176,6 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
     remndr_opt:  '아파트잔여세대',
     ofcl_pblpvt: '오피스텔/도시형/(공공지원)민간임대',
   };
-
-  const isLive = source === 'api';
 
   function handleCardClick(item: SaleItem) {
     try { sessionStorage.setItem(`sale_item_${item.id}`, JSON.stringify(item)); } catch {}
@@ -250,7 +247,7 @@ export default function SaleListClient({ initialItems, initialTotal, dataSource 
               {/* 상단: 사업주체 + 배지 */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                 <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 500, lineHeight: 1.4, maxWidth: '60%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {(item as any).businessEntity || item.constructionCompany || ''}
+                  {item.businessEntity || item.constructionCompany || ''}
                 </span>
                 <span style={{
                   fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20,

@@ -1,5 +1,6 @@
 ﻿import type { Metadata } from "next";
 import { Noto_Sans_KR } from 'next/font/google';
+import Link from 'next/link';
 import Script from "next/script";
 import BookmarkToast from "./components/BookmarkToast";
 import WebVitals from "./components/WebVitals";
@@ -95,7 +96,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <a href="/about" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>서비스 소개</a>
               <a href="/terms" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>이용약관</a>
               <a href="/privacy" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>개인정보처리방침</a>
-              <a href="/apt" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>부동산 정보</a>
+              <Link href="/apt" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>부동산 정보</Link>
             </div>
           </div>
         </footer>

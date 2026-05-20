@@ -173,7 +173,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
         <Suspense fallback={null}>
           <SaleListClient
             initialItems={[]}
-            initialTotal={0}
             dataSource="loading"
           />
         </Suspense>

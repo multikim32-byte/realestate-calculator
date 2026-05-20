@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import GlobalNav from '../components/GlobalNav';
 import type { Metadata } from 'next';
 
@@ -55,7 +56,7 @@ export default function PrivacyPage() {
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px 80px', lineHeight: 1.8, color: '#374151' }}>
 
         <P>
-          아파트집사(이하 "서비스")는 이용자의 개인정보를 소중히 여기며, 「개인정보 보호법」 및 관련 법령을 준수합니다.
+          아파트집사(이하 &quot;서비스&quot;)는 이용자의 개인정보를 소중히 여기며, 「개인정보 보호법」 및 관련 법령을 준수합니다.
           본 방침은 서비스가 수집하는 정보의 종류와 이용 목적, 제3자 공유 여부 등을 안내합니다.
         </P>
 
@@ -173,7 +174,7 @@ export default function PrivacyPage() {
           <span>본 방침은 2026년 5월 15일부터 시행됩니다.</span>
           <a href="/terms" style={{ color: '#6b7280', textDecoration: 'none' }}>이용약관</a>
           <a href="/about" style={{ color: '#6b7280', textDecoration: 'none' }}>서비스 소개</a>
-          <a href="/" style={{ color: '#6b7280', textDecoration: 'none' }}>홈으로</a>
+          <Link href="/" style={{ color: '#6b7280', textDecoration: 'none' }}>홈으로</Link>
         </div>
       </div>
     </div>

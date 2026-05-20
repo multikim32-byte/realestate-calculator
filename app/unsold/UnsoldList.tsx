@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, startTransition } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -9,14 +9,15 @@ import type { UnsoldListing } from '@/lib/supabase';
 import { formatWon } from '@/lib/formatUtils';
 
 const FAV_KEY = 'mk_favorites';
-function loadFavs() {
+interface FavItem { id: string; type: string }
+function loadFavs(): FavItem[] {
   try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); } catch { return []; }
 }
 function toggleFavStorage(item: UnsoldListing) {
   const favs = loadFavs();
-  const exists = favs.some((f: any) => f.id === item.id && f.type === 'unsold');
+  const exists = favs.some(f => f.id === item.id && f.type === 'unsold');
   const next = exists
-    ? favs.filter((f: any) => !(f.id === item.id && f.type === 'unsold'))
+    ? favs.filter(f => !(f.id === item.id && f.type === 'unsold'))
     : [...favs, { id: item.id, type: 'unsold', name: item.name, location: item.location, savedAt: new Date().toISOString() }];
   try { localStorage.setItem(FAV_KEY, JSON.stringify(next)); } catch {}
   return !exists;
@@ -25,7 +26,7 @@ function toggleFavStorage(item: UnsoldListing) {
 function FavBtn({ item }: { item: UnsoldListing }) {
   const [fav, setFav] = useState(false);
   useEffect(() => {
-    setFav(loadFavs().some((f: any) => f.id === item.id && f.type === 'unsold'));
+    startTransition(() => setFav(loadFavs().some(f => f.id === item.id && f.type === 'unsold')));
   }, [item.id]);
   return (
     <button
@@ -48,17 +49,6 @@ function FavBtn({ item }: { item: UnsoldListing }) {
   );
 }
 
-function parseAreaLabel(area: string | null | undefined): string | null {
-  if (!area) return null;
-  try {
-    const parsed = JSON.parse(area);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      const types = parsed.map((p: { type?: string }) => p.type).filter(Boolean);
-      return types.length > 0 ? types.join(' / ') + '㎡' : null;
-    }
-  } catch {}
-  return area;
-}
 
 
 // 전체 도명 → 약칭 정규화 테이블

@@ -17,11 +17,10 @@ const STATUSES = ['전체', '청약예정', '청약중', '당첨발표', '선착
 
 type Props = {
   initialItems: SaleItem[];
-  initialTotal: number;
   dataSource: string;
 };
 
-export default function SaleListClient({ initialItems, initialTotal, dataSource }: Props) {
+export default function SaleListClient({ initialItems, dataSource }: Props) {
   const [region, setRegion] = useState('전체');
   const [status, setStatus] = useState('전체');
 
