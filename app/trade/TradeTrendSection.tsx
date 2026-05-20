@@ -84,6 +84,14 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
   const [sigungu, setSigungu] = useState('');
   const [dong, setDong]       = useState('');
   const [month, setMonth]     = useState(CURRENT_MONTH);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const [regionalStats, setRegionalStats]   = useState<TradeTrendStats>(null);
   const [availableDongs, setAvailableDongs] = useState<string[]>([]);
@@ -251,7 +259,7 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             style={{
-              flex: 1, padding: '9px 4px', fontSize: 12,
+              flex: 1, padding: isMobile ? '8px 2px' : '9px 4px', fontSize: isMobile ? 11 : 12,
               fontWeight: tab === t.key ? 700 : 500,
               color: tab === t.key ? t.color : '#6b7280',
               background: tab === t.key ? t.activeBg : 'transparent',
@@ -259,7 +267,7 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
               borderBottom: tab === t.key ? `2px solid ${t.color}` : '2px solid transparent',
               cursor: 'pointer', textAlign: 'center', whiteSpace: 'nowrap',
             }}
-          >{t.label}</button>
+          >{isMobile ? t.label.replace(' TOP10', '') : t.label}</button>
         ))}
       </div>
 
@@ -311,8 +319,8 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
 
       {stats && items.length > 0 && items.map((item, idx) => (
         <div key={idx} style={{
-          display: 'flex', alignItems: 'center', gap: 12,
-          padding: '11px 20px',
+          display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 12,
+          padding: isMobile ? '10px 12px' : '11px 20px',
           borderBottom: idx < items.length - 1 ? '1px solid #f3f4f6' : 'none',
         }}>
           <div style={{
@@ -340,7 +348,7 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
             </div>
           </div>
 
-          <div style={{ textAlign: 'right', flexShrink: 0, minWidth: 90 }}>
+          <div style={{ textAlign: 'right', flexShrink: 0, minWidth: isMobile ? 72 : 90 }}>
             {(tab === 'rising' || tab === 'falling') && (
               <>
                 <div style={{ fontSize: 15, fontWeight: 700, color: currentTab.color }}>

@@ -669,7 +669,7 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
           onClick={() => applyFilter({ ...filterRef.current, unsold: !filterRef.current.unsold })}
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
-            padding: '5px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
+            padding: '9px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
             background: filter.unsold ? UNSOLD_COLOR : '#f1f5f9',
             color: filter.unsold ? '#fff' : '#64748b',
             fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
@@ -687,7 +687,7 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
           onClick={() => applyFilter({ ...filterRef.current, sale: !filterRef.current.sale })}
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
-            padding: '5px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
+            padding: '9px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
             background: filter.sale ? SALE_COLOR : '#f1f5f9',
             color: filter.sale ? '#fff' : '#64748b',
             fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
@@ -707,7 +707,7 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
           onClick={togglePriceMode}
           style={{
             display: 'flex', alignItems: 'center', gap: 5,
-            padding: '5px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
+            padding: '9px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
             background: priceMode ? '#7c3aed' : '#f1f5f9',
             color: priceMode ? '#fff' : '#64748b',
             fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',

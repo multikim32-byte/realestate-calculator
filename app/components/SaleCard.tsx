@@ -72,7 +72,7 @@ export default function SaleCard({ item }: SaleCardProps) {
           <button
             onClick={toggleFav}
             title={fav ? '관심 단지 해제' : '관심 단지 저장'}
-            style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, lineHeight: 1, color: fav ? '#f59e0b' : '#d1d5db', padding: '0 2px' }}
+            style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, lineHeight: 1, color: fav ? '#f59e0b' : '#d1d5db', padding: '8px 10px', margin: '-8px -10px' }}
           >
             {fav ? '★' : '☆'}
           </button>

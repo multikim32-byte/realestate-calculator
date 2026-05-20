@@ -27,6 +27,7 @@ export default function CalendarPage() {
           이번 달·다음 달 청약 일정을 한눈에 확인하세요 · 청약홈 공식 링크 제공
         </p>
       </div>
+      <style>{`@media (max-width: 640px) { .cal-kbd-hint { display: none !important; } }`}</style>
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 16px' }}>
 
         {/* 즐겨찾기 유도 배너 */}
@@ -42,7 +43,7 @@ export default function CalendarPage() {
               <p style={{ fontSize: 12, color: '#b45309', margin: 0 }}>매달 청약 일정을 빠르게 확인할 수 있습니다</p>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div className="cal-kbd-hint" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <kbd style={{ background: '#fff', border: '1px solid #fcd34d', borderRadius: 6, padding: '3px 8px', fontSize: 12, color: '#92400e', fontFamily: 'monospace' }}>Ctrl</kbd>
             <span style={{ fontSize: 12, color: '#92400e' }}>+</span>
             <kbd style={{ background: '#fff', border: '1px solid #fcd34d', borderRadius: 6, padding: '3px 8px', fontSize: 12, color: '#92400e', fontFamily: 'monospace' }}>D</kbd>

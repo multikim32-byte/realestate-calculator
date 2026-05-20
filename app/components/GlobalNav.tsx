@@ -112,7 +112,7 @@ export default function GlobalNav() {
           onClick={() => setMobileOpen(v => !v)}
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
-            padding: 6, color: '#374151',
+            padding: 11, color: '#374151',
             alignItems: 'center', justifyContent: 'center',
           }}
           aria-label="메뉴"

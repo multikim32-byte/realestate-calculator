@@ -87,6 +87,14 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
   const [sido, setSido] = useState(searchParams.get('sido') ?? '전체');
   const [sigungu, setSigungu] = useState(searchParams.get('sigungu') ?? '전체');
   const [page, setPage] = useState(Number(searchParams.get('page') ?? '1'));
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const updateUrl = (overrides: Partial<{ category: string; sido: string; sigungu: string; page: number }>) => {
     const c = overrides.category ?? category;
@@ -207,7 +215,7 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
       )}
 
       {/* 카드 그리드 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
         {paged.map(item => (
           <div key={item.id} style={{ position: 'relative' }}>
             <FavBtn item={item} />
