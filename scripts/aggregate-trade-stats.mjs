@@ -494,6 +494,7 @@ async function main() {
   const statDate = now.toISOString().slice(0, 10);
   const payload = {
     stat_date:             statDate,
+    period:                'monthly',
     current_month:         currYm,
     prev_month:            prevYm,
     rising,
@@ -504,7 +505,7 @@ async function main() {
     total_trades_prev:     prevTrades.length,
   };
 
-  const res = await fetch(`${SB_URL}/rest/v1/trade_stats?on_conflict=stat_date`, {
+  const res = await fetch(`${SB_URL}/rest/v1/trade_stats?on_conflict=stat_date,period`, {
     method:  'POST',
     headers: {
       'Content-Type': 'application/json',

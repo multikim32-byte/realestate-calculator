@@ -2,21 +2,37 @@
 
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
-import InstaCard, { type SaleItem, type UnsoldItem, type TradeStats } from '../InstaCard';
+import InstaCard, { type SaleItem, type UnsoldItem, type TradeStats, type CardType } from '../InstaCard';
 
 const MAX_PAGES = 3;
-const TRADE_TYPES = ['급등TOP10', '급락TOP10', '신고가TOP10', '거래량TOP10'];
+const TRADE_TYPES: CardType[] = ['급등TOP10', '급락TOP10', '신고가TOP10', '거래량TOP10'];
 
-type CardType = '오늘의청약' | '청약일정' | '미분양' | '급등TOP10' | '급락TOP10' | '신고가TOP10' | '거래량TOP10';
+function getWeekRange(): { start: string; end: string; label: string } {
+  const now = new Date();
+  const day = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+  monday.setHours(0, 0, 0, 0);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const fmt = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`;
+  return {
+    start: monday.toISOString().slice(0, 10),
+    end: sunday.toISOString().slice(0, 10),
+    label: `${fmt(monday)}(월) ~ ${fmt(sunday)}(일)`,
+  };
+}
 
 function CardView() {
   const params = useSearchParams();
   const type = (params.get('type') ?? '오늘의청약') as CardType;
   const region = params.get('region') ?? '전국';
   const month = params.get('month') ?? '';
+  const period = (params.get('period') ?? 'monthly') as 'monthly' | 'weekly';
   const page = parseInt(params.get('page') ?? '1', 10);
 
   const isTrade = TRADE_TYPES.includes(type);
+  const week = getWeekRange();
 
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [unsoldItems, setUnsoldItems] = useState<UnsoldItem[]>([]);
@@ -25,7 +41,7 @@ function CardView() {
 
   useEffect(() => {
     if (isTrade) {
-      fetch('/api/admin/trade-stats')
+      fetch(`/api/admin/trade-stats?period=${period}`)
         .then(r => r.json())
         .then(data => { if (data) setTradeStats(data); })
         .finally(() => setLoading(false));
@@ -45,10 +61,11 @@ function CardView() {
       fetch('/api/sale?type=all&perPage=100')
         .then(r => r.json())
         .then(data => {
+          const today = new Date().toISOString().slice(0, 10);
+          const in3 = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
+          const in7 = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+
           if (type === '오늘의청약') {
-            const today = new Date().toISOString().slice(0, 10);
-            const in3 = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
-            const in7 = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
             setSaleItems(
               (data.items ?? [])
                 .filter((item: SaleItem) => {
@@ -67,6 +84,26 @@ function CardView() {
                   return (order[a.statusLabel ?? ''] ?? 3) - (order[b.statusLabel ?? ''] ?? 3);
                 })
             );
+          } else if (type === '이번주청약') {
+            setSaleItems(
+              (data.items ?? [])
+                .filter((item: SaleItem) => {
+                  if (!item.receiptStart || !item.receiptEnd) return false;
+                  const overlap = item.receiptStart <= week.end && item.receiptEnd >= week.start;
+                  return overlap && (region === '전국' || item.location?.includes(region));
+                })
+                .map((item: SaleItem): SaleItem => {
+                  let statusLabel: string;
+                  if (item.receiptStart <= today && item.receiptEnd <= in3) statusLabel = '마감임박';
+                  else if (item.receiptStart <= today) statusLabel = '청약중';
+                  else statusLabel = '청약예정';
+                  return { ...item, statusLabel };
+                })
+                .sort((a: SaleItem, b: SaleItem) => {
+                  const order: Record<string, number> = { '마감임박': 0, '청약중': 1, '청약예정': 2 };
+                  return (order[a.statusLabel ?? ''] ?? 3) - (order[b.statusLabel ?? ''] ?? 3);
+                })
+            );
           } else {
             setSaleItems((data.items ?? []).filter((item: SaleItem) => {
               const inMonth = !month || item.receiptStart?.startsWith(month);
@@ -76,7 +113,8 @@ function CardView() {
         })
         .finally(() => setLoading(false));
     }
-  }, [type, region, month, isTrade]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type, region, month, period, isTrade]);
 
   const allItems = type === '미분양' ? unsoldItems : saleItems;
   const totalPages = isTrade ? 1 : Math.min(MAX_PAGES, Math.ceil(allItems.length / 5));
@@ -92,6 +130,7 @@ function CardView() {
   return (
     <InstaCard
       type={type} region={region} month={month}
+      period={period} weekLabel={week.label}
       saleItems={saleItems} unsoldItems={unsoldItems}
       tradeStats={tradeStats}
       scale={1} page={page} totalPages={totalPages}

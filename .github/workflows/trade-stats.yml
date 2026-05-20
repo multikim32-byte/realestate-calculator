@@ -2,11 +2,12 @@ name: 전국 실거래 통계 집계
 
 on:
   schedule:
-    - cron: '0 18 * * *'  # 매일 03:00 KST (18:00 UTC)
+    - cron: '0 18 * * *'  # 매일 03:00 KST — 월간 통계
+    - cron: '0 18 * * 1'  # 매주 월요일 03:00 KST — 주간 통계 (월간과 동시 실행)
   workflow_dispatch:       # 수동 실행 가능
 
 jobs:
-  aggregate:
+  aggregate-monthly:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -17,8 +18,27 @@ jobs:
         with:
           node-version: '24'
 
-      - name: 전국 아파트 실거래가 통계 집계
+      - name: 전국 아파트 실거래가 통계 집계 (월간)
         run: node scripts/aggregate-trade-stats.mjs
+        env:
+          MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+  aggregate-weekly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.schedule, '* * 1')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: 전국 아파트 실거래가 통계 집계 (주간)
+        run: node scripts/aggregate-weekly-trade-stats.mjs
         env:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

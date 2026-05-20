@@ -36,16 +36,24 @@ export type TradeStats = {
   stat_date: string;
   current_month: string;
   prev_month: string;
+  week_start?: string;
+  week_end?: string;
   rising: TradeStatItem[];
   falling: TradeStatItem[];
   top_price: TradeStatItem[];
   top_volume: TradeStatItem[];
 } | null;
 
+export type CardType =
+  | '오늘의청약' | '이번주청약' | '청약일정' | '미분양'
+  | '급등TOP10' | '급락TOP10' | '신고가TOP10' | '거래량TOP10';
+
 type Props = {
-  type: '오늘의청약' | '청약일정' | '미분양' | '급등TOP10' | '급락TOP10' | '신고가TOP10' | '거래량TOP10';
+  type: CardType;
   region: string;
   month: string;
+  period?: 'monthly' | 'weekly';
+  weekLabel?: string;
   saleItems: SaleItem[];
   unsoldItems: UnsoldItem[];
   tradeStats?: TradeStats;
@@ -102,12 +110,14 @@ const PER_PAGE = 5;
 const RANK_COLOR = ['#f59e0b', '#94a3b8', '#cd7f32'];
 
 export default function InstaCard({
-  type, region, month, saleItems, unsoldItems,
+  type, region, month, period = 'monthly', weekLabel,
+  saleItems, unsoldItems,
   tradeStats, scale = 1, page = 1, totalPages = 1,
 }: Props) {
   const W = 1080;
 
   const isToday   = type === '오늘의청약';
+  const isWeekly  = type === '이번주청약';
   const isSale    = type === '청약일정';
   const isUnsold  = type === '미분양';
   const isRising  = type === '급등TOP10';
@@ -115,6 +125,7 @@ export default function InstaCard({
   const isTopPri  = type === '신고가TOP10';
   const isTopVol  = type === '거래량TOP10';
   const isTrade   = isRising || isFalling || isTopPri || isTopVol;
+  const isWeeklyTrade = isTrade && period === 'weekly';
 
   const now = new Date();
   const todayLabel = `${now.getMonth() + 1}월 ${now.getDate()}일`;
@@ -153,26 +164,33 @@ export default function InstaCard({
   // ── 타이틀 텍스트 ─────────────────────────────────────────────────────────────
   const title = isTrade
     ? (isRising ? '급등 아파트 TOP 10' : isFalling ? '급락 아파트 TOP 10' : isTopPri ? '신고가 거래 TOP 10' : '거래량 TOP 10')
+    : isWeekly ? `${region === '전국' ? '전국' : region} 이번주 청약`
     : isToday ? '오늘의 청약 현황'
     : isSale  ? `${region === '전국' ? '전국' : region} 청약 일정`
     : `${region === '전국' ? '전국' : region} 미분양 아파트`;
 
   const subtitle = isTrade
-    ? (tradeStats ? `전국 · ${fmtYearMonth(tradeStats.current_month)} 기준` : '집계 데이터 없음')
+    ? (tradeStats
+      ? (isWeeklyTrade
+        ? `전국 · 이번주 기준${tradeStats.week_start ? ` (${tradeStats.week_start.slice(5).replace('-', '.')}~${tradeStats.week_end?.slice(5).replace('-', '.')})` : ''}`
+        : `전국 · ${fmtYearMonth(tradeStats.current_month)} 기준`)
+      : '집계 데이터 없음')
+    : isWeekly ? (weekLabel ?? '이번주 청약 일정')
     : isToday ? todayLabel
     : isSale  ? fmtMonth(month)
     : '선착순 동·호 지정 가능';
 
   const badgeText = isTrade
-    ? (isRising ? '📈 급등 TOP 10' : isFalling ? '📉 급락 TOP 10' : isTopPri ? '🏆 신고가 TOP 10' : '🔥 거래량 TOP 10')
+    ? `${isWeeklyTrade ? '주간 ' : ''}${isRising ? '📈 급등 TOP 10' : isFalling ? '📉 급락 TOP 10' : isTopPri ? '🏆 신고가 TOP 10' : '🔥 거래량 TOP 10'}`
+    : isWeekly ? '📆 이번주 청약'
     : isToday ? '📅 오늘의 청약' : isSale ? '📅 청약 일정' : '🏢 미분양 정보';
 
   // ── 청약/미분양 카드 컬럼 ────────────────────────────────────────────────────
-  const gridCols = isToday   ? '1fr 180px 210px'
+  const gridCols = (isToday || isWeekly) ? '1fr 180px 210px'
     : isSale    ? '1fr 220px 200px'
     : '1fr 230px';
 
-  const colHeaders = isToday   ? ['단지명 / 지역', '상태', '청약기간']
+  const colHeaders = (isToday || isWeekly) ? ['단지명 / 지역', '상태', '청약기간']
     : isSale    ? ['단지명 / 지역', '청약기간', '세대수 / 분양가']
     : ['단지명 / 지역', '분양가'];
 
@@ -242,7 +260,7 @@ export default function InstaCard({
           borderRadius: px(50), padding: `${px(12)}px ${px(26)}px`,
           ...sp(28), fontWeight: 900, flexShrink: 0, marginLeft: px(16),
         }}>
-          {isTrade ? `전국` : isToday ? `총 ${count}건` : `${start + 1}–${start + count}건`}
+          {isTrade ? `전국` : (isToday || isWeekly) ? `총 ${count}건` : `${start + 1}–${start + count}건`}
         </div>
       </div>
 
@@ -261,7 +279,9 @@ export default function InstaCard({
             }}>
               <div style={{ ...sp(40) }}>📊</div>
               <div style={{ ...sp(22), color: '#94a3b8' }}>집계 데이터가 없습니다</div>
-              <div style={{ ...sp(18), color: '#cbd5e1' }}>GitHub Actions 집계 후 표시됩니다</div>
+              <div style={{ ...sp(18), color: '#cbd5e1' }}>
+                {isWeeklyTrade ? '매주 월요일 자동 집계됩니다' : 'GitHub Actions 집계 후 표시됩니다'}
+              </div>
             </div>
           ) : (
             tradeItems.map((item, i) => (
@@ -347,7 +367,7 @@ export default function InstaCard({
           )}
         </div>
       ) : (
-        // 청약 / 미분양 카드 (기존 로직)
+        // 청약 / 미분양 카드
         <div style={{
           flex: 1, overflow: 'hidden',
           display: 'flex', flexDirection: 'column',
@@ -367,7 +387,7 @@ export default function InstaCard({
 
           {/* 행들 */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            {isToday
+            {(isToday || isWeekly)
               ? (pageItems as SaleItem[]).map((item, i) => {
                   const ss = STATUS_STYLE[item.statusLabel ?? ''] ?? { bg: '#f1f5f9', color: '#64748b' };
                   return (
@@ -488,8 +508,8 @@ export default function InstaCard({
         <div style={{ ...sp(22), color: '#e2e8f0', fontWeight: 700 }}>aptzipsa.kr</div>
         <div style={{ ...sp(18), color: '#64748b' }}>
           {isTrade
-            ? `#아파트집사 #실거래가 #${isRising ? '급등아파트' : isFalling ? '급락아파트' : isTopPri ? '신고가' : '거래량'}`
-            : `#아파트집사 #${isToday ? '오늘의청약' : isSale ? '청약일정' : '미분양'} #${region === '전국' ? '전국아파트' : region}`}
+            ? `#아파트집사 #실거래가 #${isWeeklyTrade ? '이번주' : '이번달'} #${isRising ? '급등아파트' : isFalling ? '급락아파트' : isTopPri ? '신고가' : '거래량'}`
+            : `#아파트집사 #${isWeekly ? '이번주청약' : isToday ? '오늘의청약' : isSale ? '청약일정' : '미분양'} #${region === '전국' ? '전국아파트' : region}`}
         </div>
       </div>
     </div>
