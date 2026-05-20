@@ -14,12 +14,13 @@ const nextConfig: NextConfig = {
     // AdSense/GA/Kakao Maps 등 외부 스크립트 허용 + 기본 XSS 방어
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.googleadservices.com https://adservice.google.com https://dapi.kakao.com https://t1.kakaocdn.net https://t1.daumcdn.net https://ssl.gstatic.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.googleadservices.com https://adservice.google.com https://dapi.kakao.com https://t1.kakaocdn.net https://*.daumcdn.net https://ssl.gstatic.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' data: https://fonts.gstatic.com",
+      "font-src 'self' data: https://fonts.gstatic.com https://*.daumcdn.net",
       "img-src 'self' data: blob: https:",
-      "connect-src 'self' https://*.supabase.co https://*.supabase.com https://www.google-analytics.com https://analytics.google.com https://dapi.kakao.com https://pub-850f6f7273f44951a2bc7d320cd99166.r2.dev",
-      "frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com",
+      "connect-src 'self' https://*.supabase.co https://*.supabase.com https://www.google-analytics.com https://analytics.google.com https://dapi.kakao.com https://map.kakao.com https://*.daumcdn.net https://pub-850f6f7273f44951a2bc7d320cd99166.r2.dev",
+      "frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com https://www.youtube.com https://youtube.com",
+      "worker-src 'self' blob:",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
