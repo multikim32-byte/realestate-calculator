@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   ClipboardList, Calendar, BarChart2, Calculator,
   Tag, Building2, Map, BookOpen, Star, Mail, Menu, X,
@@ -28,14 +28,6 @@ const NAV_ITEMS = [
 export default function GlobalNav() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 900);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
 
   function isActive(item: typeof NAV_ITEMS[0]) {
     if (item.exact) return pathname === '/';
@@ -49,6 +41,16 @@ export default function GlobalNav() {
       borderBottom: '1px solid #e5e7eb',
       position: 'sticky', top: 0, zIndex: 100,
     }}>
+      {/* CSS 미디어쿼리로 PC/모바일 전환 — JS 상태 불필요 */}
+      <style>{`
+        .gnav-pc { display: flex; }
+        .gnav-mb { display: none; }
+        @media (max-width: 899px) {
+          .gnav-pc { display: none !important; }
+          .gnav-mb { display: flex !important; }
+        }
+      `}</style>
+
       {/* 메인 바 */}
       <div style={{
         maxWidth: 1100, margin: '0 auto', padding: '0 16px',
@@ -70,61 +72,57 @@ export default function GlobalNav() {
           </span>
         </Link>
 
-        {/* 데스크톱 메뉴 */}
-        {!isMobile && (
-          <nav style={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {NAV_ITEMS.map(item => {
-              const active = isActive(item);
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 3,
-                    padding: '5px 7px', borderRadius: 7,
-                    fontSize: 12, fontWeight: 600, textDecoration: 'none',
-                    whiteSpace: 'nowrap',
-                    color: active ? '#1d4ed8' : '#4b5563',
-                    background: active ? '#eff6ff' : 'transparent',
-                  }}
-                >
-                  <Icon size={12} strokeWidth={2.2} />
-                  {item.label}
-                </Link>
-              );
-            })}
+        {/* 데스크톱 메뉴 — gnav-pc 클래스로 모바일에서 숨김 */}
+        <nav className="gnav-pc" style={{ alignItems: 'center', gap: 1 }}>
+          {NAV_ITEMS.map(item => {
+            const active = isActive(item);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 3,
+                  padding: '5px 7px', borderRadius: 7,
+                  fontSize: 12, fontWeight: 600, textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                  color: active ? '#1d4ed8' : '#4b5563',
+                  background: active ? '#eff6ff' : 'transparent',
+                }}
+              >
+                <Icon size={12} strokeWidth={2.2} />
+                {item.label}
+              </Link>
+            );
+          })}
 
-            <div style={{
-              display: 'flex', gap: 5, marginLeft: 6, alignItems: 'center',
-              paddingLeft: 10, borderLeft: '1px solid #e5e7eb', flexShrink: 0,
-            }}>
-              <KakaoChannelButton size="sm" label="카카오" />
-              <ShareButton />
-              <InstallButton />
-            </div>
-          </nav>
-        )}
+          <div style={{
+            display: 'flex', gap: 5, marginLeft: 6, alignItems: 'center',
+            paddingLeft: 10, borderLeft: '1px solid #e5e7eb', flexShrink: 0,
+          }}>
+            <KakaoChannelButton size="sm" label="카카오" />
+            <ShareButton />
+            <InstallButton />
+          </div>
+        </nav>
 
-        {/* 모바일 햄버거 */}
-        {isMobile && (
-          <button
-            onClick={() => setMobileOpen(v => !v)}
-            style={{
-              display: 'flex',
-              background: 'none', border: 'none', cursor: 'pointer',
-              padding: 6, color: '#374151',
-              alignItems: 'center', justifyContent: 'center',
-            }}
-            aria-label="메뉴"
-          >
-            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
-        )}
+        {/* 모바일 햄버거 — gnav-mb 클래스로 PC에서 숨김 */}
+        <button
+          className="gnav-mb"
+          onClick={() => setMobileOpen(v => !v)}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            padding: 6, color: '#374151',
+            alignItems: 'center', justifyContent: 'center',
+          }}
+          aria-label="메뉴"
+        >
+          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
       </div>
 
-      {/* 모바일 드롭다운 */}
-      {isMobile && mobileOpen && (
+      {/* 모바일 드롭다운 — mobileOpen 상태로 제어 */}
+      {mobileOpen && (
         <div style={{
           display: 'flex', flexDirection: 'column',
           borderTop: '1px solid #e5e7eb',
