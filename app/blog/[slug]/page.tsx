@@ -4,6 +4,7 @@ import { posts as filePosts } from "../data";
 import GlobalNav from "../../components/GlobalNav";
 import AdUnit from "../../components/AdUnit";
 import { createClient } from '@supabase/supabase-js';
+import { sanitizeHtml } from "@/lib/sanitize";
 import type { Metadata } from "next";
 
 // AdSense 대시보드 > 광고 > 광고 단위에서 발급받은 슬롯 ID로 교체하세요
@@ -146,7 +147,7 @@ export default async function PostPage({ params }: Props) {
           <div style={{ borderTop: "1px solid #f0f4f9", paddingTop: 24 }}>
           <div
             style={{ fontSize: 15, color: "#333", lineHeight: 1.9 }}
-            dangerouslySetInnerHTML={{ __html: post.content }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
           />
           </div>
         </div>

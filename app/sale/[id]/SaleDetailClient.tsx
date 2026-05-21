@@ -11,6 +11,7 @@ import CompetitionRateSection from '../../components/CompetitionRateSection';
 import SpecialSupplySection from '../../components/SpecialSupplySection';
 import type { SaleContent } from '@/lib/saleContent';
 import type { PublicSaleItem } from '@/lib/publicDataApi';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 type UnitDetail = { type: string; area: number; supplyArea?: number; count: number; specialCount?: number; price: number };
 
@@ -349,7 +350,7 @@ export default function SaleDetailClient({ content, initialItem }: { content: Sa
                 </p>
               )}
               {content.description && (
-                <div style={{ fontSize: 14, lineHeight: 1.9, color: '#374151' }} dangerouslySetInnerHTML={{ __html: content.description }} />
+                <div style={{ fontSize: 14, lineHeight: 1.9, color: '#374151' }} dangerouslySetInnerHTML={{ __html: sanitizeHtml(content.description) }} />
               )}
               {(content.pros?.length ?? 0) > 0 && (
                 <div style={{ marginTop: 20, background: '#f0fdf4', borderRadius: 10, padding: '16px 20px' }}>
@@ -532,7 +533,7 @@ export default function SaleDetailClient({ content, initialItem }: { content: Sa
             {content.description && (
               <div
                 style={{ fontSize: 14, lineHeight: 1.9, color: '#374151' }}
-                dangerouslySetInnerHTML={{ __html: content.description }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(content.description) }}
               />
             )}
             {(content.pros?.length ?? 0) > 0 && (
