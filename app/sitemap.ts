@@ -92,13 +92,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     historyItems = data ?? [];
   } catch {}
 
-  // 현재 진행 중인 청약만 사이트맵에 포함 — 마감된 과거 항목은 Soft 404 유발
-  const saleEntries: MetadataRoute.Sitemap = saleItems.map(item => ({
-    url: `${BASE}/sale/${item.houseManageNo}`,
-    lastModified: now,
-    changeFrequency: 'daily' as const,
-    priority: item.status === '청약중' ? 0.95 : item.status?.includes('예정') ? 0.9 : 0.85,
-  }));
+  const saleEntries: MetadataRoute.Sitemap = [
+    // 현재 진행 중인 청약
+    ...saleItems.map(item => ({
+      url: `${BASE}/sale/${item.houseManageNo}`,
+      lastModified: now,
+      changeFrequency: 'daily' as const,
+      priority: item.status === '청약중' ? 0.95 : item.status?.includes('예정') ? 0.9 : 0.85,
+    })),
+    // 이미지·글이 작성된 과거 단지 — content가 있는 경우만 색인 가치 있음
+    ...historyItems
+      .filter(h => !currentSet.has(h.house_manage_no))
+      .map(h => ({
+        url: `${BASE}/sale/${h.house_manage_no}`,
+        lastModified: new Date(h.updated_at),
+        changeFrequency: 'monthly' as const,
+        priority: 0.6,
+      })),
+  ];
 
   // 분양정보 개별 매물 (Supabase)
   let unsoldItems: { id: string; slug: string | null; updated_at: string }[] = [];
