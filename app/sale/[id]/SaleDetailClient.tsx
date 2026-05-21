@@ -10,6 +10,7 @@ import NearbyTradeSection from '../../components/NearbyTradeSection';
 import CompetitionRateSection from '../../components/CompetitionRateSection';
 import SpecialSupplySection from '../../components/SpecialSupplySection';
 import type { SaleContent } from '@/lib/saleContent';
+import type { PublicSaleItem } from '@/lib/publicDataApi';
 
 type UnitDetail = { type: string; area: number; supplyArea?: number; count: number; specialCount?: number; price: number };
 
@@ -231,10 +232,10 @@ function Row({ label, value }: { label: string; value: string }) {
 type UnsoldLink = { id: string; name: string; thumbnail_url: string | null; benefit: string | null; min_price: number | null };
 
 
-export default function SaleDetailClient({ content }: { content: SaleContent | null }) {
+export default function SaleDetailClient({ content, initialItem }: { content: SaleContent | null; initialItem?: PublicSaleItem | null }) {
   const { id } = useParams<{ id: string }>();
-  const [item, setItem] = useState<SaleDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [item, setItem] = useState<SaleDetail | null>(initialItem as SaleDetail ?? null);
+  const [loading, setLoading] = useState(!initialItem);
   const [error, setError] = useState(false);
   const [unsoldLink, setUnsoldLink] = useState<UnsoldLink | null>(null);
   const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null);
@@ -275,18 +276,20 @@ export default function SaleDetailClient({ content }: { content: SaleContent | n
   useEffect(() => {
     if (!id) return;
 
-    // 세션스토리지 캐시는 즉시 표시용으로만 사용 (스켈레톤 대체)
-    let fallback: SaleDetail | null = null;
-    try {
-      const cached = sessionStorage.getItem(`sale_item_${id}`);
-      if (cached) {
-        fallback = JSON.parse(cached);
-        setItem(fallback);   // 즉시 화면에 표시
-        setLoading(false);
-      }
-    } catch { /* 무시 */ }
+    // SSR에서 initialItem을 받은 경우 세션스토리지 불필요
+    let fallback: SaleDetail | null = initialItem as SaleDetail ?? null;
+    if (!fallback) {
+      try {
+        const cached = sessionStorage.getItem(`sale_item_${id}`);
+        if (cached) {
+          fallback = JSON.parse(cached);
+          setItem(fallback);
+          setLoading(false);
+        }
+      } catch { /* 무시 */ }
+    }
 
-    // 항상 API에서 최신 데이터를 가져와 갱신
+    // 항상 API에서 최신 데이터를 가져와 갱신 (경쟁률·유닛 상세 등)
     fetchDetail(id, fallback);
 
     // 연결된 미분양 매물 조회
