@@ -1,4 +1,5 @@
 ﻿import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { fetchPublicSaleList } from '@/lib/publicDataApi';
 import { fetchSaleContent } from '@/lib/saleContent';
 import SaleDetailClient from './SaleDetailClient';
@@ -48,6 +49,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function SaleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const content = await fetchSaleContent(id).catch(() => null);
+
+  if (!content) notFound();
 
   return <SaleDetailClient content={content} />;
 }
