@@ -29,11 +29,6 @@ const orgJsonLd = {
       name: '아파트집사',
       url: 'https://www.aptzipsa.kr',
       description: '전국 아파트·오피스텔 청약 정보, 실거래가 조회, 부동산 계산기를 무료로 제공합니다.',
-      potentialAction: {
-        '@type': 'SearchAction',
-        target: { '@type': 'EntryPoint', urlTemplate: 'https://www.aptzipsa.kr/?q={search_term_string}' },
-        'query-input': 'required name=search_term_string',
-      },
     },
     {
       '@type': 'Organization',
