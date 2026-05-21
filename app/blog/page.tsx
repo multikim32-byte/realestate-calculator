@@ -5,7 +5,7 @@ import { posts as filePosts } from "./data";
 import { createClient } from '@supabase/supabase-js';
 import type { Metadata } from "next";
 
-export const revalidate = 3600; // 1시간마다 재검증
+export const revalidate = 86400; // 24시간 캐시
 
 export const metadata: Metadata = {
   title: "부동산 정보 블로그 — 취득세·대출·수익률 완벽 가이드",

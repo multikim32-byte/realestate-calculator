@@ -12,7 +12,7 @@ const AD_SLOT = "XXXXXXXXXX";
 
 const BASE_URL = 'https://www.aptzipsa.kr';
 
-export const revalidate = 3600;
+export const revalidate = 86400;
 export const dynamicParams = true; // DB에 새로 추가된 슬러그 허용
 
 type Props = { params: Promise<{ slug: string }> };

@@ -15,7 +15,7 @@ const REGION_LABELS: Record<string, string> = {
   '경남': '경상남도', '제주': '제주특별자치도',
 };
 
-export const revalidate = 3600;
+export const revalidate = 7200;
 
 export function generateStaticParams() {
   const params: { sido: string; sigungu: string }[] = [];

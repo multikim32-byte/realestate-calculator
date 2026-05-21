@@ -200,7 +200,7 @@ const REGION_INFO: Record<string, RegionInfo> = {
   },
 };
 
-export const revalidate = 3600; // 1시간 캐시 후 재검증
+export const revalidate = 7200; // 2시간 캐시
 
 export function generateStaticParams() {
   return Object.keys(REGION_LABELS).map(sido => ({ sido }));
