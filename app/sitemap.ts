@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 import { fetchPublicSaleList } from '@/lib/publicDataApi';
 import { LAWD_CODE_MAP } from '@/lib/tradeApi';
+import { aptPosts } from '@/app/apt/data';
 
 const serviceDb = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -128,25 +129,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   }));
 
-  // apt 포스트
-  // dsr-calculation-guide, prepayment-penalty-guide → blog로 301 리디렉션 처리됨 (중복 제거)
-  const APT_SLUGS = [
-    'apartment-subscription-guide-2026','presale-price-ceiling-guide','new-apartment-subscription-score',
-    'presale-rights-transfer','pre-sale-vs-resale-apartment','acquisition-tax-guide','mortgage-loan-guide',
-    'jeonse-vs-monthly-rent','capital-gains-tax-real-estate','reconstruction-redevelopment-guide',
-    'real-estate-brokerage-fee','officetel-investment-guide','lease-contract-renewal-law',
-    'real-estate-tax-overview','small-commercial-investment','mortgage-ltv-limit-guide',
-    'fixed-vs-variable-rate-2026','didimdol-loan-guide','bogeumjari-loan-vs-bank',
-    'mortgage-refinancing-guide','repayment-method-comparison','newborn-special-loan-guide',
-    'first-home-buyer-loan-support','apartment-lottery-strategy',
-    'mortgage-stress-dsr-guide','mortgage-jeonse-loan-guide','jeonse-fraud-prevention-guide',
-  ];
-
-  const aptEntries: MetadataRoute.Sitemap = APT_SLUGS.map(slug => ({
-    url: `${BASE}/apt/${slug}`,
-    lastModified: now,
+  // apt 포스트 — data.ts에서 자동으로 읽어 사이트맵 생성 (수동 목록 불필요)
+  const aptEntries: MetadataRoute.Sitemap = aptPosts.map(post => ({
+    url: `${BASE}/apt/${post.slug}`,
+    lastModified: new Date(post.date),
     changeFrequency: 'monthly' as const,
-    priority: 0.7,
+    priority: 0.75,
   }));
 
   // blog 포스트
