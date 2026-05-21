@@ -319,7 +319,8 @@ export default function SaleDetailClient({ content, initialItem }: { content: Sa
     }
   }
 
-  if (loading) {
+  // content가 없을 때만 로딩 스켈레톤 표시 (content가 있으면 바로 에디토리얼 렌더)
+  if (loading && !content) {
     return (
       <div style={{ minHeight: '100vh', background: '#f8f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', color: '#6b7280' }}>
@@ -331,6 +332,59 @@ export default function SaleDetailClient({ content, initialItem }: { content: Sa
   }
 
   if (error || !item) {
+    // item 데이터가 없어도 에디토리얼 content가 있으면 표시 (마감 단지 Soft 404 방지)
+    if (content && (content.summary || content.description || (content.image_urls?.length ?? 0) > 0)) {
+      return (
+        <div style={{ background: '#f8f9fa', minHeight: '100vh', fontFamily: "'Apple SD Gothic Neo', sans-serif" }}>
+          <GlobalNav />
+          <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px 60px' }}>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: '28px', marginBottom: 16 }}>
+              {content.thumbnail_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={content.thumbnail_url} alt="분양 이미지" style={{ width: '100%', height: 'auto', borderRadius: 12, marginBottom: 22, display: 'block' }} />
+              )}
+              {content.summary && (
+                <p style={{ fontSize: 15, lineHeight: 1.8, color: '#1e293b', fontWeight: 500, background: '#eff6ff', borderLeft: '4px solid #3b82f6', padding: '14px 18px', borderRadius: '0 8px 8px 0', margin: '0 0 20px' }}>
+                  {content.summary}
+                </p>
+              )}
+              {content.description && (
+                <div style={{ fontSize: 14, lineHeight: 1.9, color: '#374151' }} dangerouslySetInnerHTML={{ __html: content.description }} />
+              )}
+              {(content.pros?.length ?? 0) > 0 && (
+                <div style={{ marginTop: 20, background: '#f0fdf4', borderRadius: 10, padding: '16px 20px' }}>
+                  <h2 style={{ fontSize: 15, fontWeight: 700, color: '#065f46', margin: '0 0 10px' }}>✅ 장점</h2>
+                  <ul style={{ margin: 0, paddingLeft: 20, color: '#374151', fontSize: 14, lineHeight: 1.9 }}>
+                    {content.pros!.map((p, i) => <li key={i}>{p}</li>)}
+                  </ul>
+                </div>
+              )}
+              {(content.cons?.length ?? 0) > 0 && (
+                <div style={{ marginTop: 12, background: '#fffbeb', borderRadius: 10, padding: '16px 20px' }}>
+                  <h2 style={{ fontSize: 15, fontWeight: 700, color: '#92400e', margin: '0 0 10px' }}>⚠️ 유의사항</h2>
+                  <ul style={{ margin: 0, paddingLeft: 20, color: '#374151', fontSize: 14, lineHeight: 1.9 }}>
+                    {content.cons!.map((c, i) => <li key={i}>{c}</li>)}
+                  </ul>
+                </div>
+              )}
+              {(content.image_urls?.length ?? 0) > 0 && (
+                <div style={{ marginTop: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
+                  {content.image_urls!.map((url, i) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img key={i} src={url} alt={`분양 사진 ${i + 1}`} loading="lazy" style={{ width: '100%', height: 'auto', borderRadius: 8, display: 'block' }} />
+                  ))}
+                </div>
+              )}
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 8 }}>
+              <Link href="/" style={{ display: 'inline-block', padding: '10px 24px', borderRadius: 10, background: '#1d4ed8', color: '#fff', textDecoration: 'none', fontWeight: 700 }}>
+                ← 청약정보로
+              </Link>
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div style={{ minHeight: '100vh', background: '#f8f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>

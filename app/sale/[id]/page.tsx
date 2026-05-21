@@ -30,8 +30,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     ]);
     const item = items.find(i => i.houseManageNo === id);
     const title = item?.name
-      ? `${item.name} 청약정보 | 아파트집사`
-      : '청약 상세정보 | 아파트집사';
+      ? `${item.name} 청약정보`
+      : '청약 상세정보';
     const description = content?.summary
       || (item
         ? `${item.name} ${item.buildingType} 청약정보. 위치: ${item.location}. 청약접수 ${item.receiptStart}~${item.receiptEnd}. 총 ${item.totalUnits.toLocaleString()}세대.`
