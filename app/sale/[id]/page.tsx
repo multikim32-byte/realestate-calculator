@@ -36,9 +36,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       || (item
         ? `${item.name} ${item.buildingType} 청약정보. 위치: ${item.location}. 청약접수 ${item.receiptStart}~${item.receiptEnd}. 총 ${item.totalUnits.toLocaleString()}세대.`
         : '청약 일정·분양가·경쟁률·인근 실거래가를 한눈에 확인하세요.');
-    const ogImages = content?.thumbnail_url
-      ? [{ url: content.thumbnail_url, width: 1200, height: 630 }]
-      : undefined;
+    const ogImageUrl =
+      content?.thumbnail_url ||
+      content?.image_urls?.[0] ||
+      'https://www.aptzipsa.kr/opengraph-image';
+    const ogImages = [{ url: ogImageUrl, width: 1200, height: 630 }];
 
     return {
       title,
@@ -51,7 +53,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         type: 'website',
         locale: 'ko_KR',
         siteName: '아파트집사',
-        ...(ogImages && { images: ogImages }),
+        images: ogImages,
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: [ogImageUrl],
       },
     };
   } catch {
