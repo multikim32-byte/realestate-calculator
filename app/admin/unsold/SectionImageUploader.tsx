@@ -120,7 +120,7 @@ export default function SectionImageUploader({ sections, onChange }: Props) {
 
                     {/* 미리보기 */}
                     <Image src={url} alt={`${section.name} ${idx + 1}`} width={120} height={80}
-                      style={{ objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb', flexShrink: 0 }} />
+                      style={{ objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb', flexShrink: 0 }} unoptimized />
 
                     {/* 파일명 */}
                     <span style={{ fontSize: 12, color: '#6b7280', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
