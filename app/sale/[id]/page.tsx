@@ -2,6 +2,7 @@ import { cache } from 'react';
 import type { Metadata } from 'next';
 import { fetchPublicSaleList, type PublicSaleItem } from '@/lib/publicDataApi';
 import { fetchSaleContent } from '@/lib/saleContent';
+import { createAdminClient } from '@/lib/supabaseAdmin';
 import SaleDetailClient from './SaleDetailClient';
 
 export const revalidate = 3600;
@@ -16,9 +17,30 @@ const fetchAllSaleItems = cache(async (): Promise<PublicSaleItem[]> => {
   }
 });
 
+async function fetchSaleContentIds(): Promise<string[]> {
+  try {
+    const db = createAdminClient();
+    const { data } = await db
+      .from('sale_content')
+      .select('house_manage_no')
+      .eq('is_published', true);
+    return data?.map((d: { house_manage_no: string }) => d.house_manage_no) ?? [];
+  } catch {
+    return [];
+  }
+}
+
 export async function generateStaticParams() {
-  const items = await fetchAllSaleItems();
-  return items.map(item => ({ id: item.houseManageNo }));
+  const [items, contentIds] = await Promise.all([
+    fetchAllSaleItems(),
+    fetchSaleContentIds(),
+  ]);
+  const apiIds = new Set(items.map(i => i.houseManageNo));
+  const extraIds = contentIds.filter(id => !apiIds.has(id));
+  return [
+    ...items.map(item => ({ id: item.houseManageNo })),
+    ...extraIds.map(id => ({ id })),
+  ];
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
