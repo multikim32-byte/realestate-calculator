@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 3600; // 1시간 캐시 (어드민 저장 시 revalidatePath로 즉시 갱신)
+export const revalidate = 7200; // 어드민 저장 시 revalidatePath로 즉시 갱신
 
 export default async function UnsoldPage() {
   const { data: raw } = await supabase

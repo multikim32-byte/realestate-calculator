@@ -5,7 +5,7 @@ import { fetchSaleContent } from '@/lib/saleContent';
 import { createAdminClient } from '@/lib/supabaseAdmin';
 import SaleDetailClient from './SaleDetailClient';
 
-export const revalidate = 3600;
+export const revalidate = 7200;
 
 // cache() deduplicates across generateStaticParams / generateMetadata / page render
 const fetchAllSaleItems = cache(async (): Promise<PublicSaleItem[]> => {

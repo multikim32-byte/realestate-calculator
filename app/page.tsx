@@ -6,7 +6,7 @@ import GlobalNav from './components/GlobalNav';
 import type { Metadata } from 'next';
 import { Calendar, BarChart2, Calculator, Tag, Map, Building2 } from 'lucide-react';
 
-export const revalidate = 3600;
+export const revalidate = 7200;
 
 export const metadata: Metadata = {
   title: '아파트 분양정보·청약정보·실거래가',

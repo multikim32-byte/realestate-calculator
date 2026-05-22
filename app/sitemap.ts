@@ -1,4 +1,4 @@
-﻿export const revalidate = 3600; // 1시간마다 재생성
+﻿export const revalidate = 86400; // 24시간
 
 import type { MetadataRoute } from 'next';
 import { supabase } from '@/lib/supabase';

@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { fetchLhRentalItemById, type LhRentalItem } from '@/lib/lhApi';
 import RentalDetailClient from './RentalDetailClient';
 
-export const revalidate = 3600;
+export const revalidate = 7200;
 
 type PageProps = {
   params: Promise<{ id: string }>;
