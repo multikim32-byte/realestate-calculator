@@ -12,6 +12,7 @@ import SectionTabs from './SectionTabs';
 import KakaoMap from '@/app/components/KakaoMap';
 import UnsoldLeadForm from '@/app/components/UnsoldLeadForm';
 import { fetchSaleDetail } from '@/lib/publicDataApi';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 async function findListing(rawSlug: string, selectCols = '*') {
   // Next.js가 한글 slug를 URL-encoded 상태로 전달할 때를 대비해 decode
@@ -315,7 +316,7 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ s
                 <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 10 }}>상세 설명</h2>
                 <div
                   className="unsold-content"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHeadings(item.description) ?? '' }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(sanitizeHeadings(item.description)) }}
                   style={{ fontSize: 14, color: '#374151', lineHeight: 1.9 }}
                 />
                 <style>{`

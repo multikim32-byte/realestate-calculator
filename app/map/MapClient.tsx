@@ -317,14 +317,12 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
     if (loadedSidosRef.current.has(sido)) return;
     loadedSidosRef.current.add(sido);
     setPriceLoadState('loading');
-    console.log('[시세] 로드 시작:', sido);
 
     let data: DistrictPrice[];
     try {
       const res = await fetch(`/api/map-prices?sido=${encodeURIComponent(sido)}`);
-      if (!res.ok) { console.warn('[시세] API 실패:', res.status); setPriceLoadState('done'); return; }
+      if (!res.ok) { setPriceLoadState('done'); return; }
       data = await res.json();
-      console.log('[시세] 수신:', sido, data.length, '개 구/시');
     } catch (e) { console.error('[시세] fetch 오류:', e); setPriceLoadState('done'); return; }
 
     for (const d of data) {
@@ -424,12 +422,10 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
           zIndex: 5,
         });
         priceOverlaysRef.current.push({ overlay, div, data: d });
-        console.log('[시세] 오버레이 생성:', d.name, coords);
-      } catch (e) { console.error('[시세] 구/시 처리 오류:', d.name, e); }
+      } catch { /* 개별 오버레이 오류 무시 */ }
     }
 
     setPriceLoadState('done');
-    console.log('[시세] 완료. 총 오버레이:', priceOverlaysRef.current.length);
   }, []);
 
   // 지도 페이지에서 body 스크롤 차단 — footer 높이로 인해 페이지가 스크롤 가능해져
