@@ -5,7 +5,7 @@ import { fetchLhRentalList } from '@/lib/lhApi';
 import { mockRentalItems } from '@/lib/mockRentalData';
 import type { Metadata } from 'next';
 
-export const revalidate = 1800;
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: 'LH 공공임대 아파트 정보 — 행복주택·전세임대',

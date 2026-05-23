@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
 import { fetchPublicSaleList } from '@/lib/publicDataApi';
 
-export const revalidate = 1800; // 30분
+export const revalidate = 3600; // 1시간
 
 export const metadata: Metadata = {
   title: '부동산 지도 — 미분양·청약 한눈에 | 아파트집사',
