@@ -244,7 +244,7 @@ export default async function SigunguPage({ params }: { params: Promise<{ sido: 
             {sido} {sigungu} 부동산 시장 안내
           </h2>
           <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.8, margin: '0 0 12px' }}>
-            {sigungu}의 아파트 실거래가는 아파트집사 실거래가 조회 페이지에서 매매·전세·월세 모두 확인할 수 있습니다.
+            {sigungu}의 아파트 실거래가는 단지집사 실거래가 조회 페이지에서 매매·전세·월세 모두 확인할 수 있습니다.
             국토교통부 실거래가 공개 데이터를 기반으로 최신 거래 내역을 제공합니다.
           </p>
           <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.8, margin: 0 }}>

@@ -2,9 +2,9 @@
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: '아파트집사',
-    short_name: '아파트집사',
-    description: '전국 아파트 분양정보, 청약 일정, 실거래가를 한눈에. 집 살 때, 아파트집사.',
+    name: '단지집사',
+    short_name: '단지집사',
+    description: '전국 아파트 분양정보, 청약 일정, 실거래가를 한눈에. 집 살 때, 단지집사.',
     id: 'https://www.aptzipsa.kr/',
     start_url: '/',
     scope: '/',

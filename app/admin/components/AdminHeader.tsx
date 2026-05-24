@@ -35,7 +35,7 @@ export default function AdminHeader() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 20px' }}>
         <Link href="/admin" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
           <span style={{ fontSize: 18 }}>🏠</span>
-          <span style={{ color: '#fff', fontWeight: 800, fontSize: 15, letterSpacing: -0.3 }}>아파트집사 관리자</span>
+          <span style={{ color: '#fff', fontWeight: 800, fontSize: 15, letterSpacing: -0.3 }}>단지집사 관리자</span>
         </Link>
         <button
           onClick={handleLogout}

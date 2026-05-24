@@ -33,7 +33,7 @@ export default function LoginForm() {
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <div style={{ fontSize: 40, marginBottom: 8 }}>🔐</div>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: '#1e293b', margin: 0 }}>관리자 로그인</h1>
-          <p style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>아파트집사 관리자 페이지</p>
+          <p style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>단지집사 관리자 페이지</p>
         </div>
 
         <form onSubmit={handleLogin}>

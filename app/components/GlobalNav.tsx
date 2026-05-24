@@ -68,7 +68,7 @@ export default function GlobalNav() {
             <span style={{ color: '#fff', fontSize: 14, fontWeight: 900, letterSpacing: '-1px' }}>AZ</span>
           </div>
           <span style={{ fontSize: 16, fontWeight: 800, color: '#1e3a5f', letterSpacing: '-0.3px' }}>
-            아파트집사
+            단지집사
           </span>
         </Link>
 

@@ -95,7 +95,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <style>{`@media (max-width: 899px) { body { padding-bottom: calc(56px + env(safe-area-inset-bottom)); } }`}</style>
         <footer style={{ background: '#f9fafb', borderTop: '1px solid #e5e7eb', padding: '24px 16px', marginTop: 40 }}>
           <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'space-between', alignItems: 'center' }}>
-            <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>© 2026 아파트집사 · 전국 아파트 청약·분양정보·실거래가·부동산 계산기 무료 제공</p>
+            <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>© 2026 단지집사 · 전국 아파트 청약·분양정보·실거래가·부동산 계산기 무료 제공</p>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <a href="/about" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>서비스 소개</a>
               <a href="/terms" style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none' }}>이용약관</a>

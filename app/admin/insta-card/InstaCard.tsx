@@ -219,7 +219,7 @@ export default function InstaCard({
             ...sp(30), fontWeight: 900, color: '#1d4ed8',
           }}>AZ</div>
           <div>
-            <div style={{ ...sp(34), fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>아파트집사</div>
+            <div style={{ ...sp(34), fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>단지집사</div>
             <div style={{ ...sp(19), color: 'rgba(255,255,255,0.55)', marginTop: px(3) }}>aptzipsa.kr</div>
           </div>
         </div>
@@ -508,8 +508,8 @@ export default function InstaCard({
         <div style={{ ...sp(22), color: '#e2e8f0', fontWeight: 700 }}>aptzipsa.kr</div>
         <div style={{ ...sp(18), color: '#64748b' }}>
           {isTrade
-            ? `#아파트집사 #실거래가 #${isWeeklyTrade ? '이번주' : '이번달'} #${isRising ? '급등아파트' : isFalling ? '급락아파트' : isTopPri ? '신고가' : '거래량'}`
-            : `#아파트집사 #${isWeekly ? '이번주청약' : isToday ? '오늘의청약' : isSale ? '청약일정' : '미분양'} #${region === '전국' ? '전국아파트' : region}`}
+            ? `#단지집사 #실거래가 #${isWeeklyTrade ? '이번주' : '이번달'} #${isRising ? '급등아파트' : isFalling ? '급락아파트' : isTopPri ? '신고가' : '거래량'}`
+            : `#단지집사 #${isWeekly ? '이번주청약' : isToday ? '오늘의청약' : isSale ? '청약일정' : '미분양'} #${region === '전국' ? '전국아파트' : region}`}
         </div>
       </div>
     </div>

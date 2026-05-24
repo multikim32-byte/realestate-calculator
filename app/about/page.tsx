@@ -96,7 +96,7 @@ const features = [
   {
     icon: Bell, color: '#FAE100',
     title: '카카오 채널 알림',
-    desc: '아파트집사 카카오 채널을 친구 추가하면 이번 주 청약 소식·실거래 트렌드 등 핵심 부동산 정보를 카카오톡으로 받아볼 수 있습니다.',
+    desc: '단지집사 카카오 채널을 친구 추가하면 이번 주 청약 소식·실거래 트렌드 등 핵심 부동산 정보를 카카오톡으로 받아볼 수 있습니다.',
     link: 'https://pf.kakao.com/_WYwjn', linkText: '채널 추가하기',
   },
 ];
@@ -134,7 +134,7 @@ export default function AboutPage() {
       <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)', padding: '36px 16px 32px', textAlign: 'center' }}>
         <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: '0 0 8px' }}>서비스 소개</h1>
         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, margin: 0 }}>
-          청약·분양·실거래가·지도·계산기·카카오 알림을 한 곳에서 — 아파트집사
+          청약·분양·실거래가·지도·계산기·카카오 알림을 한 곳에서 — 단지집사
         </p>
       </div>
 

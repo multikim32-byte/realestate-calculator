@@ -56,7 +56,7 @@ export default function PrivacyPage() {
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px 80px', lineHeight: 1.8, color: '#374151' }}>
 
         <P>
-          아파트집사(이하 &quot;서비스&quot;)는 이용자의 개인정보를 소중히 여기며, 「개인정보 보호법」 및 관련 법령을 준수합니다.
+          단지집사(이하 &quot;서비스&quot;)는 이용자의 개인정보를 소중히 여기며, 「개인정보 보호법」 및 관련 법령을 준수합니다.
           본 방침은 서비스가 수집하는 정보의 종류와 이용 목적, 제3자 공유 여부 등을 안내합니다.
         </P>
 
@@ -164,7 +164,7 @@ export default function PrivacyPage() {
 
         <H2>9. 문의 및 개인정보 관리 책임자</H2>
         <Table rows={[
-          ['서비스명', '아파트집사'],
+          ['서비스명', '단지집사'],
           ['운영자', '김경래 공인중개사'],
           ['이메일', 'multikim@naver.com'],
           ['처리 기간', '7영업일 이내'],

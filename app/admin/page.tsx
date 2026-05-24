@@ -140,7 +140,7 @@ export default async function AdminPage() {
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '48px 20px' }}>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1e293b', margin: '0 0 6px' }}>관리자 대시보드</h1>
-        <p style={{ fontSize: 14, color: '#6b7280', margin: '0 0 28px' }}>아파트집사 운영 현황</p>
+        <p style={{ fontSize: 14, color: '#6b7280', margin: '0 0 28px' }}>단지집사 운영 현황</p>
 
         {/* 전체 지표 */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 14 }}>
