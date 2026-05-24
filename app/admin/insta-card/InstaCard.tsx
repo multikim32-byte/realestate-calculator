@@ -213,13 +213,21 @@ export default function InstaCard({
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: px(18) }}>
           <div style={{
-            background: '#fff', borderRadius: px(14),
-            width: px(72), height: px(72),
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            ...sp(30), fontWeight: 900, color: '#1d4ed8',
-          }}>AZ</div>
+            background: 'linear-gradient(135deg, #f97316 0%, #ec4899 100%)',
+            borderRadius: px(14), width: px(72), height: px(72),
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <svg width={px(42)} height={px(42)} viewBox="0 0 24 24" fill="none">
+              <path d="M12 3L2 11h2v9a1 1 0 001 1h5v-5h4v5h5a1 1 0 001-1v-9h2L12 3z" fill="white"/>
+              <rect x="9.5" y="14.5" width="5" height="5.5" rx="0.8" fill="#f97316" opacity="0.75"/>
+            </svg>
+          </div>
           <div>
-            <div style={{ ...sp(34), fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>단지집사</div>
+            <div style={{ ...sp(11), fontWeight: 500, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.12em', marginBottom: px(4) }}>DANJI JIPSA</div>
+            <div style={{ ...sp(34), fontWeight: 800, lineHeight: 1.2 }}>
+              <span style={{ color: '#fff' }}>단지</span>
+              <span style={{ color: '#fda4af' }}>집사</span>
+            </div>
             <div style={{ ...sp(19), color: 'rgba(255,255,255,0.55)', marginTop: px(3) }}>aptzipsa.kr</div>
           </div>
         </div>

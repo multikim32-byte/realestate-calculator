@@ -58,18 +58,26 @@ export default function GlobalNav() {
       }}>
 
         {/* 로고 */}
-        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* 아이콘 */}
           <div style={{
-            background: '#1d4ed8', borderRadius: 8,
-            width: 36, height: 30,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0, gap: 1,
+            background: 'linear-gradient(135deg, #f97316 0%, #ec4899 100%)',
+            borderRadius: 12, width: 44, height: 44,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
-            <span style={{ color: '#fff', fontSize: 14, fontWeight: 900, letterSpacing: '-1px' }}>AZ</span>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+              <path d="M12 3L2 11h2v9a1 1 0 001 1h5v-5h4v5h5a1 1 0 001-1v-9h2L12 3z" fill="white"/>
+              <rect x="9.5" y="14.5" width="5" height="5.5" rx="0.8" fill="#f97316" opacity="0.75"/>
+            </svg>
           </div>
-          <span style={{ fontSize: 16, fontWeight: 800, color: '#1e3a5f', letterSpacing: '-0.3px' }}>
-            단지집사
-          </span>
+          {/* 텍스트 */}
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
+            <span style={{ fontSize: 10, fontWeight: 500, color: '#9ca3af', letterSpacing: '0.12em' }}>DANJI JIPSA</span>
+            <span style={{ marginTop: 3, fontSize: 17, fontWeight: 800, letterSpacing: '-0.5px' }}>
+              <span style={{ color: '#1e293b' }}>단지</span>
+              <span style={{ color: '#ec4899' }}>집사</span>
+            </span>
+          </div>
         </Link>
 
         {/* 데스크톱 메뉴 — gnav-pc 클래스로 모바일에서 숨김 */}
