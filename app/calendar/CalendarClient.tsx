@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { PublicSaleItem } from '@/lib/publicDataApi';
 
 const REGIONS = [
@@ -42,6 +43,7 @@ function getEventStyle(item: PublicSaleItem): { label: string; bg: string; color
 }
 
 export default function CalendarClient() {
+  const router = useRouter();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -58,6 +60,26 @@ export default function CalendarClient() {
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
   }, []);
+
+  // 마운트 시 URL 파라미터에서 상태 복원
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const ym = sp.get('ym');
+    const regionParam = sp.get('region');
+    if (ym && /^\d{6}$/.test(ym)) {
+      const y = parseInt(ym.slice(0, 4));
+      const m = parseInt(ym.slice(4, 6)) - 1;
+      if (!isNaN(y) && m >= 0 && m <= 11) { setYear(y); setMonth(m); }
+    }
+    if (regionParam && REGIONS.includes(regionParam)) setRegion(regionParam);
+  }, []);
+
+  function syncUrl(y: number, m: number, r: string) {
+    const sp = new URLSearchParams();
+    sp.set('ym', `${y}${pad2(m + 1)}`);
+    if (r !== '전체') sp.set('region', r);
+    router.replace(`/calendar?${sp.toString()}`, { scroll: false });
+  }
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -97,13 +119,17 @@ export default function CalendarClient() {
 
   const prevMonth = () => {
     setSelectedDay(null);
-    if (month === 0) { setYear(y => y - 1); setMonth(11); }
-    else setMonth(m => m - 1);
+    const ny = month === 0 ? year - 1 : year;
+    const nm = month === 0 ? 11 : month - 1;
+    setYear(ny); setMonth(nm);
+    syncUrl(ny, nm, region);
   };
   const nextMonth = () => {
     setSelectedDay(null);
-    if (month === 11) { setYear(y => y + 1); setMonth(0); }
-    else setMonth(m => m + 1);
+    const ny = month === 11 ? year + 1 : year;
+    const nm = month === 11 ? 0 : month + 1;
+    setYear(ny); setMonth(nm);
+    syncUrl(ny, nm, region);
   };
 
   const isToday = (d: number) =>
@@ -136,7 +162,7 @@ export default function CalendarClient() {
             display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, minWidth: 260,
           }}>
             {REGIONS.map(r => (
-              <button key={r} onClick={() => { setRegion(r); setSelectedDay(null); setOpenDrop(false); }} style={{
+              <button key={r} onClick={() => { setRegion(r); setSelectedDay(null); setOpenDrop(false); syncUrl(year, month, r); }} style={{
                 padding: '5px 8px', borderRadius: 6, fontSize: 12, fontWeight: 600,
                 border: 'none', cursor: 'pointer',
                 background: region === r ? '#1d4ed8' : '#f3f4f6',
