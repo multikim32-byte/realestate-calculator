@@ -129,6 +129,14 @@ export default function GlobalNav() {
         </button>
       </div>
 
+      {/* 모바일 드롭다운 외부 터치 오버레이 */}
+      {mobileOpen && (
+        <div
+          onClick={() => setMobileOpen(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 99, background: 'rgba(0,0,0,0.3)' }}
+        />
+      )}
+
       {/* 모바일 드롭다운 — mobileOpen 상태로 제어 */}
       {mobileOpen && (
         <div style={{
@@ -137,6 +145,7 @@ export default function GlobalNav() {
           background: '#fff',
           padding: '4px 12px 12px',
           boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+          position: 'relative', zIndex: 100,
         }}>
           {NAV_ITEMS.map(item => {
             const active = isActive(item);

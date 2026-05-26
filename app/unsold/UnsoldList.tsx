@@ -87,14 +87,6 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
   const [sido, setSido] = useState(searchParams.get('sido') ?? '전체');
   const [sigungu, setSigungu] = useState(searchParams.get('sigungu') ?? '전체');
   const [page, setPage] = useState(Number(searchParams.get('page') ?? '1'));
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 640);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
 
   const updateUrl = (overrides: Partial<{ category: string; sido: string; sigungu: string; page: number }>) => {
     const c = overrides.category ?? category;
@@ -144,6 +136,19 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
 
   return (
     <>
+      <style>{`
+        .unsold-filter-bar { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+        .unsold-filter-divider { width:1px; height:24px; background:#e5e7eb; }
+        .unsold-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
+        .unsold-page-btn { padding:10px 18px; border-radius:8px; border:1px solid #e5e7eb; background:#fff; cursor:pointer; font-size:14px; min-height:44px; }
+        .unsold-page-btn:disabled { cursor:not-allowed; color:#9ca3af; }
+        .unsold-page-num { padding:10px 16px; border-radius:8px; border:none; cursor:pointer; font-size:14px; min-height:44px; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+        @media (max-width:640px) {
+          .unsold-filter-bar { flex-direction:column; align-items:stretch; gap:10px; }
+          .unsold-filter-divider { display:none; }
+          .unsold-grid { grid-template-columns:1fr; }
+        }
+      `}</style>
       {/* 관심단지 저장 안내 배너 */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
@@ -162,7 +167,7 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
       </div>
 
       {/* 필터 바 */}
-      <div style={{ background: '#fff', borderRadius: 12, padding: '16px 20px', marginBottom: 20, boxShadow: '0 1px 6px rgba(0,0,0,0.06)', display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+      <div className="unsold-filter-bar" style={{ background: '#fff', borderRadius: 12, padding: '16px 20px', marginBottom: 20, boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
 
         {/* 지역 필터 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -177,7 +182,7 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
           )}
         </div>
 
-        <div style={{ width: 1, height: 24, background: '#e5e7eb' }} />
+        <div className="unsold-filter-divider" />
 
         {/* 카테고리 필터 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -215,7 +220,7 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
       )}
 
       {/* 카드 그리드 */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+      <div className="unsold-grid">
         {paged.map(item => (
           <div key={item.id} style={{ position: 'relative' }}>
             <FavBtn item={item} />
@@ -301,19 +306,20 @@ export default function UnsoldList({ listings }: { listings: UnsoldListing[] }) 
 
       {/* 페이지네이션 */}
       {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 32 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 32, flexWrap: 'wrap' }}>
           <button onClick={() => { const p = Math.max(1, page - 1); setPage(p); updateUrl({ page: p }); }} disabled={page === 1}
-            style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', cursor: page === 1 ? 'not-allowed' : 'pointer', color: page === 1 ? '#9ca3af' : '#374151' }}>
+            className="unsold-page-btn" style={{ color: page === 1 ? '#9ca3af' : '#374151' }}>
             이전
           </button>
           {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => i + 1).map(p => (
             <button key={p} onClick={() => { setPage(p); updateUrl({ page: p }); }}
-              style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: page === p ? '#1d4ed8' : '#fff', color: page === p ? '#fff' : '#374151', fontWeight: page === p ? 700 : 400, cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+              className="unsold-page-num"
+              style={{ background: page === p ? '#1d4ed8' : '#fff', color: page === p ? '#fff' : '#374151', fontWeight: page === p ? 700 : 400 }}>
               {p}
             </button>
           ))}
           <button onClick={() => { const p = Math.min(totalPages, page + 1); setPage(p); updateUrl({ page: p }); }} disabled={page === totalPages}
-            style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', cursor: page === totalPages ? 'not-allowed' : 'pointer', color: page === totalPages ? '#9ca3af' : '#374151' }}>
+            className="unsold-page-btn" style={{ color: page === totalPages ? '#9ca3af' : '#374151' }}>
             다음
           </button>
         </div>
