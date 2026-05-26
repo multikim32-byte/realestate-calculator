@@ -213,10 +213,12 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ s
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <tbody>
                   <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
-                    <td style={{ width: '22%', padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>단지명</td>
-                    <td style={{ width: '28%', padding: '11px 16px', fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{item.name}</td>
-                    <td style={{ width: '22%', padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>유형</td>
-                    <td style={{ width: '28%', padding: '11px 16px', fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{item.category}</td>
+                    <td style={{ width: '30%', padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>단지명</td>
+                    <td style={{ padding: '11px 16px', fontSize: 13, fontWeight: 700, color: '#1e293b', wordBreak: 'keep-all' }}>{item.name}</td>
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <td style={{ padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>유형</td>
+                    <td style={{ padding: '11px 16px', fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{item.category}</td>
                   </tr>
                   <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
                     <td style={{ padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>위치</td>
@@ -235,8 +237,9 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ s
                     if (rows.length > 0) return (
                       <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
                         <td style={{ padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap', verticalAlign: 'top' }}>전용면적별 분양가</td>
-                        <td colSpan={3} style={{ padding: '8px 16px' }}>
-                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                        <td colSpan={1} style={{ padding: '8px 16px' }}>
+                          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                          <table style={{ minWidth: 280, width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                             <thead>
                               <tr>
                                 <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', fontSize: 11, color: '#6b7280', fontWeight: 600 }}>타입</th>
@@ -261,6 +264,7 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ s
                               ))}
                             </tbody>
                           </table>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -277,15 +281,17 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ s
                     );
                     return null;
                   })()}
-                  {(item.move_in_date || item.contact) && (
-                    <tr>
+                  {item.move_in_date && (
+                    <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
                       <td style={{ padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>입주 예정</td>
-                      <td style={{ padding: '11px 16px', fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{item.move_in_date || '-'}</td>
+                      <td style={{ padding: '11px 16px', fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{item.move_in_date}</td>
+                    </tr>
+                  )}
+                  {item.contact && (
+                    <tr>
                       <td style={{ padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>문의전화</td>
                       <td style={{ padding: '11px 16px', fontSize: 13, fontWeight: 700, color: '#1e293b' }}>
-                        {item.contact
-                          ? <a href={`tel:${item.contact.replace(/[^0-9]/g, '')}`} style={{ color: '#1d4ed8', textDecoration: 'none' }}>{item.contact}</a>
-                          : '-'}
+                        <a href={`tel:${item.contact.replace(/[^0-9]/g, '')}`} style={{ color: '#1d4ed8', textDecoration: 'none' }}>{item.contact}</a>
                       </td>
                     </tr>
                   )}
