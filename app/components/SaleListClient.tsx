@@ -191,10 +191,24 @@ export default function SaleListClient({ initialItems, dataSource }: Props) {
     };
     if (loading) {
       return (
-        <div style={gridStyle}>
-          {[1,2,3,4,5,6,7,8].map(i => (
-            <div key={i} style={{ height: 210, background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', opacity: 0.5 }} />
-          ))}
+        <div>
+          <div style={{
+            textAlign: 'center', padding: '28px 16px 20px',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+          }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: '50%',
+              border: '3px solid #e5e7eb', borderTopColor: '#1d4ed8',
+              animation: 'spin 0.8s linear infinite',
+            }} />
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            <p style={{ fontSize: 14, color: '#6b7280', margin: 0 }}>API 로딩중입니다. 잠시만 기다려주세요.</p>
+          </div>
+          <div style={gridStyle}>
+            {[1,2,3,4,5,6,7,8].map(i => (
+              <div key={i} style={{ height: 210, background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', opacity: 0.4 }} />
+            ))}
+          </div>
         </div>
       );
     }
