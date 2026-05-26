@@ -14,87 +14,90 @@ import UnsoldLeadForm from '@/app/components/UnsoldLeadForm';
 import { sanitizeHtml } from '@/lib/sanitize';
 
 async function findListing(rawSlug: string, selectCols = '*') {
-  // Next.js가 한글 slug를 URL-encoded 상태로 전달할 때를 대비해 decode
-  const slug = (() => {
-    try { return decodeURIComponent(rawSlug); } catch { return rawSlug; }
-  })();
-
-  // slug로 먼저 조회
-  const { data: bySlug } = await supabase
-    .from('unsold_listings')
-    .select(selectCols)
-    .eq('slug', slug)
-    .maybeSingle();
-  if (bySlug) return { data: bySlug, redirectTo: null };
-
-  // decoded와 raw가 다른 경우 raw slug도 추가 시도
-  if (slug !== rawSlug) {
-    const { data: byRaw } = await supabase
-      .from('unsold_listings')
-      .select(selectCols)
-      .eq('slug', rawSlug)
-      .maybeSingle();
-    if (byRaw) return { data: byRaw, redirectTo: null };
-  }
-
-  // 구 UUID URL 하위 호환: 리다이렉트 없이 그대로 표시 (기존 URL 유지)
   try {
-    const { data: byId } = await supabase
+    const slug = (() => {
+      try { return decodeURIComponent(rawSlug); } catch { return rawSlug; }
+    })();
+
+    const { data: bySlug } = await supabase
       .from('unsold_listings')
       .select(selectCols)
-      .eq('id', slug)
+      .eq('slug', slug)
       .maybeSingle();
-    if (byId) return { data: byId, redirectTo: null };
-  } catch { /* invalid UUID format */ }
+    if (bySlug) return { data: bySlug, redirectTo: null };
 
-  return { data: null, redirectTo: null };
+    if (slug !== rawSlug) {
+      const { data: byRaw } = await supabase
+        .from('unsold_listings')
+        .select(selectCols)
+        .eq('slug', rawSlug)
+        .maybeSingle();
+      if (byRaw) return { data: byRaw, redirectTo: null };
+    }
+
+    try {
+      const { data: byId } = await supabase
+        .from('unsold_listings')
+        .select(selectCols)
+        .eq('id', slug)
+        .maybeSingle();
+      if (byId) return { data: byId, redirectTo: null };
+    } catch { /* invalid UUID format */ }
+
+    return { data: null, redirectTo: null };
+  } catch {
+    return { data: null, redirectTo: null };
+  }
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug: rawSlug } = await params;
-  const slug = (() => { try { return decodeURIComponent(rawSlug); } catch { return rawSlug; } })();
-  const { data } = await findListing(slug, 'name, location, category, benefit, min_price, max_price, thumbnail_url, slug');
+  try {
+    const { slug: rawSlug } = await params;
+    const slug = (() => { try { return decodeURIComponent(rawSlug); } catch { return rawSlug; } })();
+    const { data } = await findListing(slug, 'name, location, category, benefit, min_price, max_price, thumbnail_url, slug');
 
-  if (!data) return { title: '분양정보' };
+    if (!data) return { title: '분양정보' };
 
-  const item = data as unknown as Pick<UnsoldListing, 'name' | 'location' | 'category' | 'benefit' | 'min_price' | 'max_price' | 'thumbnail_url' | 'slug'>;
-  const canonical = item.slug ?? slug;
-  const priceText = item.min_price
-    ? `분양가 ${item.min_price >= 100000000 ? `${(item.min_price / 100000000).toFixed(1)}억` : `${Math.floor(item.min_price / 10000).toLocaleString()}만`}원~`
-    : '';
-  const title = `${item.name} 미분양 분양정보 — ${item.location} ${item.category}${priceText ? ` ${priceText}` : ''} 선착순 계약`;
-  const benefitText = item.benefit ? ` 계약 혜택: ${item.benefit}.` : '';
-  const description = `${item.name}(${item.location}) ${item.category} 미분양 분양정보입니다. ${priceText ? `${priceText}.` : ''}${benefitText} 선착순 동·호지정 계약 가능합니다.`.trim();
+    const item = data as unknown as Pick<UnsoldListing, 'name' | 'location' | 'category' | 'benefit' | 'min_price' | 'max_price' | 'thumbnail_url' | 'slug'>;
+    const canonical = item.slug ?? slug;
+    const location = item.location ?? '';
+    const priceText = item.min_price
+      ? `분양가 ${item.min_price >= 100000000 ? `${(item.min_price / 100000000).toFixed(1)}억` : `${Math.floor(item.min_price / 10000).toLocaleString()}만`}원~`
+      : '';
+    const title = `${item.name} 미분양 분양정보 — ${location} ${item.category}${priceText ? ` ${priceText}` : ''} 선착순 계약`;
+    const benefitText = item.benefit ? ` 계약 혜택: ${item.benefit}.` : '';
+    const description = `${item.name}(${location}) ${item.category} 미분양 분양정보입니다. ${priceText ? `${priceText}.` : ''}${benefitText} 선착순 동·호지정 계약 가능합니다.`.trim();
 
-  const parts = item.location.trim().split(/\s+/);
-  const sido = parts[0].replace(/(특별자치도|특별자치시|특별시|광역시|도)$/, '');
-  const sigungu = parts[1] ?? '';
-  const keywords = [
-    item.name,
-    `${item.name} 미분양`,
-    `${sido} 미분양 아파트`,
-    sigungu ? `${sigungu} 분양정보` : '',
-    `${sido} ${item.category} 분양`,
-    '선착순 계약',
-    '미분양 분양정보',
-    '잔여세대',
-  ].filter(Boolean) as string[];
+    const parts = location.trim().split(/\s+/);
+    const sido = parts[0]?.replace(/(특별자치도|특별자치시|특별시|광역시|도)$/, '') ?? '';
+    const sigungu = parts[1] ?? '';
+    const keywords = [
+      item.name,
+      `${item.name} 미분양`,
+      `${sido} 미분양 아파트`,
+      sigungu ? `${sigungu} 분양정보` : '',
+      `${sido} ${item.category} 분양`,
+      '선착순 계약',
+      '미분양 분양정보',
+      '잔여세대',
+    ].filter(Boolean) as string[];
 
-  return {
-    title,
-    description,
-    keywords,
-    alternates: { canonical: `https://www.aptzipsa.kr/unsold/${canonical}` },
-    openGraph: {
+    return {
       title,
       description,
-      url: `https://www.aptzipsa.kr/unsold/${canonical}`,
-      siteName: '아파트집사',
-      images: item.thumbnail_url
-        ? [{ url: item.thumbnail_url }]
-        : [],
-    },
-  };
+      keywords,
+      alternates: { canonical: `https://www.aptzipsa.kr/unsold/${canonical}` },
+      openGraph: {
+        title,
+        description,
+        url: `https://www.aptzipsa.kr/unsold/${canonical}`,
+        siteName: '아파트집사',
+        images: item.thumbnail_url ? [{ url: item.thumbnail_url }] : [],
+      },
+    };
+  } catch {
+    return { title: '분양정보' };
+  }
 }
 
 function fmt만원(v: number) {
