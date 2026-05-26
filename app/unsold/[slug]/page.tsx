@@ -232,59 +232,17 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ s
                       </td>
                     </tr>
                   )}
-                  {(() => {
-                    const rows = parseUnitPrices(item.area);
-                    if (rows.length > 0) return (
-                      <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
-                        <td style={{ padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap', verticalAlign: 'top' }}>전용면적별 분양가</td>
-                        <td style={{ padding: '10px 14px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            {rows.map((r, i) => (
-                              <div key={i} style={{
-                                border: '1px solid #e5e7eb', borderRadius: 8,
-                                overflow: 'hidden', background: '#fff',
-                              }}>
-                                <div style={{ background: '#eff6ff', padding: '5px 10px', fontSize: 12, fontWeight: 700, color: '#1d4ed8', borderBottom: '1px solid #dbeafe' }}>
-                                  {r.type} m²
-                                </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', padding: '8px 10px', gap: '6px 0' }}>
-                                  <div>
-                                    <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>공급면적</div>
-                                    <div style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>{r.supplyArea ? `${r.supplyArea}㎡` : '-'}</div>
-                                  </div>
-                                  <div>
-                                    <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>공급세대</div>
-                                    <div style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>{r.count ? `${r.count.toLocaleString()}세대` : '-'}</div>
-                                  </div>
-                                  <div style={{ gridColumn: '1 / -1', marginTop: 2, paddingTop: 6, borderTop: '1px solid #f3f4f6' }}>
-                                    <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>분양가</div>
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: '#1d4ed8' }}>
-                                      {r.min && r.max && r.min !== r.max
-                                        ? `${fmt만원(r.min)} ~ ${fmt만원(r.max)}`
-                                        : r.max ? fmt만원(r.max)
-                                        : r.min ? fmt만원(r.min) : '미정'}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                    // 폴백: area가 plain text이거나 없을 때
-                    if (item.min_price || item.max_price) return (
-                      <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
-                        <td style={{ padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>분양가</td>
-                        <td colSpan={3} style={{ padding: '11px 16px', fontSize: 13, fontWeight: 700, color: '#1d4ed8' }}>
-                          {item.min_price && item.max_price && item.min_price !== item.max_price
-                            ? `${fmt만원(item.min_price)} ~ ${fmt만원(item.max_price)}`
-                            : item.min_price ? fmt만원(item.min_price) : fmt만원(item.max_price!)}
-                        </td>
-                      </tr>
-                    );
-                    return null;
-                  })()}
+                  {/* 분양가 요약 (상세 테이블은 별도 섹션으로 표시) */}
+                  {!parseUnitPrices(item.area).length && (item.min_price || item.max_price) && (
+                    <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
+                      <td style={{ padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>분양가</td>
+                      <td style={{ padding: '11px 16px', fontSize: 13, fontWeight: 700, color: '#1d4ed8' }}>
+                        {item.min_price && item.max_price && item.min_price !== item.max_price
+                          ? `${fmt만원(item.min_price)} ~ ${fmt만원(item.max_price)}`
+                          : item.min_price ? fmt만원(item.min_price) : fmt만원(item.max_price!)}
+                      </td>
+                    </tr>
+                  )}
                   {item.move_in_date && (
                     <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
                       <td style={{ padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap' }}>입주 예정</td>
@@ -302,6 +260,44 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ s
                 </tbody>
               </table>
             </div>
+
+            {/* 전용면적별 분양가 — 독립 테이블 */}
+            {(() => {
+              const rows = parseUnitPrices(item.area);
+              if (rows.length === 0) return null;
+              return (
+                <div style={{ border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
+                  <div style={{ background: '#f8fafc', padding: '10px 16px', borderBottom: '1px solid #e5e7eb' }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#1e3a5f' }}>📐 전용면적별 분양가</span>
+                  </div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ background: '#f0f4f9' }}>
+                        <th style={{ padding: '10px 14px', fontSize: 12, color: '#374151', fontWeight: 700, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>타입</th>
+                        <th style={{ padding: '10px 14px', fontSize: 12, color: '#374151', fontWeight: 700, textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>공급면적</th>
+                        <th style={{ padding: '10px 14px', fontSize: 12, color: '#374151', fontWeight: 700, textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>세대수</th>
+                        <th style={{ padding: '10px 14px', fontSize: 12, color: '#374151', fontWeight: 700, textAlign: 'right', borderBottom: '1px solid #e5e7eb' }}>분양가</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((r, i) => (
+                        <tr key={i} style={{ borderBottom: i < rows.length - 1 ? '1px solid #f3f4f6' : 'none', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
+                          <td style={{ padding: '12px 14px', fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{r.type}㎡</td>
+                          <td style={{ padding: '12px 14px', fontSize: 13, color: '#374151', textAlign: 'center' }}>{r.supplyArea ? `${r.supplyArea}㎡` : '-'}</td>
+                          <td style={{ padding: '12px 14px', fontSize: 13, color: '#374151', textAlign: 'center' }}>{r.count ? `${r.count.toLocaleString()}세대` : '-'}</td>
+                          <td style={{ padding: '12px 14px', fontSize: 13, fontWeight: 700, color: '#1d4ed8', textAlign: 'right' }}>
+                            {r.min && r.max && r.min !== r.max
+                              ? `${fmt만원(r.min)}~${fmt만원(r.max)}`
+                              : r.max ? fmt만원(r.max)
+                              : r.min ? fmt만원(r.min) : '미정'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
 
             {/* 계약 혜택 */}
             {item.benefit && (
