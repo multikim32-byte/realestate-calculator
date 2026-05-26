@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import { LAWD_CODE_MAP, recentMonths } from '@/lib/tradeApi';
 import type { TradeItem } from '@/lib/tradeApi';
 import type { RentItem } from '@/lib/rentApi';
@@ -47,6 +48,7 @@ interface TradeClientProps {
 }
 
 export default function TradeClient({ initialItems = [], initialDong = '개포동' }: TradeClientProps) {
+  const router = useRouter();
   const [tab, setTab] = useState<TabType>('매매');
   const [sido, setSido] = useState<keyof typeof LAWD_CODE_MAP>('서울');
   const [lawdCd, setLawdCd] = useState('11680'); // 강남구 기본
@@ -105,6 +107,9 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
     const dongParam    = sp.get('dong');
     const monthParam   = sp.get('month');
     const aptParam     = sp.get('apt');
+    const tabParam     = sp.get('tab');
+
+    if (tabParam === '전세' || tabParam === '월세') setTab(tabParam);
 
     if (dongParam) pendingDongRef.current = dongParam;
     if (aptParam)  pendingAptRef.current  = aptParam;
@@ -125,6 +130,19 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
     if (initialItems.length === 0) handleSearch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 검색 상태가 바뀔 때마다 URL을 업데이트 → 뒤로가기 시 복원 가능
+  useEffect(() => {
+    if (!searched && !rentSearched) return;
+    const sp = new URLSearchParams();
+    sp.set('sido', sido);
+    const sg = LAWD_CODE_MAP[sido]?.find(d => d.code === lawdCd);
+    if (sg) sp.set('sigungu', sg.name);
+    sp.set('month', dealYmd);
+    if (tab !== '매매') sp.set('tab', tab);
+    router.replace(`/trade?${sp.toString()}`, { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searched, rentSearched, sido, lawdCd, dealYmd, tab]);
 
   const sigunguList = LAWD_CODE_MAP[sido];
 
