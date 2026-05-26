@@ -11,7 +11,6 @@ import { notFound, redirect } from 'next/navigation';
 import SectionTabs from './SectionTabs';
 import KakaoMap from '@/app/components/KakaoMap';
 import UnsoldLeadForm from '@/app/components/UnsoldLeadForm';
-import { fetchSaleDetail } from '@/lib/publicDataApi';
 import { sanitizeHtml } from '@/lib/sanitize';
 
 async function findListing(rawSlug: string, selectCols = '*') {
@@ -137,14 +136,7 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ s
   const item = raw as unknown as UnsoldListing;
   if (!item.is_active) notFound();
 
-  // house_manage_no가 있으면 청약홈 API에서 상세 주소 가져옴 → KakaoMap 정확도 향상
-  let mapAddress = item.location;
-  if (item.house_manage_no) {
-    try {
-      const saleItem = await fetchSaleDetail(item.house_manage_no);
-      if (saleItem?.location) mapAddress = saleItem.location;
-    } catch { /* 실패 시 item.location 그대로 사용 */ }
-  }
+  const mapAddress = item.location;
 
   const priceFrom = item.min_price ?? item.max_price;
   const priceTo = item.max_price ?? item.min_price;
