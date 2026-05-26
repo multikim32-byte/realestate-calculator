@@ -11,7 +11,7 @@ import { notFound, redirect } from 'next/navigation';
 import SectionTabs from './SectionTabs';
 import KakaoMap from '@/app/components/KakaoMap';
 import UnsoldLeadForm from '@/app/components/UnsoldLeadForm';
-import { sanitizeHtml } from '@/lib/sanitize';
+import DescriptionHtml from './DescriptionHtml';
 
 async function findListing(rawSlug: string, selectCols = '*') {
   try {
@@ -114,10 +114,6 @@ function extractYoutubeId(url: string | null | undefined): string | null {
   return m?.[1] ?? null;
 }
 
-function sanitizeHeadings(html: string | null): string | null {
-  if (!html) return null;
-  return html.replace(/<h1(\s[^>]*)?>/gi, '<h2$1>').replace(/<\/h1>/gi, '</h2>');
-}
 
 function parseUnitPrices(area: string | null): UnitPriceRow[] {
   if (!area) return [];
@@ -309,11 +305,9 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ s
             {item.description && (
               <div style={{ marginBottom: 24 }}>
                 <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 10 }}>상세 설명</h2>
-                <div
-                  className="unsold-content"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(sanitizeHeadings(item.description)) }}
-                  style={{ fontSize: 14, color: '#374151', lineHeight: 1.9 }}
-                />
+                <div className="unsold-content" style={{ fontSize: 14, color: '#374151', lineHeight: 1.9 }}>
+                  <DescriptionHtml html={item.description} />
+                </div>
                 <style>{`
                   .unsold-content h2 { font-size: 18px; font-weight: 800; margin: 20px 0 10px; color: #1e293b; }
                   .unsold-content h3 { font-size: 16px; font-weight: 700; margin: 16px 0 8px; color: #1e293b; }
