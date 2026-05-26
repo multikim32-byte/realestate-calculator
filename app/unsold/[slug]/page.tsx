@@ -237,33 +237,37 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ s
                     if (rows.length > 0) return (
                       <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
                         <td style={{ padding: '11px 16px', fontSize: 12, color: '#6b7280', fontWeight: 600, background: '#fafafa', whiteSpace: 'nowrap', verticalAlign: 'top' }}>전용면적별 분양가</td>
-                        <td colSpan={1} style={{ padding: '8px 16px' }}>
-                          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                          <table style={{ minWidth: 280, width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                            <thead>
-                              <tr>
-                                <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', fontSize: 11, color: '#6b7280', fontWeight: 600 }}>타입</th>
-                                <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', fontSize: 11, color: '#6b7280', fontWeight: 600 }}>공급면적</th>
-                                <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', fontSize: 11, color: '#6b7280', fontWeight: 600 }}>공급세대</th>
-                                <th style={{ textAlign: 'left', padding: '4px 0', fontSize: 11, color: '#6b7280', fontWeight: 600 }}>분양가</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {rows.map((r, i) => (
-                                <tr key={i} style={{ borderTop: '1px solid #f3f4f6' }}>
-                                  <td style={{ padding: '7px 12px 7px 0', fontWeight: 700, color: '#1e293b' }}>{r.type} m²</td>
-                                  <td style={{ padding: '7px 12px 7px 0', color: '#374151' }}>{r.supplyArea ? `${r.supplyArea}m²` : '-'}</td>
-                                  <td style={{ padding: '7px 12px 7px 0', color: '#374151' }}>{r.count ? `${r.count.toLocaleString()}세대` : '-'}</td>
-                                  <td style={{ padding: '7px 0', fontWeight: 700, color: '#1d4ed8' }}>
-                                    {r.min && r.max && r.min !== r.max
-                                      ? `${fmt만원(r.min)} ~ ${fmt만원(r.max)}`
-                                      : r.max ? fmt만원(r.max)
-                                      : r.min ? fmt만원(r.min) : '-'}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                        <td style={{ padding: '10px 14px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {rows.map((r, i) => (
+                              <div key={i} style={{
+                                border: '1px solid #e5e7eb', borderRadius: 8,
+                                overflow: 'hidden', background: '#fff',
+                              }}>
+                                <div style={{ background: '#eff6ff', padding: '5px 10px', fontSize: 12, fontWeight: 700, color: '#1d4ed8', borderBottom: '1px solid #dbeafe' }}>
+                                  {r.type} m²
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', padding: '8px 10px', gap: '6px 0' }}>
+                                  <div>
+                                    <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>공급면적</div>
+                                    <div style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>{r.supplyArea ? `${r.supplyArea}㎡` : '-'}</div>
+                                  </div>
+                                  <div>
+                                    <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>공급세대</div>
+                                    <div style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>{r.count ? `${r.count.toLocaleString()}세대` : '-'}</div>
+                                  </div>
+                                  <div style={{ gridColumn: '1 / -1', marginTop: 2, paddingTop: 6, borderTop: '1px solid #f3f4f6' }}>
+                                    <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>분양가</div>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: '#1d4ed8' }}>
+                                      {r.min && r.max && r.min !== r.max
+                                        ? `${fmt만원(r.min)} ~ ${fmt만원(r.max)}`
+                                        : r.max ? fmt만원(r.max)
+                                        : r.min ? fmt만원(r.min) : '미정'}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </td>
                       </tr>
