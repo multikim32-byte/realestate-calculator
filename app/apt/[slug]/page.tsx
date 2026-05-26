@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { aptPosts } from "../data";
 import GlobalNav from "../../components/GlobalNav";
 import AdUnit from "../../components/AdUnit";
-import { sanitizeHtml } from "@/lib/sanitize";
+import ContentHtml from "@/app/components/ContentHtml";
 import type { Metadata } from "next";
 
 // AdSense 대시보드 > 광고 > 광고 단위에서 발급받은 슬롯 ID로 교체하세요
@@ -102,10 +102,7 @@ export default async function AptPostPage({ params }: Props) {
           <p style={{ margin: "0 0 28px", fontSize: 15, color: "#666", lineHeight: 1.7, borderBottom: "1px solid #f0f4f9", paddingBottom: 24 }}>
             {post.description}
           </p>
-          <div
-            style={{ fontSize: 15, color: "#333", lineHeight: 1.9 }}
-            dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
-          />
+          <ContentHtml html={post.content} style={{ fontSize: 15, color: "#333", lineHeight: 1.9 }} />
         </div>
 
         {/* 광고 */}
