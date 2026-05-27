@@ -169,7 +169,30 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, buildi
     supplyMap[normalizeType(u.type)] = u.count; // 정규화 키 (폴백)
   }
   const hasData = rows && rows.length > 0;
-  const summaries = hasData ? computeSummaries(grouped, spsplyMap, supplyMap) : [];
+  const rawSummaries = hasData ? computeSummaries(grouped, spsplyMap, supplyMap) : [];
+
+  // supplyMap에 없는 타입(unit API 누락)은 totalUnits 기준으로 나머지를 비례 분배
+  const summaries: TypeSummary[] = (() => {
+    if (!totalUnits || totalUnits <= 0 || rawSummaries.length === 0) return rawSummaries;
+    const isMatched = (t: string) => supplyMap[t] !== undefined || supplyMap[normalizeType(t)] !== undefined;
+    const matchedSum = rawSummaries.filter(s => isMatched(s.type)).reduce((acc, s) => acc + s.totalSupply, 0);
+    const unmatchedItems = rawSummaries.filter(s => !isMatched(s.type));
+    const unmatchedFallbackSum = unmatchedItems.reduce((acc, s) => acc + s.totalSupply, 0);
+    const unmatchedTarget = totalUnits - matchedSum;
+    if (unmatchedItems.length === 0 || unmatchedFallbackSum === 0 || unmatchedTarget <= 0) return rawSummaries;
+    let allocated = 0;
+    const adjusted = [...rawSummaries];
+    const unmatchedIdxs = rawSummaries.map((s, i) => !isMatched(s.type) ? i : -1).filter(i => i >= 0);
+    unmatchedIdxs.forEach((idx, n) => {
+      const s = rawSummaries[idx];
+      const isLast = n === unmatchedIdxs.length - 1;
+      const ts = isLast ? unmatchedTarget - allocated : Math.round(s.totalSupply / unmatchedFallbackSum * unmatchedTarget);
+      allocated += ts;
+      const totalApply = s.generalApply + s.specialApply;
+      adjusted[idx] = { ...s, totalSupply: ts, rate: ts > 0 ? totalApply / ts : null };
+    });
+    return adjusted;
+  })();
 
   return (
     <div style={{ marginTop: 16, background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
