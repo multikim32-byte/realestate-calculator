@@ -54,10 +54,21 @@ function fmtRate(v: string | number | undefined) {
   return `${n.toFixed(2)} : 1`;
 }
 
+type SpsplyRow = {
+  주택형: string;
+  공급세대수: number;
+  해당지역: Record<string, number>;
+  기타지역: Record<string, number>;
+  기관추천배정: number;
+  기관합산: string;
+};
+
 type TypeSummary = {
   type: string;
-  supply: number;
-  apply: number;
+  generalSupply: number;
+  generalApply: number;
+  specialSupply: number;
+  specialApply: number;
   rate: number | null;  // null = 미달
 };
 
@@ -66,15 +77,35 @@ function toNum(v: string | number | undefined): number {
   return parseInt(String(v).replace(/[^0-9]/g, '')) || 0;
 }
 
-function computeSummaries(grouped: Record<string, RatioRow[]>): TypeSummary[] {
+function buildSpsplyMap(spsplyRows: SpsplyRow[]): Record<string, { supply: number; apply: number }> {
+  const map: Record<string, { supply: number; apply: number }> = {};
+  for (const row of spsplyRows) {
+    const apply =
+      Object.values(row.해당지역).reduce((s, v) => s + (v || 0), 0) +
+      Object.values(row.기타지역).reduce((s, v) => s + (v || 0), 0) +
+      toNum(row.기관합산);
+    map[row.주택형] = { supply: row.공급세대수 || 0, apply };
+  }
+  return map;
+}
+
+function computeSummaries(
+  grouped: Record<string, RatioRow[]>,
+  spsplyMap: Record<string, { supply: number; apply: number }>,
+): TypeSummary[] {
   return Object.entries(grouped).map(([type, rows]) => {
     // 1순위 행만 (없으면 전체)
     const r1 = rows.filter(r => String(r.순위) === '1' || r.순위 === 1);
     const base = r1.length > 0 ? r1 : rows;
-    const supply = toNum(base[0]?.공급세대수);
-    const apply  = base.reduce((s, r) => s + toNum(r.접수건수), 0);
-    const rate   = supply > 0 ? apply / supply : null;
-    return { type, supply, apply, rate };
+    const generalSupply = toNum(base[0]?.공급세대수);
+    const generalApply  = base.reduce((s, r) => s + toNum(r.접수건수), 0);
+
+    const sp = spsplyMap[type] ?? { supply: 0, apply: 0 };
+    const totalSupply = generalSupply + sp.supply;
+    const totalApply  = generalApply + sp.apply;
+    const rate = totalSupply > 0 ? totalApply / totalSupply : null;
+
+    return { type, generalSupply, generalApply, specialSupply: sp.supply, specialApply: sp.apply, rate };
   });
 }
 
@@ -92,18 +123,24 @@ function rateLabel(rate: number | null): string {
 }
 
 export default function CompetitionRateSection({ houseManageNo, pblancNo, buildingType, recruitType }: Props) {
-  const [rows, setRows] = useState<RatioRow[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [rows, setRows]           = useState<RatioRow[] | null>(null);
+  const [spsplyRows, setSpsplyRows] = useState<SpsplyRow[] | null>(null);
+  const [loading, setLoading]     = useState(false);
+  const [open, setOpen]           = useState(false);
 
   useEffect(() => {
     if (!open || !houseManageNo) return;
     if (rows !== null) return; // 이미 불러옴
     startTransition(() => setLoading(true));
-    fetch(`/api/sale/ratio?houseManageNo=${houseManageNo}&pblancNo=${pblancNo}`)
-      .then(r => r.json())
-      .then(data => setRows(data.ratio ?? []))
-      .catch(() => setRows([]))
+    Promise.all([
+      fetch(`/api/sale/ratio?houseManageNo=${houseManageNo}&pblancNo=${pblancNo}`).then(r => r.json()),
+      fetch(`/api/sale/spsply?houseManageNo=${houseManageNo}&pblancNo=${pblancNo}`).then(r => r.json()),
+    ])
+      .then(([ratioData, spsplyData]) => {
+        setRows(ratioData.ratio ?? []);
+        setSpsplyRows(spsplyData.rows ?? []);
+      })
+      .catch(() => { setRows([]); setSpsplyRows([]); })
       .finally(() => setLoading(false));
   }, [open, houseManageNo, pblancNo, rows]);
 
@@ -116,8 +153,9 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, buildi
       grouped[ty].push(row);
     }
   }
+  const spsplyMap = buildSpsplyMap(spsplyRows ?? []);
   const hasData = rows && rows.length > 0;
-  const summaries = hasData ? computeSummaries(grouped) : [];
+  const summaries = hasData ? computeSummaries(grouped, spsplyMap) : [];
 
   return (
     <div style={{ marginTop: 16, background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
@@ -171,13 +209,13 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, buildi
               {/* ── 평형별 경쟁률 요약 ── */}
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 8 }}>
-                  📊 평형별 경쟁률 요약 (1순위 기준)
+                  📊 평형별 합산경쟁률 (일반공급 + 특별공급)
                 </div>
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                     <thead>
                       <tr style={{ background: '#f8f9fa' }}>
-                        {['주택형', '공급세대', '총 접수', '1순위 경쟁률'].map(h => (
+                        {['주택형', '일반 접수', '특별 접수', '총 공급', '합산경쟁률'].map(h => (
                           <th key={h} style={{
                             padding: '8px 10px', textAlign: 'center', fontWeight: 700,
                             color: '#6b7280', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap',
@@ -188,16 +226,26 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, buildi
                     <tbody>
                       {summaries.map(s => {
                         const c = rateColor(s.rate);
+                        const totalSupply = s.generalSupply + s.specialSupply;
+                        const totalApply  = s.generalApply + s.specialApply;
                         return (
                           <tr key={s.type} style={{ borderBottom: '1px solid #f3f4f6' }}>
                             <td style={{ padding: '9px 10px', textAlign: 'center', fontWeight: 700, color: '#1e293b' }}>
                               {s.type}
                             </td>
                             <td style={{ padding: '9px 10px', textAlign: 'center', color: '#374151' }}>
-                              {s.supply.toLocaleString()}
+                              {s.generalApply.toLocaleString()}
                             </td>
                             <td style={{ padding: '9px 10px', textAlign: 'center', color: '#374151' }}>
-                              {s.apply.toLocaleString()}
+                              {s.specialApply > 0 ? s.specialApply.toLocaleString() : '-'}
+                            </td>
+                            <td style={{ padding: '9px 10px', textAlign: 'center', color: '#374151' }}>
+                              {totalSupply.toLocaleString()}
+                              {s.specialSupply > 0 && (
+                                <div style={{ fontSize: 10, color: '#9ca3af' }}>
+                                  일반 {s.generalSupply} + 특별 {s.specialSupply}
+                                </div>
+                              )}
                             </td>
                             <td style={{ padding: '9px 10px', textAlign: 'center' }}>
                               <span style={{
@@ -206,7 +254,7 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, buildi
                                 fontSize: 12, fontWeight: 700,
                                 background: c.bg, color: c.color, border: `1px solid ${c.border}`,
                               }}>
-                                {rateLabel(s.rate)}
+                                {totalApply > 0 ? rateLabel(s.rate) : '-'}
                               </span>
                             </td>
                           </tr>
