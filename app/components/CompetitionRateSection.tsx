@@ -4,7 +4,7 @@ import { useEffect, useState, startTransition } from 'react';
 
 type RatioRow = {
   주택형?: string;
-  순위?: string;
+  순위?: string | number;
   거주지역?: string;
   접수건수?: string | number;
   공급세대수?: string | number;
@@ -54,6 +54,43 @@ function fmtRate(v: string | number | undefined) {
   return `${n.toFixed(2)} : 1`;
 }
 
+type TypeSummary = {
+  type: string;
+  supply: number;
+  apply: number;
+  rate: number | null;  // null = 미달
+};
+
+function toNum(v: string | number | undefined): number {
+  if (v === undefined || v === null || v === '') return 0;
+  return parseInt(String(v).replace(/[^0-9]/g, '')) || 0;
+}
+
+function computeSummaries(grouped: Record<string, RatioRow[]>): TypeSummary[] {
+  return Object.entries(grouped).map(([type, rows]) => {
+    // 1순위 행만 (없으면 전체)
+    const r1 = rows.filter(r => String(r.순위) === '1' || r.순위 === 1);
+    const base = r1.length > 0 ? r1 : rows;
+    const supply = toNum(base[0]?.공급세대수);
+    const apply  = base.reduce((s, r) => s + toNum(r.접수건수), 0);
+    const rate   = supply > 0 ? apply / supply : null;
+    return { type, supply, apply, rate };
+  });
+}
+
+function rateColor(rate: number | null): { bg: string; color: string; border: string } {
+  if (rate === null || rate < 1) return { bg: '#f3f4f6', color: '#6b7280', border: '#e5e7eb' };
+  if (rate >= 10) return { bg: '#fef2f2', color: '#991b1b', border: '#fecaca' };
+  if (rate >= 5)  return { bg: '#fff7ed', color: '#9a3412', border: '#fed7aa' };
+  if (rate >= 2)  return { bg: '#fefce8', color: '#854d0e', border: '#fde68a' };
+  return { bg: '#f0fdf4', color: '#166534', border: '#bbf7d0' };
+}
+
+function rateLabel(rate: number | null): string {
+  if (rate === null || rate < 1) return '미달';
+  return `${rate.toFixed(2)} : 1`;
+}
+
 export default function CompetitionRateSection({ houseManageNo, pblancNo, buildingType, recruitType }: Props) {
   const [rows, setRows] = useState<RatioRow[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -80,6 +117,7 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, buildi
     }
   }
   const hasData = rows && rows.length > 0;
+  const summaries = hasData ? computeSummaries(grouped) : [];
 
   return (
     <div style={{ marginTop: 16, background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
@@ -129,6 +167,62 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, buildi
 
           {!loading && hasData && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+              {/* ── 평형별 경쟁률 요약 ── */}
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 8 }}>
+                  📊 평형별 경쟁률 요약 (1순위 기준)
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                    <thead>
+                      <tr style={{ background: '#f8f9fa' }}>
+                        {['주택형', '공급세대', '총 접수', '1순위 경쟁률'].map(h => (
+                          <th key={h} style={{
+                            padding: '8px 10px', textAlign: 'center', fontWeight: 700,
+                            color: '#6b7280', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap',
+                          }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {summaries.map(s => {
+                        const c = rateColor(s.rate);
+                        return (
+                          <tr key={s.type} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                            <td style={{ padding: '9px 10px', textAlign: 'center', fontWeight: 700, color: '#1e293b' }}>
+                              {s.type}
+                            </td>
+                            <td style={{ padding: '9px 10px', textAlign: 'center', color: '#374151' }}>
+                              {s.supply.toLocaleString()}
+                            </td>
+                            <td style={{ padding: '9px 10px', textAlign: 'center', color: '#374151' }}>
+                              {s.apply.toLocaleString()}
+                            </td>
+                            <td style={{ padding: '9px 10px', textAlign: 'center' }}>
+                              <span style={{
+                                display: 'inline-block',
+                                padding: '3px 10px', borderRadius: 20,
+                                fontSize: 12, fontWeight: 700,
+                                background: c.bg, color: c.color, border: `1px solid ${c.border}`,
+                              }}>
+                                {rateLabel(s.rate)}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* ── 순위·지역별 상세 ── */}
+              <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 12 }}>
+                  📋 순위·거주지역별 상세
+                </div>
+              </div>
               {Object.entries(grouped).map(([type, typeRows]) => (
                 <div key={type}>
                   <div style={{

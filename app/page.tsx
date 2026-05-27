@@ -5,6 +5,7 @@ import SaleListClient from './components/SaleListClient';
 import GlobalNav from './components/GlobalNav';
 import type { Metadata } from 'next';
 import { Calendar, BarChart2, Calculator, Tag, Map, Building2 } from 'lucide-react';
+import { fetchPublicSaleList } from '@/lib/publicDataApi';
 
 export const revalidate = 7200;
 
@@ -57,6 +58,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
     const qs = new URLSearchParams(params).toString();
     redirect(`/calculator?${qs}`);
   }
+
+  // ISR 캐시에 청약정보 임베드 — 2시간마다 백그라운드 갱신
+  let saleInitialItems: import('@/lib/types').SaleItem[] = [];
+  try {
+    const result = await fetchPublicSaleList({ type: 'apt', page: 1, perPage: 20, skipEnrich: false });
+    saleInitialItems = (result.items ?? []) as import('@/lib/types').SaleItem[];
+  } catch { /* 실패 시 클라이언트 fetch로 fallback */ }
 
   return (
     <div style={{ minHeight: '100vh', background: '#f0f4f9', fontFamily: "'Apple SD Gothic Neo', sans-serif" }}>
@@ -167,8 +175,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 
         <Suspense fallback={null}>
           <SaleListClient
-            initialItems={[]}
-            dataSource="loading"
+            initialItems={saleInitialItems}
+            dataSource={saleInitialItems.length > 0 ? 'ssr' : 'loading'}
           />
         </Suspense>
 

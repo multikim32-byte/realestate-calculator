@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { SaleItem, Region } from '@/lib/types';
 import KakaoMapList from './KakaoMapList';
@@ -75,6 +75,9 @@ export default function SaleListClient({ initialItems, dataSource }: Props) {
   const [source, setSource] = useState(dataSource);
   const [loading, setLoading] = useState(false);
 
+  // SSR 초기 데이터가 있으면 첫 fetch는 스피너 없이 백그라운드로
+  const showSpinnerRef = useRef(initialItems.length === 0);
+
   const [region, setRegionState] = useState<Region>((searchParams.get('region') as Region) || '전체');
   const [fetchType, setFetchTypeState] = useState<FetchType>(() => {
     const t = searchParams.get('type');
@@ -128,7 +131,9 @@ export default function SaleListClient({ initialItems, dataSource }: Props) {
   function setFetchType(v: FetchType) { setFetchTypeState(v); updateUrl({ type: v }); }
 
   const fetchItems = useCallback(async (reg: Region, ft: FetchType) => {
-    setLoading(true);
+    const showSpinner = showSpinnerRef.current;
+    showSpinnerRef.current = true; // 이후 필터 변경 시에는 항상 스피너 표시
+    if (showSpinner) setLoading(true);
     try {
       let merged: SaleItem[] = [];
       let src = 'api';

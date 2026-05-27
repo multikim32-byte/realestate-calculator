@@ -11,7 +11,6 @@ type PriceOverlayItem = { overlay: KakaoCustomOverlay; div: HTMLDivElement; data
 
 interface Props {
   unsoldListings: MapUnsoldItem[];
-  saleListings: MapSaleItem[];
 }
 
 type PinType = 'unsold' | 'sale';
@@ -209,7 +208,7 @@ function geocodePin(
   });
 }
 
-export default function MapClient({ unsoldListings, saleListings }: Props) {
+export default function MapClient({ unsoldListings }: Props) {
   const mapRef     = useRef<HTMLDivElement>(null);
   const mapInst    = useRef<KakaoMapInstance | null>(null);
   const markersRef = useRef<{ m: KakaoMarker; type: PinType }[]>([]);
@@ -219,7 +218,7 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
 
   // 실제 지도에 올라간 마커 수 (geocoding 성공한 것만)
   const [placed, setPlaced]   = useState({ unsold: 0, sale: 0 });
-  const [total]               = useState({ unsold: unsoldListings.length, sale: saleListings.length });
+  const [total, setTotal]     = useState({ unsold: unsoldListings.length, sale: 0 });
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<PinInfo | null>(null);
 
@@ -238,6 +237,11 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
   const saleClustererRef   = useRef<{ clear(): void; addMarker(m: KakaoMarker): void; addMarkers(m: KakaoMarker[]): void } | null>(null);
   const pinLabelsRef    = useRef<{ overlay: KakaoCustomOverlay; type: PinType }[]>([]);
   const labelsVisibleRef = useRef(false);
+
+  // 청약 데이터 비동기 조율용 refs
+  const saleDataRef     = useRef<MapSaleItem[]>([]);
+  const saleLoadedRef   = useRef(false);
+  const saleResolverRef = useRef<((items: MapSaleItem[]) => void) | null>(null);
 
   function applyFilter(next: typeof filter) {
     filterRef.current = next;
@@ -440,11 +444,40 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
     };
   }, []);
 
+  // 청약 데이터 클라이언트 사이드 fetch (서버 타임아웃 방지)
+  useEffect(() => {
+    fetch('/api/sale?type=all&perPage=100')
+      .then(r => r.ok ? r.json() : { items: [] })
+      .then(({ items = [] }) => {
+        const filtered: MapSaleItem[] = (items as MapSaleItem[])
+          .filter(i => i.buildingType === '아파트' && i.status !== '청약마감')
+          .map(i => ({
+            houseManageNo: i.houseManageNo,
+            name: i.name,
+            location: i.location,
+            status: i.status,
+            receiptStart: i.receiptStart,
+            receiptEnd: i.receiptEnd,
+            buildingType: i.buildingType,
+            totalUnits: i.totalUnits,
+          }));
+        saleDataRef.current = filtered;
+        saleLoadedRef.current = true;
+        setTotal(prev => ({ ...prev, sale: filtered.length }));
+        saleResolverRef.current?.(filtered);
+      })
+      .catch(() => {
+        saleLoadedRef.current = true;
+        saleResolverRef.current?.([]);
+      });
+  }, []);
+
   useEffect(() => {
     if (!KAKAO_KEY || !mapRef.current) return;
 
     function initMap() {
       if (!mapRef.current || mapInst.current) return;
+      try {
 
       // 기본: 서울시청 / 접속자 위치 허용 시 해당 위치로 이동
       const map = new window.kakao.maps.Map(mapRef.current, {
@@ -598,33 +631,51 @@ export default function MapClient({ unsoldListings, saleListings }: Props) {
       }
 
       (async () => {
+        // ─── 미분양 핀 처리 ───
         const unsoldPins = unsoldListings.map(i => ({ type: 'unsold' as PinType, item: i, address: i.location }));
-        const salePins   = saleListings.map(i => ({ type: 'sale' as PinType, item: i, address: i.location }));
-        const allPins    = [...unsoldPins, ...salePins];
-
-        // 0패스: DB에 저장된 좌표 있는 미분양 → 즉시 배치 (geocoding 불필요)
-        const uncachedPins: typeof allPins = [];
-        for (const pin of allPins) {
+        const uncachedUnsold: typeof unsoldPins = [];
+        for (const pin of unsoldPins) {
           const item = pin.item as MapUnsoldItem;
-          if (pin.type === 'unsold' && item.lat && item.lng) {
-            placeMarker(pin.type, pin.item, { lat: item.lat, lng: item.lng });
-            continue;
-          }
-          // 1패스: localStorage 캐시
+          if (item.lat && item.lng) { placeMarker('unsold', item, { lat: item.lat, lng: item.lng }); continue; }
           const cacheKey = `gc5:${pin.address}|${pin.item.name}`;
           const coords = getCachedByKey(cacheKey);
-          if (coords) placeMarker(pin.type, pin.item, coords);
-          else uncachedPins.push(pin);
+          if (coords) placeMarker('unsold', pin.item, coords);
+          else uncachedUnsold.push(pin);
         }
+        await runParallel(uncachedUnsold, async pin => {
+          const coords = await geocodePin(geocoder, ps, pin.address, pin.item.name, 'unsold');
+          if (coords) placeMarker('unsold', pin.item, coords);
+        });
 
-        // 2패스: 미캐시 항목 병렬 geocoding
-        await runParallel(uncachedPins, async pin => {
-          const coords = await geocodePin(geocoder, ps, pin.address, pin.item.name, pin.type);
-          if (coords) placeMarker(pin.type, pin.item, coords);
+        // ─── 청약 데이터 기다리기 (최대 10초) ───
+        const saleItems = await Promise.race([
+          new Promise<MapSaleItem[]>(resolve => {
+            if (saleLoadedRef.current) { resolve(saleDataRef.current); return; }
+            saleResolverRef.current = resolve;
+          }),
+          new Promise<MapSaleItem[]>(r => setTimeout(() => r([]), 10000)),
+        ]);
+
+        // ─── 청약 핀 처리 ───
+        const salePins = saleItems.map(i => ({ type: 'sale' as PinType, item: i, address: i.location }));
+        const uncachedSale: typeof salePins = [];
+        for (const pin of salePins) {
+          const cacheKey = `gc5:${pin.address}|${pin.item.name}`;
+          const coords = getCachedByKey(cacheKey);
+          if (coords) placeMarker('sale', pin.item, coords);
+          else uncachedSale.push(pin);
+        }
+        await runParallel(uncachedSale, async pin => {
+          const coords = await geocodePin(geocoder, ps, pin.address, pin.item.name, 'sale');
+          if (coords) placeMarker('sale', pin.item, coords);
         });
 
         setLoading(false);
-      })();
+      })().catch(err => { console.error('[지도] 핀 배치 오류:', err); setLoading(false); });
+      } catch (err) {
+        console.error('[지도] 초기화 오류:', err);
+        setLoading(false);
+      }
     }
 
     const scriptId = 'kakao-map-sdk';
