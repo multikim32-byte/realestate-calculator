@@ -628,16 +628,17 @@ export default function SaleDetailClient({ content, initialItem }: { content: Sa
                     <span style={{ fontSize: 14, fontWeight: 800, color: '#1d4ed8' }}>{u.type}</span>
                   </div>
                   {/* 정보 그리드 */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)' }}>
                     {[
                       { label: '전용면적(㎡)', value: u.area ? u.area.toFixed(2) : (parseFloat(u.type) ? parseFloat(u.type).toFixed(2) : '-') },
                       { label: '공급면적(㎡)', value: u.supplyArea ? u.supplyArea.toFixed(2) : '-' },
                       { label: '일반공급', value: `${Math.max(0, u.count - (u.specialCount ?? 0)).toLocaleString()}세대` },
                       { label: '특별공급', value: u.specialCount ? `${u.specialCount.toLocaleString()}세대` : '-' },
+                      { label: '전체세대', value: `${u.count.toLocaleString()}세대` },
                     ].map(({ label, value }, j) => (
                       <div key={label} style={{
                         padding: '10px 6px', textAlign: 'center',
-                        borderRight: j < 3 ? '1px solid #e5e7eb' : 'none',
+                        borderRight: j < 4 ? '1px solid #e5e7eb' : 'none',
                       }}>
                         <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600, marginBottom: 4 }}>{label}</div>
                         <div style={{ fontSize: 12, fontWeight: 700, color: '#1e293b', wordBreak: 'keep-all' }}>{value}</div>
