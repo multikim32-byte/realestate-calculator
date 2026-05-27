@@ -307,6 +307,11 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, buildi
                               }}>
                                 {totApp > 0 ? rateLabel(totRate) : '-'}
                               </span>
+                              {totRate !== null && totRate < 1 && totSup - totApp > 0 && (
+                                <div style={{ fontSize: 11, color: '#dc2626', fontWeight: 700, marginTop: 3 }}>
+                                  잔여 {(totSup - totApp).toLocaleString()}세대
+                                </div>
+                              )}
                             </td>
                           </tr>
                         </tfoot>
