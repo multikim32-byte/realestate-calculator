@@ -632,7 +632,7 @@ export default function SaleDetailClient({ content, initialItem }: { content: Sa
                     {[
                       { label: '전용면적(㎡)', value: u.area ? u.area.toFixed(2) : (parseFloat(u.type) ? parseFloat(u.type).toFixed(2) : '-') },
                       { label: '공급면적(㎡)', value: u.supplyArea ? u.supplyArea.toFixed(2) : '-' },
-                      { label: '일반공급', value: u.count ? `${u.count.toLocaleString()}세대` : '-' },
+                      { label: '일반공급', value: `${Math.max(0, u.count - (u.specialCount ?? 0)).toLocaleString()}세대` },
                       { label: '특별공급', value: u.specialCount ? `${u.specialCount.toLocaleString()}세대` : '-' },
                     ].map(({ label, value }, j) => (
                       <div key={label} style={{

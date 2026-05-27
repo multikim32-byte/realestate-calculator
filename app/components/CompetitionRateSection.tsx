@@ -166,29 +166,7 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, buildi
   const supplyMap: Record<string, number> = {};
   for (const u of (units ?? [])) supplyMap[normalizeType(u.type)] = u.count;
   const hasData = rows && rows.length > 0;
-  const rawSummaries = hasData ? computeSummaries(grouped, spsplyMap, supplyMap) : [];
-
-  // totalUnits와 평형별 합계가 다를 경우 비례 보정 → 가로/세로 일관성 유지
-  const summaries: TypeSummary[] = (() => {
-    if (!totalUnits || totalUnits <= 0 || rawSummaries.length === 0) return rawSummaries;
-    const rawTotal = rawSummaries.reduce((s, r) => s + r.totalSupply, 0);
-    if (rawTotal === 0 || rawTotal === totalUnits) return rawSummaries;
-    const scaled = rawSummaries.map(s => {
-      const ts = Math.round(s.totalSupply / rawTotal * totalUnits);
-      const totalApply = s.generalApply + s.specialApply;
-      return { ...s, totalSupply: ts, rate: ts > 0 ? totalApply / ts : null };
-    });
-    // 반올림 오차를 마지막 항목에 보정
-    const scaledSum = scaled.reduce((s, r) => s + r.totalSupply, 0);
-    const diff = totalUnits - scaledSum;
-    if (diff !== 0) {
-      const last = scaled[scaled.length - 1];
-      const ts = last.totalSupply + diff;
-      const totalApply = last.generalApply + last.specialApply;
-      scaled[scaled.length - 1] = { ...last, totalSupply: ts, rate: ts > 0 ? totalApply / ts : null };
-    }
-    return scaled;
-  })();
+  const summaries = hasData ? computeSummaries(grouped, spsplyMap, supplyMap) : [];
 
   return (
     <div style={{ marginTop: 16, background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
