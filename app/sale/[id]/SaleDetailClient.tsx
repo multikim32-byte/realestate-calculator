@@ -671,6 +671,8 @@ export default function SaleDetailClient({ content, initialItem }: { content: Sa
             status={item.status}
             buildingType={item.buildingType}
             recruitType={item.recruitType}
+            units={item.units}
+            totalUnits={item.totalUnits}
           />
         )}
 

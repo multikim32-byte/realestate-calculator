@@ -18,6 +18,8 @@ interface Props {
   status: string;
   buildingType?: string;
   recruitType?: string;
+  units?: { type: string; count: number }[];
+  totalUnits?: number;
 }
 
 // 해당 단지 청약홈 직접 링크 (목록 → 상세 페이지)
@@ -65,16 +67,22 @@ type SpsplyRow = {
 
 type TypeSummary = {
   type: string;
-  generalSupply: number;
+  totalSupply: number;
   generalApply: number;
-  specialSupply: number;
   specialApply: number;
-  rate: number | null;  // null = 미달
+  specialSupply: number;
+  rate: number | null;
 };
 
 function toNum(v: string | number | undefined): number {
   if (v === undefined || v === null || v === '') return 0;
   return parseInt(String(v).replace(/[^0-9]/g, '')) || 0;
+}
+
+// "084.9584A" → "84A",  "84A" → "84A"
+function normalizeType(t: string): string {
+  const m = t.match(/^0*(\d+)(?:\.\d+)?([A-Za-z]*)$/);
+  return m ? `${m[1]}${m[2]}` : t;
 }
 
 function buildSpsplyMap(spsplyRows: SpsplyRow[]): Record<string, { supply: number; apply: number }> {
@@ -92,20 +100,20 @@ function buildSpsplyMap(spsplyRows: SpsplyRow[]): Record<string, { supply: numbe
 function computeSummaries(
   grouped: Record<string, RatioRow[]>,
   spsplyMap: Record<string, { supply: number; apply: number }>,
+  supplyMap: Record<string, number>,
 ): TypeSummary[] {
   return Object.entries(grouped).map(([type, rows]) => {
-    // 1순위 행만 (없으면 전체)
     const r1 = rows.filter(r => String(r.순위) === '1' || r.순위 === 1);
     const base = r1.length > 0 ? r1 : rows;
-    const generalSupply = toNum(base[0]?.공급세대수);
-    const generalApply  = base.reduce((s, r) => s + toNum(r.접수건수), 0);
+    const generalApply = base.reduce((s, r) => s + toNum(r.접수건수), 0);
 
     const sp = spsplyMap[type] ?? { supply: 0, apply: 0 };
-    const totalSupply = generalSupply + sp.supply;
+    // item.units의 세대수가 있으면 그것을 기준으로 사용 (ratio API 이중집계 방지)
+    const totalSupply = supplyMap[normalizeType(type)] ?? (toNum(base[0]?.공급세대수) + sp.supply);
     const totalApply  = generalApply + sp.apply;
     const rate = totalSupply > 0 ? totalApply / totalSupply : null;
 
-    return { type, generalSupply, generalApply, specialSupply: sp.supply, specialApply: sp.apply, rate };
+    return { type, totalSupply, generalApply, specialApply: sp.apply, specialSupply: sp.supply, rate };
   });
 }
 
@@ -123,7 +131,7 @@ function rateLabel(rate: number | null): string {
   return `${rate.toFixed(2)} : 1`;
 }
 
-export default function CompetitionRateSection({ houseManageNo, pblancNo, buildingType, recruitType }: Props) {
+export default function CompetitionRateSection({ houseManageNo, pblancNo, buildingType, recruitType, units, totalUnits }: Props) {
   const [rows, setRows]           = useState<RatioRow[] | null>(null);
   const [spsplyRows, setSpsplyRows] = useState<SpsplyRow[] | null>(null);
   const [loading, setLoading]     = useState(false);
@@ -155,8 +163,10 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, buildi
     }
   }
   const spsplyMap = buildSpsplyMap(spsplyRows ?? []);
+  const supplyMap: Record<string, number> = {};
+  for (const u of (units ?? [])) supplyMap[normalizeType(u.type)] = u.count;
   const hasData = rows && rows.length > 0;
-  const summaries = hasData ? computeSummaries(grouped, spsplyMap) : [];
+  const summaries = hasData ? computeSummaries(grouped, spsplyMap, supplyMap) : [];
 
   return (
     <div style={{ marginTop: 16, background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
@@ -227,9 +237,8 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, buildi
                     <tbody>
                       {summaries.map(s => {
                         const c = rateColor(s.rate);
-                        const totalSupply = s.generalSupply + s.specialSupply;
                         const totalApply  = s.generalApply + s.specialApply;
-                        const remaining   = totalSupply - totalApply;
+                        const remaining   = s.totalSupply - totalApply;
                         const isMidal     = s.rate !== null && s.rate < 1;
                         return (
                           <tr key={s.type} style={{ borderBottom: '1px solid #f3f4f6' }}>
@@ -243,12 +252,7 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, buildi
                               {s.specialApply > 0 ? s.specialApply.toLocaleString() : '-'}
                             </td>
                             <td style={{ padding: '9px 10px', textAlign: 'center', color: '#374151' }}>
-                              {totalSupply.toLocaleString()}
-                              {s.specialSupply > 0 && (
-                                <div style={{ fontSize: 10, color: '#9ca3af' }}>
-                                  일반 {s.generalSupply} + 특별 {s.specialSupply}
-                                </div>
-                              )}
+                              {s.totalSupply.toLocaleString()}
                             </td>
                             <td style={{ padding: '9px 10px', textAlign: 'center' }}>
                               <span style={{
@@ -271,8 +275,9 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, buildi
                     </tbody>
                     {/* 전체 합계 행 */}
                     {summaries.length > 0 && (() => {
-                      const totSup = summaries.reduce((s, r) => s + r.generalSupply + r.specialSupply, 0);
                       const totApp = summaries.reduce((s, r) => s + r.generalApply + r.specialApply, 0);
+                      // totalUnits(TOT_SUPLY_HSHLDCO)가 있으면 우선 사용 — 이중집계 없는 공식 세대수
+                      const totSup = totalUnits && totalUnits > 0 ? totalUnits : summaries.reduce((s, r) => s + r.totalSupply, 0);
                       const totRate = totSup > 0 ? totApp / totSup : null;
                       const totC = rateColor(totRate);
                       return (
