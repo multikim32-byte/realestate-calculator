@@ -229,6 +229,8 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, buildi
                         const c = rateColor(s.rate);
                         const totalSupply = s.generalSupply + s.specialSupply;
                         const totalApply  = s.generalApply + s.specialApply;
+                        const remaining   = totalSupply - totalApply;
+                        const isMidal     = s.rate !== null && s.rate < 1;
                         return (
                           <tr key={s.type} style={{ borderBottom: '1px solid #f3f4f6' }}>
                             <td style={{ padding: '9px 10px', textAlign: 'center', fontWeight: 700, color: '#1e293b' }}>
@@ -257,11 +259,54 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, buildi
                               }}>
                                 {totalApply > 0 ? rateLabel(s.rate) : '-'}
                               </span>
+                              {isMidal && remaining > 0 && (
+                                <div style={{ fontSize: 11, color: '#dc2626', fontWeight: 700, marginTop: 3 }}>
+                                  잔여 {remaining.toLocaleString()}세대
+                                </div>
+                              )}
                             </td>
                           </tr>
                         );
                       })}
                     </tbody>
+                    {/* 전체 합계 행 */}
+                    {summaries.length > 0 && (() => {
+                      const totSup = summaries.reduce((s, r) => s + r.generalSupply + r.specialSupply, 0);
+                      const totApp = summaries.reduce((s, r) => s + r.generalApply + r.specialApply, 0);
+                      const totRate = totSup > 0 ? totApp / totSup : null;
+                      const totC = rateColor(totRate);
+                      return (
+                        <tfoot>
+                          <tr style={{ background: '#f8f9fa', borderTop: '2px solid #e5e7eb' }}>
+                            <td style={{ padding: '10px 10px', textAlign: 'center', fontWeight: 800, color: '#1e293b' }}>
+                              전체
+                            </td>
+                            <td style={{ padding: '10px 10px', textAlign: 'center', fontWeight: 700, color: '#1e293b' }}>
+                              {summaries.reduce((s, r) => s + r.generalApply, 0).toLocaleString()}
+                            </td>
+                            <td style={{ padding: '10px 10px', textAlign: 'center', fontWeight: 700, color: '#1e293b' }}>
+                              {summaries.reduce((s, r) => s + r.specialApply, 0) > 0
+                                ? summaries.reduce((s, r) => s + r.specialApply, 0).toLocaleString()
+                                : '-'}
+                            </td>
+                            <td style={{ padding: '10px 10px', textAlign: 'center', fontWeight: 700, color: '#1e293b' }}>
+                              {totSup.toLocaleString()}
+                              <div style={{ fontSize: 10, color: '#6b7280', fontWeight: 500 }}>총 공급물량</div>
+                            </td>
+                            <td style={{ padding: '10px 10px', textAlign: 'center' }}>
+                              <span style={{
+                                display: 'inline-block',
+                                padding: '3px 10px', borderRadius: 20,
+                                fontSize: 12, fontWeight: 800,
+                                background: totC.bg, color: totC.color, border: `1px solid ${totC.border}`,
+                              }}>
+                                {totApp > 0 ? rateLabel(totRate) : '-'}
+                              </span>
+                            </td>
+                          </tr>
+                        </tfoot>
+                      );
+                    })()}
                   </table>
                 </div>
               </div>
