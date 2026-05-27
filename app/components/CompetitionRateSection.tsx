@@ -108,8 +108,8 @@ function computeSummaries(
     const generalApply = base.reduce((s, r) => s + toNum(r.접수건수), 0);
 
     const sp = spsplyMap[type] ?? { supply: 0, apply: 0 };
-    // item.units의 세대수가 있으면 그것을 기준으로 사용 (ratio API 이중집계 방지)
-    const totalSupply = supplyMap[normalizeType(type)] ?? (toNum(base[0]?.공급세대수) + sp.supply);
+    // 정확 일치 → 정규화 → 폴백(이중집계) 순서로 시도
+    const totalSupply = supplyMap[type] ?? supplyMap[normalizeType(type)] ?? (toNum(base[0]?.공급세대수) + sp.supply);
     const totalApply  = generalApply + sp.apply;
     const rate = totalSupply > 0 ? totalApply / totalSupply : null;
 
@@ -164,7 +164,10 @@ export default function CompetitionRateSection({ houseManageNo, pblancNo, buildi
   }
   const spsplyMap = buildSpsplyMap(spsplyRows ?? []);
   const supplyMap: Record<string, number> = {};
-  for (const u of (units ?? [])) supplyMap[normalizeType(u.type)] = u.count;
+  for (const u of (units ?? [])) {
+    supplyMap[u.type] = u.count;                // 정확 일치 (ratio API와 동일 포맷)
+    supplyMap[normalizeType(u.type)] = u.count; // 정규화 키 (폴백)
+  }
   const hasData = rows && rows.length > 0;
   const summaries = hasData ? computeSummaries(grouped, spsplyMap, supplyMap) : [];
 
