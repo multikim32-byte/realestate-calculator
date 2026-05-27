@@ -110,7 +110,8 @@ function computeSummaries(
 }
 
 function rateColor(rate: number | null): { bg: string; color: string; border: string } {
-  if (rate === null || rate < 1) return { bg: '#f3f4f6', color: '#6b7280', border: '#e5e7eb' };
+  if (rate === null)  return { bg: '#f3f4f6', color: '#9ca3af', border: '#e5e7eb' };
+  if (rate < 1)       return { bg: '#f1f5f9', color: '#475569', border: '#cbd5e1' };
   if (rate >= 10) return { bg: '#fef2f2', color: '#991b1b', border: '#fecaca' };
   if (rate >= 5)  return { bg: '#fff7ed', color: '#9a3412', border: '#fed7aa' };
   if (rate >= 2)  return { bg: '#fefce8', color: '#854d0e', border: '#fde68a' };
@@ -118,7 +119,7 @@ function rateColor(rate: number | null): { bg: string; color: string; border: st
 }
 
 function rateLabel(rate: number | null): string {
-  if (rate === null || rate < 1) return '미달';
+  if (rate === null) return '-';
   return `${rate.toFixed(2)} : 1`;
 }
 
