@@ -76,12 +76,18 @@ export default function SaleContentForm({
     fd.append('file', file);
     try {
       const res = await fetch('/api/admin/unsold/upload', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (data.url) return data.url;
-      setError(data.error || '업로드 실패');
+      let data: Record<string, unknown>;
+      try {
+        data = await res.json();
+      } catch {
+        setError(`서버 오류 (HTTP ${res.status}) — JSON 파싱 실패`);
+        return null;
+      }
+      if (data.url) return data.url as string;
+      setError((data.error as string) || `업로드 실패 (${res.status})`);
       return null;
-    } catch {
-      setError('업로드 중 오류가 발생했습니다.');
+    } catch (e) {
+      setError(`네트워크 오류: ${e instanceof Error ? e.message : String(e)}`);
       return null;
     }
   };
