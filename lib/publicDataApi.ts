@@ -647,7 +647,18 @@ export async function fetchUnitDetails(
       if (results.length === 0)
         results = await fetchUnits('getOPTLttotPblancMdl', houseManageNo, pblancNo).catch(() => []);
     } else {
-      results = await fetchUnits('getAPTLttotPblancMdl', houseManageNo, pblancNo).catch(() => []);
+      // PBLANC_NO 있는 버전과 없는 버전을 병렬 조회 — 일부 단지는 타입별로 PBLANC_NO가 달라 없는 쪽이 더 많은 타입 반환
+      const [withPblanc, withoutPblanc] = await Promise.all([
+        fetchUnits('getAPTLttotPblancMdl', houseManageNo, pblancNo).catch(() => [] as UnitDetail[]),
+        fetchUnits('getAPTLttotPblancMdl', houseManageNo, '').catch(() => [] as UnitDetail[]),
+      ]);
+      if (withoutPblanc.length > withPblanc.length) {
+        // 타입이 더 많은 결과를 쓰되, PBLANC_NO 조회분의 가격이 있으면 덮어씀
+        const priceMap = new Map(withPblanc.map(u => [u.type, u.price]));
+        results = withoutPblanc.map(u => priceMap.has(u.type) ? { ...u, price: priceMap.get(u.type)! } : u);
+      } else {
+        results = withPblanc;
+      }
       if (results.length === 0)
         results = await fetchUnits('getPblPvtRentLttotPblancMdl', houseManageNo, pblancNo).catch(() => []);
     }
