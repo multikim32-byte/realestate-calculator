@@ -71,16 +71,49 @@ export default function SaleContentForm({
   const set = (key: keyof FormData, value: unknown) =>
     setForm(prev => ({ ...prev, [key]: value }));
 
+  // Vercel 4.5MB 제한 대응: 클라이언트에서 canvas로 리사이즈 후 업로드
+  const compressImage = (file: File): Promise<Blob> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      const objUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objUrl);
+        const MAX = 1920;
+        let { naturalWidth: w, naturalHeight: h } = img;
+        if (w > MAX || h > MAX) {
+          const r = Math.min(MAX / w, MAX / h);
+          w = Math.round(w * r);
+          h = Math.round(h * r);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+        canvas.toBlob(b => b ? resolve(b) : reject(new Error('canvas 변환 실패')), 'image/jpeg', 0.85);
+      };
+      img.onerror = () => { URL.revokeObjectURL(objUrl); reject(new Error('이미지 로드 실패')); };
+      img.src = objUrl;
+    });
+
   const uploadImage = async (file: File): Promise<string | null> => {
     const fd = new FormData();
-    fd.append('file', file);
+    // 4MB 초과 시 canvas 압축
+    if (file.size > 4 * 1024 * 1024) {
+      try {
+        const compressed = await compressImage(file);
+        fd.append('file', new File([compressed], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
+      } catch {
+        fd.append('file', file);
+      }
+    } else {
+      fd.append('file', file);
+    }
     try {
       const res = await fetch('/api/admin/unsold/upload', { method: 'POST', body: fd });
       let data: Record<string, unknown>;
       try {
         data = await res.json();
       } catch {
-        setError(`서버 오류 (HTTP ${res.status}) — JSON 파싱 실패`);
+        setError(`서버 오류 (HTTP ${res.status}) — 파일이 너무 크거나 서버 에러`);
         return null;
       }
       if (data.url) return data.url as string;
