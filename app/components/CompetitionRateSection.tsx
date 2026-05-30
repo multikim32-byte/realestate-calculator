@@ -92,7 +92,9 @@ function buildSpsplyMap(spsplyRows: SpsplyRow[]): Record<string, { supply: numbe
       Object.values(row.해당지역).reduce((s, v) => s + (v || 0), 0) +
       Object.values(row.기타지역).reduce((s, v) => s + (v || 0), 0) +
       toNum(row.기관합산);
-    map[row.주택형] = { supply: row.공급세대수 || 0, apply };
+    const entry = { supply: row.공급세대수 || 0, apply };
+    map[row.주택형] = entry;                   // 원본 키 (예: "104.9424")
+    map[normalizeType(row.주택형)] = entry;    // 정규화 키 (예: "104")
   }
   return map;
 }
@@ -107,7 +109,7 @@ function computeSummaries(
     const base = r1.length > 0 ? r1 : rows;
     const generalApply = base.reduce((s, r) => s + toNum(r.접수건수), 0);
 
-    const sp = spsplyMap[type] ?? { supply: 0, apply: 0 };
+    const sp = spsplyMap[type] ?? spsplyMap[normalizeType(type)] ?? { supply: 0, apply: 0 };
     // 정확 일치 → 정규화 → 폴백(이중집계) 순서로 시도
     const totalSupply = supplyMap[type] ?? supplyMap[normalizeType(type)] ?? (toNum(base[0]?.공급세대수) + sp.supply);
     const totalApply  = generalApply + sp.apply;
