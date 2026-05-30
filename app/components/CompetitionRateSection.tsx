@@ -110,11 +110,11 @@ function computeSummaries(
     const generalApply = base.reduce((s, r) => s + toNum(r.접수건수), 0);
 
     const sp = spsplyMap[type] ?? spsplyMap[normalizeType(type)] ?? { supply: 0, apply: 0 };
-    // 해당지역/기타지역으로 분할 반환될 경우 합산, 동일값 반복 시 첫 값만 사용
+    // ratio API 공급세대수는 이미 이월 특별공급을 포함한 값이므로 sp.supply를 더하면 이중집계됨
     const supplies = base.map(r => toNum(r.공급세대수));
     const generalFromRatio = supplies.every(v => v === supplies[0]) ? (supplies[0] ?? 0) : supplies.reduce((s, v) => s + v, 0);
-    // 정확 일치 → 정규화 → 폴백(일반공급+특별공급) 순서로 시도
-    const totalSupply = supplyMap[type] ?? supplyMap[normalizeType(type)] ?? (generalFromRatio + sp.supply);
+    // 정확 일치 → 정규화 → ratio 단독 폴백 순서로 시도
+    const totalSupply = supplyMap[type] ?? supplyMap[normalizeType(type)] ?? generalFromRatio;
     const totalApply  = generalApply + sp.apply;
     const rate = totalSupply > 0 ? totalApply / totalSupply : null;
 
