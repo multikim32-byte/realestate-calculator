@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "부동산정보 — 청약·분양·세금·대출 완벽 가이드",
   description: "2026년 최신 부동산 정보를 제공합니다. 청약 자격, 취득세, 주담대, 양도세, 전세·월세까지 부동산에 필요한 모든 정보를 알아보세요.",
-  alternates: { canonical: 'https://www.aptzipsa.kr/apt' },
+  alternates: { canonical: 'https://www.danjizipsa.kr/apt' },
 };
 
 const tagColors: Record<string, { bg: string; color: string }> = {

@@ -14,7 +14,7 @@ const notoSansKr = Noto_Sans_KR({
   variable: '--font-kr',
 });
 
-const BASE_URL = 'https://www.aptzipsa.kr';
+const BASE_URL = 'https://www.danjizipsa.kr';
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),

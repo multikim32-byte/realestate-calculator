@@ -74,7 +74,7 @@ export default function Image() {
           fontSize: 20, color: 'rgba(255,255,255,0.45)',
           display: 'flex',
         }}>
-          www.aptzipsa.kr
+          www.danjizipsa.kr
         </div>
       </div>
     ),

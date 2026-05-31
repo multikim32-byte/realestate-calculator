@@ -11,7 +11,7 @@ export const dynamic = 'force-static';
 export const metadata: Metadata = {
   title: '서비스 소개',
   description: '전국 아파트 청약정보·분양정보·실거래가·LH 임대공고·부동산 지도와 취득세·대출·중개수수료 계산기를 무료 제공합니다. 카카오 채널 알림도 지원합니다.',
-  alternates: { canonical: 'https://www.aptzipsa.kr/about' },
+  alternates: { canonical: 'https://www.danjizipsa.kr/about' },
 };
 
 const features = [
@@ -207,7 +207,7 @@ export default function AboutPage() {
             취득세·대출·청약·임대차 등 실생활에 필요한 부동산 정보를 누구나 쉽게 이해할 수 있도록 정리하고, 직접 사용하기 편한 계산·조회 도구를 만들어 제공합니다.
           </p>
           <p style={{ fontSize: 13, color: '#9ca3af', margin: 0 }}>
-            www.aptzipsa.kr &nbsp;·&nbsp; multikim@naver.com
+            www.danjizipsa.kr &nbsp;·&nbsp; multikim@naver.com
           </p>
         </div>
 

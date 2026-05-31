@@ -6,7 +6,7 @@ export const dynamic = 'force-static';
 export const metadata: Metadata = {
   title: '문의하기',
   description: '아파트집사 서비스 이용 중 궁금한 점이나 오류 제보, 개선 의견을 보내주세요.',
-  alternates: { canonical: 'https://www.aptzipsa.kr/contact' },
+  alternates: { canonical: 'https://www.danjizipsa.kr/contact' },
 };
 
 const SERVICES = [
@@ -115,11 +115,11 @@ export default function ContactPage() {
           <table style={{ width: '100%', fontSize: 14, borderCollapse: 'collapse' }}>
             <tbody>
               {[
-                ['서비스명', '단지집사 (aptzipsa.kr)'],
+                ['서비스명', '단지집사 (danjizipsa.kr)'],
                 ['운영자', '김경래 공인중개사'],
                 ['사업자등록번호', '465-41-00587'],
                 ['이메일', 'multikim@naver.com'],
-                ['도메인', 'www.aptzipsa.kr'],
+                ['도메인', 'www.danjizipsa.kr'],
                 ['데이터 출처', '국토교통부 공공데이터 API, LH 공공데이터 API'],
               ].map(([label, value]) => (
                 <tr key={label} style={{ borderBottom: '1px solid #f3f4f6' }}>

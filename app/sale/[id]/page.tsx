@@ -61,17 +61,17 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const ogImageUrl =
       content?.thumbnail_url ||
       content?.image_urls?.[0] ||
-      'https://www.aptzipsa.kr/opengraph-image';
+      'https://www.danjizipsa.kr/opengraph-image';
     const ogImages = [{ url: ogImageUrl, width: 1200, height: 630 }];
 
     return {
       title,
       description,
-      alternates: { canonical: `https://www.aptzipsa.kr/sale/${id}` },
+      alternates: { canonical: `https://www.danjizipsa.kr/sale/${id}` },
       openGraph: {
         title,
         description,
-        url: `https://www.aptzipsa.kr/sale/${id}`,
+        url: `https://www.danjizipsa.kr/sale/${id}`,
         type: 'website',
         locale: 'ko_KR',
         siteName: '아파트집사',

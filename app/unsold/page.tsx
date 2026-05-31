@@ -11,11 +11,11 @@ export const metadata: Metadata = {
   title: '미분양 아파트 분양정보 — 전국 선착순 계약 매물 | 아파트집사',
   description: '전국 미분양 아파트 분양정보를 한눈에. 청약 없이 선착순 동·호 지정 계약 가능한 매물을 지역별로 확인하세요. 아파트집사에서 실시간 업데이트.',
   keywords: ['미분양 아파트', '미분양 분양정보', '선착순 분양', '청약없이 분양', '아파트 선착순 계약', '아파트집사'],
-  alternates: { canonical: 'https://www.aptzipsa.kr/unsold' },
+  alternates: { canonical: 'https://www.danjizipsa.kr/unsold' },
   openGraph: {
     title: '미분양 아파트 분양정보 — 전국 선착순 계약 매물 | 아파트집사',
     description: '전국 미분양 아파트 분양정보를 한눈에. 청약 없이 선착순 동·호 지정 계약 가능한 매물을 지역별로 확인하세요.',
-    url: 'https://www.aptzipsa.kr/unsold',
+    url: 'https://www.danjizipsa.kr/unsold',
     siteName: '아파트집사',
   },
 };
@@ -39,16 +39,16 @@ export default async function UnsoldPage() {
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: '홈', item: 'https://www.aptzipsa.kr' },
-          { '@type': 'ListItem', position: 2, name: '전국 분양정보', item: 'https://www.aptzipsa.kr/unsold' },
+          { '@type': 'ListItem', position: 1, name: '홈', item: 'https://www.danjizipsa.kr' },
+          { '@type': 'ListItem', position: 2, name: '전국 분양정보', item: 'https://www.danjizipsa.kr/unsold' },
         ],
       },
       {
         '@type': 'CollectionPage',
         name: '전국 미분양 아파트 분양정보',
         description: '전국 미분양 아파트 분양정보. 청약 없이 선착순 동·호 지정 계약 가능한 매물 및 계약 혜택 정보 제공.',
-        url: 'https://www.aptzipsa.kr/unsold',
-        isPartOf: { '@type': 'WebSite', url: 'https://www.aptzipsa.kr', name: '아파트집사' },
+        url: 'https://www.danjizipsa.kr/unsold',
+        isPartOf: { '@type': 'WebSite', url: 'https://www.danjizipsa.kr', name: '아파트집사' },
       },
     ],
   };

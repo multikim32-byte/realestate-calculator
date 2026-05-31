@@ -12,7 +12,7 @@ const serviceDb = () => createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
-const BASE = 'https://www.aptzipsa.kr';
+const BASE = 'https://www.danjizipsa.kr';
 
 const REGIONS = ['서울','경기','인천','부산','대구','광주','대전','울산','세종','강원','충북','충남','전북','전남','경북','경남','제주'];
 

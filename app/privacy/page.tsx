@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import GlobalNav from '../components/GlobalNav';
 import type { Metadata } from 'next';
 
@@ -7,7 +7,7 @@ export const dynamic = 'force-static';
 export const metadata: Metadata = {
   title: '개인정보처리방침',
   description: '아파트집사 서비스의 개인정보처리방침입니다. 수집하는 정보, 이용 목적, 광고 및 쿠키 사용에 대해 안내합니다.',
-  alternates: { canonical: 'https://www.aptzipsa.kr/privacy' },
+  alternates: { canonical: 'https://www.danjizipsa.kr/privacy' },
 };
 
 const H2 = ({ children }: { children: React.ReactNode }) => (

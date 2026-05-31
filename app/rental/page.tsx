@@ -15,10 +15,10 @@ export const metadata: Metadata = {
     title: 'LH 공공임대 아파트 정보 — 행복주택·전세임대 | 아파트집사',
     description: 'LH 공공임대, 행복주택, 전세임대 등 전국 공공임대 아파트 정보를 한눈에. 입주 자격·신청 방법까지.',
     type: 'website',
-    url: 'https://www.aptzipsa.kr/rental',
+    url: 'https://www.danjizipsa.kr/rental',
     siteName: '아파트집사',
   },
-  alternates: { canonical: 'https://www.aptzipsa.kr/rental' },
+  alternates: { canonical: 'https://www.danjizipsa.kr/rental' },
 };
 
 const jsonLd = {
@@ -26,7 +26,7 @@ const jsonLd = {
   '@type': 'WebPage',
   name: 'LH 임대공고 목록',
   description: '한국토지주택공사(LH) 행복주택, 국민임대, 통합공공임대, 장기전세 등 임대주택 입주자 모집공고 목록',
-  url: 'https://www.aptzipsa.kr/rental',
+  url: 'https://www.danjizipsa.kr/rental',
   provider: {
     '@type': 'Organization',
     name: '한국토지주택공사(LH)',

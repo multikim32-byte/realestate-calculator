@@ -1,6 +1,6 @@
-User-agent: *
+﻿User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /api/
 
-Sitemap: https://www.aptzipsa.kr/sitemap.xml
+Sitemap: https://www.danjizipsa.kr/sitemap.xml

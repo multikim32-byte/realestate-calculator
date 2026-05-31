@@ -13,11 +13,11 @@ export const metadata: Metadata = {
   title: '아파트 분양정보·청약정보·실거래가',
   description: '전국 아파트 분양정보, 청약 일정, 실거래가를 한눈에. 취득세·대출 계산기 무료 제공. 집 살 때, 아파트집사.',
   keywords: ['아파트 분양정보', '청약정보', '실거래가', '청약 일정', '아파트집사', 'aptzipsa'],
-  alternates: { canonical: 'https://www.aptzipsa.kr' },
+  alternates: { canonical: 'https://www.danjizipsa.kr' },
   openGraph: {
     title: '아파트 분양정보·청약정보·실거래가 | 아파트집사',
     description: '전국 아파트 분양·청약 정보와 실거래가를 무료로. 집 살 때, 아파트집사.',
-    url: 'https://www.aptzipsa.kr',
+    url: 'https://www.danjizipsa.kr',
     siteName: '아파트집사',
   },
 };
@@ -28,14 +28,14 @@ const orgJsonLd = {
     {
       '@type': 'WebSite',
       name: '아파트집사',
-      url: 'https://www.aptzipsa.kr',
+      url: 'https://www.danjizipsa.kr',
       description: '전국 아파트·오피스텔 청약 정보, 실거래가 조회, 부동산 계산기를 무료로 제공합니다.',
     },
     {
       '@type': 'Organization',
       name: '아파트집사',
-      url: 'https://www.aptzipsa.kr',
-      logo: 'https://www.aptzipsa.kr/icon-192.png',
+      url: 'https://www.danjizipsa.kr',
+      logo: 'https://www.danjizipsa.kr/icon-192.png',
       contactPoint: { '@type': 'ContactPoint', contactType: 'customer support', email: 'multikim@naver.com' },
     },
   ],

@@ -214,11 +214,11 @@ export async function generateMetadata({ params }: { params: Promise<{ sido: str
   return {
     title: `${sido} 청약·분양 — ${fullName} 아파트 청약정보 & 분양 매물`,
     description: `${fullName} 아파트 청약 일정, 미분양 분양 매물, 실거래가를 한 페이지에서 확인하세요. 2026년 최신 ${sido} 청약·분양 정보.`,
-    alternates: { canonical: `https://www.aptzipsa.kr/region/${encodeURIComponent(sido)}` },
+    alternates: { canonical: `https://www.danjizipsa.kr/region/${encodeURIComponent(sido)}` },
     openGraph: {
       title: `${sido} 청약·분양 모아보기 | 아파트집사`,
       description: `${fullName} 아파트 청약정보 & 분양 매물 한눈에`,
-      url: `https://www.aptzipsa.kr/region/${encodeURIComponent(sido)}`,
+      url: `https://www.danjizipsa.kr/region/${encodeURIComponent(sido)}`,
     },
   };
 }
@@ -288,16 +288,16 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: '홈', item: 'https://www.aptzipsa.kr' },
-          { '@type': 'ListItem', position: 2, name: `${sido} 청약·분양 모아보기`, item: `https://www.aptzipsa.kr/region/${encodeURIComponent(sido)}` },
+          { '@type': 'ListItem', position: 1, name: '홈', item: 'https://www.danjizipsa.kr' },
+          { '@type': 'ListItem', position: 2, name: `${sido} 청약·분양 모아보기`, item: `https://www.danjizipsa.kr/region/${encodeURIComponent(sido)}` },
         ],
       },
       {
         '@type': 'CollectionPage',
         name: `${sido} 청약·분양 모아보기`,
         description: `${fullName} 아파트 청약 일정, 미분양 분양 매물, 실거래가를 한 페이지에서 확인하세요.`,
-        url: `https://www.aptzipsa.kr/region/${encodeURIComponent(sido)}`,
-        isPartOf: { '@type': 'WebSite', url: 'https://www.aptzipsa.kr', name: '아파트집사' },
+        url: `https://www.danjizipsa.kr/region/${encodeURIComponent(sido)}`,
+        isPartOf: { '@type': 'WebSite', url: 'https://www.danjizipsa.kr', name: '아파트집사' },
       },
     ],
   };

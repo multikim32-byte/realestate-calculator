@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+﻿import type { CSSProperties } from 'react';
 
 export type SaleItem = {
   name: string; location: string;
@@ -228,7 +228,7 @@ export default function InstaCard({
               <span style={{ color: '#fff' }}>단지</span>
               <span style={{ color: '#fda4af' }}>집사</span>
             </div>
-            <div style={{ ...sp(19), color: 'rgba(255,255,255,0.55)', marginTop: px(3) }}>aptzipsa.kr</div>
+            <div style={{ ...sp(19), color: 'rgba(255,255,255,0.55)', marginTop: px(3) }}>danjizipsa.kr</div>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: px(10) }}>
@@ -513,7 +513,7 @@ export default function InstaCard({
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         flexShrink: 0,
       }}>
-        <div style={{ ...sp(22), color: '#e2e8f0', fontWeight: 700 }}>aptzipsa.kr</div>
+        <div style={{ ...sp(22), color: '#e2e8f0', fontWeight: 700 }}>danjizipsa.kr</div>
         <div style={{ ...sp(18), color: '#64748b' }}>
           {isTrade
             ? `#단지집사 #실거래가 #${isWeeklyTrade ? '이번주' : '이번달'} #${isRising ? '급등아파트' : isFalling ? '급락아파트' : isTopPri ? '신고가' : '거래량'}`

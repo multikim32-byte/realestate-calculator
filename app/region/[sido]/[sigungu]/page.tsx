@@ -42,12 +42,12 @@ export async function generateMetadata({ params }: { params: Promise<{ sido: str
     title,
     description,
     alternates: {
-      canonical: `https://www.aptzipsa.kr/region/${encodeURIComponent(sido)}/${encodeURIComponent(sigungu)}`,
+      canonical: `https://www.danjizipsa.kr/region/${encodeURIComponent(sido)}/${encodeURIComponent(sigungu)}`,
     },
     openGraph: {
       title: `${sido} ${sigungu} 아파트 정보 | 아파트집사`,
       description,
-      url: `https://www.aptzipsa.kr/region/${encodeURIComponent(sido)}/${encodeURIComponent(sigungu)}`,
+      url: `https://www.danjizipsa.kr/region/${encodeURIComponent(sido)}/${encodeURIComponent(sigungu)}`,
     },
   };
 }
@@ -92,16 +92,16 @@ export default async function SigunguPage({ params }: { params: Promise<{ sido: 
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: '홈', item: 'https://www.aptzipsa.kr' },
-          { '@type': 'ListItem', position: 2, name: sido, item: `https://www.aptzipsa.kr/region/${encodeURIComponent(sido)}` },
-          { '@type': 'ListItem', position: 3, name: sigungu, item: `https://www.aptzipsa.kr/region/${encodeURIComponent(sido)}/${encodeURIComponent(sigungu)}` },
+          { '@type': 'ListItem', position: 1, name: '홈', item: 'https://www.danjizipsa.kr' },
+          { '@type': 'ListItem', position: 2, name: sido, item: `https://www.danjizipsa.kr/region/${encodeURIComponent(sido)}` },
+          { '@type': 'ListItem', position: 3, name: sigungu, item: `https://www.danjizipsa.kr/region/${encodeURIComponent(sido)}/${encodeURIComponent(sigungu)}` },
         ],
       },
       {
         '@type': 'WebPage',
         name: `${sido} ${sigungu} 아파트 실거래가 · 미분양 정보`,
         description: `${sido} ${sigungu} 아파트 실거래가, 미분양 매물, 전세월세 시세 정보`,
-        url: `https://www.aptzipsa.kr/region/${encodeURIComponent(sido)}/${encodeURIComponent(sigungu)}`,
+        url: `https://www.danjizipsa.kr/region/${encodeURIComponent(sido)}/${encodeURIComponent(sigungu)}`,
       },
     ],
   };

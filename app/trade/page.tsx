@@ -13,11 +13,11 @@ export const metadata: Metadata = {
   title: '아파트 실거래가 조회 — 매매·전세·월세 확인',
   description: '국토교통부 공공데이터 기반 전국 아파트 매매·전세·월세 실거래가를 무료로 조회하세요. 전세가율 자동 계산, 지역별·단지별 상세 내역 한눈에. 아파트집사.',
   keywords: ['아파트 실거래가', '실거래가 조회', '아파트 매매가', '전세 실거래가', '월세 실거래가', '전세가율', '전국 실거래가', '부동산 실거래가', '아파트집사'],
-  alternates: { canonical: 'https://www.aptzipsa.kr/trade' },
+  alternates: { canonical: 'https://www.danjizipsa.kr/trade' },
   openGraph: {
     title: '아파트 실거래가 조회 — 매매·전세·월세 확인 | 아파트집사',
     description: '국토교통부 공공데이터 기반 전국 아파트 매매·전세·월세 실거래가를 무료로 조회하세요. 전세가율 자동 계산, 지역별·단지별 상세 내역 한눈에.',
-    url: 'https://www.aptzipsa.kr/trade',
+    url: 'https://www.danjizipsa.kr/trade',
     siteName: '아파트집사',
   },
 };

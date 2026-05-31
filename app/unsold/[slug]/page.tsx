@@ -86,11 +86,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title,
       description,
       keywords,
-      alternates: { canonical: `https://www.aptzipsa.kr/unsold/${canonical}` },
+      alternates: { canonical: `https://www.danjizipsa.kr/unsold/${canonical}` },
       openGraph: {
         title,
         description,
-        url: `https://www.aptzipsa.kr/unsold/${canonical}`,
+        url: `https://www.danjizipsa.kr/unsold/${canonical}`,
         siteName: '아파트집사',
         images: item.thumbnail_url ? [{ url: item.thumbnail_url }] : [],
       },
@@ -145,16 +145,16 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ s
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: '홈', item: 'https://www.aptzipsa.kr' },
-          { '@type': 'ListItem', position: 2, name: '분양정보', item: 'https://www.aptzipsa.kr/unsold' },
-          { '@type': 'ListItem', position: 3, name: item.name, item: `https://www.aptzipsa.kr/unsold/${item.slug ?? slug}` },
+          { '@type': 'ListItem', position: 1, name: '홈', item: 'https://www.danjizipsa.kr' },
+          { '@type': 'ListItem', position: 2, name: '분양정보', item: 'https://www.danjizipsa.kr/unsold' },
+          { '@type': 'ListItem', position: 3, name: item.name, item: `https://www.danjizipsa.kr/unsold/${item.slug ?? slug}` },
         ],
       },
       {
         '@type': 'Residence',
         name: item.name,
         description: item.benefit ?? `${item.location} ${item.category} 분양 매물`,
-        url: `https://www.aptzipsa.kr/unsold/${item.slug ?? slug}`,
+        url: `https://www.danjizipsa.kr/unsold/${item.slug ?? slug}`,
         address: {
           '@type': 'PostalAddress',
           streetAddress: item.location,

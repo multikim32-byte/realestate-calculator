@@ -1,4 +1,4 @@
-import type { MetadataRoute } from 'next';
+﻿import type { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -9,7 +9,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/admin/', '/api/'],
       },
     ],
-    sitemap: 'https://www.aptzipsa.kr/sitemap.xml',
-    host: 'https://www.aptzipsa.kr',
+    sitemap: 'https://www.danjizipsa.kr/sitemap.xml',
+    host: 'https://www.danjizipsa.kr',
   };
 }

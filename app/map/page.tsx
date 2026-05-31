@@ -1,4 +1,4 @@
-import GlobalNav from '@/app/components/GlobalNav';
+﻿import GlobalNav from '@/app/components/GlobalNav';
 import MapClient from './MapClient';
 import type { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
@@ -8,11 +8,11 @@ export const revalidate = 3600; // 1시간
 export const metadata: Metadata = {
   title: '부동산 지도 — 미분양·청약 한눈에 | 아파트집사',
   description: '전국 미분양 매물과 청약 단지를 지도에서 한 번에 확인하세요. 아파트집사 부동산 지도.',
-  alternates: { canonical: 'https://www.aptzipsa.kr/map' },
+  alternates: { canonical: 'https://www.danjizipsa.kr/map' },
   openGraph: {
     title: '부동산 지도 | 아파트집사',
     description: '전국 미분양 매물과 청약 단지를 지도에서 한 번에 확인하세요.',
-    url: 'https://www.aptzipsa.kr/map',
+    url: 'https://www.danjizipsa.kr/map',
   },
 };
 

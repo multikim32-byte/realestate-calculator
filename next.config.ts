@@ -42,36 +42,61 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // mk-land.kr → aptzipsa.kr (구 도메인 → 신 도메인 301)
+      // mk-land.kr → danjizipsa.kr (구 도메인 → 신 도메인 301)
       {
         source: '/',
         has: [{ type: 'host', value: 'mk-land.kr' }],
-        destination: 'https://www.aptzipsa.kr/',
+        destination: 'https://www.danjizipsa.kr/',
         permanent: true,
       },
       {
         source: '/',
         has: [{ type: 'host', value: 'www.mk-land.kr' }],
-        destination: 'https://www.aptzipsa.kr/',
+        destination: 'https://www.danjizipsa.kr/',
         permanent: true,
       },
       {
         source: '/:path+',
         has: [{ type: 'host', value: 'mk-land.kr' }],
-        destination: 'https://www.aptzipsa.kr/:path+',
+        destination: 'https://www.danjizipsa.kr/:path+',
         permanent: true,
       },
       {
         source: '/:path+',
         has: [{ type: 'host', value: 'www.mk-land.kr' }],
-        destination: 'https://www.aptzipsa.kr/:path+',
+        destination: 'https://www.danjizipsa.kr/:path+',
+        permanent: true,
+      },
+      // aptzipsa.kr → danjizipsa.kr 301 (구 브랜드 도메인 영구 이전)
+      {
+        source: '/',
+        has: [{ type: 'host', value: 'aptzipsa.kr' }],
+        destination: 'https://www.danjizipsa.kr/',
+        permanent: true,
+      },
+      {
+        source: '/',
+        has: [{ type: 'host', value: 'www.aptzipsa.kr' }],
+        destination: 'https://www.danjizipsa.kr/',
+        permanent: true,
+      },
+      {
+        source: '/:path+',
+        has: [{ type: 'host', value: 'aptzipsa.kr' }],
+        destination: 'https://www.danjizipsa.kr/:path+',
+        permanent: true,
+      },
+      {
+        source: '/:path+',
+        has: [{ type: 'host', value: 'www.aptzipsa.kr' }],
+        destination: 'https://www.danjizipsa.kr/:path+',
         permanent: true,
       },
       // non-www → www 리다이렉트 (canonical 통일)
       {
         source: '/:path*',
-        has: [{ type: 'host', value: 'aptzipsa.kr' }],
-        destination: 'https://www.aptzipsa.kr/:path*',
+        has: [{ type: 'host', value: 'danjizipsa.kr' }],
+        destination: 'https://www.danjizipsa.kr/:path*',
         permanent: true,
       },
       {

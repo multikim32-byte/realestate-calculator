@@ -9,7 +9,7 @@ import type { Metadata } from "next";
 // AdSense 대시보드 > 광고 > 광고 단위에서 발급받은 슬롯 ID로 교체하세요
 const AD_SLOT = "XXXXXXXXXX";
 
-const BASE_URL = 'https://www.aptzipsa.kr';
+const BASE_URL = 'https://www.danjizipsa.kr';
 
 type Props = { params: Promise<{ slug: string }> };
 

@@ -8,11 +8,11 @@ export const metadata: Metadata = {
   title: '2026 청약 일정 달력 — 아파트 청약 날짜 한눈에',
   description: '2026년 전국 아파트·오피스텔 청약 일정을 달력으로 확인하세요. 특별공급·1순위·2순위 날짜, 당첨자 발표일 모두 제공. 아파트집사.',
   keywords: ['청약 일정', '청약 달력', '2026 청약', '아파트 청약', '특별공급', '1순위 청약', '아파트집사'],
-  alternates: { canonical: 'https://www.aptzipsa.kr/calendar' },
+  alternates: { canonical: 'https://www.danjizipsa.kr/calendar' },
   openGraph: {
     title: '2026 청약 일정 달력 — 아파트 청약 날짜 한눈에 | 아파트집사',
     description: '2026년 전국 아파트·오피스텔 청약 일정을 달력으로 확인하세요. 특별공급·1순위·2순위 날짜, 당첨자 발표일 모두 제공.',
-    url: 'https://www.aptzipsa.kr/calendar',
+    url: 'https://www.danjizipsa.kr/calendar',
     siteName: '아파트집사',
   },
 };

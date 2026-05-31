@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -361,7 +361,7 @@ export default function BlogEditor({ initial }: { initial: BlogPostData }) {
               <div style={{ background: '#f8fafc', borderRadius: 10, border: '1px solid #e5e7eb', padding: '12px 14px' }}>
                 <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>공개 URL</div>
                 <div style={{ fontSize: 12, color: '#374151', wordBreak: 'break-all' }}>
-                  aptzipsa.kr/blog/{form.slug}
+                  danjizipsa.kr/blog/{form.slug}
                 </div>
               </div>
             )}

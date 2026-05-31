@@ -23,7 +23,7 @@ export async function generateMetadata({ params, searchParams: _sp }: PageProps)
   await _sp; // Next.js requires searchParams to be awaited even if unused
   const item = await getRentalItem(id);
 
-  const canonical = `https://www.aptzipsa.kr/rental/${id}`;
+  const canonical = `https://www.danjizipsa.kr/rental/${id}`;
 
   if (!item) {
     return {
@@ -76,7 +76,7 @@ export default async function RentalDetailPage({ params, searchParams }: PagePro
       availabilityStarts: item.receiptStart,
       availabilityEnds: item.receiptEnd || undefined,
     }),
-    url: item.pblancUrl || `https://www.aptzipsa.kr/rental/${id}`,
+    url: item.pblancUrl || `https://www.danjizipsa.kr/rental/${id}`,
   } : null;
 
   return (
