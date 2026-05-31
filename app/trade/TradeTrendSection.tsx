@@ -93,6 +93,19 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
     return () => window.removeEventListener('resize', check);
   }, []);
 
+  // 링크로 진입 시 URL 파라미터로 초기 지역 설정 (예: 단지 클릭 → ?sido=경기&sigungu=양주시)
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const sidoParam    = sp.get('sido');
+    const sigunguParam = sp.get('sigungu');
+    const monthParam   = sp.get('month');
+    if (sidoParam && sidoParam in LAWD_CODE_MAP) {
+      setSido(sidoParam);
+      if (sigunguParam) setSigungu(sigunguParam);
+    }
+    if (monthParam && /^\d{6}$/.test(monthParam)) setMonth(monthParam);
+  }, []);
+
   const [regionalStats, setRegionalStats]   = useState<TradeTrendStats>(null);
   const [availableDongs, setAvailableDongs] = useState<string[]>([]);
   const [loading, setLoading]               = useState(false);
