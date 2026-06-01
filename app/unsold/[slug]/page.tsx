@@ -1,4 +1,15 @@
 ﻿export const revalidate = 7200; // 어드민 저장 시 revalidatePath로 즉시 갱신
+export const dynamicParams = true;
+
+// 빌드 시 활성 매물 전체 pre-generate → ISR Writes 쿼터 절약
+export async function generateStaticParams() {
+  const { data } = await supabase
+    .from('unsold_listings')
+    .select('slug')
+    .eq('is_active', true)
+    .not('slug', 'is', null);
+  return (data ?? []).map(r => ({ slug: encodeURIComponent(r.slug ?? '') }));
+}
 
 import GlobalNav from '@/app/components/GlobalNav';
 import ShareButton from '@/app/components/ShareButton';
