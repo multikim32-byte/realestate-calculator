@@ -8,7 +8,7 @@ export async function generateStaticParams() {
     .select('slug')
     .eq('is_active', true)
     .not('slug', 'is', null);
-  return (data ?? []).map(r => ({ slug: encodeURIComponent(r.slug ?? '') }));
+  return (data ?? []).map(r => ({ slug: r.slug ?? '' }));
 }
 
 import GlobalNav from '@/app/components/GlobalNav';
