@@ -97,7 +97,7 @@ const features = [
     icon: Bell, color: '#FAE100',
     title: '카카오 채널 알림',
     desc: '단지집사 카카오 채널을 친구 추가하면 이번 주 청약 소식·실거래 트렌드 등 핵심 부동산 정보를 카카오톡으로 받아볼 수 있습니다.',
-    link: 'https://pf.kakao.com/_WYwjn', linkText: '채널 추가하기',
+    link: 'https://pf.kakao.com/_xkfKGX', linkText: '채널 추가하기',
   },
 ];
 
@@ -122,7 +122,7 @@ const quickLinks = [
   { href: '/map',         label: '부동산 지도', bg: '#6366f1', color: '#fff' },
   { href: '/region/서울', label: '지역별',     bg: '#374151', color: '#fff' },
   { href: '/apt',        label: '부동산 정보', bg: '#f9fafb', color: '#374151', border: '1px solid #e5e7eb' },
-  { href: 'https://pf.kakao.com/_WYwjn', label: '카카오 채널', bg: '#FAE100', color: '#3A1D1D' },
+  { href: 'https://pf.kakao.com/_xkfKGX', label: '카카오 채널', bg: '#FAE100', color: '#3A1D1D' },
 ];
 
 export default function AboutPage() {

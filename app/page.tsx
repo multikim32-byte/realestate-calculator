@@ -152,7 +152,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
             </span>
           </div>
           <a
-            href="https://pf.kakao.com/_WYwjn"
+            href="https://pf.kakao.com/_xkfKGX"
             target="_blank"
             rel="noopener noreferrer"
             style={{

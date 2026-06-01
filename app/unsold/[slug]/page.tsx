@@ -369,7 +369,7 @@ export default async function UnsoldDetailPage({ params }: { params: Promise<{ s
 
             {/* 카카오 채널 */}
             <a
-              href="https://pf.kakao.com/_WYwjn"
+              href="https://pf.kakao.com/_xkfKGX"
               target="_blank"
               rel="noopener noreferrer"
               style={{

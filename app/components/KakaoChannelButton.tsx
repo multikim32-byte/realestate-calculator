@@ -1,6 +1,6 @@
 'use client';
 
-const CHANNEL_URL = 'https://pf.kakao.com/_WYwjn';
+const CHANNEL_URL = 'https://pf.kakao.com/_xkfKGX';
 
 interface Props {
   size?: 'sm' | 'md' | 'lg';

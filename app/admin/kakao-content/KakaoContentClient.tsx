@@ -134,7 +134,7 @@ function generateSaleText(props: Props): string {
   }
 
   lines.push('👉 전체 청약 정보 → https://www.danjizipsa.kr');
-  lines.push('📌 채널 추가하고 매일 받아보기 → https://pf.kakao.com/_WYwjn');
+  lines.push('📌 채널 추가하고 매일 받아보기 → https://pf.kakao.com/_xkfKGX');
 
   return lines.join('\n');
 }
@@ -210,7 +210,7 @@ function generateWeeklyText(items: SaleItem[], thisWeekStart: string, thisWeekEn
   }
 
   lines.push('👉 전체 청약 정보 → https://www.danjizipsa.kr');
-  lines.push('📌 채널 추가하고 매일 받아보기 → https://pf.kakao.com/_WYwjn');
+  lines.push('📌 채널 추가하고 매일 받아보기 → https://pf.kakao.com/_xkfKGX');
 
   return lines.join('\n');
 }
@@ -273,7 +273,7 @@ function generateTradeText(stats: TradeStats): string {
 
   lines.push(`집계일: ${stats.stat_date}`);
   lines.push('👉 실거래가 조회 → https://www.danjizipsa.kr/trade');
-  lines.push('📌 채널 추가하고 매일 받아보기 → https://pf.kakao.com/_WYwjn');
+  lines.push('📌 채널 추가하고 매일 받아보기 → https://pf.kakao.com/_xkfKGX');
 
   return lines.join('\n');
 }
