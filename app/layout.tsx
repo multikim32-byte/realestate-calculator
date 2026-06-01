@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   },
   verification: {
     google: ['RAqDPK6ChEYWgVUEXLItRYmja-LdtaytbxpW9dXuAk8', '9YoCpDyF7EL6xbhUdP3NjT5jl1fNuYQW_YC_Yb8KLxo'],
-    other: { 'naver-site-verification': ['41df8473c50b96914c865e2564fa4393d44492d2', 'e36ab5708fa76e934ef3585f28abf54e260fcad3'] },
+    other: { 'naver-site-verification': ['41df8473c50b96914c865e2564fa4393d44492d2', 'e36ab5708fa76e934ef3585f28abf54e260fcad3', 'd9a56093441b623b132a603f86ec405d2d1b1fca'] },
   },
   robots: {
     index: true,
