@@ -137,6 +137,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.75,
   }));
 
+  // 단지별 SEO 페이지 /complex/[slug] — 좌표 있는 상위 5,000개
+  let complexEntries: MetadataRoute.Sitemap = [];
+  try {
+    const { data: complexes } = await serviceDb()
+      .from('apartment_complexes')
+      .select('slug, updated_at')
+      .not('lat', 'is', null)
+      .order('kapt_code')
+      .limit(5000);
+    complexEntries = (complexes ?? []).map(c => ({
+      url: `${BASE}/complex/${encodeURIComponent(c.slug)}`,
+      lastModified: new Date(c.updated_at ?? now),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    }));
+  } catch {}
+
   // blog 포스트
   const BLOG_SLUGS = [
     'acquisition-tax-guide-2025','loan-repayment-comparison','intermediate-payment-interest-tips',
@@ -171,5 +188,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...unsoldEntries,
     ...aptEntries,
     ...blogEntries,
+    ...complexEntries,
   ];
 }
