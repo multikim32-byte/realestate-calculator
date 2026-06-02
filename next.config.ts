@@ -1,6 +1,7 @@
 ﻿import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['isomorphic-dompurify', 'jsdom'],
   images: {
     formats: ['image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 365,
