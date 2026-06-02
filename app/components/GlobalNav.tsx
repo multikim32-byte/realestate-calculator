@@ -10,6 +10,7 @@ import {
 import ShareButton from './ShareButton';
 import InstallButton from './InstallButton';
 import KakaoChannelButton from './KakaoChannelButton';
+import ComplexSearch from './ComplexSearch';
 
 const NAV_ITEMS = [
   { href: '/',           label: '청약정보',  icon: ClipboardList, exact: true },
@@ -108,13 +109,17 @@ export default function GlobalNav() {
             display: 'flex', gap: 5, marginLeft: 6, alignItems: 'center',
             paddingLeft: 10, borderLeft: '1px solid #e5e7eb', flexShrink: 0,
           }}>
+            <ComplexSearch />
             <KakaoChannelButton size="sm" label="카카오" />
             <ShareButton />
             <InstallButton />
           </div>
         </nav>
 
-        {/* 모바일 햄버거 — gnav-mb 클래스로 PC에서 숨김 */}
+        {/* 모바일 검색 + 햄버거 */}
+        <div className="gnav-mb" style={{ alignItems: 'center', gap: 4 }}>
+          <ComplexSearch />
+        </div>
         <button
           className="gnav-mb"
           onClick={() => setMobileOpen(v => !v)}
