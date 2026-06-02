@@ -18,6 +18,12 @@ const AptPriceTrendChart = dynamic(() => import('@/app/components/AptPriceTrendC
 });
 
 const SIDOS = Object.keys(LAWD_CODE_MAP) as Array<keyof typeof LAWD_CODE_MAP>;
+
+// 단지 슬러그 생성 (collect-complexes.mjs와 동일 로직)
+function makeComplexSlug(sido: string, sigungu: string, name: string) {
+  const normalize = (s: string) => s.replace(/\s+/g, '-').replace(/[^\w가-힣-]/g, '');
+  return `${normalize(sido)}-${normalize(sigungu)}-${normalize(name)}`;
+}
 const MONTHS = recentMonths(12);
 
 type TabType = '매매' | '전세' | '월세';
@@ -534,7 +540,10 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
             단지별 거래 요약 ({aptStats.length}개 단지)
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10, marginBottom: aptStats.length > aptCardCount ? 10 : 24 }}>
-            {aptStats.slice(0, aptCardCount).map(apt => (
+            {aptStats.slice(0, aptCardCount).map(apt => {
+              const sigunguName = LAWD_CODE_MAP[sido]?.find(d => d.code === lawdCd)?.name ?? '';
+              const complexSlug = makeComplexSlug(sido, sigunguName, apt.name);
+              return (
               <div
                 key={apt.name}
                 onClick={() => setSelectedApt(selectedApt === apt.name ? '' : apt.name)}
@@ -547,7 +556,14 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
                   transition: 'border-color 0.15s',
                 }}
               >
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 6 }}>{apt.name}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>{apt.name}</div>
+                  <a
+                    href={`/complex/${encodeURIComponent(complexSlug)}`}
+                    onClick={e => e.stopPropagation()}
+                    style={{ fontSize: 11, color: '#2563eb', textDecoration: 'none', fontWeight: 600, whiteSpace: 'nowrap', marginLeft: 8, flexShrink: 0 }}
+                  >시세 →</a>
+                </div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 12 }}>
                   <span style={{ color: '#6b7280' }}>거래 <strong>{apt.count}</strong>건</span>
                   <span style={{ color: '#166534' }}>최저 <strong>{fmt만원(apt.min)}</strong></span>
@@ -555,7 +571,8 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
                 </div>
                 <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>평균 {fmt만원(apt.avg)}</div>
               </div>
-            ))}
+              );
+            })}
           </div>
           {aptStats.length > aptCardCount && (
             <button
