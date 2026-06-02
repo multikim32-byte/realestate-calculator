@@ -5,12 +5,11 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import {
   ClipboardList, Calendar, BarChart2, Calculator,
-  Tag, Building2, Map, BookOpen, Star, Mail, Menu, X,
+  Tag, Building2, Map, BookOpen, Star, Mail, Menu, X, Search,
 } from 'lucide-react';
 import ShareButton from './ShareButton';
 import InstallButton from './InstallButton';
 import KakaoChannelButton from './KakaoChannelButton';
-import ComplexSearch from './ComplexSearch';
 
 const NAV_ITEMS = [
   { href: '/',           label: '청약정보',  icon: ClipboardList, exact: true },
@@ -21,6 +20,7 @@ const NAV_ITEMS = [
   { href: '/calculator', label: '계산기',    icon: Calculator },
   { href: '/rental',     label: '임대정보',  icon: Building2 },
   { href: '/region/서울', label: '지역별',   icon: Map, matchPrefix: '/region' },
+  { href: '/complex',    label: '단지정보',  icon: Search },
   { href: '/apt',        label: '부동산정보', icon: BookOpen },
   { href: '/favorites',  label: '관심단지',  icon: Star },
   { href: '/contact',    label: '문의',      icon: Mail },
@@ -109,17 +109,12 @@ export default function GlobalNav() {
             display: 'flex', gap: 5, marginLeft: 6, alignItems: 'center',
             paddingLeft: 10, borderLeft: '1px solid #e5e7eb', flexShrink: 0,
           }}>
-            <ComplexSearch />
             <KakaoChannelButton size="sm" label="카카오" />
             <ShareButton />
             <InstallButton />
           </div>
         </nav>
 
-        {/* 모바일 검색 + 햄버거 */}
-        <div className="gnav-mb" style={{ alignItems: 'center', gap: 4 }}>
-          <ComplexSearch />
-        </div>
         <button
           className="gnav-mb"
           onClick={() => setMobileOpen(v => !v)}
