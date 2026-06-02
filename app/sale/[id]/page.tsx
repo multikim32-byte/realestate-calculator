@@ -102,11 +102,15 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function SaleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [content, items] = await Promise.all([
-    fetchSaleContent(id).catch(() => null),
-    fetchAllSaleItems(),
-  ]);
-  const initialItem = items.find(i => i.houseManageNo === id) ?? null;
-
-  return <SaleDetailClient content={content} initialItem={initialItem} />;
+  try {
+    const [content, items] = await Promise.all([
+      fetchSaleContent(id).catch(() => null),
+      fetchAllSaleItems(),
+    ]);
+    const initialItem = items.find(i => i.houseManageNo === id) ?? null;
+    return <SaleDetailClient content={content} initialItem={initialItem} />;
+  } catch (e) {
+    console.error('[SaleDetailPage] render error:', e);
+    return <SaleDetailClient content={null} initialItem={null} />;
+  }
 }
