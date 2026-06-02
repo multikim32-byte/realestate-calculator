@@ -85,7 +85,18 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       },
     };
   } catch {
-    return { title: '청약 상세정보 | 아파트집사' };
+    return {
+      title: '청약 상세정보 | 아파트집사',
+      openGraph: {
+        title: '청약 상세정보 | 아파트집사',
+        description: '청약 일정·분양가·경쟁률·인근 실거래가를 한눈에 확인하세요.',
+        url: `https://www.danjizipsa.kr/sale/${id}`,
+        type: 'website',
+        locale: 'ko_KR',
+        siteName: '아파트집사',
+        images: [{ url: 'https://www.danjizipsa.kr/opengraph-image', width: 1200, height: 630 }],
+      },
+    };
   }
 }
 
