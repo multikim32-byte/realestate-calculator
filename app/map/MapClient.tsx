@@ -7,6 +7,22 @@ import type { DistrictPrice, PriceStats } from '@/app/api/map-prices/route';
 import type { DongPrice } from '@/app/api/map-prices/dong/route';
 
 type AgeTab = 'all' | 'y5' | 'y10' | 'y15' | 'y20';
+
+// 주소 문자열에서 sido-sigungu-name 슬러그 생성
+const SIDO_ABBR: Record<string, string> = {
+  '서울특별시': '서울', '부산광역시': '부산', '대구광역시': '대구', '인천광역시': '인천',
+  '광주광역시': '광주', '대전광역시': '대전', '울산광역시': '울산', '세종특별자치시': '세종',
+  '경기도': '경기', '강원특별자치도': '강원', '강원도': '강원',
+  '충청북도': '충북', '충청남도': '충남', '전라북도': '전북', '전북특별자치도': '전북',
+  '전라남도': '전남', '경상북도': '경북', '경상남도': '경남', '제주특별자치도': '제주',
+};
+function locationToSlug(location: string, name: string): string {
+  const parts = location.trim().split(/\s+/);
+  const sido = SIDO_ABBR[parts[0]] ?? parts[0].replace(/(특별시|광역시|특별자치시|특별자치도|도)$/, '');
+  const sigungu = parts[1] ?? '';
+  const normalize = (s: string) => s.replace(/\s+/g, '-').replace(/[^\w가-힣-]/g, '');
+  return `${normalize(sido)}-${normalize(sigungu)}-${normalize(name)}`;
+}
 type PriceOverlayItem = { overlay: KakaoCustomOverlay; div: HTMLDivElement; data: DistrictPrice };
 
 interface Props {
@@ -854,16 +870,28 @@ export default function MapClient({ unsoldListings }: Props) {
                         🎁 {i.benefit}
                       </p>
                     )}
-                    <Link
-                      href={`/unsold/${i.slug ?? i.id}`}
-                      style={{
-                        display: 'block', textAlign: 'center', marginTop: 10, padding: '9px 0',
-                        background: UNSOLD_COLOR, color: '#fff', borderRadius: 8,
-                        textDecoration: 'none', fontSize: 13, fontWeight: 700,
-                      }}
-                    >
-                      매물 상세보기 →
-                    </Link>
+                    <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+                      <Link
+                        href={`/unsold/${i.slug ?? i.id}`}
+                        style={{
+                          flex: 1, display: 'block', textAlign: 'center', padding: '9px 0',
+                          background: UNSOLD_COLOR, color: '#fff', borderRadius: 8,
+                          textDecoration: 'none', fontSize: 13, fontWeight: 700,
+                        }}
+                      >
+                        매물 상세보기 →
+                      </Link>
+                      <Link
+                        href={`/complex/${encodeURIComponent(locationToSlug(i.location, i.name))}`}
+                        style={{
+                          flex: 1, display: 'block', textAlign: 'center', padding: '9px 0',
+                          background: '#f0fdf4', color: '#16a34a', borderRadius: 8,
+                          textDecoration: 'none', fontSize: 13, fontWeight: 700, border: '1px solid #bbf7d0',
+                        }}
+                      >
+                        단지 시세 →
+                      </Link>
+                    </div>
                   </>
                 );
               })()}
@@ -888,16 +916,28 @@ export default function MapClient({ unsoldListings }: Props) {
                         청약 {i.receiptStart} ~ {i.receiptEnd}
                       </p>
                     )}
-                    <Link
-                      href={`/sale/${i.houseManageNo}`}
-                      style={{
-                        display: 'block', textAlign: 'center', marginTop: 10, padding: '9px 0',
-                        background: SALE_COLOR, color: '#fff', borderRadius: 8,
-                        textDecoration: 'none', fontSize: 13, fontWeight: 700,
-                      }}
-                    >
-                      청약 상세보기 →
-                    </Link>
+                    <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+                      <Link
+                        href={`/sale/${i.houseManageNo}`}
+                        style={{
+                          flex: 1, display: 'block', textAlign: 'center', padding: '9px 0',
+                          background: SALE_COLOR, color: '#fff', borderRadius: 8,
+                          textDecoration: 'none', fontSize: 13, fontWeight: 700,
+                        }}
+                      >
+                        청약 상세보기 →
+                      </Link>
+                      <Link
+                        href={`/complex/${encodeURIComponent(locationToSlug(i.location, i.name))}`}
+                        style={{
+                          flex: 1, display: 'block', textAlign: 'center', padding: '9px 0',
+                          background: '#f0fdf4', color: '#16a34a', borderRadius: 8,
+                          textDecoration: 'none', fontSize: 13, fontWeight: 700, border: '1px solid #bbf7d0',
+                        }}
+                      >
+                        단지 시세 →
+                      </Link>
+                    </div>
                   </>
                 );
               })()}
