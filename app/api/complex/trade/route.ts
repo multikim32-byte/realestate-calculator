@@ -18,6 +18,7 @@ function getLawdCode(sido: string, sigungu: string): string | null {
 // MOLIT XML → 거래 항목 파싱
 function parseXml(xml: string, aptName: string) {
   const items: { date: string; area: number; price: number; floor: number }[] = [];
+  let buildYear: number | null = null;
   const blocks = xml.match(/<item>([\s\S]*?)<\/item>/g) ?? [];
 
   for (const block of blocks) {
@@ -35,11 +36,13 @@ function parseXml(xml: string, aptName: string) {
     const price = parseInt(get('dealAmount').replace(/,/g, '')) || 0;
     const area  = parseFloat(get('excluUseAr')) || 0;
     const floor = parseInt(get('floor')) || 0;
+    const by    = parseInt(get('buildYear')) || 0;
+    if (by > 1900 && !buildYear) buildYear = by;
 
     if (!year || !price || !area) continue;
     items.push({ date: `${year}-${month}-${day}`, area, price, floor });
   }
-  return items;
+  return { items, buildYear };
 }
 
 export async function GET(req: NextRequest) {
@@ -63,7 +66,8 @@ export async function GET(req: NextRequest) {
 
   // 최근 N개월 조회
   const now = new Date();
-  const results: ReturnType<typeof parseXml> = [];
+  const allTrades: { date: string; area: number; price: number; floor: number }[] = [];
+  let buildYear: number | null = null;
 
   await Promise.all(
     Array.from({ length: months }, (_, i) => {
@@ -75,15 +79,19 @@ export async function GET(req: NextRequest) {
         10000,
       )
         .then(r => r.text())
-        .then(xml => results.push(...parseXml(xml, name)))
+        .then(xml => {
+          const { items, buildYear: by } = parseXml(xml, name);
+          allTrades.push(...items);
+          if (by && !buildYear) buildYear = by;
+        })
         .catch(() => {});
     })
   );
 
   // 날짜 내림차순 정렬
-  results.sort((a, b) => b.date.localeCompare(a.date));
+  allTrades.sort((a, b) => b.date.localeCompare(a.date));
 
-  return NextResponse.json({ trades: results }, {
+  return NextResponse.json({ trades: allTrades, buildYear }, {
     headers: { 'Cache-Control': 'public, max-age=86400' },
   });
 }

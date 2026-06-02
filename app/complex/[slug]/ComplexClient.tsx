@@ -148,14 +148,15 @@ function PriceChart({ trades }: { trades: Trade[] }) {
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
 export default function ComplexClient({ complex }: { complex: Complex }) {
-  const [trades, setTrades]     = useState<Trade[]>([]);
+  const [trades, setTrades]       = useState<Trade[]>([]);
   const [tradeLoading, setTradeLoading] = useState(true);
+  const [buildYear, setBuildYear] = useState<number | null>(complex.built_year);
   const [activeTab, setActiveTab] = useState<'info' | 'transit' | 'school' | 'infra'>('info');
 
   useEffect(() => {
     fetch(`/api/complex/trade?name=${encodeURIComponent(complex.name)}&sido=${encodeURIComponent(complex.sido)}&sigungu=${encodeURIComponent(complex.sigungu)}&months=24`)
       .then(r => r.json())
-      .then(d => setTrades(d.trades ?? []))
+      .then(d => { setTrades(d.trades ?? []); if (d.buildYear) setBuildYear(d.buildYear); })
       .catch(() => {})
       .finally(() => setTradeLoading(false));
   }, [complex.name, complex.sido, complex.sigungu]);
@@ -182,9 +183,9 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
               {complex.total_units.toLocaleString()}세대
             </span>
           )}
-          {complex.built_year && (
+          {buildYear && (
             <span style={{ fontSize: 13, background: '#f0fdf4', color: '#16a34a', padding: '4px 12px', borderRadius: 20, fontWeight: 600 }}>
-              {complex.built_year}년 준공
+              {buildYear}년 준공
             </span>
           )}
           {complex.floor_count && (
@@ -260,7 +261,7 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
                 { label: '단지명', value: complex.name },
                 { label: '주소', value: [complex.sido, complex.sigungu, complex.dong].filter(Boolean).join(' ') },
                 { label: '총 세대수', value: complex.total_units ? `${complex.total_units.toLocaleString()}세대` : '-' },
-                { label: '준공연도', value: complex.built_year ? `${complex.built_year}년` : '-' },
+                { label: '준공연도', value: buildYear ? `${buildYear}년` : '-' },
                 { label: '최고층수', value: complex.floor_count ? `${complex.floor_count}층` : '-' },
               ].map(({ label, value }) => (
                 <div key={label} style={{ display: 'flex', borderBottom: '1px solid #f3f4f6', padding: '10px 0' }}>
