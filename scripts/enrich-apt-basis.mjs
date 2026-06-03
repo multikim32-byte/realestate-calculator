@@ -60,12 +60,12 @@ function parseBass(item) {
   if (!item) return {};
   const result = {};
 
-  // 세대수
-  const units = parseInt(item.kaptMgindvHh ?? item.kaptTotHocnt ?? '0');
+  // 세대수 (hoCnt 또는 kaptdaCnt)
+  const units = parseInt(item.hoCnt ?? item.kaptdaCnt ?? '0');
   if (units > 0) result.total_units = units;
 
-  // 준공년도 (사용승인일 YYYYMMDD → YYYY)
-  const dateStr = item.kaptUseDate ?? '';
+  // 준공년도 (kaptUsedate YYYYMMDD → YYYY)
+  const dateStr = item.kaptUsedate ?? item.kaptUseDate ?? '';
   if (dateStr.length >= 4) {
     const yr = parseInt(dateStr.slice(0, 4));
     if (yr > 1950 && yr <= new Date().getFullYear()) result.built_year = yr;
@@ -75,11 +75,15 @@ function parseBass(item) {
   const dongCnt = parseInt(item.kaptDongCnt ?? '0');
   if (dongCnt > 0) result.dong_count = dongCnt;
 
-  // 난방방식
-  if (item.kaptHeatSystem) result.heating_type = item.kaptHeatSystem.trim();
+  // 난방방식 (codeHeatNm)
+  if (item.codeHeatNm) result.heating_type = item.codeHeatNm.trim();
 
   // 시공사
   if (item.kaptBcompany) result.builder = item.kaptBcompany.trim();
+
+  // 최고층수
+  const topFloor = parseInt(item.kaptTopFloor ?? '0');
+  if (topFloor > 0) result.floor_count = topFloor;
 
   return result;
 }
@@ -89,27 +93,28 @@ function parseDtl(item) {
   if (!item) return {};
   const result = {};
 
-  // 주차대수 (지상+지하)
-  const above = parseInt(item.parkingOutDong ?? item.kaptParking ?? '0');
-  const below = parseInt(item.parkingUnderDong ?? '0');
+  // 주차대수 (지상 + 지하)
+  const above = parseInt(item.kaptdPcnt ?? '0');
+  const below = parseInt(item.kaptdPcntu ?? '0');
   const total = above + below;
   if (total > 0) result.parking_total = total;
 
-  // 지하철 (최대 2개)
-  const transit = [];
-  for (let i = 1; i <= 2; i++) {
-    const line = item[`kaptSubwayLine${i}`]?.trim();
-    const station = item[`kaptSubwayStation${i}`]?.trim();
-    const dist = parseInt(item[`kaptSubwayDist${i}`] ?? '0');
-    if (station && station !== '') {
-      transit.push({ name: `${station} ${line ?? ''}`.trim(), distance: dist, category: 'subway' });
-    }
+  // 지하철
+  const line    = item.subwayLine?.trim();
+  const station = item.subwayStation?.trim();
+  const walkTime = item.kaptdWtimesub?.trim();
+  if (line && line !== '' && walkTime && walkTime !== '') {
+    const name = station ? `${station} ${line}` : line;
+    result.nearby_subway = [{ name, walk_time: walkTime, category: 'subway' }];
   }
-  if (transit.length > 0) result.nearby_subway = transit;
 
   // CCTV
-  const cctv = parseInt(item.cntlTower ?? '0');
+  const cctv = parseInt(item.kaptdCccnt ?? '0');
   if (cctv > 0) result.cctv_count = cctv;
+
+  // 복리시설 / 교육시설
+  if (item.welfareFacility?.trim()) result.welfare_facility = item.welfareFacility.trim();
+  if (item.educationFacility?.trim()) result.education_facility = item.educationFacility.trim();
 
   return result;
 }
