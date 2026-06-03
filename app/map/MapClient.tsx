@@ -908,7 +908,7 @@ export default function MapClient({ unsoldListings }: Props) {
             display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
             background: filter.complex ? '#fff' : COMPLEX_COLOR,
           }} />
-          단지 시세{filter.complex ? ` ${placed.complex}` : ''}
+          단지 시세
         </button>
 
         {/* 청약 필터 */}
@@ -926,7 +926,7 @@ export default function MapClient({ unsoldListings }: Props) {
             display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
             background: filter.sale ? '#fff' : SALE_COLOR,
           }} />
-          청약 {loading ? `${placed.sale}/${total.sale}` : placed.sale}
+          청약
         </button>
 
         {/* 미분양 필터 */}
@@ -944,7 +944,7 @@ export default function MapClient({ unsoldListings }: Props) {
             display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
             background: filter.unsold ? '#fff' : UNSOLD_COLOR,
           }} />
-          미분양 {loading ? `${placed.unsold}/${total.unsold}` : placed.unsold}
+          미분양
         </button>
 
 
