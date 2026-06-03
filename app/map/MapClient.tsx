@@ -904,45 +904,6 @@ export default function MapClient({ unsoldListings }: Props) {
           단지 시세{filter.complex ? ` ${placed.complex}` : ''}
         </button>
 
-        <div style={{ width: 1, height: 16, background: '#e5e7eb' }} />
-
-        {/* 시세 오버레이 토글 */}
-        <button
-          onClick={togglePriceMode}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            padding: '9px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
-            background: priceMode ? '#7c3aed' : '#f1f5f9',
-            color: priceMode ? '#fff' : '#64748b',
-            fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
-          }}
-        >
-          💰 시세
-          {priceMode && priceLoadState === 'loading' && (
-            <span style={{ fontSize: 10, opacity: 0.8 }}>로딩…</span>
-          )}
-        </button>
-
-        {/* 건축연식 탭 — 시세 모드 ON일 때만 */}
-        {priceMode && (
-          <>
-            <div style={{ width: 1, height: 16, background: '#e5e7eb' }} />
-            {AGE_TABS.map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => applyAgeTab(key)}
-                style={{
-                  padding: '4px 10px', borderRadius: 16, border: 'none', cursor: 'pointer',
-                  background: ageTab === key ? '#7c3aed' : '#ede9fe',
-                  color: ageTab === key ? '#fff' : '#5b21b6',
-                  fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap',
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </>
-        )}
 
         {loading && (
           <span style={{ fontSize: 11, color: '#9ca3af', whiteSpace: 'nowrap' }}>
