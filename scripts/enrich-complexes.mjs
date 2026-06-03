@@ -91,7 +91,7 @@ async function enrichOne(complex) {
   if (!only || only === 'transit') {
     const subways = await searchNearby(lat, lng, 'SW8', 1000);
     result.nearby_transit = subways.map(s => ({ ...s, category: 'subway' }));
-    await sleep(60);
+    await sleep(300); // 속도 제한 방지
   }
 
   // 학교 (1km)
@@ -100,7 +100,7 @@ async function enrichOne(complex) {
     result.nearby_schools = schools
       .map(s => ({ ...s, school_type: classifySchool(s.name) }))
       .sort((a, b) => a.distance - b.distance);
-    await sleep(60);
+    await sleep(300);
   }
 
   // 인프라 (대형마트/편의점/병원/은행 — 500m)
@@ -109,7 +109,7 @@ async function enrichOne(complex) {
     for (const cat of CATEGORIES.infra) {
       const items = await searchNearby(lat, lng, cat.code, 500);
       infraItems.push(...items.slice(0, 3).map(i => ({ ...i, category: cat.type, label: cat.label })));
-      await sleep(60);
+      await sleep(300);
     }
     result.nearby_infra = infraItems.sort((a, b) => a.distance - b.distance);
   }
@@ -134,7 +134,19 @@ async function main() {
     query = query.is('nearby_transit', null);
   }
 
-  const { data: complexes, error } = await query.order('kapt_code').limit(50000);
+  // Supabase 기본 1,000행 제한 → 페이지네이션으로 전체 로드
+  const complexes = [];
+  let from = 0;
+  const PAGE = 1000;
+  while (true) {
+    const { data: page, error: pageErr } = await query.order('kapt_code').range(from, from + PAGE - 1);
+    if (pageErr) { console.error('조회 오류:', pageErr.message); break; }
+    if (!page || page.length === 0) break;
+    complexes.push(...page);
+    if (page.length < PAGE) break;
+    from += PAGE;
+  }
+  const error = null;
   if (error) { console.error('❌ 조회 오류:', error.message); process.exit(1); }
 
   console.log(`📍 보강 대상: ${complexes.length.toLocaleString()}개\n`);

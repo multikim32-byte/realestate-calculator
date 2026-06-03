@@ -320,29 +320,37 @@ export default function MapClient({ unsoldListings }: Props) {
     complexMarkersRef.current.forEach(({ overlay }) => overlay.setMap(null));
     complexMarkersRef.current = [];
 
-    // 새 마커 생성
+    // 투명 마커 (클러스터러용 — 실제 표시는 말풍선 오버레이)
+    const transparentSvg = `data:image/svg+xml;charset=utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>')}`;
     const complexImg = new window.kakao.maps.MarkerImage(
-      makeMarkerSvg(COMPLEX_COLOR),
-      new window.kakao.maps.Size(20, 20),
-      { offset: new window.kakao.maps.Point(10, 10) },
+      transparentSvg,
+      new window.kakao.maps.Size(1, 1),
+      { offset: new window.kakao.maps.Point(0, 0) },
     );
 
     for (const c of complexes) {
       const pos = new window.kakao.maps.LatLng(c.lat, c.lng);
       const marker = new window.kakao.maps.Marker({ position: pos, image: complexImg, title: c.name });
 
-      // 라벨 오버레이
+      // 호갱노노 스타일 말풍선 오버레이
+      const avgPrice = c.avg_price ?? 0;
+      const avgPyeong = c.avg_pyeong ?? 0;
+      const hasPrice = avgPrice > 0;
+      const priceText = avgPrice >= 10000
+        ? `${(avgPrice / 10000).toFixed(1)}억`
+        : `${Math.round(avgPrice / 1000)}천`;
+      const nameLabel = c.name.length > 8 ? c.name.slice(0, 7) + '…' : c.name;
       const ld = document.createElement('div');
-      ld.style.cssText = [
-        'transform:translate(-50%,calc(-100% - 14px))',
-        `border:1.5px solid ${COMPLEX_COLOR}`,
-        'background:#fff', 'border-radius:6px',
-        'padding:3px 8px', 'font-size:11px', 'font-weight:700',
-        'color:#1e293b', 'white-space:nowrap',
-        'box-shadow:0 2px 8px rgba(0,0,0,0.15)', 'cursor:pointer',
-      ].join(';');
-      const label = c.name.length > 10 ? c.name.slice(0, 9) + '…' : c.name;
-      ld.innerHTML = label;
+      ld.style.cssText = 'position:relative;transform:translate(-50%,calc(-100% - 4px));cursor:pointer';
+      ld.innerHTML = `
+        <div style="background:#1e3a8a;color:#fff;border-radius:8px;padding:${hasPrice ? '4px 10px' : '5px 10px'};text-align:center;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);min-width:48px;">
+          ${hasPrice
+            ? `<div style="font-size:10px;opacity:0.75;line-height:1.3">${avgPyeong}평</div><div style="font-size:13px;font-weight:800;line-height:1.3">${priceText}</div>`
+            : `<div style="font-size:11px;font-weight:700;line-height:1.4">${nameLabel}</div>`
+          }
+        </div>
+        <div style="position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid #1e3a8a"></div>
+      `;
       const overlay = new window.kakao.maps.CustomOverlay({ position: pos, content: ld, yAnchor: 0 });
 
       window.kakao.maps.event.addListener(marker, 'click', () => {
@@ -357,7 +365,7 @@ export default function MapClient({ unsoldListings }: Props) {
       });
 
       const level = map.getLevel();
-      if (level <= 5) overlay.setMap(map);
+      if (level <= 7) overlay.setMap(map);
 
       complexMarkersRef.current.push({ m: marker, overlay, data: c });
       complexClustererRef.current?.addMarker(marker);
@@ -587,7 +595,7 @@ export default function MapClient({ unsoldListings }: Props) {
       // 기본: 서울시청 / 접속자 위치 허용 시 해당 위치로 이동
       const map = new window.kakao.maps.Map(mapRef.current, {
         center: new window.kakao.maps.LatLng(37.5665, 126.9780),
-        level: 10,
+        level: 7,
       });
       mapInst.current = map;
 
@@ -628,22 +636,22 @@ export default function MapClient({ unsoldListings }: Props) {
       window.kakao.maps.event.addListener(map, 'idle', () => {
         const level = map.getLevel();
 
-        // 단지 핀: 레벨 5 이하에서 뷰포트 기준 로드
+        // 단지 핀: 레벨 7 이하에서 뷰포트 기준 로드
         if (filterRef.current.complex) {
-          if (level <= 5) {
+          if (level <= 7) {
             loadComplexesInView();
           } else {
             // 줌 아웃 시 라벨만 숨김, 마커는 클러스터러가 관리
             complexMarkersRef.current.forEach(({ overlay }) => overlay.setMap(null));
           }
-          // 레벨 5 이하에서 라벨 표시
-          if (level <= 5) {
+          // 레벨 7 이하에서 라벨 표시
+          if (level <= 7) {
             complexMarkersRef.current.forEach(({ overlay }) => overlay.setMap(map));
           }
         }
 
-        // 핀 라벨: 레벨 6 이하에서 단지명·가격 표시
-        const showLabels = level <= 6;
+        // 핀 라벨: 레벨 7 이하에서 단지명·가격 표시
+        const showLabels = level <= 7;
         if (showLabels !== labelsVisibleRef.current) {
           labelsVisibleRef.current = showLabels;
           pinLabelsRef.current.forEach(({ overlay, type }) => {
