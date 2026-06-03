@@ -244,6 +244,9 @@ export default function MapClient({ unsoldListings }: Props) {
   const complexClustererRef   = useRef<KakaoClusterer | null>(null);
   const loadedComplexBoundsRef = useRef<string | null>(null); // 마지막 로드한 bounds 키
   const [selectedComplex, setSelectedComplex] = useState<MapComplex | null>(null);
+  const [complexTrades, setComplexTrades] = useState<Array<{ date: string; area: number; price: number; floor: number }> | null>(null);
+  const [complexNearby, setComplexNearby] = useState<{ nearby_transit?: Array<{ name: string; distance: number; category?: string }>; nearby_schools?: Array<{ name: string; distance: number; school_type?: string }>; nearby_infra?: Array<{ name: string; distance: number; label?: string; category?: string }> } | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<PinInfo | null>(null);
 
@@ -585,6 +588,24 @@ export default function MapClient({ unsoldListings }: Props) {
       });
   }, []);
 
+  // 단지 선택 시 실거래 + 주변환경 데이터 fetch
+  useEffect(() => {
+    if (!selectedComplex) { setComplexTrades(null); setComplexNearby(null); return; }
+    setDetailLoading(true);
+    setComplexTrades(null);
+    setComplexNearby(null);
+    Promise.all([
+      fetch(`/api/complex/trade?name=${encodeURIComponent(selectedComplex.name)}&sido=${encodeURIComponent(selectedComplex.sido)}&sigungu=${encodeURIComponent(selectedComplex.sigungu)}&months=3`)
+        .then(r => r.json()).catch(() => ({ trades: [] })),
+      fetch(`/api/complex/detail?kapt_code=${encodeURIComponent(selectedComplex.kapt_code)}`)
+        .then(r => r.json()).catch(() => ({})),
+    ]).then(([tradeData, nearbyData]) => {
+      setComplexTrades(tradeData.trades ?? []);
+      setComplexNearby(nearbyData);
+      setDetailLoading(false);
+    });
+  }, [selectedComplex?.kapt_code]);
+
   useEffect(() => {
     if (!KAKAO_KEY || !mapRef.current) return;
 
@@ -924,75 +945,153 @@ export default function MapClient({ unsoldListings }: Props) {
       </div>
 
       {/* 단지 시세 — 왼쪽 슬라이드 패널 */}
-      {selectedComplex && !selected && (
-        <>
-          <div style={{ position: 'absolute', inset: 0, zIndex: 15 }} onClick={() => setSelectedComplex(null)} />
-          <div style={{
-            position: 'absolute', left: 0, top: 0, bottom: 0,
-            width: 'min(320px, 85vw)',
-            background: '#fff',
-            boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
-            zIndex: 20, overflow: 'hidden',
-            display: 'flex', flexDirection: 'column',
-            animation: 'slideInLeft 0.22s ease-out',
-          }}>
-            {/* 헤더 */}
-            <div style={{ background: COMPLEX_COLOR, padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexShrink: 0 }}>
-              <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', lineHeight: 1.3 }}>{selectedComplex.name}</div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 4 }}>
-                  {selectedComplex.sido} {selectedComplex.sigungu}
+      {selectedComplex && !selected && (() => {
+        const avgPrice = selectedComplex.avg_price ?? 0;
+        const fmtPrice = (v: number) => v >= 10000 ? `${(v / 10000).toFixed(1)}억` : `${Math.round(v / 1000)}천`;
+        const fmtPyeong = (area: number) => `${Math.round(area / 3.3)}평`;
+        const transit = complexNearby?.nearby_transit ?? [];
+        const schools = complexNearby?.nearby_schools ?? [];
+        const infra   = complexNearby?.nearby_infra ?? [];
+        const recentTrades = (complexTrades ?? []).slice(0, 10);
+
+        return (
+          <>
+            <div style={{ position: 'absolute', inset: 0, zIndex: 15 }} onClick={() => setSelectedComplex(null)} />
+            <div style={{
+              position: 'absolute', left: 0, top: 0, bottom: 0,
+              width: 'min(320px, 85vw)',
+              background: '#fff',
+              boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
+              zIndex: 20, display: 'flex', flexDirection: 'column',
+              animation: 'slideInLeft 0.22s ease-out',
+            }}>
+              {/* 헤더 */}
+              <div style={{ background: COMPLEX_COLOR, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexShrink: 0 }}>
+                <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', lineHeight: 1.3 }}>{selectedComplex.name}</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 3 }}>{selectedComplex.sido} {selectedComplex.sigungu}</div>
+                </div>
+                <button onClick={() => setSelectedComplex(null)}
+                  style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', color: '#fff', fontSize: 15, flexShrink: 0 }}>
+                  ✕
+                </button>
+              </div>
+
+              {/* 스크롤 영역 */}
+              <div style={{ flex: 1, overflowY: 'auto' }}>
+
+                {/* 기본 정보 */}
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {selectedComplex.total_units && (
+                    <span style={{ fontSize: 12, background: '#ede9fe', color: COMPLEX_COLOR, padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>
+                      {selectedComplex.total_units.toLocaleString()}세대
+                    </span>
+                  )}
+                  {selectedComplex.built_year && (
+                    <span style={{ fontSize: 12, background: '#f0fdf4', color: '#16a34a', padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>
+                      {selectedComplex.built_year}년 준공
+                    </span>
+                  )}
+                </div>
+
+                {/* 평균 시세 */}
+                {avgPrice > 0 && (
+                  <div style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                    <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>최근 6개월 평균 실거래가</div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                      <span style={{ fontSize: 22, fontWeight: 800, color: '#1e293b' }}>{fmtPrice(avgPrice)}</span>
+                      <span style={{ fontSize: 12, color: '#6b7280' }}>{selectedComplex.avg_pyeong}평 기준</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* 최근 실거래 */}
+                <div style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 10 }}>최근 실거래</div>
+                  {detailLoading ? (
+                    <div style={{ fontSize: 12, color: '#9ca3af', padding: '8px 0' }}>불러오는 중…</div>
+                  ) : recentTrades.length === 0 ? (
+                    <div style={{ fontSize: 12, color: '#9ca3af', padding: '8px 0' }}>최근 3개월 거래 없음</div>
+                  ) : (
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                      <thead>
+                        <tr style={{ color: '#9ca3af' }}>
+                          <th style={{ textAlign: 'left', paddingBottom: 6, fontWeight: 600 }}>계약일</th>
+                          <th style={{ textAlign: 'right', paddingBottom: 6, fontWeight: 600 }}>면적</th>
+                          <th style={{ textAlign: 'right', paddingBottom: 6, fontWeight: 600 }}>층</th>
+                          <th style={{ textAlign: 'right', paddingBottom: 6, fontWeight: 600 }}>가격</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {recentTrades.map((t, i) => (
+                          <tr key={i} style={{ borderTop: '1px solid #f8fafc' }}>
+                            <td style={{ padding: '5px 0', color: '#6b7280' }}>{t.date.slice(2).replace(/-/g, '.')}</td>
+                            <td style={{ padding: '5px 0', textAlign: 'right', color: '#6b7280' }}>{fmtPyeong(t.area)}</td>
+                            <td style={{ padding: '5px 0', textAlign: 'right', color: '#6b7280' }}>{t.floor}층</td>
+                            <td style={{ padding: '5px 0', textAlign: 'right', fontWeight: 700, color: '#1e293b' }}>{fmtPrice(t.price)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+
+                {/* 교통 */}
+                {transit.length > 0 && (
+                  <div style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>교통</div>
+                    {transit.slice(0, 4).map((s, i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '4px 0' }}>
+                        <span style={{ color: '#374151' }}>🚇 {s.name}</span>
+                        <span style={{ color: '#9ca3af' }}>{s.distance}m</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 학교 */}
+                {schools.length > 0 && (
+                  <div style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>학교</div>
+                    {schools.slice(0, 4).map((s, i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '4px 0' }}>
+                        <span style={{ color: '#374151' }}>🏫 {s.name}</span>
+                        <span style={{ color: '#9ca3af' }}>{s.distance}m</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 인프라 */}
+                {infra.length > 0 && (
+                  <div style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>주변 인프라</div>
+                    {infra.slice(0, 6).map((s, i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '4px 0' }}>
+                        <span style={{ color: '#374151' }}>📍 {s.name}</span>
+                        <span style={{ color: '#9ca3af' }}>{s.distance}m</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 상세 페이지 링크 */}
+                <div style={{ padding: '16px' }}>
+                  <Link href={`/complex/${encodeURIComponent(selectedComplex.slug)}`}
+                    style={{
+                      display: 'block', textAlign: 'center', padding: '12px 0',
+                      background: COMPLEX_COLOR, color: '#fff', borderRadius: 10,
+                      textDecoration: 'none', fontSize: 14, fontWeight: 700,
+                    }}>
+                    단지 상세 정보 →
+                  </Link>
                 </div>
               </div>
-              <button onClick={() => setSelectedComplex(null)}
-                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', color: '#fff', fontSize: 16, flexShrink: 0 }}>
-                ✕
-              </button>
             </div>
-
-            {/* 시세 요약 */}
-            {(selectedComplex.avg_price ?? 0) > 0 && (
-              <div style={{ padding: '16px', borderBottom: '1px solid #f1f5f9', flexShrink: 0 }}>
-                <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>최근 6개월 평균 실거래가</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                  <span style={{ fontSize: 24, fontWeight: 800, color: '#1e293b' }}>
-                    {selectedComplex.avg_price! >= 10000
-                      ? `${(selectedComplex.avg_price! / 10000).toFixed(1)}억`
-                      : `${Math.round(selectedComplex.avg_price! / 1000)}천`}
-                  </span>
-                  <span style={{ fontSize: 13, color: '#6b7280' }}>{selectedComplex.avg_pyeong}평 기준</span>
-                </div>
-              </div>
-            )}
-
-            {/* 기본 정보 */}
-            <div style={{ padding: '16px', flex: 1, overflowY: 'auto' }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-                {selectedComplex.total_units && (
-                  <span style={{ fontSize: 12, background: '#ede9fe', color: COMPLEX_COLOR, padding: '4px 12px', borderRadius: 20, fontWeight: 700 }}>
-                    {selectedComplex.total_units.toLocaleString()}세대
-                  </span>
-                )}
-                {selectedComplex.built_year && (
-                  <span style={{ fontSize: 12, background: '#f0fdf4', color: '#16a34a', padding: '4px 12px', borderRadius: 20, fontWeight: 700 }}>
-                    {selectedComplex.built_year}년 준공
-                  </span>
-                )}
-              </div>
-
-              <Link href={`/complex/${encodeURIComponent(selectedComplex.slug)}`}
-                style={{
-                  display: 'block', textAlign: 'center', padding: '13px 0',
-                  background: COMPLEX_COLOR, color: '#fff', borderRadius: 12,
-                  textDecoration: 'none', fontSize: 14, fontWeight: 700,
-                }}>
-                실거래 시세 상세 보기 →
-              </Link>
-            </div>
-          </div>
-          <style>{`@keyframes slideInLeft { from { transform: translateX(-100%) } to { transform: translateX(0) } }`}</style>
-        </>
-      )}
+            <style>{`@keyframes slideInLeft { from { transform: translateX(-100%) } to { transform: translateX(0) } }`}</style>
+          </>
+        );
+      })()}
 
       {/* 선택된 매물 카드 */}
       {selected && (
