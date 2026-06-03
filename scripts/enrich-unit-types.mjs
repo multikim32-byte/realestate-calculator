@@ -36,24 +36,16 @@ const supabase = createClient(SB_URL, SB_KEY);
 const force = process.argv.includes('--force');
 const BASE = 'https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1';
 
-// ── 청약 API 조회 ─────────────────────────────────────────────────────────────
-async function fetchApi(endpoint, params = {}) {
-  const qs = new URLSearchParams({ serviceKey: API_KEY, page: '1', perPage: '100', ...params });
-  const url = `${BASE}/${endpoint}?${qs}`;
-  try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
-    if (!res.ok) return [];
-    const json = await res.json();
-    return json.data ?? [];
-  } catch { return []; }
+// ── 청약 API 조회 — URL 직접 조립 (URLSearchParams은 [] 인코딩 문제) ──────────
+function buildUrl(endpoint, page, perPage, extraRaw = '') {
+  return `${BASE}/${endpoint}?serviceKey=${API_KEY}&page=${page}&perPage=${perPage}${extraRaw}`;
 }
 
-async function fetchAllPages(endpoint, params = {}) {
+async function fetchAllPages(endpoint, extraRaw = '') {
   const results = [];
   let page = 1;
   while (true) {
-    const qs = new URLSearchParams({ serviceKey: API_KEY, page: String(page), perPage: '100', ...params });
-    const url = `${BASE}/${endpoint}?${qs}`;
+    const url = buildUrl(endpoint, page, 100, extraRaw);
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
       const json = await res.json();
@@ -93,12 +85,15 @@ async function main() {
   console.log('🏗️  단지 평형 공급면적 보강 시작');
   console.log(`   모드: ${force ? '전체 재수집' : '미보강만'}\n`);
 
-  // 1. 청약 공고 전체 수집 (일반분양 아파트)
+  // 1. 청약 공고 전체 수집 (필터 없이 전체 조회 → 로컬에서 아파트만 필터)
   console.log('📥 청약 공고 수집 중...');
-  const allPblanc = await fetchAllPages('getAPTLttotPblancDetail', {
-    'cond[HOUSE_SECD::IN]': '01,04', // 01:민간, 04:공공
-  });
-  console.log(`   공고 ${allPblanc.length}건 수집\n`);
+  const allPblancRaw = await fetchAllPages('getAPTLttotPblancDetail');
+  const allPblanc = allPblancRaw.filter(p =>
+    p.HOUSE_DTL_SECD_NM?.includes('아파트') ||
+    p.HOUSE_SECD === '01' || p.HOUSE_SECD === '04' ||
+    !p.HOUSE_SECD // 미분류도 포함
+  );
+  console.log(`   전체 공고 ${allPblancRaw.length}건 → 아파트 ${allPblanc.length}건 필터\n`);
 
   // 2. 공고별 주택형 데이터 수집
   console.log('📐 주택형 데이터 수집 중...');
@@ -110,9 +105,9 @@ async function main() {
   for (let i = 0; i < allPblanc.length; i += BATCH) {
     const batch = allPblanc.slice(i, i + BATCH);
     const pblancNos = batch.map(p => p.PBLANC_NO).join(',');
-    const types = await fetchAllPages('getAPTLttotPblancMdl', {
-      'cond[PBLANC_NO::IN]': pblancNos,
-    });
+    // cond 파라미터: [] 인코딩, 쉼표는 raw 유지 (encodeURIComponent는 쉼표도 %2C로 바꿔서 API가 IN 인식 못함)
+    const condRaw = `&cond%5BPBLANC_NO%3A%3AIN%5D=${pblancNos}`;
+    const types = await fetchAllPages('getAPTLttotPblancMdl', condRaw);
     for (const t of types) {
       if (!pblancTypeMap.has(t.PBLANC_NO)) pblancTypeMap.set(t.PBLANC_NO, []);
       pblancTypeMap.get(t.PBLANC_NO).push(t);
