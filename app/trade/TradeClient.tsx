@@ -56,6 +56,7 @@ interface TradeClientProps {
 export default function TradeClient({ initialItems = [], initialDong = '개포동' }: TradeClientProps) {
   const router = useRouter();
   const [tab, setTab] = useState<TabType>('매매');
+  const [propertyType, setPropertyType] = useState<'apt' | 'offi' | 'villa'>('apt');
   const [sido, setSido] = useState<keyof typeof LAWD_CODE_MAP>('서울');
   const [lawdCd, setLawdCd] = useState('11680'); // 강남구 기본
   const [dealYmd, setDealYmd] = useState(MONTHS[1].value); // 전달 기본
@@ -167,7 +168,8 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
     setRentItems([]);
     setRentSearched(false);
     try {
-      const res = await fetch(`/api/trade?lawdCd=${searchLawdCd}&dealYmd=${searchDealYmd}&numOfRows=200`);
+      const tradeEndpoint = propertyType === 'offi' ? '/api/offi/trade' : propertyType === 'villa' ? '/api/villa/trade' : '/api/trade';
+      const res = await fetch(`${tradeEndpoint}?lawdCd=${searchLawdCd}&dealYmd=${searchDealYmd}&numOfRows=200`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setItems(data.items ?? []);
@@ -191,7 +193,8 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
     setSelectedApt('');
     setRentItems([]);
     try {
-      const res = await fetch(`/api/rent?lawdCd=${searchLawdCd}&dealYmd=${searchDealYmd}&numOfRows=200`);
+      const rentEndpoint = propertyType === 'offi' ? '/api/offi/rent' : propertyType === 'villa' ? '/api/villa/rent' : '/api/rent';
+      const res = await fetch(`${rentEndpoint}?lawdCd=${searchLawdCd}&dealYmd=${searchDealYmd}&numOfRows=200`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setRentItems(data.items ?? []);
@@ -356,6 +359,20 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
 
   return (
     <div>
+      {/* ── 유형 선택 ── */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
+        {([['apt', '아파트'], ['offi', '오피스텔'], ['villa', '연립·다세대']] as const).map(([type, label]) => (
+          <button key={type} onClick={() => { setPropertyType(type); setItems([]); setRentItems([]); setSearched(false); setRentSearched(false); }}
+            style={{
+              padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+              background: propertyType === type ? '#1d4ed8' : '#f1f5f9',
+              color: propertyType === type ? '#fff' : '#64748b',
+            }}>
+            {label}
+          </button>
+        ))}
+      </div>
+
       {/* ── 탭 ── */}
       <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: '2px solid #e5e7eb' }}>
         {(['매매', '전세', '월세'] as TabType[]).map(t => (
