@@ -1018,6 +1018,37 @@ export default function MapClient({ unsoldListings }: Props) {
                   <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: 13, color: '#9ca3af' }}>불러오는 중…</div>
                 ) : (
                   <>
+                    {/* 전세 현황 요약 카드 */}
+                    {dealType === '전세' && complexRents && complexRents.length > 0 && (() => {
+                      const today = Date.now();
+                      const jeonseAll = complexRents.filter(t => t.monthly === 0);
+                      const active  = jeonseAll.filter(t => {
+                        const exp = new Date(t.date).getTime() + 2 * 365.25 * 24 * 3600 * 1000;
+                        return exp > today;
+                      });
+                      const soonMs = today + 90 * 24 * 3600 * 1000;
+                      const soon = active.filter(t => {
+                        const exp = new Date(t.date).getTime() + 2 * 365.25 * 24 * 3600 * 1000;
+                        return exp <= soonMs;
+                      });
+                      return (
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+                          <div style={{ background: '#eff6ff', borderRadius: 8, padding: '8px 10px' }}>
+                            <div style={{ fontSize: 10, color: '#9ca3af' }}>거주중 추정</div>
+                            <div style={{ fontSize: 16, fontWeight: 800, color: '#1d4ed8' }}>{active.length}건</div>
+                          </div>
+                          <div style={{ background: soon.length > 0 ? '#fefce8' : '#f9fafb', borderRadius: 8, padding: '8px 10px' }}>
+                            <div style={{ fontSize: 10, color: '#9ca3af' }}>3개월내 만료</div>
+                            <div style={{ fontSize: 16, fontWeight: 800, color: soon.length > 0 ? '#d97706' : '#9ca3af' }}>{soon.length}건</div>
+                          </div>
+                          <div style={{ background: '#f9fafb', borderRadius: 8, padding: '8px 10px' }}>
+                            <div style={{ fontSize: 10, color: '#9ca3af' }}>조회 건수</div>
+                            <div style={{ fontSize: 16, fontWeight: 800, color: '#6b7280' }}>{jeonseAll.length}건</div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     {/* 면적 셀렉터 + 평균가 */}
                     <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
@@ -1073,40 +1104,78 @@ export default function MapClient({ unsoldListings }: Props) {
                     )}
 
                     {/* 최근 거래 테이블 */}
-                    <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>최근 실거래</div>
-                      {tableRows.length === 0 ? (
-                        <div style={{ fontSize: 12, color: '#9ca3af' }}>해당 면적 거래 없음</div>
-                      ) : (
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                          <thead>
-                            <tr style={{ color: '#9ca3af' }}>
-                              <th style={{ textAlign: 'left', paddingBottom: 5, fontWeight: 500 }}>계약일</th>
-                              <th style={{ textAlign: 'right', paddingBottom: 5, fontWeight: 500 }}>층</th>
-                              <th style={{ textAlign: 'right', paddingBottom: 5, fontWeight: 500 }}>
-                                {dealType === '월세' ? '보증/월세' : dealType === '전세' ? '전세가' : '매매가'}
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {tableRows.map((t, i) => {
-                              const priceCell = dealType === '매매'
-                                ? fmtPrice((t as { price: number }).price)
-                                : dealType === '전세'
-                                  ? fmtPrice((t as { deposit: number }).deposit)
-                                  : `${fmtPrice((t as { deposit: number }).deposit)}/${(t as { monthly: number }).monthly}만`;
-                              return (
-                                <tr key={i} style={{ borderTop: '1px solid #f8fafc' }}>
-                                  <td style={{ padding: '5px 0', color: '#6b7280' }}>{t.date.slice(2).replace(/-/g, '.')}</td>
-                                  <td style={{ padding: '5px 0', textAlign: 'right', color: '#6b7280' }}>{t.floor}층</td>
-                                  <td style={{ padding: '5px 0', textAlign: 'right', fontWeight: 700, color: '#1e293b' }}>{priceCell}</td>
+                    {(() => {
+                      // 전세/월세 계약 상태 계산
+                      function contractStatus(dateStr: string, isMonthly: boolean) {
+                        const today = Date.now();
+                        const deal  = new Date(dateStr).getTime();
+                        const expiry  = deal + 2 * 365.25 * 24 * 3600 * 1000;
+                        const renewal = deal + 4 * 365.25 * 24 * 3600 * 1000;
+                        const daysToExpiry  = Math.round((expiry  - today) / 86400000);
+                        const daysToRenewal = Math.round((renewal - today) / 86400000);
+                        if (isMonthly) {
+                          // 월세: 1년 계약 기준
+                          const mExpiry = deal + 365.25 * 24 * 3600 * 1000;
+                          const d = Math.round((mExpiry - today) / 86400000);
+                          if (d < 0)  return { label: '만료됨',          color: '#6b7280', bg: '#f1f5f9' };
+                          if (d <= 90) return { label: `만료임박 D-${d}`, color: '#d97706', bg: '#fefce8' };
+                          return            { label: `거주중 D-${d}`,    color: '#059669', bg: '#f0fdf4' };
+                        }
+                        if (daysToRenewal < 0) return { label: '만료됨',              color: '#6b7280', bg: '#f1f5f9' };
+                        if (daysToExpiry  < 0) return { label: `갱신중 +${Math.abs(daysToExpiry)}일`, color: '#7c3aed', bg: '#ede9fe' };
+                        if (daysToExpiry <= 90) return { label: `만료임박 D-${daysToExpiry}`, color: '#d97706', bg: '#fefce8' };
+                        return                  { label: `거주중 D-${daysToExpiry}`,   color: '#059669', bg: '#f0fdf4' };
+                      }
+                      const showStatus = dealType === '전세' || dealType === '월세';
+                      return (
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>최근 실거래</div>
+                          {tableRows.length === 0 ? (
+                            <div style={{ fontSize: 12, color: '#9ca3af' }}>해당 면적 거래 없음</div>
+                          ) : (
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                              <thead>
+                                <tr style={{ color: '#9ca3af' }}>
+                                  <th style={{ textAlign: 'left', paddingBottom: 5, fontWeight: 500 }}>계약일</th>
+                                  <th style={{ textAlign: 'right', paddingBottom: 5, fontWeight: 500 }}>층</th>
+                                  <th style={{ textAlign: 'right', paddingBottom: 5, fontWeight: 500 }}>
+                                    {dealType === '월세' ? '보증/월세' : dealType === '전세' ? '전세가' : '매매가'}
+                                  </th>
+                                  {showStatus && <th style={{ textAlign: 'right', paddingBottom: 5, fontWeight: 500 }}>상태</th>}
                                 </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      )}
-                    </div>
+                              </thead>
+                              <tbody>
+                                {tableRows.map((t, i) => {
+                                  const priceCell = dealType === '매매'
+                                    ? fmtPrice((t as { price: number }).price)
+                                    : dealType === '전세'
+                                      ? fmtPrice((t as { deposit: number }).deposit)
+                                      : `${fmtPrice((t as { deposit: number }).deposit)}/${(t as { monthly: number }).monthly}만`;
+                                  const status = showStatus
+                                    ? contractStatus(t.date, dealType === '월세')
+                                    : null;
+                                  return (
+                                    <tr key={i} style={{ borderTop: '1px solid #f8fafc' }}>
+                                      <td style={{ padding: '5px 0', color: '#6b7280' }}>{t.date.slice(2).replace(/-/g, '.')}</td>
+                                      <td style={{ padding: '5px 0', textAlign: 'right', color: '#6b7280' }}>{t.floor}층</td>
+                                      <td style={{ padding: '5px 0', textAlign: 'right', fontWeight: 700, color: '#1e293b' }}>{priceCell}</td>
+                                      {status && (
+                                        <td style={{ padding: '5px 0', textAlign: 'right' }}>
+                                          <span style={{
+                                            fontSize: 10, fontWeight: 700, padding: '2px 5px', borderRadius: 6,
+                                            background: status.bg, color: status.color, whiteSpace: 'nowrap',
+                                          }}>{status.label}</span>
+                                        </td>
+                                      )}
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* 교통 */}
                     {transit.length > 0 && (
