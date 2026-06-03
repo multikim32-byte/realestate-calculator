@@ -3,7 +3,7 @@ name: 전국 실거래 통계 집계
 on:
   schedule:
     - cron: '0 18 * * *'  # 매일 03:00 KST — 월간 통계
-    - cron: '0 18 * * 1'  # 매주 월요일 03:00 KST — 주간 통계 (월간과 동시 실행)
+    - cron: '0 18 * * 1'  # 매주 월요일 03:00 KST — 주간 통계 + 단지 가격 갱신
   workflow_dispatch:       # 수동 실행 가능
 
 jobs:
@@ -39,6 +39,28 @@ jobs:
 
       - name: 전국 아파트 실거래가 통계 집계 (주간)
         run: node scripts/aggregate-weekly-trade-stats.mjs
+        env:
+          MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+  enrich-complex-prices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.schedule, '* * 1')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: 패키지 설치
+        run: npm ci --ignore-scripts
+
+      - name: 단지 실거래 평균가 갱신 (주 1회 전체 재계산)
+        run: node scripts/enrich-prices.mjs --force
         env:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

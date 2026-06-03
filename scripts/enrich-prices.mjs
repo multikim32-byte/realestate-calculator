@@ -27,11 +27,11 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 config({ path: resolve(__dirname, '../.env.local') });
 
 const MOLIT_KEY = process.env.MOLIT_API_KEY?.trim();
-const SB_URL    = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SB_URL    = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
 const SB_KEY    = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!MOLIT_KEY || !SB_URL || !SB_KEY) {
-  console.error('❌ 필수 환경변수 없음: MOLIT_API_KEY, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY');
+  console.error('❌ 필수 환경변수 없음: MOLIT_API_KEY, NEXT_PUBLIC_SUPABASE_URL(또는 SUPABASE_URL), SUPABASE_SERVICE_ROLE_KEY');
   process.exit(1);
 }
 
