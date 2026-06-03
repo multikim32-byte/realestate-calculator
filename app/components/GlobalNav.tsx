@@ -13,16 +13,16 @@ import KakaoChannelButton from './KakaoChannelButton';
 
 // 주요 메뉴 — 항상 표시
 const PRIMARY_NAV = [
-  { href: '/',           label: '청약정보',  icon: ClipboardList, exact: true },
-  { href: '/unsold',     label: '미분양정보', icon: Tag },
-  { href: '/trade',      label: '실거래가',  icon: BarChart2 },
-  { href: '/map',        label: '지도',      icon: Map },
-  { href: '/complex',    label: '단지정보',  icon: Search },
-  { href: '/calculator', label: '계산기',    icon: Calculator },
+  { href: '/',           label: '청약정보',       icon: ClipboardList, exact: true },
+  { href: '/unsold',     label: '미분양정보',      icon: Tag },
+  { href: '/map',        label: '지도',           icon: Map },
+  { href: '/trade',      label: '실거래가 분석',   icon: BarChart2 },
+  { href: '/calculator', label: '계산기',         icon: Calculator },
 ];
 
 // 더보기 드롭다운
 const MORE_NAV = [
+  { href: '/complex',    label: '단지정보',  icon: Search },
   { href: '/calendar',   label: '청약달력',  icon: Calendar },
   { href: '/rental',     label: '임대정보',  icon: Building2 },
   { href: '/region/서울', label: '지역별',   icon: Map, matchPrefix: '/region' },
