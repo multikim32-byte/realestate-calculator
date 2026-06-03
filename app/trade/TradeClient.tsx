@@ -11,6 +11,7 @@ import KakaoMap from '@/app/components/KakaoMap';
 const VolumeChart = dynamic(() => import('@/app/components/VolumeChart'), { ssr: false });
 const RentPriceTrendChart = dynamic(() => import('@/app/components/RentPriceTrendChart'), { ssr: false });
 const MapRegionPicker = dynamic(() => import('@/app/components/MapRegionPicker'), { ssr: false });
+const DistrictTrendChart = dynamic(() => import('@/app/components/DistrictTrendChart'), { ssr: false });
 
 const AptPriceTrendChart = dynamic(() => import('@/app/components/AptPriceTrendChart'), {
   ssr: false,
@@ -471,6 +472,9 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
           </button>
         </div>
       </div>
+
+      {/* ── 지역 시세 추이 차트 (항상 표시) ── */}
+      {lawdCd && <DistrictTrendChart lawdCd={lawdCd} sigunguName={sigunguName} />}
 
       {/* ── 평형 필터 ── */}
       {(searched || rentSearched) && (
