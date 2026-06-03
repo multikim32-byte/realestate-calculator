@@ -341,17 +341,17 @@ export default function MapClient({ unsoldListings }: Props) {
         : `${Math.round(avgPrice / 1000)}천`;
       const nameLabel = c.name.length > 8 ? c.name.slice(0, 7) + '…' : c.name;
       const ld = document.createElement('div');
-      ld.style.cssText = 'position:relative;transform:translate(-50%,calc(-100% - 4px));cursor:pointer';
+      ld.style.cssText = 'transform:translateX(-50%);cursor:pointer;text-align:center';
       ld.innerHTML = `
-        <div style="background:#1e3a8a;color:#fff;border-radius:8px;padding:${hasPrice ? '4px 10px' : '5px 10px'};text-align:center;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);min-width:48px;">
+        <div style="display:inline-block;background:#1e3a8a;color:#fff;border-radius:8px;padding:${hasPrice ? '4px 10px' : '5px 10px'};white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);min-width:48px;">
           ${hasPrice
             ? `<div style="font-size:10px;opacity:0.75;line-height:1.3">${avgPyeong}평</div><div style="font-size:13px;font-weight:800;line-height:1.3">${priceText}</div>`
             : `<div style="font-size:11px;font-weight:700;line-height:1.4">${nameLabel}</div>`
           }
         </div>
-        <div style="position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid #1e3a8a"></div>
+        <div style="width:0;height:0;margin:0 auto;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid #1e3a8a"></div>
       `;
-      const overlay = new window.kakao.maps.CustomOverlay({ position: pos, content: ld, yAnchor: 0 });
+      const overlay = new window.kakao.maps.CustomOverlay({ position: pos, content: ld, yAnchor: 1 });
 
       window.kakao.maps.event.addListener(marker, 'click', () => {
         setSelectedComplex(c);
