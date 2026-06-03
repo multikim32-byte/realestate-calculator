@@ -261,6 +261,8 @@ export default function MapClient({ unsoldListings }: Props) {
   const [ageTab, setAgeTab] = useState<AgeTab>('all');
   const [dongPanel, setDongPanel] = useState<{ districtName: string; code: string; dongs: DongPrice[] } | null>(null);
   const [dongLoading, setDongLoading] = useState(false);
+  const [mapSearch, setMapSearch] = useState('');
+  const [mapSearching, setMapSearching] = useState(false);
   const priceModeRef = useRef(false);
   const ageTabRef = useRef<AgeTab>('all');
   const priceOverlaysRef = useRef<PriceOverlayItem[]>([]);
@@ -382,6 +384,38 @@ export default function MapClient({ unsoldListings }: Props) {
 
     setPlaced(p => ({ ...p, complex: complexes.length }));
     setTotal(t => ({ ...t, complex: complexes.length }));
+  }, []);
+
+  // 지역 검색 → 지도 이동
+  const handleMapSearch = useCallback((query: string) => {
+    const map = mapInst.current;
+    const ps  = placesRef.current;
+    if (!map || !ps || !query.trim()) return;
+    setMapSearching(true);
+    ps.keywordSearch(query.trim(), (result: { y: string; x: string }[], status: string) => {
+      setMapSearching(false);
+      if (status !== 'OK' || !result.length) return;
+      const lat = parseFloat(result[0].y);
+      const lng = parseFloat(result[0].x);
+      map.setCenter(new window.kakao.maps.LatLng(lat, lng));
+      map.setLevel(5);
+      loadedComplexBoundsRef.current = null;
+    });
+  }, []);
+
+  // 내 위치로 이동
+  const handleMyLocation = useCallback(() => {
+    const map = mapInst.current;
+    if (!map || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        map.setCenter(new window.kakao.maps.LatLng(coords.latitude, coords.longitude));
+        map.setLevel(5);
+        loadedComplexBoundsRef.current = null;
+      },
+      () => alert('위치 정보를 가져올 수 없습니다. 브라우저 위치 권한을 확인해주세요.'),
+      { timeout: 8000 },
+    );
   }, []);
 
   // 탭 변경 시 오버레이 색상/내용 즉시 업데이트
@@ -870,6 +904,48 @@ export default function MapClient({ unsoldListings }: Props) {
     <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
       {/* 지도 */}
       <div ref={mapRef} style={{ width: '100%', height: '100%', touchAction: 'none' }} />
+
+      {/* 지역 검색창 */}
+      <div style={{
+        position: 'absolute', top: 12, right: 12,
+        zIndex: 10, display: 'flex', gap: 6, alignItems: 'center',
+      }}>
+        <form
+          onSubmit={e => { e.preventDefault(); handleMapSearch(mapSearch); }}
+          style={{ display: 'flex', background: '#fff', borderRadius: 10, boxShadow: '0 2px 12px rgba(0,0,0,0.15)', overflow: 'hidden' }}
+        >
+          <input
+            type="text"
+            value={mapSearch}
+            onChange={e => setMapSearch(e.target.value)}
+            placeholder="지역·주소 검색"
+            style={{
+              border: 'none', outline: 'none', padding: '9px 12px',
+              fontSize: 13, width: 160, color: '#1e293b', background: 'transparent',
+            }}
+          />
+          <button type="submit" disabled={mapSearching} style={{
+            border: 'none', background: mapSearching ? '#9ca3af' : '#1d4ed8',
+            color: '#fff', padding: '0 12px', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+          }}>
+            {mapSearching ? '…' : '🔍'}
+          </button>
+        </form>
+
+        {/* 내 위치 버튼 */}
+        <button
+          onClick={handleMyLocation}
+          title="내 위치로 이동"
+          style={{
+            background: '#fff', border: 'none', borderRadius: 10,
+            width: 38, height: 38, cursor: 'pointer', fontSize: 17,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          📍
+        </button>
+      </div>
 
 
       {/* 단지 시세 — 왼쪽 슬라이드 패널 */}
