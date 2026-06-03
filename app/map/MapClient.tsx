@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { MapUnsoldItem, MapSaleItem } from './page';
 import type { DistrictPrice, PriceStats } from '@/app/api/map-prices/route';
 import type { DongPrice } from '@/app/api/map-prices/dong/route';
+import type { MapComplex } from '@/app/api/map/complexes/route';
 
 type AgeTab = 'all' | 'y5' | 'y10' | 'y15' | 'y20';
 
@@ -36,9 +37,10 @@ interface PinInfo {
   item: MapUnsoldItem | MapSaleItem;
 }
 
-const KAKAO_KEY    = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
-const UNSOLD_COLOR = '#1d4ed8';
-const SALE_COLOR   = '#059669';
+const KAKAO_KEY      = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
+const UNSOLD_COLOR   = '#1d4ed8';
+const SALE_COLOR     = '#059669';
+const COMPLEX_COLOR  = '#7c3aed'; // 단지 시세 — 보라
 const CONCURRENCY  = 8;
 
 // 가격 티어 — ㎡당 만원 기준
@@ -229,12 +231,19 @@ export default function MapClient({ unsoldListings }: Props) {
   const mapInst    = useRef<KakaoMapInstance | null>(null);
   const markersRef = useRef<{ m: KakaoMarker; type: PinType }[]>([]);
 
-  const [filter, setFilter]   = useState({ unsold: true, sale: true });
-  const filterRef = useRef({ unsold: true, sale: true });
+  const [filter, setFilter]   = useState({ unsold: true, sale: true, complex: false });
+  const filterRef = useRef({ unsold: true, sale: true, complex: false });
 
   // 실제 지도에 올라간 마커 수 (geocoding 성공한 것만)
-  const [placed, setPlaced]   = useState({ unsold: 0, sale: 0 });
-  const [total, setTotal]     = useState({ unsold: unsoldListings.length, sale: 0 });
+  const [placed, setPlaced]   = useState({ unsold: 0, sale: 0, complex: 0 });
+  const [total, setTotal]     = useState({ unsold: unsoldListings.length, sale: 0, complex: 0 });
+
+  // 단지 관련
+  type KakaoClusterer = { clear(): void; addMarker(m: KakaoMarker): void; addMarkers(m: KakaoMarker[]): void };
+  const complexMarkersRef     = useRef<{ m: KakaoMarker; overlay: KakaoCustomOverlay; data: MapComplex }[]>([]);
+  const complexClustererRef   = useRef<KakaoClusterer | null>(null);
+  const loadedComplexBoundsRef = useRef<string | null>(null); // 마지막 로드한 bounds 키
+  const [selectedComplex, setSelectedComplex] = useState<MapComplex | null>(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<PinInfo | null>(null);
 
@@ -272,11 +281,91 @@ export default function MapClient({ unsoldListings }: Props) {
         ref.current.addMarkers(markersRef.current.filter(m => m.type === type).map(m => m.m));
       }
     }
+    // 단지 핀 토글
+    if (complexClustererRef.current) {
+      complexClustererRef.current.clear();
+      if (next.complex) {
+        complexClustererRef.current.addMarkers(complexMarkersRef.current.map(c => c.m));
+      }
+    }
+    complexMarkersRef.current.forEach(({ overlay }) => {
+      overlay.setMap(next.complex && mapInst.current ? mapInst.current : null);
+    });
     // 라벨도 함께 토글
     pinLabelsRef.current.forEach(({ overlay, type }) => {
       overlay.setMap(next[type] && labelsVisibleRef.current ? mapInst.current : null);
     });
   }
+
+  // 뷰포트 내 단지 핀 로드
+  const loadComplexesInView = useCallback(async () => {
+    if (!mapInst.current || !filterRef.current.complex) return;
+    const map = mapInst.current;
+    const bounds = map.getBounds();
+    if (!bounds) return;
+
+    const sw = bounds.getSouthWest();
+    const ne = bounds.getNorthEast();
+    const boundsKey = `${sw.getLat().toFixed(3)},${sw.getLng().toFixed(3)},${ne.getLat().toFixed(3)},${ne.getLng().toFixed(3)}`;
+    if (boundsKey === loadedComplexBoundsRef.current) return;
+    loadedComplexBoundsRef.current = boundsKey;
+
+    const res = await fetch(`/api/map/complexes?swLat=${sw.getLat()}&swLng=${sw.getLng()}&neLat=${ne.getLat()}&neLng=${ne.getLng()}`);
+    const { complexes } = await res.json() as { complexes: MapComplex[] };
+
+    if (!mapInst.current || !filterRef.current.complex) return;
+
+    // 기존 단지 마커 제거
+    if (complexClustererRef.current) complexClustererRef.current.clear();
+    complexMarkersRef.current.forEach(({ overlay }) => overlay.setMap(null));
+    complexMarkersRef.current = [];
+
+    // 새 마커 생성
+    const complexImg = new window.kakao.maps.MarkerImage(
+      makeMarkerSvg(COMPLEX_COLOR),
+      new window.kakao.maps.Size(20, 20),
+      { offset: new window.kakao.maps.Point(10, 10) },
+    );
+
+    for (const c of complexes) {
+      const pos = new window.kakao.maps.LatLng(c.lat, c.lng);
+      const marker = new window.kakao.maps.Marker({ position: pos, image: complexImg, title: c.name });
+
+      // 라벨 오버레이
+      const ld = document.createElement('div');
+      ld.style.cssText = [
+        'transform:translate(-50%,calc(-100% - 14px))',
+        `border:1.5px solid ${COMPLEX_COLOR}`,
+        'background:#fff', 'border-radius:6px',
+        'padding:3px 8px', 'font-size:11px', 'font-weight:700',
+        'color:#1e293b', 'white-space:nowrap',
+        'box-shadow:0 2px 8px rgba(0,0,0,0.15)', 'cursor:pointer',
+      ].join(';');
+      const label = c.name.length > 10 ? c.name.slice(0, 9) + '…' : c.name;
+      ld.innerHTML = label;
+      const overlay = new window.kakao.maps.CustomOverlay({ position: pos, content: ld, yAnchor: 0 });
+
+      window.kakao.maps.event.addListener(marker, 'click', () => {
+        setSelectedComplex(c);
+        setSelected(null);
+        map.panTo(pos);
+      });
+      ld.addEventListener('click', () => {
+        setSelectedComplex(c);
+        setSelected(null);
+        map.panTo(pos);
+      });
+
+      const level = map.getLevel();
+      if (level <= 5) overlay.setMap(map);
+
+      complexMarkersRef.current.push({ m: marker, overlay, data: c });
+      complexClustererRef.current?.addMarker(marker);
+    }
+
+    setPlaced(p => ({ ...p, complex: complexes.length }));
+    setTotal(t => ({ ...t, complex: complexes.length }));
+  }, []);
 
   // 탭 변경 시 오버레이 색상/내용 즉시 업데이트
   function applyAgeTab(tab: AgeTab) {
@@ -531,10 +620,27 @@ export default function MapClient({ unsoldListings }: Props) {
       saleClustererRef.current = new window.kakao.maps.MarkerClusterer({
         map, averageCenter: true, minLevel: 7, styles: clusterStyle(SALE_COLOR),
       });
+      complexClustererRef.current = new window.kakao.maps.MarkerClusterer({
+        map, averageCenter: true, minLevel: 6, styles: clusterStyle(COMPLEX_COLOR),
+      });
 
       // 지도 이동/줌 시 처리
       window.kakao.maps.event.addListener(map, 'idle', () => {
         const level = map.getLevel();
+
+        // 단지 핀: 레벨 5 이하에서 뷰포트 기준 로드
+        if (filterRef.current.complex) {
+          if (level <= 5) {
+            loadComplexesInView();
+          } else {
+            // 줌 아웃 시 라벨만 숨김, 마커는 클러스터러가 관리
+            complexMarkersRef.current.forEach(({ overlay }) => overlay.setMap(null));
+          }
+          // 레벨 5 이하에서 라벨 표시
+          if (level <= 5) {
+            complexMarkersRef.current.forEach(({ overlay }) => overlay.setMap(map));
+          }
+        }
 
         // 핀 라벨: 레벨 6 이하에서 단지명·가격 표시
         const showLabels = level <= 6;
@@ -770,6 +876,34 @@ export default function MapClient({ unsoldListings }: Props) {
           청약 {loading ? `${placed.sale}/${total.sale}` : placed.sale}
         </button>
 
+        {/* 단지 시세 필터 */}
+        <button
+          onClick={() => {
+            const next = { ...filterRef.current, complex: !filterRef.current.complex };
+            applyFilter(next);
+            if (next.complex) loadComplexesInView();
+            else {
+              if (complexClustererRef.current) complexClustererRef.current.clear();
+              complexMarkersRef.current.forEach(({ overlay }) => overlay.setMap(null));
+              complexMarkersRef.current = [];
+              loadedComplexBoundsRef.current = null;
+            }
+          }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '9px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
+            background: filter.complex ? COMPLEX_COLOR : '#f1f5f9',
+            color: filter.complex ? '#fff' : '#64748b',
+            fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
+          }}
+        >
+          <span style={{
+            display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
+            background: filter.complex ? '#fff' : COMPLEX_COLOR,
+          }} />
+          단지 시세{filter.complex ? ` ${placed.complex}` : ''}
+        </button>
+
         <div style={{ width: 1, height: 16, background: '#e5e7eb' }} />
 
         {/* 시세 오버레이 토글 */}
@@ -816,6 +950,57 @@ export default function MapClient({ unsoldListings }: Props) {
           </span>
         )}
       </div>
+
+      {/* 단지 시세 카드 */}
+      {selectedComplex && !selected && (
+        <>
+          <div style={{ position: 'absolute', inset: 0, zIndex: 15 }} onClick={() => setSelectedComplex(null)} />
+          <div style={{
+            position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)',
+            width: 'min(360px, calc(100vw - 32px))',
+            background: '#fff', borderRadius: 16,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            zIndex: 20, overflow: 'hidden',
+          }}>
+            {/* 헤더 */}
+            <div style={{ background: COMPLEX_COLOR, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>{selectedComplex.name}</div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 2 }}>
+                  {selectedComplex.sido} {selectedComplex.sigungu}
+                </div>
+              </div>
+              <button onClick={() => setSelectedComplex(null)}
+                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 20, width: 28, height: 28, cursor: 'pointer', color: '#fff', fontSize: 16 }}>
+                ✕
+              </button>
+            </div>
+            {/* 기본 정보 */}
+            <div style={{ padding: '14px 16px' }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+                {selectedComplex.total_units && (
+                  <span style={{ fontSize: 12, background: '#ede9fe', color: COMPLEX_COLOR, padding: '3px 10px', borderRadius: 12, fontWeight: 700 }}>
+                    {selectedComplex.total_units.toLocaleString()}세대
+                  </span>
+                )}
+                {selectedComplex.built_year && (
+                  <span style={{ fontSize: 12, background: '#f0fdf4', color: '#16a34a', padding: '3px 10px', borderRadius: 12, fontWeight: 700 }}>
+                    {selectedComplex.built_year}년
+                  </span>
+                )}
+              </div>
+              <Link href={`/complex/${encodeURIComponent(selectedComplex.slug)}`}
+                style={{
+                  display: 'block', textAlign: 'center', padding: '11px 0',
+                  background: COMPLEX_COLOR, color: '#fff', borderRadius: 10,
+                  textDecoration: 'none', fontSize: 14, fontWeight: 700,
+                }}>
+                실거래 시세 상세 보기 →
+              </Link>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* 선택된 매물 카드 */}
       {selected && (
