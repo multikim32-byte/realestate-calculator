@@ -76,49 +76,6 @@ function parseTotalCount(xml: string): number {
   return parseInt(xmlVal(xml, 'totalCount')) || 0;
 }
 
-function parsePropertyRentItems(xml: string, nameTag: string): RentItem[] {
-  const items: RentItem[] = [];
-  const blocks = xml.match(/<item>([\s\S]*?)<\/item>/g) ?? [];
-  for (const block of blocks) {
-    const deposit = parseAmount(xmlVal(block, 'deposit'));
-    if (deposit === 0) continue;
-    const year  = xmlVal(block, 'dealYear');
-    const month = xmlVal(block, 'dealMonth').padStart(2, '0');
-    const day   = xmlVal(block, 'dealDay').padStart(2, '0');
-    items.push({
-      name:           xmlVal(block, nameTag),
-      dong:           xmlVal(block, 'umdNm'),
-      area:           parseFloat(xmlVal(block, 'excluUseAr')) || 0,
-      floor:          parseInt(xmlVal(block, 'floor')) || 0,
-      deposit,
-      monthlyRent:    parseAmount(xmlVal(block, 'monthlyRent')),
-      contractTerm:   xmlVal(block, 'contractTerm').trim(),
-      contractType:   xmlVal(block, 'contractType').trim(),
-      preDeposit:     parseAmount(xmlVal(block, 'preDeposit')),
-      preMonthlyRent: parseAmount(xmlVal(block, 'preMonthlyRent')),
-      builtYear:      parseInt(xmlVal(block, 'buildYear')) || 0,
-      dealDate:       year && month && day ? `${year}-${month}-${day}` : '',
-    });
-  }
-  return items;
-}
-
-export async function fetchPropertyRentList(
-  type: 'offi' | 'villa',
-  lawdCd: string,
-  dealYmd: string,
-  page = 1,
-  numOfRows = 100,
-): Promise<{ items: RentItem[]; total: number }> {
-  const key = process.env.MOLIT_API_KEY?.trim();
-  if (!key) throw new Error('MOLIT_API_KEY가 설정되지 않았습니다.');
-  const svc     = type === 'offi' ? 'RTMSDataSvcOffiRent/getRTMSDataSvcOffiRent' : 'RTMSDataSvcRHRent/getRTMSDataSvcRHRent';
-  const nameTag = type === 'offi' ? 'offiNm' : 'mhouseNm';
-  const url = `https://apis.data.go.kr/1613000/${svc}?serviceKey=${key}&pageNo=${page}&numOfRows=${numOfRows}&LAWD_CD=${lawdCd}&DEAL_YMD=${dealYmd}`;
-  const res = await fetchWithTimeout(url, { cache: 'no-store' });
-  const xml = await res.text();
-  return { items: parsePropertyRentItems(xml, nameTag), total: parseTotalCount(xml) };
-}
 
 // ─── 공개 함수 ────────────────────────────────────────────────────────────────
 

@@ -114,55 +114,6 @@ export async function fetchTradeList(
   };
 }
 
-// ─── 오피스텔·연립다세대 공통 파서 ────────────────────────────────────────────
-
-function parsePropertyItems(xml: string, nameTag: string): TradeItem[] {
-  const items: TradeItem[] = [];
-  const blocks = xml.match(/<item>([\s\S]*?)<\/item>/g) ?? [];
-  for (const block of blocks) {
-    const cdealType = xmlVal(block, 'cdealType').trim();
-    if (cdealType && cdealType !== ' ') continue;
-    const priceRaw = xmlVal(block, 'dealAmount').replace(/,/g, '').replace(/\s/g, '');
-    const price = parseInt(priceRaw) || 0;
-    if (price === 0) continue;
-    const year  = xmlVal(block, 'dealYear');
-    const month = xmlVal(block, 'dealMonth').padStart(2, '0');
-    const day   = xmlVal(block, 'dealDay').padStart(2, '0');
-    items.push({
-      name:       xmlVal(block, nameTag),
-      dong:       xmlVal(block, 'umdNm'),
-      aptDong:    '',
-      area:       parseFloat(xmlVal(block, 'excluUseAr')) || 0,
-      floor:      parseInt(xmlVal(block, 'floor')) || 0,
-      price,
-      builtYear:  parseInt(xmlVal(block, 'buildYear')) || 0,
-      dealDate:   year && month && day ? `${year}-${month}-${day}` : '',
-      rgstDate:   '',
-      dealType:   xmlVal(block, 'dealingGbn'),
-      sellerType: xmlVal(block, 'slerGbn').trim(),
-      buyerType:  xmlVal(block, 'buyerGbn').trim(),
-    });
-  }
-  return items;
-}
-
-export async function fetchPropertyTradeList(
-  type: 'offi' | 'villa',
-  lawdCd: string,
-  dealYmd: string,
-  page = 1,
-  numOfRows = 100,
-): Promise<{ items: TradeItem[]; total: number }> {
-  const key = process.env.MOLIT_API_KEY?.trim();
-  if (!key) throw new Error('MOLIT_API_KEY가 설정되지 않았습니다.');
-  const svc   = type === 'offi' ? 'RTMSDataSvcOffiTrade/getRTMSDataSvcOffiTrade' : 'RTMSDataSvcRHTrade/getRTMSDataSvcRHTrade';
-  const nameTag = type === 'offi' ? 'offiNm' : 'mhouseNm';
-  const url = `https://apis.data.go.kr/1613000/${svc}?serviceKey=${key}&pageNo=${page}&numOfRows=${numOfRows}&LAWD_CD=${lawdCd}&DEAL_YMD=${dealYmd}`;
-  const res = await fetchWithTimeout(url, { cache: 'no-store' });
-  const xml = await res.text();
-  return { items: parsePropertyItems(xml, nameTag), total: parseTotalCount(xml) };
-}
-
 // ─── 지역 코드 매핑 ──────────────────────────────────────────────────────────
 
 export type SidoName = keyof typeof LAWD_CODE_MAP;
