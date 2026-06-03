@@ -231,8 +231,8 @@ export default function MapClient({ unsoldListings }: Props) {
   const mapInst    = useRef<KakaoMapInstance | null>(null);
   const markersRef = useRef<{ m: KakaoMarker; type: PinType }[]>([]);
 
-  const [filter, setFilter]   = useState({ unsold: true, sale: true, complex: false });
-  const filterRef = useRef({ unsold: true, sale: true, complex: false });
+  const [filter, setFilter]   = useState({ unsold: true, sale: true, complex: true });
+  const filterRef = useRef({ unsold: true, sale: true, complex: true });
 
   // 실제 지도에 올라간 마커 수 (geocoding 성공한 것만)
   const [placed, setPlaced]   = useState({ unsold: 0, sale: 0, complex: 0 });
@@ -793,6 +793,8 @@ export default function MapClient({ unsoldListings }: Props) {
         });
 
         setLoading(false);
+        // 단지 시세 기본 로드 (약간 지연 후 지도가 안정되면 실행)
+        setTimeout(() => loadComplexesInView(), 800);
       })().catch(err => { console.error('[지도] 핀 배치 오류:', err); setLoading(false); });
       } catch (err) {
         console.error('[지도] 초기화 오류:', err);
@@ -840,43 +842,7 @@ export default function MapClient({ unsoldListings }: Props) {
         </span>
         <div style={{ width: 1, height: 16, background: '#e5e7eb' }} />
 
-        {/* 미분양 필터 — 실제 마커 수 표시 */}
-        <button
-          onClick={() => applyFilter({ ...filterRef.current, unsold: !filterRef.current.unsold })}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '9px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
-            background: filter.unsold ? UNSOLD_COLOR : '#f1f5f9',
-            color: filter.unsold ? '#fff' : '#64748b',
-            fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
-          }}
-        >
-          <span style={{
-            display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
-            background: filter.unsold ? '#fff' : UNSOLD_COLOR,
-          }} />
-          미분양 {loading ? `${placed.unsold}/${total.unsold}` : placed.unsold}
-        </button>
-
-        {/* 청약 필터 */}
-        <button
-          onClick={() => applyFilter({ ...filterRef.current, sale: !filterRef.current.sale })}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '9px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
-            background: filter.sale ? SALE_COLOR : '#f1f5f9',
-            color: filter.sale ? '#fff' : '#64748b',
-            fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
-          }}
-        >
-          <span style={{
-            display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
-            background: filter.sale ? '#fff' : SALE_COLOR,
-          }} />
-          청약 {loading ? `${placed.sale}/${total.sale}` : placed.sale}
-        </button>
-
-        {/* 단지 시세 필터 */}
+        {/* 단지 시세 필터 — 기본 ON */}
         <button
           onClick={() => {
             const next = { ...filterRef.current, complex: !filterRef.current.complex };
@@ -902,6 +868,42 @@ export default function MapClient({ unsoldListings }: Props) {
             background: filter.complex ? '#fff' : COMPLEX_COLOR,
           }} />
           단지 시세{filter.complex ? ` ${placed.complex}` : ''}
+        </button>
+
+        {/* 청약 필터 */}
+        <button
+          onClick={() => applyFilter({ ...filterRef.current, sale: !filterRef.current.sale })}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '9px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
+            background: filter.sale ? SALE_COLOR : '#f1f5f9',
+            color: filter.sale ? '#fff' : '#64748b',
+            fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
+          }}
+        >
+          <span style={{
+            display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
+            background: filter.sale ? '#fff' : SALE_COLOR,
+          }} />
+          청약 {loading ? `${placed.sale}/${total.sale}` : placed.sale}
+        </button>
+
+        {/* 미분양 필터 */}
+        <button
+          onClick={() => applyFilter({ ...filterRef.current, unsold: !filterRef.current.unsold })}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '9px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
+            background: filter.unsold ? UNSOLD_COLOR : '#f1f5f9',
+            color: filter.unsold ? '#fff' : '#64748b',
+            fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
+          }}
+        >
+          <span style={{
+            display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
+            background: filter.unsold ? '#fff' : UNSOLD_COLOR,
+          }} />
+          미분양 {loading ? `${placed.unsold}/${total.unsold}` : placed.unsold}
         </button>
 
 
