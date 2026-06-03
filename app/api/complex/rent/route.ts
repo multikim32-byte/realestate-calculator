@@ -27,8 +27,11 @@ function parseRentXml(xml: string, aptName: string) {
     const day     = get('dealDay').padStart(2, '0');
     const area    = parseFloat(get('excluUseAr')) || 0;
     const floor   = parseInt(get('floor')) || 0;
-    const deposit = parseInt(get('deposit').replace(/,/g, '')) || 0;
-    const monthly = parseInt(get('monthlyRent').replace(/,/g, '')) || 0;
+    // MOLIT API 버전에 따라 태그명 상이 — 영문/한글 모두 시도
+    const depositRaw = get('deposit') || get('보증금') || get('보증금액') || '0';
+    const monthlyRaw = get('monthlyRent') || get('월세') || get('월세금액') || '0';
+    const deposit = parseInt(depositRaw.replace(/,/g, '')) || 0;
+    const monthly = parseInt(monthlyRaw.replace(/,/g, '')) || 0;
     if (!year || !area) continue;
     items.push({ date: `${year}-${month}-${day}`, area, floor, deposit, monthly });
   }

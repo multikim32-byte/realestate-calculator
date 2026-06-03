@@ -957,8 +957,12 @@ export default function MapClient({ unsoldListings }: Props) {
         const fmtPrice = (v: number) => v >= 10000 ? `${(v / 10000).toFixed(1)}억` : `${Math.round(v / 1000)}천만`;
         const toPyeong = (area: number) => Math.round(area / 3.3);
 
-        // 현재 탭 raw 데이터
-        const rawList = dealType === '매매' ? (complexTrades ?? []) : (complexRents ?? []);
+        // 현재 탭 raw 데이터 (전세 = monthly===0, 월세 = monthly>0)
+        const rawList = dealType === '매매'
+          ? (complexTrades ?? [])
+          : dealType === '전세'
+            ? (complexRents ?? []).filter(t => t.monthly === 0)
+            : (complexRents ?? []).filter(t => t.monthly > 0);
 
         // 면적 목록 (중복 제거, 오름차순)
         const pyeongList = [...new Set(rawList.map(t => toPyeong(t.area)))].sort((a, b) => a - b);
@@ -1040,13 +1044,12 @@ export default function MapClient({ unsoldListings }: Props) {
                   <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', flexShrink: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', marginBottom: 6 }}>{address}</div>
                     <div style={{ fontSize: 12, color: '#6b7280', display: 'flex', flexWrap: 'wrap', gap: '2px 12px' }}>
-                      {selectedComplex.total_units && (
-                        <span>{selectedComplex.total_units.toLocaleString()}세대</span>
-                      )}
-                      {builtYear && (
-                        <span>{builtYear}년 준공{yearCount !== null && yearCount >= 0 ? ` (${yearCount}년차)` : ''}</span>
-                      )}
-                      {floorCount && <span>최고 {floorCount}층</span>}
+                      <span>{selectedComplex.total_units ? `${selectedComplex.total_units.toLocaleString()}세대` : '세대 정보 없음'}</span>
+                      {builtYear
+                        ? <span>{builtYear}년 준공{yearCount !== null && yearCount >= 0 ? ` (${yearCount}년차)` : ''}</span>
+                        : null
+                      }
+                      {floorCount ? <span>최고 {floorCount}층</span> : null}
                     </div>
                   </div>
                 );
@@ -1070,13 +1073,17 @@ export default function MapClient({ unsoldListings }: Props) {
                     <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                         <span style={{ fontSize: 12, color: '#6b7280' }}>면적</span>
-                        <select
-                          value={curPyeong}
-                          onChange={e => setSelPyeong(Number(e.target.value))}
-                          style={{ fontSize: 12, border: '1px solid #e5e7eb', borderRadius: 6, padding: '3px 8px', color: '#1e293b', background: '#fff', cursor: 'pointer' }}
-                        >
-                          {pyeongList.map(p => <option key={p} value={p}>{p}평</option>)}
-                        </select>
+                        {pyeongList.length === 0 ? (
+                          <span style={{ fontSize: 12, color: '#9ca3af' }}>거래 데이터 없음</span>
+                        ) : (
+                          <select
+                            value={curPyeong}
+                            onChange={e => setSelPyeong(Number(e.target.value))}
+                            style={{ fontSize: 12, border: '1px solid #e5e7eb', borderRadius: 6, padding: '3px 8px', color: '#1e293b', background: '#fff', cursor: 'pointer' }}
+                          >
+                            {pyeongList.map(p => <option key={p} value={p}>{p}평</option>)}
+                          </select>
+                        )}
                       </div>
                       {lastMonthAvg > 0 && (
                         <>
