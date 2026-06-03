@@ -14,6 +14,7 @@ const MapRegionPicker = dynamic(() => import('@/app/components/MapRegionPicker')
 const DistrictTrendChart  = dynamic(() => import('@/app/components/DistrictTrendChart'), { ssr: false });
 const NationalRankings   = dynamic(() => import('@/app/components/NationalRankings'), { ssr: false });
 const JeonseExpiryChart  = dynamic(() => import('@/app/components/JeonseExpiryChart'), { ssr: false });
+const MaemaeSupplyChart  = dynamic(() => import('@/app/components/MaemaeSupplyChart'), { ssr: false });
 
 const AptPriceTrendChart = dynamic(() => import('@/app/components/AptPriceTrendChart'), {
   ssr: false,
@@ -478,8 +479,13 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
       {/* ── 지역 시세 추이 차트 (항상 표시) ── */}
       {lawdCd && <DistrictTrendChart lawdCd={lawdCd} sigunguName={sigunguName} />}
 
-      {/* ── 전세 만료 파동 차트 ── */}
-      {lawdCd && <JeonseExpiryChart lawdCd={lawdCd} sigunguName={sigunguName} />}
+      {/* ── 공급 예측 (전세 만료 + 매매 비과세 도달) ── */}
+      {lawdCd && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 0 }}>
+          <JeonseExpiryChart lawdCd={lawdCd} sigunguName={sigunguName} />
+          <MaemaeSupplyChart lawdCd={lawdCd} sigunguName={sigunguName} />
+        </div>
+      )}
 
       {/* ── 전국 실거래 랭킹 ── */}
       <NationalRankings />
