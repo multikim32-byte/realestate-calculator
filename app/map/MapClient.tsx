@@ -595,7 +595,7 @@ export default function MapClient({ unsoldListings }: Props) {
       // 기본: 서울시청 / 접속자 위치 허용 시 해당 위치로 이동
       const map = new window.kakao.maps.Map(mapRef.current, {
         center: new window.kakao.maps.LatLng(37.5665, 126.9780),
-        level: 7,
+        level: 5,
       });
       mapInst.current = map;
 
@@ -604,6 +604,7 @@ export default function MapClient({ unsoldListings }: Props) {
           ({ coords }) => {
             map.setCenter(new window.kakao.maps.LatLng(coords.latitude, coords.longitude));
             map.setLevel(5);
+            loadedComplexBoundsRef.current = null; // 위치 이동 후 단지 핀 강제 재로드
           },
           () => { /* 거부 시 서울시청 유지 */ },
           { timeout: 5000, maximumAge: 60000 },
