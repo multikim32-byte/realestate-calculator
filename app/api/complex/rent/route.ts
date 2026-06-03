@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { LAWD_CODE_MAP } from '@/lib/tradeApi';
 import { fetchWithTimeout } from '@/lib/fetchWithTimeout';
 
-const RENT_URL = 'https://apis.data.go.kr/1613000/RTMSDataSvcAptRentDev/getRTMSDataSvcAptRentDev';
+const RENT_URL = 'https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent';
 
 function getLawdCode(sido: string, sigungu: string): string | null {
   const districts = LAWD_CODE_MAP[sido as keyof typeof LAWD_CODE_MAP] ?? [];
