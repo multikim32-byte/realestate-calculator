@@ -246,6 +246,7 @@ export default function MapClient({ unsoldListings }: Props) {
   const [selectedComplex, setSelectedComplex] = useState<MapComplex | null>(null);
   const [complexTrades, setComplexTrades] = useState<Array<{ date: string; area: number; price: number; floor: number }> | null>(null);
   const [complexRents, setComplexRents]   = useState<Array<{ date: string; area: number; floor: number; deposit: number; monthly: number }> | null>(null);
+  const [complexBuildYear, setComplexBuildYear] = useState<number | null>(null);
   const [complexNearby, setComplexNearby] = useState<{ dong?: string; floor_count?: number; nearby_transit?: Array<{ name: string; distance: number; category?: string }>; nearby_schools?: Array<{ name: string; distance: number; school_type?: string }>; nearby_infra?: Array<{ name: string; distance: number; label?: string; category?: string }> } | null>(null);
   const [dealType, setDealType] = useState<'매매' | '전세' | '월세'>('매매');
   const [selPyeong, setSelPyeong] = useState<number>(0);
@@ -600,6 +601,7 @@ export default function MapClient({ unsoldListings }: Props) {
     }
     setDetailLoading(true);
     setComplexTrades(null); setComplexRents(null); setComplexNearby(null);
+    setComplexBuildYear(null);
     setDealType('매매'); setSelPyeong(0);
     const q = `name=${encodeURIComponent(selectedComplex.name)}&sido=${encodeURIComponent(selectedComplex.sido)}&sigungu=${encodeURIComponent(selectedComplex.sigungu)}&months=12`;
     Promise.all([
@@ -610,6 +612,7 @@ export default function MapClient({ unsoldListings }: Props) {
       setComplexTrades(tradeData.trades ?? []);
       setComplexRents(rentData.trades ?? []);
       setComplexNearby(nearbyData);
+      if (tradeData.buildYear) setComplexBuildYear(tradeData.buildYear);
       setDetailLoading(false);
     });
   }, [selectedComplex?.kapt_code]);
@@ -1037,7 +1040,7 @@ export default function MapClient({ unsoldListings }: Props) {
               {(() => {
                 const dong = complexNearby?.dong;
                 const address = [selectedComplex.sido, selectedComplex.sigungu, dong].filter(Boolean).join(' ');
-                const builtYear = selectedComplex.built_year;
+                const builtYear = selectedComplex.built_year ?? complexBuildYear;
                 const yearCount = builtYear ? new Date().getFullYear() - builtYear : null;
                 const floorCount = complexNearby?.floor_count;
                 return (

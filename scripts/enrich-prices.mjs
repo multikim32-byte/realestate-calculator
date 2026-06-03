@@ -230,11 +230,12 @@ function parseTrades(xml) {
     const cdeal = get('cdealType').trim();
     if (cdeal && cdeal !== ' ') continue;
 
-    const name  = get('aptNm');
-    const price = parseInt(get('dealAmount').replace(/,/g, '')) || 0;
-    const area  = parseFloat(get('excluUseAr')) || 0;
+    const name      = get('aptNm');
+    const price     = parseInt(get('dealAmount').replace(/,/g, '')) || 0;
+    const area      = parseFloat(get('excluUseAr')) || 0;
+    const buildYear = parseInt(get('buildYear')) || 0;
     if (!name || !price || !area) continue;
-    trades.push({ name, price, area });
+    trades.push({ name, price, area, buildYear });
   }
   return trades;
 }
@@ -290,7 +291,17 @@ function calcStats(trades) {
   const prices = byPyeong.get(modePyeong);
   const avgPrice = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
 
-  return { avg_pyeong: modePyeong, avg_price: avgPrice };
+  // built_year: trades에서 가장 많이 등장한 값
+  const byYearMap = new Map();
+  for (const t of trades) {
+    if (t.buildYear > 1900) byYearMap.set(t.buildYear, (byYearMap.get(t.buildYear) ?? 0) + 1);
+  }
+  let built_year = null;
+  if (byYearMap.size > 0) {
+    built_year = [...byYearMap.entries()].sort((a, b) => b[1] - a[1])[0][0];
+  }
+
+  return { avg_pyeong: modePyeong, avg_price: avgPrice, built_year };
 }
 
 // ── 메인 ──────────────────────────────────────────────────────────────────────
@@ -376,12 +387,18 @@ async function main() {
 }
 
 async function flushUpdates(batch) {
-  const { error } = await supabase
-    .from('apartment_complexes')
-    .upsert(batch.map(u => ({ ...u, updated_at: new Date().toISOString() })), {
-      onConflict: 'kapt_code',
-    });
-  if (error) console.error('\n⚠️  upsert 오류:', error.message);
+  const now = new Date().toISOString();
+  await Promise.all(batch.map(({ kapt_code, avg_pyeong, avg_price, built_year }) => {
+    const payload = { avg_pyeong, avg_price, updated_at: now };
+    if (built_year) payload.built_year = built_year;
+    return supabase
+      .from('apartment_complexes')
+      .update(payload)
+      .eq('kapt_code', kapt_code)
+      .then(({ error }) => {
+        if (error) console.error(`\n⚠️  ${kapt_code} 업데이트 오류:`, error.message);
+      });
+  }));
 }
 
 main().catch(e => { console.error('❌ 오류:', e); process.exit(1); });
