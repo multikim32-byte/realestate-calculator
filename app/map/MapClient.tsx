@@ -923,54 +923,74 @@ export default function MapClient({ unsoldListings }: Props) {
         )}
       </div>
 
-      {/* 단지 시세 카드 */}
+      {/* 단지 시세 — 왼쪽 슬라이드 패널 */}
       {selectedComplex && !selected && (
         <>
           <div style={{ position: 'absolute', inset: 0, zIndex: 15 }} onClick={() => setSelectedComplex(null)} />
           <div style={{
-            position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)',
-            width: 'min(360px, calc(100vw - 32px))',
-            background: '#fff', borderRadius: 16,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            position: 'absolute', left: 0, top: 0, bottom: 0,
+            width: 'min(320px, 85vw)',
+            background: '#fff',
+            boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
             zIndex: 20, overflow: 'hidden',
+            display: 'flex', flexDirection: 'column',
+            animation: 'slideInLeft 0.22s ease-out',
           }}>
             {/* 헤더 */}
-            <div style={{ background: COMPLEX_COLOR, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>{selectedComplex.name}</div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 2 }}>
+            <div style={{ background: COMPLEX_COLOR, padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexShrink: 0 }}>
+              <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', lineHeight: 1.3 }}>{selectedComplex.name}</div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 4 }}>
                   {selectedComplex.sido} {selectedComplex.sigungu}
                 </div>
               </div>
               <button onClick={() => setSelectedComplex(null)}
-                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 20, width: 28, height: 28, cursor: 'pointer', color: '#fff', fontSize: 16 }}>
+                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', color: '#fff', fontSize: 16, flexShrink: 0 }}>
                 ✕
               </button>
             </div>
+
+            {/* 시세 요약 */}
+            {(selectedComplex.avg_price ?? 0) > 0 && (
+              <div style={{ padding: '16px', borderBottom: '1px solid #f1f5f9', flexShrink: 0 }}>
+                <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>최근 6개월 평균 실거래가</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                  <span style={{ fontSize: 24, fontWeight: 800, color: '#1e293b' }}>
+                    {selectedComplex.avg_price! >= 10000
+                      ? `${(selectedComplex.avg_price! / 10000).toFixed(1)}억`
+                      : `${Math.round(selectedComplex.avg_price! / 1000)}천`}
+                  </span>
+                  <span style={{ fontSize: 13, color: '#6b7280' }}>{selectedComplex.avg_pyeong}평 기준</span>
+                </div>
+              </div>
+            )}
+
             {/* 기본 정보 */}
-            <div style={{ padding: '14px 16px' }}>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+            <div style={{ padding: '16px', flex: 1, overflowY: 'auto' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
                 {selectedComplex.total_units && (
-                  <span style={{ fontSize: 12, background: '#ede9fe', color: COMPLEX_COLOR, padding: '3px 10px', borderRadius: 12, fontWeight: 700 }}>
+                  <span style={{ fontSize: 12, background: '#ede9fe', color: COMPLEX_COLOR, padding: '4px 12px', borderRadius: 20, fontWeight: 700 }}>
                     {selectedComplex.total_units.toLocaleString()}세대
                   </span>
                 )}
                 {selectedComplex.built_year && (
-                  <span style={{ fontSize: 12, background: '#f0fdf4', color: '#16a34a', padding: '3px 10px', borderRadius: 12, fontWeight: 700 }}>
-                    {selectedComplex.built_year}년
+                  <span style={{ fontSize: 12, background: '#f0fdf4', color: '#16a34a', padding: '4px 12px', borderRadius: 20, fontWeight: 700 }}>
+                    {selectedComplex.built_year}년 준공
                   </span>
                 )}
               </div>
+
               <Link href={`/complex/${encodeURIComponent(selectedComplex.slug)}`}
                 style={{
-                  display: 'block', textAlign: 'center', padding: '11px 0',
-                  background: COMPLEX_COLOR, color: '#fff', borderRadius: 10,
+                  display: 'block', textAlign: 'center', padding: '13px 0',
+                  background: COMPLEX_COLOR, color: '#fff', borderRadius: 12,
                   textDecoration: 'none', fontSize: 14, fontWeight: 700,
                 }}>
                 실거래 시세 상세 보기 →
               </Link>
             </div>
           </div>
+          <style>{`@keyframes slideInLeft { from { transform: translateX(-100%) } to { transform: translateX(0) } }`}</style>
         </>
       )}
 
