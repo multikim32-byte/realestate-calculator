@@ -246,7 +246,7 @@ export default function MapClient({ unsoldListings }: Props) {
   const [selectedComplex, setSelectedComplex] = useState<MapComplex | null>(null);
   const [complexTrades, setComplexTrades] = useState<Array<{ date: string; area: number; price: number; floor: number }> | null>(null);
   const [complexRents, setComplexRents]   = useState<Array<{ date: string; area: number; floor: number; deposit: number; monthly: number }> | null>(null);
-  const [complexNearby, setComplexNearby] = useState<{ nearby_transit?: Array<{ name: string; distance: number; category?: string }>; nearby_schools?: Array<{ name: string; distance: number; school_type?: string }>; nearby_infra?: Array<{ name: string; distance: number; label?: string; category?: string }> } | null>(null);
+  const [complexNearby, setComplexNearby] = useState<{ dong?: string; floor_count?: number; nearby_transit?: Array<{ name: string; distance: number; category?: string }>; nearby_schools?: Array<{ name: string; distance: number; school_type?: string }>; nearby_infra?: Array<{ name: string; distance: number; label?: string; category?: string }> } | null>(null);
   const [dealType, setDealType] = useState<'매매' | '전세' | '월세'>('매매');
   const [selPyeong, setSelPyeong] = useState<number>(0);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -1030,18 +1030,27 @@ export default function MapClient({ unsoldListings }: Props) {
               </div>
 
               {/* 기본 정보 */}
-              <div style={{ padding: '10px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: 8, flexWrap: 'wrap', flexShrink: 0 }}>
-                {selectedComplex.total_units && (
-                  <span style={{ fontSize: 11, background: '#ede9fe', color: COMPLEX_COLOR, padding: '2px 9px', borderRadius: 20, fontWeight: 700 }}>
-                    {selectedComplex.total_units.toLocaleString()}세대
-                  </span>
-                )}
-                {selectedComplex.built_year && (
-                  <span style={{ fontSize: 11, background: '#f0fdf4', color: '#16a34a', padding: '2px 9px', borderRadius: 20, fontWeight: 700 }}>
-                    {selectedComplex.built_year}년 준공
-                  </span>
-                )}
-              </div>
+              {(() => {
+                const dong = complexNearby?.dong;
+                const address = [selectedComplex.sido, selectedComplex.sigungu, dong].filter(Boolean).join(' ');
+                const builtYear = selectedComplex.built_year;
+                const yearCount = builtYear ? new Date().getFullYear() - builtYear : null;
+                const floorCount = complexNearby?.floor_count;
+                return (
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', flexShrink: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', marginBottom: 6 }}>{address}</div>
+                    <div style={{ fontSize: 12, color: '#6b7280', display: 'flex', flexWrap: 'wrap', gap: '2px 12px' }}>
+                      {selectedComplex.total_units && (
+                        <span>{selectedComplex.total_units.toLocaleString()}세대</span>
+                      )}
+                      {builtYear && (
+                        <span>{builtYear}년 준공{yearCount !== null && yearCount >= 0 ? ` (${yearCount}년차)` : ''}</span>
+                      )}
+                      {floorCount && <span>최고 {floorCount}층</span>}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* 탭: 매매 / 전세 / 월세 */}
               <div style={{ display: 'flex', borderBottom: '1px solid #f1f5f9', flexShrink: 0 }}>

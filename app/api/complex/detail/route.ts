@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
   const { data } = await supabase
     .from('apartment_complexes')
-    .select('nearby_transit, nearby_schools, nearby_infra')
+    .select('dong, floor_count, nearby_transit, nearby_schools, nearby_infra')
     .eq('kapt_code', kapt_code)
     .single();
 
