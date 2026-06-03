@@ -3,6 +3,16 @@ import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'edge';
 
+export type UnitType = {
+  house_ty: string;
+  supply_area: number;
+  exclusive_area: number;
+  supply_pyeong: number;
+  exclusive_pyeong: number;
+  count: number;
+  source: 'cheongak' | 'estimate';
+};
+
 export type MapComplex = {
   kapt_code: string;
   name: string;
@@ -15,6 +25,7 @@ export type MapComplex = {
   built_year: number | null;
   avg_pyeong: number | null;
   avg_price: number | null;
+  unit_types: UnitType[] | null;
 };
 
 export async function GET(req: NextRequest) {
@@ -35,7 +46,7 @@ export async function GET(req: NextRequest) {
 
   const { data } = await supabase
     .from('apartment_complexes')
-    .select('kapt_code, name, slug, sido, sigungu, lat, lng, total_units, built_year, avg_pyeong, avg_price')
+    .select('kapt_code, name, slug, sido, sigungu, lat, lng, total_units, built_year, avg_pyeong, avg_price, unit_types')
     .gte('lat', swLat).lte('lat', neLat)
     .gte('lng', swLng).lte('lng', neLng)
     .not('lat', 'is', null)

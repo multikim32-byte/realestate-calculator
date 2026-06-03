@@ -953,6 +953,18 @@ export default function MapClient({ unsoldListings }: Props) {
         const fmtPrice = (v: number) => v >= 10000 ? `${(v / 10000).toFixed(1)}억` : `${Math.round(v / 1000)}천만`;
         const toPyeong = (area: number) => Math.round(area / 3.3);
 
+        // 공급면적 표시 레이블 생성
+        const unitTypes = selectedComplex.unit_types ?? [];
+        function areaLabel(exclusiveM2: number): string {
+          const excPy = toPyeong(exclusiveM2);
+          // 청약 데이터 있으면 정확한 공급면적 사용
+          const match = unitTypes.find(u => Math.abs(u.exclusive_area - exclusiveM2) <= 1.5);
+          if (match) return `${match.supply_pyeong}평 (공급 ${match.supply_area.toFixed(0)}㎡)`;
+          // 없으면 추산 (전용 × 1.3)
+          const supplyPy = Math.round(exclusiveM2 * 1.3 / 3.3);
+          return `전용 ${excPy}평 (공급 약 ${supplyPy}평)`;
+        }
+
         // 현재 탭 raw 데이터 (전세 = monthly===0, 월세 = monthly>0)
         const rawList = dealType === '매매'
           ? (complexTrades ?? [])
@@ -960,7 +972,8 @@ export default function MapClient({ unsoldListings }: Props) {
             ? (complexRents ?? []).filter(t => t.monthly === 0)
             : (complexRents ?? []).filter(t => t.monthly > 0);
 
-        // 면적 목록 (중복 제거, 오름차순)
+        // 면적 목록: 전용면적 기준 unique 목록
+        const exclusiveAreas = [...new Set(rawList.map(t => Math.round(t.area * 100) / 100))].sort((a, b) => a - b);
         const pyeongList = [...new Set(rawList.map(t => toPyeong(t.area)))].sort((a, b) => a - b);
         const curPyeong  = selPyeong || (pyeongList[0] ?? 0);
 
@@ -1137,7 +1150,10 @@ export default function MapClient({ unsoldListings }: Props) {
                             onChange={e => setSelPyeong(Number(e.target.value))}
                             style={{ fontSize: 12, border: '1px solid #e5e7eb', borderRadius: 6, padding: '3px 8px', color: '#1e293b', background: '#fff', cursor: 'pointer' }}
                           >
-                            {pyeongList.map(p => <option key={p} value={p}>{p}평</option>)}
+                            {exclusiveAreas.map(area => {
+                            const py = toPyeong(area);
+                            return <option key={area} value={py}>{areaLabel(area)}</option>;
+                          })}
                           </select>
                         )}
                       </div>
