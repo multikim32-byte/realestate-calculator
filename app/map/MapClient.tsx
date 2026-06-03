@@ -918,6 +918,14 @@ export default function MapClient({ unsoldListings }: Props) {
           return `${x},${y}`;
         }).join(' ');
 
+        // 전세가율 계산 (매매·전세 같은 평형 평균 기준)
+        const tradeFiltered  = (complexTrades ?? []).filter(t => toPyeong(t.area) === curPyeong);
+        const jeonseFiltered = (complexRents  ?? []).filter(t => t.monthly === 0 && toPyeong(t.area) === curPyeong);
+        const tradeAvgAll  = tradeFiltered.length  ? tradeFiltered.reduce((s, t)  => s + t.price,   0) / tradeFiltered.length  : 0;
+        const jeonseAvgAll = jeonseFiltered.length ? jeonseFiltered.reduce((s, t) => s + t.deposit, 0) / jeonseFiltered.length : 0;
+        const jeonseRatio  = tradeAvgAll > 0 && jeonseAvgAll > 0
+          ? Math.round((jeonseAvgAll / tradeAvgAll) * 100) : null;
+
         const transit = complexNearby?.nearby_transit ?? [];
         const schools = complexNearby?.nearby_schools ?? [];
         const infra   = complexNearby?.nearby_infra ?? [];
@@ -1008,7 +1016,18 @@ export default function MapClient({ unsoldListings }: Props) {
                           <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>
                             {dealType === '월세' ? '최근 보증금 평균' : `최근 ${dealType} 평균`}
                           </div>
-                          <div style={{ fontSize: 22, fontWeight: 800, color: '#1e293b' }}>{fmtPrice(lastMonthAvg)}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                            <div style={{ fontSize: 22, fontWeight: 800, color: '#1e293b' }}>{fmtPrice(lastMonthAvg)}</div>
+                            {jeonseRatio !== null && (dealType === '매매' || dealType === '전세') && (
+                              <span style={{
+                                fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+                                background: jeonseRatio >= 70 ? '#fef2f2' : jeonseRatio >= 50 ? '#fefce8' : '#f0fdf4',
+                                color:      jeonseRatio >= 70 ? '#dc2626' : jeonseRatio >= 50 ? '#ca8a04' : '#16a34a',
+                              }}>
+                                전세가율 {jeonseRatio}%
+                              </span>
+                            )}
+                          </div>
                         </>
                       )}
                     </div>
