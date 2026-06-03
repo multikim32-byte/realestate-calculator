@@ -26,8 +26,13 @@ export default function FavoritesClient() {
     try { localStorage.setItem(FAV_KEY, JSON.stringify(next)); } catch {}
   }
 
-  const sales = favs.filter(f => f.type === 'sale');
-  const unsolds = favs.filter(f => f.type === 'unsold');
+  const sales    = favs.filter(f => f.type === 'sale');
+  const unsolds  = favs.filter(f => f.type === 'unsold');
+  const complexes = favs.filter(f => f.type === 'complex');
+
+  function fmtPrice(v: number) {
+    return v >= 10000 ? `${(v / 10000).toFixed(1)}억` : `${Math.round(v / 1000)}천만`;
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#f0f4f9' }}>
@@ -42,16 +47,41 @@ export default function FavoritesClient() {
 
         {!mounted ? null : favs.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fff', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>☆</div>
-            <p style={{ fontSize: 16, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>저장된 관심 단지가 없습니다</p>
-            <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 24 }}>청약정보나 분양정보의 ☆ 버튼을 눌러 저장해보세요.</p>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🤍</div>
+            <p style={{ fontSize: 16, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>저장된 관심 항목이 없습니다</p>
+            <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 24 }}>지도에서 단지를 클릭하고 ❤️ 버튼을 눌러 저장해보세요.</p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link href="/map" style={{ padding: '10px 20px', background: '#7c3aed', color: '#fff', borderRadius: 8, textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>지도에서 단지 찾기</Link>
               <Link href="/" style={{ padding: '10px 20px', background: '#1d4ed8', color: '#fff', borderRadius: 8, textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>청약정보 보기</Link>
-              <Link href="/unsold" style={{ padding: '10px 20px', background: '#059669', color: '#fff', borderRadius: 8, textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>분양정보 보기</Link>
             </div>
           </div>
         ) : (
           <>
+            {complexes.length > 0 && (
+              <section style={{ marginBottom: 32 }}>
+                <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1e293b', marginBottom: 14 }}>❤️ 관심 단지 ({complexes.length})</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {complexes.map(f => (
+                    <div key={f.id} style={{ background: '#fff', borderRadius: 12, padding: '16px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', gap: 16 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <Link href={f.slug ? `/complex/${encodeURIComponent(f.slug)}` : '/map'} style={{ textDecoration: 'none' }}>
+                          <p style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', margin: '0 0 4px' }}>{f.name}</p>
+                          <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>
+                            📍 {f.location}
+                            {f.avg_price ? ` · ${fmtPrice(f.avg_price)}${f.avg_pyeong ? `/${f.avg_pyeong}평` : ''}` : ''}
+                          </p>
+                        </Link>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                        <Link href="/map" style={{ padding: '6px 14px', background: '#ede9fe', color: '#7c3aed', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>지도</Link>
+                        <button onClick={() => remove(f.id, f.type)} style={{ padding: '6px 14px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>삭제</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {sales.length > 0 && (
               <section style={{ marginBottom: 32 }}>
                 <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1e293b', marginBottom: 14 }}>📋 관심 청약정보 ({sales.length})</h2>

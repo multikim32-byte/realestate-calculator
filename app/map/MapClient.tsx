@@ -6,6 +6,7 @@ import type { MapUnsoldItem, MapSaleItem } from './page';
 import type { DistrictPrice, PriceStats } from '@/app/api/map-prices/route';
 import type { DongPrice } from '@/app/api/map-prices/dong/route';
 import type { MapComplex } from '@/app/api/map/complexes/route';
+import { useFavorites } from '@/lib/useFavorites';
 
 type AgeTab = 'all' | 'y5' | 'y10' | 'y15' | 'y20';
 
@@ -243,6 +244,7 @@ export default function MapClient({ unsoldListings }: Props) {
   const complexMarkersRef     = useRef<{ m: KakaoMarker; overlay: KakaoCustomOverlay; data: MapComplex }[]>([]);
   const complexClustererRef   = useRef<KakaoClusterer | null>(null);
   const loadedComplexBoundsRef = useRef<string | null>(null); // 마지막 로드한 bounds 키
+  const { toggle: toggleFav, isFav } = useFavorites();
   const [selectedComplex, setSelectedComplex] = useState<MapComplex | null>(null);
   const [complexTrades, setComplexTrades] = useState<Array<{ date: string; area: number; price: number; floor: number }> | null>(null);
   const [complexRents, setComplexRents]   = useState<Array<{ date: string; area: number; floor: number; deposit: number; monthly: number }> | null>(null);
@@ -948,16 +950,37 @@ export default function MapClient({ unsoldListings }: Props) {
               animation: 'slideInLeft 0.22s ease-out',
             }}>
               {/* 헤더 */}
-              <div style={{ background: COMPLEX_COLOR, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexShrink: 0 }}>
-                <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', lineHeight: 1.3 }}>{selectedComplex.name}</div>
-                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 3 }}>{selectedComplex.sido} {selectedComplex.sigungu}</div>
-                </div>
-                <button onClick={() => setSelectedComplex(null)}
-                  style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', color: '#fff', fontSize: 15, flexShrink: 0 }}>
-                  ✕
-                </button>
-              </div>
+              {(() => {
+                const faved = isFav(selectedComplex.kapt_code, 'complex');
+                return (
+                  <div style={{ background: COMPLEX_COLOR, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexShrink: 0 }}>
+                    <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', lineHeight: 1.3 }}>{selectedComplex.name}</div>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 3 }}>{selectedComplex.sido} {selectedComplex.sigungu}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                      <button
+                        onClick={() => toggleFav({
+                          id: selectedComplex.kapt_code,
+                          type: 'complex',
+                          name: selectedComplex.name,
+                          location: `${selectedComplex.sido} ${selectedComplex.sigungu}`,
+                          slug: selectedComplex.slug,
+                          avg_price: selectedComplex.avg_price ?? undefined,
+                          avg_pyeong: selectedComplex.avg_pyeong ?? undefined,
+                        })}
+                        title={faved ? '관심 단지 해제' : '관심 단지 저장'}
+                        style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
+                        {faved ? '❤️' : '🤍'}
+                      </button>
+                      <button onClick={() => setSelectedComplex(null)}
+                        style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', color: '#fff', fontSize: 15, flexShrink: 0 }}>
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* 기본 정보 */}
               {(() => {

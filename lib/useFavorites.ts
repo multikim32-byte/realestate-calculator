@@ -2,11 +2,15 @@ import { useState, useCallback } from 'react';
 
 export interface Favorite {
   id: string;
-  type: 'sale' | 'unsold';
+  type: 'sale' | 'unsold' | 'complex';
   name: string;
   location: string;
   savedAt: string;
   receiptStart?: string;
+  // complex 전용
+  slug?: string;
+  avg_price?: number;
+  avg_pyeong?: number;
 }
 
 const KEY = 'mk_favorites';
@@ -36,7 +40,7 @@ export function useFavorites() {
     });
   }, []);
 
-  const isFav = useCallback((id: string, type: 'sale' | 'unsold') =>
+  const isFav = useCallback((id: string, type: Favorite['type']) =>
     favorites.some(f => f.id === id && f.type === type)
   , [favorites]);
 
