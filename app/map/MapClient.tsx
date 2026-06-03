@@ -245,7 +245,10 @@ export default function MapClient({ unsoldListings }: Props) {
   const loadedComplexBoundsRef = useRef<string | null>(null); // 마지막 로드한 bounds 키
   const [selectedComplex, setSelectedComplex] = useState<MapComplex | null>(null);
   const [complexTrades, setComplexTrades] = useState<Array<{ date: string; area: number; price: number; floor: number }> | null>(null);
+  const [complexRents, setComplexRents]   = useState<Array<{ date: string; area: number; floor: number; deposit: number; monthly: number }> | null>(null);
   const [complexNearby, setComplexNearby] = useState<{ nearby_transit?: Array<{ name: string; distance: number; category?: string }>; nearby_schools?: Array<{ name: string; distance: number; school_type?: string }>; nearby_infra?: Array<{ name: string; distance: number; label?: string; category?: string }> } | null>(null);
+  const [dealType, setDealType] = useState<'매매' | '전세' | '월세'>('매매');
+  const [selPyeong, setSelPyeong] = useState<number>(0);
   const [detailLoading, setDetailLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<PinInfo | null>(null);
@@ -588,19 +591,24 @@ export default function MapClient({ unsoldListings }: Props) {
       });
   }, []);
 
-  // 단지 선택 시 실거래 + 주변환경 데이터 fetch
+  // 단지 선택 시 실거래(12개월) + 전월세(12개월) + 주변환경 병렬 fetch
   useEffect(() => {
-    if (!selectedComplex) { setComplexTrades(null); setComplexNearby(null); return; }
+    if (!selectedComplex) {
+      setComplexTrades(null); setComplexRents(null); setComplexNearby(null);
+      setDealType('매매'); setSelPyeong(0);
+      return;
+    }
     setDetailLoading(true);
-    setComplexTrades(null);
-    setComplexNearby(null);
+    setComplexTrades(null); setComplexRents(null); setComplexNearby(null);
+    setDealType('매매'); setSelPyeong(0);
+    const q = `name=${encodeURIComponent(selectedComplex.name)}&sido=${encodeURIComponent(selectedComplex.sido)}&sigungu=${encodeURIComponent(selectedComplex.sigungu)}&months=12`;
     Promise.all([
-      fetch(`/api/complex/trade?name=${encodeURIComponent(selectedComplex.name)}&sido=${encodeURIComponent(selectedComplex.sido)}&sigungu=${encodeURIComponent(selectedComplex.sigungu)}&months=3`)
-        .then(r => r.json()).catch(() => ({ trades: [] })),
-      fetch(`/api/complex/detail?kapt_code=${encodeURIComponent(selectedComplex.kapt_code)}`)
-        .then(r => r.json()).catch(() => ({})),
-    ]).then(([tradeData, nearbyData]) => {
+      fetch(`/api/complex/trade?${q}`).then(r => r.json()).catch(() => ({ trades: [] })),
+      fetch(`/api/complex/rent?${q}`).then(r => r.json()).catch(() => ({ trades: [] })),
+      fetch(`/api/complex/detail?kapt_code=${encodeURIComponent(selectedComplex.kapt_code)}`).then(r => r.json()).catch(() => ({})),
+    ]).then(([tradeData, rentData, nearbyData]) => {
       setComplexTrades(tradeData.trades ?? []);
+      setComplexRents(rentData.trades ?? []);
       setComplexNearby(nearbyData);
       setDetailLoading(false);
     });
@@ -946,13 +954,57 @@ export default function MapClient({ unsoldListings }: Props) {
 
       {/* 단지 시세 — 왼쪽 슬라이드 패널 */}
       {selectedComplex && !selected && (() => {
-        const avgPrice = selectedComplex.avg_price ?? 0;
-        const fmtPrice = (v: number) => v >= 10000 ? `${(v / 10000).toFixed(1)}억` : `${Math.round(v / 1000)}천`;
-        const fmtPyeong = (area: number) => `${Math.round(area / 3.3)}평`;
+        const fmtPrice = (v: number) => v >= 10000 ? `${(v / 10000).toFixed(1)}억` : `${Math.round(v / 1000)}천만`;
+        const toPyeong = (area: number) => Math.round(area / 3.3);
+
+        // 현재 탭 raw 데이터
+        const rawList = dealType === '매매' ? (complexTrades ?? []) : (complexRents ?? []);
+
+        // 면적 목록 (중복 제거, 오름차순)
+        const pyeongList = [...new Set(rawList.map(t => toPyeong(t.area)))].sort((a, b) => a - b);
+        const curPyeong  = selPyeong || (pyeongList[0] ?? 0);
+
+        // 선택 면적으로 필터
+        const filtered = rawList.filter(t => toPyeong(t.area) === curPyeong);
+
+        // 최근 10건 테이블
+        const tableRows = filtered.slice(0, 10);
+
+        // 월별 평균가 차트 데이터 (최근 12개월)
+        const monthMap = new Map<string, number[]>();
+        for (const t of filtered) {
+          const ym = t.date.slice(0, 7);
+          const val = dealType === '매매' ? (t as { price: number }).price : (t as { deposit: number }).deposit;
+          if (!monthMap.has(ym)) monthMap.set(ym, []);
+          monthMap.get(ym)!.push(val);
+        }
+        const chartData = [...monthMap.entries()]
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([ym, prices]) => ({ ym, avg: Math.round(prices.reduce((s, v) => s + v, 0) / prices.length) }));
+
+        // 1개월 평균
+        const lastMonthAvg = chartData.at(-1)?.avg ?? 0;
+
+        // SVG 차트 계산
+        const W = 288; const H = 80; const PAD = 8;
+        const vals = chartData.map(d => d.avg);
+        const minV = Math.min(...vals); const maxV = Math.max(...vals);
+        const range = maxV - minV || 1;
+        const pts = chartData.map((d, i) => {
+          const x = PAD + (i / Math.max(chartData.length - 1, 1)) * (W - PAD * 2);
+          const y = H - PAD - ((d.avg - minV) / range) * (H - PAD * 2);
+          return `${x},${y}`;
+        }).join(' ');
+
         const transit = complexNearby?.nearby_transit ?? [];
         const schools = complexNearby?.nearby_schools ?? [];
         const infra   = complexNearby?.nearby_infra ?? [];
-        const recentTrades = (complexTrades ?? []).slice(0, 10);
+
+        const TAB_STYLE = (active: boolean) => ({
+          flex: 1, padding: '7px 0', fontSize: 13, fontWeight: active ? 700 : 500,
+          border: 'none', cursor: 'pointer', borderBottom: active ? `2px solid ${COMPLEX_COLOR}` : '2px solid transparent',
+          background: 'none', color: active ? COMPLEX_COLOR : '#9ca3af',
+        } as React.CSSProperties);
 
         return (
           <>
@@ -977,102 +1029,148 @@ export default function MapClient({ unsoldListings }: Props) {
                 </button>
               </div>
 
+              {/* 기본 정보 */}
+              <div style={{ padding: '10px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: 8, flexWrap: 'wrap', flexShrink: 0 }}>
+                {selectedComplex.total_units && (
+                  <span style={{ fontSize: 11, background: '#ede9fe', color: COMPLEX_COLOR, padding: '2px 9px', borderRadius: 20, fontWeight: 700 }}>
+                    {selectedComplex.total_units.toLocaleString()}세대
+                  </span>
+                )}
+                {selectedComplex.built_year && (
+                  <span style={{ fontSize: 11, background: '#f0fdf4', color: '#16a34a', padding: '2px 9px', borderRadius: 20, fontWeight: 700 }}>
+                    {selectedComplex.built_year}년 준공
+                  </span>
+                )}
+              </div>
+
+              {/* 탭: 매매 / 전세 / 월세 */}
+              <div style={{ display: 'flex', borderBottom: '1px solid #f1f5f9', flexShrink: 0 }}>
+                {(['매매', '전세', '월세'] as const).map(t => (
+                  <button key={t} style={TAB_STYLE(dealType === t)} onClick={() => { setDealType(t); setSelPyeong(0); }}>{t}</button>
+                ))}
+              </div>
+
               {/* 스크롤 영역 */}
               <div style={{ flex: 1, overflowY: 'auto' }}>
 
-                {/* 기본 정보 */}
-                <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {selectedComplex.total_units && (
-                    <span style={{ fontSize: 12, background: '#ede9fe', color: COMPLEX_COLOR, padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>
-                      {selectedComplex.total_units.toLocaleString()}세대
-                    </span>
-                  )}
-                  {selectedComplex.built_year && (
-                    <span style={{ fontSize: 12, background: '#f0fdf4', color: '#16a34a', padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>
-                      {selectedComplex.built_year}년 준공
-                    </span>
-                  )}
-                </div>
-
-                {/* 평균 시세 */}
-                {avgPrice > 0 && (
-                  <div style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9' }}>
-                    <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>최근 6개월 평균 실거래가</div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                      <span style={{ fontSize: 22, fontWeight: 800, color: '#1e293b' }}>{fmtPrice(avgPrice)}</span>
-                      <span style={{ fontSize: 12, color: '#6b7280' }}>{selectedComplex.avg_pyeong}평 기준</span>
+                {detailLoading ? (
+                  <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: 13, color: '#9ca3af' }}>불러오는 중…</div>
+                ) : (
+                  <>
+                    {/* 면적 셀렉터 + 평균가 */}
+                    <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                        <span style={{ fontSize: 12, color: '#6b7280' }}>면적</span>
+                        <select
+                          value={curPyeong}
+                          onChange={e => setSelPyeong(Number(e.target.value))}
+                          style={{ fontSize: 12, border: '1px solid #e5e7eb', borderRadius: 6, padding: '3px 8px', color: '#1e293b', background: '#fff', cursor: 'pointer' }}
+                        >
+                          {pyeongList.map(p => <option key={p} value={p}>{p}평</option>)}
+                        </select>
+                      </div>
+                      {lastMonthAvg > 0 && (
+                        <>
+                          <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>
+                            {dealType === '월세' ? '최근 보증금 평균' : `최근 ${dealType} 평균`}
+                          </div>
+                          <div style={{ fontSize: 22, fontWeight: 800, color: '#1e293b' }}>{fmtPrice(lastMonthAvg)}</div>
+                        </>
+                      )}
                     </div>
-                  </div>
-                )}
 
-                {/* 최근 실거래 */}
-                <div style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 10 }}>최근 실거래</div>
-                  {detailLoading ? (
-                    <div style={{ fontSize: 12, color: '#9ca3af', padding: '8px 0' }}>불러오는 중…</div>
-                  ) : recentTrades.length === 0 ? (
-                    <div style={{ fontSize: 12, color: '#9ca3af', padding: '8px 0' }}>최근 3개월 거래 없음</div>
-                  ) : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                      <thead>
-                        <tr style={{ color: '#9ca3af' }}>
-                          <th style={{ textAlign: 'left', paddingBottom: 6, fontWeight: 600 }}>계약일</th>
-                          <th style={{ textAlign: 'right', paddingBottom: 6, fontWeight: 600 }}>면적</th>
-                          <th style={{ textAlign: 'right', paddingBottom: 6, fontWeight: 600 }}>층</th>
-                          <th style={{ textAlign: 'right', paddingBottom: 6, fontWeight: 600 }}>가격</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {recentTrades.map((t, i) => (
-                          <tr key={i} style={{ borderTop: '1px solid #f8fafc' }}>
-                            <td style={{ padding: '5px 0', color: '#6b7280' }}>{t.date.slice(2).replace(/-/g, '.')}</td>
-                            <td style={{ padding: '5px 0', textAlign: 'right', color: '#6b7280' }}>{fmtPyeong(t.area)}</td>
-                            <td style={{ padding: '5px 0', textAlign: 'right', color: '#6b7280' }}>{t.floor}층</td>
-                            <td style={{ padding: '5px 0', textAlign: 'right', fontWeight: 700, color: '#1e293b' }}>{fmtPrice(t.price)}</td>
-                          </tr>
+                    {/* 가격 차트 */}
+                    {chartData.length > 1 && (
+                      <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                        <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}>월별 평균 추이</div>
+                        <svg width={W} height={H} style={{ overflow: 'visible' }}>
+                          <polyline points={pts} fill="none" stroke={COMPLEX_COLOR} strokeWidth={2} strokeLinejoin="round" />
+                          {chartData.map((d, i) => {
+                            const x = PAD + (i / Math.max(chartData.length - 1, 1)) * (W - PAD * 2);
+                            const y = H - PAD - ((d.avg - minV) / range) * (H - PAD * 2);
+                            return <circle key={i} cx={x} cy={y} r={3} fill={COMPLEX_COLOR} />;
+                          })}
+                          <text x={PAD} y={H - 1} fontSize={9} fill="#9ca3af">{chartData[0]?.ym?.slice(0, 7)}</text>
+                          <text x={W - PAD} y={H - 1} fontSize={9} fill="#9ca3af" textAnchor="end">{chartData.at(-1)?.ym?.slice(0, 7)}</text>
+                        </svg>
+                      </div>
+                    )}
+
+                    {/* 최근 거래 테이블 */}
+                    <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>최근 실거래</div>
+                      {tableRows.length === 0 ? (
+                        <div style={{ fontSize: 12, color: '#9ca3af' }}>해당 면적 거래 없음</div>
+                      ) : (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ color: '#9ca3af' }}>
+                              <th style={{ textAlign: 'left', paddingBottom: 5, fontWeight: 500 }}>계약일</th>
+                              <th style={{ textAlign: 'right', paddingBottom: 5, fontWeight: 500 }}>층</th>
+                              <th style={{ textAlign: 'right', paddingBottom: 5, fontWeight: 500 }}>
+                                {dealType === '월세' ? '보증/월세' : dealType === '전세' ? '전세가' : '매매가'}
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {tableRows.map((t, i) => {
+                              const priceCell = dealType === '매매'
+                                ? fmtPrice((t as { price: number }).price)
+                                : dealType === '전세'
+                                  ? fmtPrice((t as { deposit: number }).deposit)
+                                  : `${fmtPrice((t as { deposit: number }).deposit)}/${(t as { monthly: number }).monthly}만`;
+                              return (
+                                <tr key={i} style={{ borderTop: '1px solid #f8fafc' }}>
+                                  <td style={{ padding: '5px 0', color: '#6b7280' }}>{t.date.slice(2).replace(/-/g, '.')}</td>
+                                  <td style={{ padding: '5px 0', textAlign: 'right', color: '#6b7280' }}>{t.floor}층</td>
+                                  <td style={{ padding: '5px 0', textAlign: 'right', fontWeight: 700, color: '#1e293b' }}>{priceCell}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+
+                    {/* 교통 */}
+                    {transit.length > 0 && (
+                      <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 6 }}>교통</div>
+                        {transit.slice(0, 4).map((s, i) => (
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '3px 0' }}>
+                            <span style={{ color: '#374151' }}>🚇 {s.name}</span>
+                            <span style={{ color: '#9ca3af' }}>{s.distance}m</span>
+                          </div>
                         ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-
-                {/* 교통 */}
-                {transit.length > 0 && (
-                  <div style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>교통</div>
-                    {transit.slice(0, 4).map((s, i) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '4px 0' }}>
-                        <span style={{ color: '#374151' }}>🚇 {s.name}</span>
-                        <span style={{ color: '#9ca3af' }}>{s.distance}m</span>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    )}
 
-                {/* 학교 */}
-                {schools.length > 0 && (
-                  <div style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>학교</div>
-                    {schools.slice(0, 4).map((s, i) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '4px 0' }}>
-                        <span style={{ color: '#374151' }}>🏫 {s.name}</span>
-                        <span style={{ color: '#9ca3af' }}>{s.distance}m</span>
+                    {/* 학교 */}
+                    {schools.length > 0 && (
+                      <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 6 }}>학교</div>
+                        {schools.slice(0, 4).map((s, i) => (
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '3px 0' }}>
+                            <span style={{ color: '#374151' }}>🏫 {s.name}</span>
+                            <span style={{ color: '#9ca3af' }}>{s.distance}m</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                )}
+                    )}
 
-                {/* 인프라 */}
-                {infra.length > 0 && (
-                  <div style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>주변 인프라</div>
-                    {infra.slice(0, 6).map((s, i) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '4px 0' }}>
-                        <span style={{ color: '#374151' }}>📍 {s.name}</span>
-                        <span style={{ color: '#9ca3af' }}>{s.distance}m</span>
+                    {/* 인프라 */}
+                    {infra.length > 0 && (
+                      <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 6 }}>주변 인프라</div>
+                        {infra.slice(0, 6).map((s, i) => (
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '3px 0' }}>
+                            <span style={{ color: '#374151' }}>📍 {s.name}</span>
+                            <span style={{ color: '#9ca3af' }}>{s.distance}m</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  </>
                 )}
 
                 {/* 상세 페이지 링크 */}
