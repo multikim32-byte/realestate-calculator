@@ -3,49 +3,27 @@
 import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
-interface TradeItem {
-  price: number;
-  area: number;
-  dealDate: string;
-}
+interface MonthRow { deal_ym: string; trade_cnt: number; }
+interface SupplyBucket { ym: string; label: string; count: number; isPast: boolean; isSoon: boolean; }
+interface Props { lawdCd: string; sigunguName: string; }
 
-interface SupplyBucket {
-  ym: string;
-  label: string;
-  count: number;
-  isPast: boolean;
-  isSoon: boolean;
-}
-
-interface Props {
-  lawdCd: string;
-  sigunguName: string;
-}
-
-type RangeKey = '1년' | '2년' | '3년';
-const RANGES: { key: RangeKey; months: number }[] = [
-  { key: '1년', months: 12 },
-  { key: '2년', months: 24 },
-  { key: '3년', months: 36 },
+type RangeKey = '1년' | '2년' | '3년' | '전체';
+const RANGES: { key: RangeKey; future: number; past: number }[] = [
+  { key: '1년',  future: 12, past: 4   },
+  { key: '2년',  future: 24, past: 8   },
+  { key: '3년',  future: 36, past: 12  },
+  { key: '전체', future: 36, past: 999 },
 ];
 
-function recentYms(n: number) {
-  return Array.from({ length: n }, (_, i) => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - i - 1);
-    return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}`;
-  });
+function addMonths(ym6: string, n: number): string {
+  const y = parseInt(ym6.slice(0, 4)), m = parseInt(ym6.slice(4, 6));
+  const d = new Date(y, m - 1 + n);
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
-
-function addMonths(dateStr: string, months: number): string {
-  const d = new Date(dateStr);
-  d.setMonth(d.getMonth() + months);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
-
-function getTodayYm() {
+function ym6toYmDash(ym6: string) { return `${ym6.slice(0, 4)}-${ym6.slice(4, 6)}`; }
+function getTodayYm6() {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
 const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) => {
@@ -60,86 +38,75 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 };
 
 export default function MaemaeSupplyChart({ lawdCd, sigunguName }: Props) {
-  const [allTrades, setAllTrades] = useState<TradeItem[]>([]);
+  const [rows, setRows]           = useState<MonthRow[]>([]);
   const [loading, setLoading]     = useState(false);
   const [loadedFor, setLoadedFor] = useState('');
   const [range, setRange]         = useState<RangeKey>('2년');
 
-  // 데이터 수집 — 36개월 (3년 예측 커버)
   useEffect(() => {
     if (!lawdCd || loadedFor === lawdCd) return;
     setLoading(true);
-    setAllTrades([]);
-
-    const yms = recentYms(36);
-    Promise.all(
-      yms.map(ym =>
-        fetch(`/api/trade?lawdCd=${lawdCd}&dealYmd=${ym}&numOfRows=500`)
-          .then(r => r.json())
-          .then(d => (d.items ?? []) as TradeItem[])
-          .catch(() => [] as TradeItem[])
-      )
-    ).then(results => {
-      setAllTrades(results.flat());
-      setLoadedFor(lawdCd);
-    }).finally(() => setLoading(false));
+    fetch(`/api/district-history?lawdCd=${lawdCd}`)
+      .then(r => r.json())
+      .then(d => { setRows(d.data ?? []); setLoadedFor(lawdCd); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [lawdCd, loadedFor]);
 
-  // 선택 범위 기준 집계
-  const now          = getTodayYm();
-  const futureMonths = RANGES.find(r => r.key === range)!.months;
-  const futureLimit  = addMonths(now, futureMonths);
-  const chartStart   = addMonths(now, -Math.round(futureMonths / 3));
-  const soon3m       = addMonths(now, 3);
-  const soon6m       = addMonths(now, 6);
+  const todayYm6        = getTodayYm6();
+  const todayDash       = ym6toYmDash(todayYm6);
+  const sel             = RANGES.find(r => r.key === range)!;
+  const futureLimitDash = ym6toYmDash(addMonths(todayYm6, sel.future));
+  const pastLimitDash   = sel.past === 999 ? '2000-01' : ym6toYmDash(addMonths(todayYm6, -(sel.past)));
+  const soon3Dash       = ym6toYmDash(addMonths(todayYm6, 3));
+  const soon6Dash       = ym6toYmDash(addMonths(todayYm6, 6));
 
   const bucketMap = new Map<string, number>();
   let cnt3m = 0, cnt6m = 0, cntFuture = 0;
 
-  for (const t of allTrades) {
-    if (!t.dealDate) continue;
-    const supplyYm = addMonths(t.dealDate, 24);
-
-    if (supplyYm >= now && supplyYm <= soon3m) cnt3m++;
-    if (supplyYm >= now && supplyYm <= soon6m) cnt6m++;
-    if (supplyYm >= now) cntFuture++;
-
-    if (supplyYm < chartStart || supplyYm > futureLimit) continue;
-    bucketMap.set(supplyYm, (bucketMap.get(supplyYm) ?? 0) + 1);
+  for (const r of rows) {
+    const supplyDash = ym6toYmDash(addMonths(r.deal_ym, 24));
+    if (supplyDash >= todayDash && supplyDash <= soon3Dash) cnt3m   += r.trade_cnt;
+    if (supplyDash >= todayDash && supplyDash <= soon6Dash) cnt6m   += r.trade_cnt;
+    if (supplyDash >= todayDash)                            cntFuture += r.trade_cnt;
+    if (supplyDash < pastLimitDash || supplyDash > futureLimitDash) continue;
+    bucketMap.set(supplyDash, (bucketMap.get(supplyDash) ?? 0) + r.trade_cnt);
   }
 
   const data: SupplyBucket[] = [...bucketMap.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([ym, count]) => ({
       ym, label: ym.slice(2).replace('-', '.'), count,
-      isPast: ym < now,
-      isSoon: ym >= now && ym <= soon3m,
+      isPast: ym < todayDash,
+      isSoon: ym >= todayDash && ym <= soon3Dash,
     }));
 
-  if (loading) {
-    return (
-      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 20, marginBottom: 20 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>🏷️ 매매 잠재 매물 예측</div>
-        <div style={{ textAlign: 'center', padding: '32px 0', color: '#9ca3af', fontSize: 13 }}>36개월 매매 데이터 분석 중…</div>
-      </div>
-    );
-  }
-  if (!allTrades.length && !loading) return null;
+  const dbMonths = rows.length > 0
+    ? `${rows[0].deal_ym.slice(0,4)}.${rows[0].deal_ym.slice(4,6)} ~ 현재`
+    : '수집 중';
+
+  if (loading) return (
+    <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 20, marginBottom: 20 }}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>🏷️ 매매 잠재 매물 예측</div>
+      <div style={{ textAlign: 'center', padding: '32px 0', color: '#9ca3af', fontSize: 13 }}>이력 데이터 로딩 중…</div>
+    </div>
+  );
+  if (!rows.length && !loading) return null;
 
   return (
     <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 20, marginBottom: 20 }}>
-      {/* 헤더 + 범위 선택 */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>
             🏷️ {sigunguName} 매매 잠재 매물 예측
           </div>
-          <div style={{ fontSize: 11, color: '#9ca3af' }}>최근 36개월 매매 기준 · 2년 보유 도달 시점 = 비과세 매도 가능</div>
+          <div style={{ fontSize: 11, color: '#9ca3af' }}>데이터 기간: {dbMonths} · 2년 보유 도달 시점 = 비과세 매도 가능</div>
         </div>
         <div style={{ display: 'flex', gap: 4 }}>
           {RANGES.map(r => (
             <button key={r.key} onClick={() => setRange(r.key)} style={{
-              padding: '4px 12px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: range === r.key ? 700 : 500,
+              padding: '4px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
+              fontSize: 12, fontWeight: range === r.key ? 700 : 500,
               background: range === r.key ? '#059669' : '#f1f5f9',
               color: range === r.key ? '#fff' : '#475569',
             }}>{r.key}</button>
@@ -147,7 +114,6 @@ export default function MaemaeSupplyChart({ lawdCd, sigunguName }: Props) {
         </div>
       </div>
 
-      {/* 요약 카드 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
         <div style={{ background: cnt3m > 0 ? '#fefce8' : '#f9fafb', borderRadius: 10, padding: '12px 14px' }}>
           <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>3개월내 비과세</div>
@@ -168,7 +134,6 @@ export default function MaemaeSupplyChart({ lawdCd, sigunguName }: Props) {
         </div>
       </div>
 
-      {/* 차트 */}
       <div>
         <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 8, fontWeight: 600 }}>
           월별 2년 보유 도달 건수
@@ -181,9 +146,7 @@ export default function MaemaeSupplyChart({ lawdCd, sigunguName }: Props) {
             <YAxis hide />
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="count" radius={[3, 3, 0, 0]}>
-              {data.map((d, i) => (
-                <Cell key={i} fill={d.isPast ? '#d1fae5' : d.isSoon ? '#fbbf24' : '#34d399'} />
-              ))}
+              {data.map((d, i) => <Cell key={i} fill={d.isPast ? '#d1fae5' : d.isSoon ? '#fbbf24' : '#34d399'} />)}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
