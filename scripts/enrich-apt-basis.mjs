@@ -85,6 +85,14 @@ function parseBass(item) {
   const topFloor = parseInt(item.kaptTopFloor ?? '0');
   if (topFloor > 0) result.floor_count = topFloor;
 
+  // 관리사무소 연락처 / 팩스
+  if (item.kaptTel?.trim()) result.phone = item.kaptTel.trim();
+  if (item.kaptFax?.trim()) result.fax   = item.kaptFax.trim();
+
+  // 법정동코드 + 지번주소 (건축물대장 조회용)
+  if (item.bjdCode) result.bjd_code  = String(item.bjdCode);
+  if (item.kaptAddr?.trim()) result.kapt_addr = item.kaptAddr.trim();
+
   return result;
 }
 
@@ -124,9 +132,9 @@ async function main() {
   console.log('🏢 공동주택 기본정보 보강 시작');
   console.log(`   모드: ${only ?? 'bass+dtl'} | ${force ? '전체 재수집' : '미보강만'}\n`);
 
-  // 대상 단지 조회
+  // 대상 단지 조회 — phone이 없는 단지 우선 (phone 추가 이후 기준)
   let query = supabase.from('apartment_complexes').select('kapt_code, name');
-  if (!force) query = query.is('total_units', null);
+  if (!force) query = query.is('phone', null);
 
   const complexes = [];
   let from = 0;
