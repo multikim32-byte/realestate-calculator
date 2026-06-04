@@ -12,8 +12,22 @@ function getLawdCode(sido: string, sigungu: string): string | null {
   return partial?.code ?? null;
 }
 
+// contractTerm "26.03~28.03" → ISO 날짜 "2028-03-01"
+function parseTermEnd(term: string): string {
+  const end = term.split('~')[1]?.trim();
+  if (!end) return '';
+  const [yy, mm] = end.split('.');
+  if (!yy || !mm) return '';
+  const year = parseInt(yy) + (parseInt(yy) < 50 ? 2000 : 1900);
+  return `${year}-${mm.padStart(2, '0')}-01`;
+}
+
 function parseRentXml(xml: string, aptName: string) {
-  const items: { date: string; area: number; floor: number; deposit: number; monthly: number; contractType: string }[] = [];
+  const items: {
+    date: string; area: number; floor: number; deposit: number; monthly: number;
+    contractType: string; contractEnd: string; useRRRight: string;
+    preDeposit: number; preMonthly: number;
+  }[] = [];
   const blocks = xml.match(/<item>([\s\S]*?)<\/item>/g) ?? [];
   for (const block of blocks) {
     const get = (tag: string) => {
@@ -27,15 +41,17 @@ function parseRentXml(xml: string, aptName: string) {
     const day     = get('dealDay').padStart(2, '0');
     const area    = parseFloat(get('excluUseAr')) || 0;
     const floor   = parseInt(get('floor')) || 0;
-    // MOLIT API 버전에 따라 태그명 상이 — 영문/한글 모두 시도
-    const depositRaw = get('deposit') || get('보증금') || get('보증금액') || '0';
-    const monthlyRaw = get('monthlyRent') || get('월세') || get('월세금액') || '0';
+    const depositRaw = get('deposit') || get('보증금') || '0';
+    const monthlyRaw = get('monthlyRent') || get('월세') || '0';
     const deposit = parseInt(depositRaw.replace(/,/g, '')) || 0;
     const monthly = parseInt(monthlyRaw.replace(/,/g, '')) || 0;
-    // 계약구분: 신규 / 갱신 / 재계약
-    const contractType = get('계약구분') || get('contractType') || '';
+    const contractType = get('contractType') || get('계약구분') || '';
+    const contractEnd  = parseTermEnd(get('contractTerm'));
+    const useRRRight   = get('useRRRight') || '';
+    const preDeposit   = parseInt((get('preDeposit') || '0').replace(/,/g, '')) || 0;
+    const preMonthly   = parseInt((get('preMonthlyRent') || '0').replace(/,/g, '')) || 0;
     if (!year || !area) continue;
-    items.push({ date: `${year}-${month}-${day}`, area, floor, deposit, monthly, contractType });
+    items.push({ date: `${year}-${month}-${day}`, area, floor, deposit, monthly, contractType, contractEnd, useRRRight, preDeposit, preMonthly });
   }
   return items;
 }
@@ -57,7 +73,11 @@ export async function GET(req: NextRequest) {
   if (!apiKey) return NextResponse.json({ trades: [] });
 
   const now = new Date();
-  const allTrades: { date: string; area: number; floor: number; deposit: number; monthly: number; contractType: string }[] = [];
+  const allTrades: {
+    date: string; area: number; floor: number; deposit: number; monthly: number;
+    contractType: string; contractEnd: string; useRRRight: string;
+    preDeposit: number; preMonthly: number;
+  }[] = [];
 
   await Promise.all(
     Array.from({ length: months }, (_, i) => {

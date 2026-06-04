@@ -246,8 +246,13 @@ export default function MapClient({ unsoldListings }: Props) {
   const loadedComplexBoundsRef = useRef<string | null>(null); // 마지막 로드한 bounds 키
   const { toggle: toggleFav, isFav } = useFavorites();
   const [selectedComplex, setSelectedComplex] = useState<MapComplex | null>(null);
-  const [complexTrades, setComplexTrades] = useState<Array<{ date: string; area: number; price: number; floor: number }> | null>(null);
-  const [complexRents, setComplexRents]   = useState<Array<{ date: string; area: number; floor: number; deposit: number; monthly: number; contractType: string }> | null>(null);
+  const [complexTrades, setComplexTrades] = useState<Array<{
+    date: string; area: number; price: number; floor: number;
+    dong: string; buyerGbn: string; slerGbn: string;
+    dealingGbn: string; agentSgg: string;
+    rgstDate: string; cdealType: string; cdealDay: string;
+  }> | null>(null);
+  const [complexRents, setComplexRents]   = useState<Array<{ date: string; area: number; floor: number; deposit: number; monthly: number; contractType: string; contractEnd: string; useRRRight: string; preDeposit: number; preMonthly: number }> | null>(null);
   const [complexBuildYear, setComplexBuildYear] = useState<number | null>(null);
   const [complexNearby, setComplexNearby] = useState<{ dong?: string; floor_count?: number; nearby_transit?: Array<{ name: string; distance: number; category?: string }>; nearby_schools?: Array<{ name: string; distance: number; school_type?: string }>; nearby_infra?: Array<{ name: string; distance: number; label?: string; category?: string }> } | null>(null);
   const [dealType, setDealType] = useState<'매매' | '전세' | '월세'>('매매');
@@ -1121,20 +1126,15 @@ export default function MapClient({ unsoldListings }: Props) {
                       }
                       const dedupedJeonse = [...latestByUnit.values()];
 
-                      // 갱신/재계약은 최대 4년(2년+계약갱신청구권 2년), 신규는 2년 기준
-                      const active = dedupedJeonse.filter(t => {
+                      // contractEnd(실제 만료일) 우선, 없으면 계약유형별 추산
+                      const getExpiry = (t: typeof dedupedJeonse[0]) => {
+                        if (t.contractEnd) return new Date(t.contractEnd).getTime();
                         const isRenewed = t.contractType === '갱신' || t.contractType === '재계약';
-                        const duration = isRenewed ? 4 * 365.25 : 2 * 365.25;
-                        const exp = new Date(t.date).getTime() + duration * 24 * 3600 * 1000;
-                        return exp > today;
-                      });
+                        return new Date(t.date).getTime() + (isRenewed ? 4 : 2) * 365.25 * 24 * 3600 * 1000;
+                      };
+                      const active = dedupedJeonse.filter(t => getExpiry(t) > today);
                       const soonMs = today + 90 * 24 * 3600 * 1000;
-                      const soon = active.filter(t => {
-                        const isRenewed = t.contractType === '갱신' || t.contractType === '재계약';
-                        const duration = isRenewed ? 4 * 365.25 : 2 * 365.25;
-                        const exp = new Date(t.date).getTime() + duration * 24 * 3600 * 1000;
-                        return exp <= soonMs;
-                      });
+                      const soon = active.filter(t => getExpiry(t) <= soonMs);
                       return (
                         <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
                           <div style={{ background: '#eff6ff', borderRadius: 8, padding: '8px 10px' }}>
@@ -1213,38 +1213,40 @@ export default function MapClient({ unsoldListings }: Props) {
                     {/* 최근 거래 테이블 */}
                     {(() => {
                       // 전세/월세 계약 상태 계산
-                      function contractStatus(dateStr: string, isMonthly: boolean, contractType = '') {
+                      function contractStatus(dateStr: string, isMonthly: boolean, contractType = '', contractEnd = '') {
                         const today = Date.now();
                         const deal  = new Date(dateStr).getTime();
-                        const isRenewed = contractType === '갱신' || contractType === '재계약';
 
                         if (isMonthly) {
-                          const mExpiry = deal + 365.25 * 24 * 3600 * 1000;
-                          const d = Math.round((mExpiry - today) / 86400000);
-                          if (d < 0)   return { label: '만료됨',           color: '#6b7280', bg: '#f1f5f9' };
-                          if (d <= 90) return { label: `만료임박 D-${d}`,  color: '#d97706', bg: '#fefce8' };
-                          return             { label: `거주중 D-${d}`,     color: '#059669', bg: '#f0fdf4' };
+                          const exp = contractEnd
+                            ? new Date(contractEnd).getTime()
+                            : deal + 365.25 * 24 * 3600 * 1000;
+                          const d = Math.round((exp - today) / 86400000);
+                          if (d < 0)   return { label: '만료됨',          color: '#6b7280', bg: '#f1f5f9' };
+                          if (d <= 90) return { label: `만료임박 D-${d}`, color: '#d97706', bg: '#fefce8' };
+                          return             { label: `거주중 D-${d}`,    color: '#059669', bg: '#f0fdf4' };
                         }
 
-                        if (isRenewed) {
-                          // 갱신/재계약: 계약일 기준 최대 4년
-                          const expiry4 = deal + 4 * 365.25 * 24 * 3600 * 1000;
-                          const d = Math.round((expiry4 - today) / 86400000);
-                          if (d < 0)   return { label: '만료됨',                           color: '#6b7280', bg: '#f1f5f9' };
-                          if (d <= 90) return { label: `만료임박 D-${d}`,                  color: '#d97706', bg: '#fefce8' };
-                          const tag = contractType === '재계약' ? '재계약중' : '갱신중';
-                          return             { label: `${tag} D-${d}`,                     color: '#7c3aed', bg: '#ede9fe' };
+                        // 전세: contractEnd(실제 만료일) 우선
+                        const isRenewed = contractType === '갱신' || contractType === '재계약';
+                        if (contractEnd) {
+                          const exp = new Date(contractEnd).getTime();
+                          const d = Math.round((exp - today) / 86400000);
+                          if (d < 0)   return { label: '만료됨',          color: '#6b7280', bg: '#f1f5f9' };
+                          if (d <= 90) return { label: `만료임박 D-${d}`, color: '#d97706', bg: '#fefce8' };
+                          const tag = isRenewed ? (contractType === '재계약' ? '재계약중' : '갱신중') : '거주중';
+                          return             { label: `${tag} D-${d}`,   color: isRenewed ? '#7c3aed' : '#059669', bg: isRenewed ? '#ede9fe' : '#f0fdf4' };
                         }
 
-                        // 신규: 2년 만료 / 갱신청구권 사용 시 최대 4년
+                        // contractEnd 없을 때 추산
                         const expiry2 = deal + 2 * 365.25 * 24 * 3600 * 1000;
                         const expiry4 = deal + 4 * 365.25 * 24 * 3600 * 1000;
                         const daysTo2 = Math.round((expiry2 - today) / 86400000);
                         const daysTo4 = Math.round((expiry4 - today) / 86400000);
-                        if (daysTo4 < 0)  return { label: '만료됨',                                    color: '#6b7280', bg: '#f1f5f9' };
-                        if (daysTo2 < 0)  return { label: `갱신중 +${Math.abs(daysTo2)}일`,            color: '#7c3aed', bg: '#ede9fe' };
-                        if (daysTo2 <= 90) return { label: `만료임박 D-${daysTo2}`,                    color: '#d97706', bg: '#fefce8' };
-                        return                   { label: `거주중 D-${daysTo2}`,                       color: '#059669', bg: '#f0fdf4' };
+                        if (daysTo4 < 0)   return { label: '만료됨',                       color: '#6b7280', bg: '#f1f5f9' };
+                        if (daysTo2 < 0)   return { label: `갱신중 +${Math.abs(daysTo2)}일`, color: '#7c3aed', bg: '#ede9fe' };
+                        if (daysTo2 <= 90) return { label: `만료임박 D-${daysTo2}`,          color: '#d97706', bg: '#fefce8' };
+                        return                    { label: `거주중 D-${daysTo2}`,            color: '#059669', bg: '#f0fdf4' };
                       }
                       const showStatus = dealType === '전세' || dealType === '월세';
                       return (
@@ -1272,15 +1274,44 @@ export default function MapClient({ unsoldListings }: Props) {
                                       ? fmtPrice((t as { deposit: number }).deposit)
                                       : `${fmtPrice((t as { deposit: number }).deposit)}/${(t as { monthly: number }).monthly}만`;
                                   const status = showStatus
-                                    ? contractStatus(t.date, dealType === '월세', (t as { contractType?: string }).contractType)
+                                    ? contractStatus(t.date, dealType === '월세', (t as { contractType?: string }).contractType, (t as { contractEnd?: string }).contractEnd)
                                     : null;
+                                  const tr = t as {
+                                    dealingGbn?: string; agentSgg?: string;
+                                    dong?: string; buyerGbn?: string; slerGbn?: string;
+                                    rgstDate?: string; cdealType?: string; cdealDay?: string;
+                                    contractType?: string; contractEnd?: string;
+                                  };
+                                  const isCancelled = !!tr.cdealType;
                                   return (
-                                    <tr key={i} style={{ borderTop: '1px solid #f8fafc' }}>
-                                      <td style={{ padding: '5px 0', color: '#6b7280' }}>{t.date.slice(2).replace(/-/g, '.')}</td>
-                                      <td style={{ padding: '5px 0', textAlign: 'right', color: '#6b7280' }}>{t.floor}층</td>
-                                      <td style={{ padding: '5px 0', textAlign: 'right', fontWeight: 700, color: '#1e293b' }}>{priceCell}</td>
+                                    <tr key={i} style={{ borderTop: '1px solid #f8fafc', opacity: isCancelled ? 0.45 : 1 }}>
+                                      <td style={{ padding: '5px 0', color: '#6b7280', verticalAlign: 'top' }}>
+                                        {t.date.slice(2).replace(/-/g, '.')}
+                                        {tr.rgstDate && <div style={{ fontSize: 9, color: '#9ca3af' }}>등기 {tr.rgstDate.slice(2).replace(/\./g, '.')}</div>}
+                                        {isCancelled && <div style={{ fontSize: 9, color: '#dc2626' }}>해제 {tr.cdealDay}</div>}
+                                      </td>
+                                      <td style={{ padding: '5px 0', textAlign: 'right', color: '#6b7280', verticalAlign: 'top' }}>
+                                        {tr.dong ? `${tr.dong} ` : ''}{t.floor}층
+                                      </td>
+                                      <td style={{ padding: '5px 0', textAlign: 'right', fontWeight: 700, color: '#1e293b', verticalAlign: 'top' }}>
+                                        {priceCell}
+                                        <div style={{ fontSize: 9, color: '#9ca3af', fontWeight: 400, marginTop: 1 }}>
+                                          {[
+                                            tr.buyerGbn && `매수 ${tr.buyerGbn}`,
+                                            tr.slerGbn  && `매도 ${tr.slerGbn}`,
+                                          ].filter(Boolean).join(' · ')}
+                                        </div>
+                                        {(tr.dealingGbn || tr.agentSgg) && (
+                                          <div style={{ fontSize: 9, color: '#9ca3af', fontWeight: 400 }}>
+                                            {tr.dealingGbn === '직거래'
+                                              ? <span style={{ color: '#dc2626' }}>직거래</span>
+                                              : tr.dealingGbn}
+                                            {tr.agentSgg ? ` · ${tr.agentSgg}` : ''}
+                                          </div>
+                                        )}
+                                      </td>
                                       {status && (
-                                        <td style={{ padding: '5px 0', textAlign: 'right' }}>
+                                        <td style={{ padding: '5px 0', textAlign: 'right', verticalAlign: 'top' }}>
                                           <span style={{
                                             fontSize: 10, fontWeight: 700, padding: '2px 5px', borderRadius: 6,
                                             background: status.bg, color: status.color, whiteSpace: 'nowrap',

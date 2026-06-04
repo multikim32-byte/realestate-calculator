@@ -17,7 +17,12 @@ function getLawdCode(sido: string, sigungu: string): string | null {
 
 // MOLIT XML → 거래 항목 파싱
 function parseXml(xml: string, aptName: string) {
-  const items: { date: string; area: number; price: number; floor: number }[] = [];
+  const items: {
+    date: string; area: number; price: number; floor: number;
+    dong: string; buyerGbn: string; slerGbn: string;
+    dealingGbn: string; agentSgg: string;
+    rgstDate: string; cdealType: string; cdealDay: string;
+  }[] = [];
   let buildYear: number | null = null;
   const blocks = xml.match(/<item>([\s\S]*?)<\/item>/g) ?? [];
 
@@ -40,7 +45,17 @@ function parseXml(xml: string, aptName: string) {
     if (by > 1900 && !buildYear) buildYear = by;
 
     if (!year || !price || !area) continue;
-    items.push({ date: `${year}-${month}-${day}`, area, price, floor });
+    items.push({
+      date: `${year}-${month}-${day}`, area, price, floor,
+      dong:       get('aptDong'),
+      buyerGbn:   get('buyerGbn'),
+      slerGbn:    get('slerGbn'),
+      dealingGbn: get('dealingGbn'),
+      agentSgg:   get('estateAgentSggNm'),
+      rgstDate:   get('rgstDate'),
+      cdealType:  get('cdealType'),
+      cdealDay:   get('cdealDay'),
+    });
   }
   return { items, buildYear };
 }
@@ -66,7 +81,12 @@ export async function GET(req: NextRequest) {
 
   // 최근 N개월 조회
   const now = new Date();
-  const allTrades: { date: string; area: number; price: number; floor: number }[] = [];
+  const allTrades: {
+    date: string; area: number; price: number; floor: number;
+    dong: string; buyerGbn: string; slerGbn: string;
+    dealingGbn: string; agentSgg: string;
+    rgstDate: string; cdealType: string; cdealDay: string;
+  }[] = [];
   let buildYear: number | null = null;
 
   await Promise.all(
