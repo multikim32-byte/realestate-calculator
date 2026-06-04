@@ -13,7 +13,7 @@ function getLawdCode(sido: string, sigungu: string): string | null {
 }
 
 function parseRentXml(xml: string, aptName: string) {
-  const items: { date: string; area: number; floor: number; deposit: number; monthly: number }[] = [];
+  const items: { date: string; area: number; floor: number; deposit: number; monthly: number; contractType: string }[] = [];
   const blocks = xml.match(/<item>([\s\S]*?)<\/item>/g) ?? [];
   for (const block of blocks) {
     const get = (tag: string) => {
@@ -32,8 +32,10 @@ function parseRentXml(xml: string, aptName: string) {
     const monthlyRaw = get('monthlyRent') || get('월세') || get('월세금액') || '0';
     const deposit = parseInt(depositRaw.replace(/,/g, '')) || 0;
     const monthly = parseInt(monthlyRaw.replace(/,/g, '')) || 0;
+    // 계약구분: 신규 / 갱신 / 재계약
+    const contractType = get('계약구분') || get('contractType') || '';
     if (!year || !area) continue;
-    items.push({ date: `${year}-${month}-${day}`, area, floor, deposit, monthly });
+    items.push({ date: `${year}-${month}-${day}`, area, floor, deposit, monthly, contractType });
   }
   return items;
 }
@@ -55,7 +57,7 @@ export async function GET(req: NextRequest) {
   if (!apiKey) return NextResponse.json({ trades: [] });
 
   const now = new Date();
-  const allTrades: { date: string; area: number; floor: number; deposit: number; monthly: number }[] = [];
+  const allTrades: { date: string; area: number; floor: number; deposit: number; monthly: number; contractType: string }[] = [];
 
   await Promise.all(
     Array.from({ length: months }, (_, i) => {

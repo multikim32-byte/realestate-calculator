@@ -247,7 +247,7 @@ export default function MapClient({ unsoldListings }: Props) {
   const { toggle: toggleFav, isFav } = useFavorites();
   const [selectedComplex, setSelectedComplex] = useState<MapComplex | null>(null);
   const [complexTrades, setComplexTrades] = useState<Array<{ date: string; area: number; price: number; floor: number }> | null>(null);
-  const [complexRents, setComplexRents]   = useState<Array<{ date: string; area: number; floor: number; deposit: number; monthly: number }> | null>(null);
+  const [complexRents, setComplexRents]   = useState<Array<{ date: string; area: number; floor: number; deposit: number; monthly: number; contractType: string }> | null>(null);
   const [complexBuildYear, setComplexBuildYear] = useState<number | null>(null);
   const [complexNearby, setComplexNearby] = useState<{ dong?: string; floor_count?: number; nearby_transit?: Array<{ name: string; distance: number; category?: string }>; nearby_schools?: Array<{ name: string; distance: number; school_type?: string }>; nearby_infra?: Array<{ name: string; distance: number; label?: string; category?: string }> } | null>(null);
   const [dealType, setDealType] = useState<'매매' | '전세' | '월세'>('매매');
@@ -1111,13 +1111,28 @@ export default function MapClient({ unsoldListings }: Props) {
                     {dealType === '전세' && complexRents && complexRents.length > 0 && (() => {
                       const today = Date.now();
                       const jeonseAll = complexRents.filter(t => t.monthly === 0);
-                      const active  = jeonseAll.filter(t => {
-                        const exp = new Date(t.date).getTime() + 2 * 365.25 * 24 * 3600 * 1000;
+
+                      // (층+면적) 기준 가장 최근 계약만 유지 — 같은 호수 중복 방지
+                      const latestByUnit = new Map<string, typeof jeonseAll[0]>();
+                      for (const t of jeonseAll) {
+                        const key = `${t.floor}_${Math.round(t.area)}`;
+                        const existing = latestByUnit.get(key);
+                        if (!existing || t.date > existing.date) latestByUnit.set(key, t);
+                      }
+                      const dedupedJeonse = [...latestByUnit.values()];
+
+                      // 갱신/재계약은 최대 4년(2년+계약갱신청구권 2년), 신규는 2년 기준
+                      const active = dedupedJeonse.filter(t => {
+                        const isRenewed = t.contractType === '갱신' || t.contractType === '재계약';
+                        const duration = isRenewed ? 4 * 365.25 : 2 * 365.25;
+                        const exp = new Date(t.date).getTime() + duration * 24 * 3600 * 1000;
                         return exp > today;
                       });
                       const soonMs = today + 90 * 24 * 3600 * 1000;
                       const soon = active.filter(t => {
-                        const exp = new Date(t.date).getTime() + 2 * 365.25 * 24 * 3600 * 1000;
+                        const isRenewed = t.contractType === '갱신' || t.contractType === '재계약';
+                        const duration = isRenewed ? 4 * 365.25 : 2 * 365.25;
+                        const exp = new Date(t.date).getTime() + duration * 24 * 3600 * 1000;
                         return exp <= soonMs;
                       });
                       return (
@@ -1198,25 +1213,38 @@ export default function MapClient({ unsoldListings }: Props) {
                     {/* 최근 거래 테이블 */}
                     {(() => {
                       // 전세/월세 계약 상태 계산
-                      function contractStatus(dateStr: string, isMonthly: boolean) {
+                      function contractStatus(dateStr: string, isMonthly: boolean, contractType = '') {
                         const today = Date.now();
                         const deal  = new Date(dateStr).getTime();
-                        const expiry  = deal + 2 * 365.25 * 24 * 3600 * 1000;
-                        const renewal = deal + 4 * 365.25 * 24 * 3600 * 1000;
-                        const daysToExpiry  = Math.round((expiry  - today) / 86400000);
-                        const daysToRenewal = Math.round((renewal - today) / 86400000);
+                        const isRenewed = contractType === '갱신' || contractType === '재계약';
+
                         if (isMonthly) {
-                          // 월세: 1년 계약 기준
                           const mExpiry = deal + 365.25 * 24 * 3600 * 1000;
                           const d = Math.round((mExpiry - today) / 86400000);
-                          if (d < 0)  return { label: '만료됨',          color: '#6b7280', bg: '#f1f5f9' };
-                          if (d <= 90) return { label: `만료임박 D-${d}`, color: '#d97706', bg: '#fefce8' };
-                          return            { label: `거주중 D-${d}`,    color: '#059669', bg: '#f0fdf4' };
+                          if (d < 0)   return { label: '만료됨',           color: '#6b7280', bg: '#f1f5f9' };
+                          if (d <= 90) return { label: `만료임박 D-${d}`,  color: '#d97706', bg: '#fefce8' };
+                          return             { label: `거주중 D-${d}`,     color: '#059669', bg: '#f0fdf4' };
                         }
-                        if (daysToRenewal < 0) return { label: '만료됨',              color: '#6b7280', bg: '#f1f5f9' };
-                        if (daysToExpiry  < 0) return { label: `갱신중 +${Math.abs(daysToExpiry)}일`, color: '#7c3aed', bg: '#ede9fe' };
-                        if (daysToExpiry <= 90) return { label: `만료임박 D-${daysToExpiry}`, color: '#d97706', bg: '#fefce8' };
-                        return                  { label: `거주중 D-${daysToExpiry}`,   color: '#059669', bg: '#f0fdf4' };
+
+                        if (isRenewed) {
+                          // 갱신/재계약: 계약일 기준 최대 4년
+                          const expiry4 = deal + 4 * 365.25 * 24 * 3600 * 1000;
+                          const d = Math.round((expiry4 - today) / 86400000);
+                          if (d < 0)   return { label: '만료됨',                           color: '#6b7280', bg: '#f1f5f9' };
+                          if (d <= 90) return { label: `만료임박 D-${d}`,                  color: '#d97706', bg: '#fefce8' };
+                          const tag = contractType === '재계약' ? '재계약중' : '갱신중';
+                          return             { label: `${tag} D-${d}`,                     color: '#7c3aed', bg: '#ede9fe' };
+                        }
+
+                        // 신규: 2년 만료 / 갱신청구권 사용 시 최대 4년
+                        const expiry2 = deal + 2 * 365.25 * 24 * 3600 * 1000;
+                        const expiry4 = deal + 4 * 365.25 * 24 * 3600 * 1000;
+                        const daysTo2 = Math.round((expiry2 - today) / 86400000);
+                        const daysTo4 = Math.round((expiry4 - today) / 86400000);
+                        if (daysTo4 < 0)  return { label: '만료됨',                                    color: '#6b7280', bg: '#f1f5f9' };
+                        if (daysTo2 < 0)  return { label: `갱신중 +${Math.abs(daysTo2)}일`,            color: '#7c3aed', bg: '#ede9fe' };
+                        if (daysTo2 <= 90) return { label: `만료임박 D-${daysTo2}`,                    color: '#d97706', bg: '#fefce8' };
+                        return                   { label: `거주중 D-${daysTo2}`,                       color: '#059669', bg: '#f0fdf4' };
                       }
                       const showStatus = dealType === '전세' || dealType === '월세';
                       return (
@@ -1244,7 +1272,7 @@ export default function MapClient({ unsoldListings }: Props) {
                                       ? fmtPrice((t as { deposit: number }).deposit)
                                       : `${fmtPrice((t as { deposit: number }).deposit)}/${(t as { monthly: number }).monthly}만`;
                                   const status = showStatus
-                                    ? contractStatus(t.date, dealType === '월세')
+                                    ? contractStatus(t.date, dealType === '월세', (t as { contractType?: string }).contractType)
                                     : null;
                                   return (
                                     <tr key={i} style={{ borderTop: '1px solid #f8fafc' }}>
