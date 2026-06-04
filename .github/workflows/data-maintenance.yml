@@ -1,0 +1,66 @@
+name: 월간 데이터 유지보수
+
+on:
+  schedule:
+    - cron: '0 18 1 * *'  # 매월 1일 03:00 KST
+  workflow_dispatch:       # 수동 실행 가능
+
+jobs:
+  # ── 신규 아파트 단지 등록 ────────────────────────────────────────────────────
+  collect-new-complexes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts
+
+      - name: 신규 아파트 단지 수집 (전국)
+        run: node scripts/collect-complexes.mjs
+        env:
+          PUBLIC_DATA_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+          KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+  # ── 신규 단지 주변환경 보강 (교통/학교/인프라) ──────────────────────────────
+  enrich-new-complex-env:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    needs: collect-new-complexes   # 신규 단지 등록 후 실행
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts
+
+      - name: 교통/학교/인프라 보강 (nearby_transit IS NULL 단지만)
+        run: node scripts/enrich-complexes.mjs
+        env:
+          KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+  # ── 데이터 품질 점검 ─────────────────────────────────────────────────────────
+  check-data-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: enrich-new-complex-env
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts
+
+      - name: Supabase URL 및 데이터 품질 점검
+        run: node scripts/check-supabase-urls.mjs
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
