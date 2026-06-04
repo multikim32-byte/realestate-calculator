@@ -8,7 +8,12 @@ interface ExpiryBucket {
   ym: string; label: string; jeonse: number; wolse: number;
   isPast: boolean; isSoon: boolean;
 }
-interface Props { lawdCd: string; sigunguName: string; }
+interface Props {
+  lawdCd: string;
+  sigunguName: string;
+  aptName?: string;  // 단지 필터 (외부 제어)
+  dong?: string;     // 동 필터 (외부 제어)
+}
 
 type RangeKey = '1년' | '2년' | '3년' | '전체';
 const RANGES: { key: RangeKey; future: number; past: number }[] = [
@@ -44,21 +49,26 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
   );
 };
 
-export default function JeonseExpiryChart({ lawdCd, sigunguName }: Props) {
-  const [rows, setRows]       = useState<MonthRow[]>([]);
-  const [loading, setLoading] = useState(false);
+export default function JeonseExpiryChart({ lawdCd, sigunguName, aptName, dong }: Props) {
+  const [rows, setRows]           = useState<MonthRow[]>([]);
+  const [loading, setLoading]     = useState(false);
   const [loadedFor, setLoadedFor] = useState('');
-  const [range, setRange]     = useState<RangeKey>('2년');
+  const [range, setRange]         = useState<RangeKey>('2년');
+
+  const cacheKey = `${lawdCd}|${aptName ?? ''}|${dong ?? ''}`;
 
   useEffect(() => {
-    if (!lawdCd || loadedFor === lawdCd) return;
+    if (!lawdCd || loadedFor === cacheKey) return;
     setLoading(true);
-    fetch(`/api/district-history?lawdCd=${lawdCd}`)
+    const params = new URLSearchParams({ lawdCd });
+    if (aptName) params.set('aptName', aptName);
+    if (dong)    params.set('dong', dong);
+    fetch(`/api/district-history?${params}`)
       .then(r => r.json())
-      .then(d => { setRows(d.data ?? []); setLoadedFor(lawdCd); })
+      .then(d => { setRows(d.data ?? []); setLoadedFor(cacheKey); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [lawdCd, loadedFor]);
+  }, [lawdCd, aptName, dong, cacheKey, loadedFor]);
 
   const todayYm6  = getTodayYm6();
   const todayDash = ym6toYmDash(todayYm6);
@@ -115,9 +125,11 @@ export default function JeonseExpiryChart({ lawdCd, sigunguName }: Props) {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>
-            🏠 {sigunguName} 전세·월세 만료 예측
+            🏠 {aptName ?? dong ?? sigunguName} 전세·월세 만료 예측
           </div>
-          <div style={{ fontSize: 11, color: '#9ca3af' }}>데이터 기간: {dbMonths} · 만료 추산 (계약일 +2년)</div>
+          <div style={{ fontSize: 11, color: '#9ca3af' }}>
+            {aptName ? '단지' : dong ? '동' : '시군구'} 기준 · 데이터: {dbMonths} · 만료 추산 (계약일 +2년)
+          </div>
         </div>
         <div style={{ display: 'flex', gap: 4 }}>
           {RANGES.map(r => (
