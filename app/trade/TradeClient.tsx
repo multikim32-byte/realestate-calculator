@@ -813,49 +813,6 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
             />
           </div>
 
-          {/* 갭투자 랭킹 (전세 탭 + 매매 데이터 있을 때) */}
-          {tab === '전세' && Object.keys(jeonseRatioMap).length > 0 && (() => {
-            const ranked = Object.entries(jeonseRatioMap)
-              .sort(([, a], [, b]) => b - a)
-              .slice(0, 10);
-            return (
-              <div style={{ marginBottom: 24, background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-                <div style={{ padding: '14px 20px', background: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 16 }}>⚡</span>
-                  <span style={{ color: '#fff', fontWeight: 800, fontSize: 15 }}>갭투자 주의 랭킹</span>
-                  <span style={{ color: '#94a3b8', fontSize: 12, marginLeft: 4 }}>전세가율 높은 단지 TOP {ranked.length}</span>
-                </div>
-                <div style={{ padding: '0 4px 8px' }}>
-                  {ranked.map(([name, ratio], idx) => {
-                    const bg   = ratio >= 80 ? '#fef2f2' : ratio >= 70 ? '#fffbeb' : '#f0fdf4';
-                    const clr  = ratio >= 80 ? '#dc2626' : ratio >= 70 ? '#92400e' : '#166534';
-                    const lbl  = ratio >= 80 ? '위험' : ratio >= 70 ? '주의' : '안전';
-                    return (
-                      <div key={name} onClick={() => setSelectedApt(selectedApt === name ? '' : name)}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 12,
-                          padding: '10px 16px', cursor: 'pointer',
-                          background: selectedApt === name ? '#f0fdf4' : 'transparent',
-                          borderBottom: idx < ranked.length - 1 ? '1px solid #f3f4f6' : 'none',
-                        }}
-                      >
-                        <span style={{ fontSize: 13, fontWeight: 800, color: '#9ca3af', width: 20, flexShrink: 0 }}>{idx + 1}</span>
-                        <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: clr }}>{ratio}%</span>
-                          <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: bg, color: clr }}>{lbl}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div style={{ padding: '8px 16px 12px', fontSize: 11, color: '#9ca3af' }}>
-                  ※ 전세가율 = 전세 보증금 ÷ 매매 최고가 · 80%↑ 위험 · 70~80% 주의
-                </div>
-              </div>
-            );
-          })()}
-
           {/* 단지별 요약 카드 */}
           <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1e3a5f', marginBottom: 12 }}>
             단지별 {tab} 요약 ({rentAptStats.length}개 단지)
@@ -1072,6 +1029,44 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
             return (
               <div style={{ marginTop: 16 }}>
                 <KakaoMap address={mapAddress} name={selectedApt} />
+              </div>
+            );
+          })()}
+
+          {/* 갭투자 주의 랭킹 (지도 아래) */}
+          {tab === '전세' && Object.keys(jeonseRatioMap).length > 0 && (() => {
+            const ranked = Object.entries(jeonseRatioMap)
+              .sort(([, a], [, b]) => b - a)
+              .slice(0, 10);
+            return (
+              <div style={{ marginTop: 16, background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                <div style={{ padding: '14px 20px', background: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 16 }}>⚡</span>
+                  <span style={{ color: '#fff', fontWeight: 800, fontSize: 15 }}>갭투자 주의 랭킹</span>
+                  <span style={{ color: '#94a3b8', fontSize: 12, marginLeft: 4 }}>전세가율 높은 단지 TOP {ranked.length}</span>
+                </div>
+                <div style={{ padding: '0 4px 8px' }}>
+                  {ranked.map(([name, ratio], idx) => {
+                    const bg  = ratio >= 80 ? '#fef2f2' : ratio >= 70 ? '#fffbeb' : '#f0fdf4';
+                    const clr = ratio >= 80 ? '#dc2626' : ratio >= 70 ? '#92400e' : '#166534';
+                    const lbl = ratio >= 80 ? '위험' : ratio >= 70 ? '주의' : '안전';
+                    return (
+                      <div key={name} onClick={() => setSelectedApt(selectedApt === name ? '' : name)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', cursor: 'pointer', background: selectedApt === name ? '#f0fdf4' : 'transparent', borderBottom: idx < ranked.length - 1 ? '1px solid #f3f4f6' : 'none' }}
+                      >
+                        <span style={{ fontSize: 13, fontWeight: 800, color: '#9ca3af', width: 20, flexShrink: 0 }}>{idx + 1}</span>
+                        <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: clr }}>{ratio}%</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: bg, color: clr }}>{lbl}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{ padding: '8px 16px 12px', fontSize: 11, color: '#9ca3af' }}>
+                  ※ 전세가율 = 전세 보증금 ÷ 매매 최고가 · 80%↑ 위험 · 70~80% 주의
+                </div>
               </div>
             );
           })()}
