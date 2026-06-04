@@ -2,11 +2,19 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend,
 } from 'recharts';
 import KakaoMap from '@/app/components/KakaoMap';
+import { LAWD_CODE_MAP } from '@/lib/tradeApi';
+
+const DistrictTrendChart = dynamic(() => import('@/app/components/DistrictTrendChart'), { ssr: false });
+const JeonseExpiryChart  = dynamic(() => import('@/app/components/JeonseExpiryChart'),  { ssr: false });
+const MaemaeSupplyChart  = dynamic(() => import('@/app/components/MaemaeSupplyChart'),  { ssr: false });
+const NationalRankings   = dynamic(() => import('@/app/components/NationalRankings'),   { ssr: false });
+const TradeTrendSection  = dynamic(() => import('@/app/trade/TradeTrendSection'),       { ssr: false });
 
 type Complex = {
   kapt_code: string; name: string; slug: string;
@@ -347,6 +355,24 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
           />
         </div>
       )}
+
+      {/* 동네 분석 */}
+      {(() => {
+        const lawdCd = (LAWD_CODE_MAP[complex.sido as keyof typeof LAWD_CODE_MAP] ?? [])
+          .find(d => complex.sigungu.includes(d.name) || d.name.includes(complex.sigungu))?.code ?? '';
+        if (!lawdCd) return null;
+        return (
+          <>
+            <DistrictTrendChart lawdCd={lawdCd} sigunguName={complex.sigungu} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 0 }}>
+              <JeonseExpiryChart  lawdCd={lawdCd} sigunguName={complex.sigungu} />
+              <MaemaeSupplyChart  lawdCd={lawdCd} sigunguName={complex.sigungu} />
+            </div>
+            <NationalRankings />
+            <TradeTrendSection tradeStats={null} extSido={complex.sido} extSigungu={complex.sigungu} />
+          </>
+        );
+      })()}
 
       {/* 관련 링크 */}
       <div style={{ background: '#1e3a5f', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
