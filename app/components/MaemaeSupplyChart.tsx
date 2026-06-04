@@ -22,6 +22,13 @@ interface Props {
   sigunguName: string;
 }
 
+type RangeKey = '1년' | '2년' | '3년';
+const RANGES: { key: RangeKey; months: number }[] = [
+  { key: '1년', months: 12 },
+  { key: '2년', months: 24 },
+  { key: '3년', months: 36 },
+];
+
 function recentYms(n: number) {
   return Array.from({ length: n }, (_, i) => {
     const d = new Date();
@@ -36,38 +43,35 @@ function addMonths(dateStr: string, months: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function todayYm() {
+function getTodayYm() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
 const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) => {
   if (!active || !payload?.length) return null;
-  const count = payload[0]?.value ?? 0;
   return (
     <div style={{ background: '#1e293b', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#fff' }}>
       <div style={{ fontWeight: 700, marginBottom: 4 }}>{label} 비과세 가능</div>
-      <div style={{ color: '#34d399' }}>{count}건 잠재 매물</div>
+      <div style={{ color: '#34d399' }}>{payload[0]?.value ?? 0}건 잠재 매물</div>
       <div style={{ color: '#9ca3af', fontSize: 11, marginTop: 4 }}>2년 보유 도달 기준</div>
     </div>
   );
 };
 
 export default function MaemaeSupplyChart({ lawdCd, sigunguName }: Props) {
-  const [data, setData] = useState<SupplyBucket[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [allTrades, setAllTrades] = useState<TradeItem[]>([]);
+  const [loading, setLoading]     = useState(false);
   const [loadedFor, setLoadedFor] = useState('');
-  const [totalSoon3m, setTotalSoon3m] = useState(0);
-  const [totalSoon6m, setTotalSoon6m] = useState(0);
-  const [totalFuture, setTotalFuture] = useState(0);
+  const [range, setRange]         = useState<RangeKey>('2년');
 
+  // 데이터 수집 — 36개월 (3년 예측 커버)
   useEffect(() => {
     if (!lawdCd || loadedFor === lawdCd) return;
     setLoading(true);
-    setData([]);
+    setAllTrades([]);
 
-    const yms = recentYms(24);
-
+    const yms = recentYms(36);
     Promise.all(
       yms.map(ym =>
         fetch(`/api/trade?lawdCd=${lawdCd}&dealYmd=${ym}&numOfRows=500`)
@@ -76,95 +80,95 @@ export default function MaemaeSupplyChart({ lawdCd, sigunguName }: Props) {
           .catch(() => [] as TradeItem[])
       )
     ).then(results => {
-      const allTrades = results.flat();
-      const now = todayYm();
-      const soon3m = addMonths(now, 3);
-      const soon6m = addMonths(now, 6);
-      const futureLimit = addMonths(now, 12);
-      const chartStart = addMonths(now, -3);
-
-      const bucketMap = new Map<string, number>();
-
-      let cnt3m = 0, cnt6m = 0, cntFuture = 0;
-
-      for (const t of allTrades) {
-        if (!t.dealDate) continue;
-        const supplyYm = addMonths(t.dealDate, 24); // 2년 보유 도달 시점
-
-        // 미래 집계용 카운트
-        if (supplyYm >= now && supplyYm <= soon3m) cnt3m++;
-        if (supplyYm >= now && supplyYm <= soon6m) cnt6m++;
-        if (supplyYm >= now) cntFuture++;
-
-        // 차트 범위: -3개월 ~ +12개월
-        if (supplyYm < chartStart || supplyYm > futureLimit) continue;
-        bucketMap.set(supplyYm, (bucketMap.get(supplyYm) ?? 0) + 1);
-      }
-
-      setTotalSoon3m(cnt3m);
-      setTotalSoon6m(cnt6m);
-      setTotalFuture(cntFuture);
-
-      const sorted: SupplyBucket[] = [...bucketMap.entries()]
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([ym, count]) => ({
-          ym,
-          label: ym.slice(2).replace('-', '.'),
-          count,
-          isPast: ym < now,
-          isSoon: ym >= now && ym <= soon3m,
-        }));
-
-      setData(sorted);
+      setAllTrades(results.flat());
       setLoadedFor(lawdCd);
     }).finally(() => setLoading(false));
   }, [lawdCd, loadedFor]);
+
+  // 선택 범위 기준 집계
+  const now          = getTodayYm();
+  const futureMonths = RANGES.find(r => r.key === range)!.months;
+  const futureLimit  = addMonths(now, futureMonths);
+  const chartStart   = addMonths(now, -Math.round(futureMonths / 3));
+  const soon3m       = addMonths(now, 3);
+  const soon6m       = addMonths(now, 6);
+
+  const bucketMap = new Map<string, number>();
+  let cnt3m = 0, cnt6m = 0, cntFuture = 0;
+
+  for (const t of allTrades) {
+    if (!t.dealDate) continue;
+    const supplyYm = addMonths(t.dealDate, 24);
+
+    if (supplyYm >= now && supplyYm <= soon3m) cnt3m++;
+    if (supplyYm >= now && supplyYm <= soon6m) cnt6m++;
+    if (supplyYm >= now) cntFuture++;
+
+    if (supplyYm < chartStart || supplyYm > futureLimit) continue;
+    bucketMap.set(supplyYm, (bucketMap.get(supplyYm) ?? 0) + 1);
+  }
+
+  const data: SupplyBucket[] = [...bucketMap.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([ym, count]) => ({
+      ym, label: ym.slice(2).replace('-', '.'), count,
+      isPast: ym < now,
+      isSoon: ym >= now && ym <= soon3m,
+    }));
 
   if (loading) {
     return (
       <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 20, marginBottom: 20 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>🏷️ 매매 잠재 매물 예측</div>
-        <div style={{ textAlign: 'center', padding: '32px 0', color: '#9ca3af', fontSize: 13 }}>24개월 매매 데이터 분석 중…</div>
+        <div style={{ textAlign: 'center', padding: '32px 0', color: '#9ca3af', fontSize: 13 }}>36개월 매매 데이터 분석 중…</div>
       </div>
     );
   }
-
-  if (!data.length && !loading) return null;
+  if (!allTrades.length && !loading) return null;
 
   return (
     <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', padding: 20, marginBottom: 20 }}>
-      {/* 헤더 */}
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>
-          🏷️ {sigunguName} 매매 잠재 매물 예측
+      {/* 헤더 + 범위 선택 */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>
+            🏷️ {sigunguName} 매매 잠재 매물 예측
+          </div>
+          <div style={{ fontSize: 11, color: '#9ca3af' }}>최근 36개월 매매 기준 · 2년 보유 도달 시점 = 비과세 매도 가능</div>
         </div>
-        <div style={{ fontSize: 11, color: '#9ca3af' }}>최근 24개월 매매 기준 · 2년 보유 도달 시점 = 비과세 매도 가능</div>
+        <div style={{ display: 'flex', gap: 4 }}>
+          {RANGES.map(r => (
+            <button key={r.key} onClick={() => setRange(r.key)} style={{
+              padding: '4px 12px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: range === r.key ? 700 : 500,
+              background: range === r.key ? '#059669' : '#f1f5f9',
+              color: range === r.key ? '#fff' : '#475569',
+            }}>{r.key}</button>
+          ))}
+        </div>
       </div>
 
       {/* 요약 카드 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
-        <div style={{ background: totalSoon3m > 0 ? '#fefce8' : '#f9fafb', borderRadius: 10, padding: '12px 14px' }}>
+        <div style={{ background: cnt3m > 0 ? '#fefce8' : '#f9fafb', borderRadius: 10, padding: '12px 14px' }}>
           <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>3개월내 비과세</div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: totalSoon3m > 0 ? '#d97706' : '#6b7280' }}>
-            {totalSoon3m.toLocaleString()}건
-          </div>
-          <div style={{ fontSize: 11, color: totalSoon3m > 0 ? '#d97706' : '#9ca3af', marginTop: 2, fontWeight: totalSoon3m > 0 ? 700 : 400 }}>
-            {totalSoon3m > 0 ? '⚠️ 매물 출현 예상' : '해당 없음'}
+          <div style={{ fontSize: 18, fontWeight: 800, color: cnt3m > 0 ? '#d97706' : '#6b7280' }}>{cnt3m.toLocaleString()}건</div>
+          <div style={{ fontSize: 11, color: cnt3m > 0 ? '#d97706' : '#9ca3af', marginTop: 2, fontWeight: cnt3m > 0 ? 700 : 400 }}>
+            {cnt3m > 0 ? '⚠️ 매물 출현 예상' : '해당 없음'}
           </div>
         </div>
         <div style={{ background: '#f0fdf4', borderRadius: 10, padding: '12px 14px' }}>
           <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>6개월내 비과세</div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: '#059669' }}>{totalSoon6m.toLocaleString()}건</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: '#059669' }}>{cnt6m.toLocaleString()}건</div>
           <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>잠재 공급</div>
         </div>
         <div style={{ background: '#f8faff', borderRadius: 10, padding: '12px 14px' }}>
           <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>12개월내 누적</div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: '#3b82f6' }}>{totalFuture.toLocaleString()}건</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: '#3b82f6' }}>{cntFuture.toLocaleString()}건</div>
           <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>보유자 매도 가능</div>
         </div>
       </div>
 
-      {/* 잠재 매물 출현 차트 */}
+      {/* 차트 */}
       <div>
         <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 8, fontWeight: 600 }}>
           월별 2년 보유 도달 건수
@@ -178,10 +182,7 @@ export default function MaemaeSupplyChart({ lawdCd, sigunguName }: Props) {
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="count" radius={[3, 3, 0, 0]}>
               {data.map((d, i) => (
-                <Cell
-                  key={i}
-                  fill={d.isPast ? '#d1fae5' : d.isSoon ? '#fbbf24' : '#34d399'}
-                />
+                <Cell key={i} fill={d.isPast ? '#d1fae5' : d.isSoon ? '#fbbf24' : '#34d399'} />
               ))}
             </Bar>
           </BarChart>
