@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { LAWD_CODE_MAP, recentMonths } from '@/lib/tradeApi';
 import type { TradeItem } from '@/lib/tradeApi';
 import type { RentItem } from '@/lib/rentApi';
+import type { TradeTrendStats } from './TradeTrendSection';
 import KakaoMap from '@/app/components/KakaoMap';
 
 const VolumeChart = dynamic(() => import('@/app/components/VolumeChart'), { ssr: false });
@@ -15,6 +16,7 @@ const DistrictTrendChart  = dynamic(() => import('@/app/components/DistrictTrend
 const NationalRankings   = dynamic(() => import('@/app/components/NationalRankings'), { ssr: false });
 const JeonseExpiryChart  = dynamic(() => import('@/app/components/JeonseExpiryChart'), { ssr: false });
 const MaemaeSupplyChart  = dynamic(() => import('@/app/components/MaemaeSupplyChart'), { ssr: false });
+const TradeTrendSection  = dynamic(() => import('./TradeTrendSection'), { ssr: false });
 
 const AptPriceTrendChart = dynamic(() => import('@/app/components/AptPriceTrendChart'), {
   ssr: false,
@@ -55,9 +57,10 @@ function areaLabel(area: number) {
 interface TradeClientProps {
   initialItems?: TradeItem[];
   initialDong?: string;
+  tradeStats?: TradeTrendStats;
 }
 
-export default function TradeClient({ initialItems = [], initialDong = '개포동' }: TradeClientProps) {
+export default function TradeClient({ initialItems = [], initialDong = '개포동', tradeStats = null }: TradeClientProps) {
   const router = useRouter();
   const [tab, setTab] = useState<TabType>('매매');
   const [sido, setSido] = useState<keyof typeof LAWD_CODE_MAP>('서울');
@@ -489,6 +492,13 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
 
       {/* ── 전국 실거래 랭킹 ── */}
       <NationalRankings />
+
+      {/* ── 지역 실거래 동향 TOP10 (시도/시군구 연동) ── */}
+      <TradeTrendSection
+        tradeStats={tradeStats}
+        extSido={sido}
+        extSigungu={sigunguName}
+      />
 
       {/* ── 평형 필터 ── */}
       {(searched || rentSearched) && (

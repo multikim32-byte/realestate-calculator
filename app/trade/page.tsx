@@ -1,7 +1,6 @@
 ﻿import Link from 'next/link';
 import GlobalNav from '../components/GlobalNav';
 import TradeClient from './TradeClient';
-import TradeTrendSection from './TradeTrendSection';
 import type { TradeTrendStats } from './TradeTrendSection';
 import type { Metadata } from 'next';
 import { fetchTradeList, recentMonths } from '@/lib/tradeApi';
@@ -53,9 +52,7 @@ export default async function TradePage() {
       </div>
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 16px' }}>
 
-        <TradeTrendSection tradeStats={tradeStats} />
-
-        <TradeClient initialItems={initialItems} initialDong="개포동" />
+        <TradeClient initialItems={initialItems} initialDong="개포동" tradeStats={tradeStats} />
 
         {/* SEO 안내 섹션 */}
         <div style={{ marginTop: 60, borderTop: '1px solid #e5e7eb', paddingTop: 40 }}>

@@ -78,13 +78,39 @@ const SEL: React.CSSProperties = {
   fontSize: 13, color: '#1e293b', background: '#fff', cursor: 'pointer',
 };
 
-export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTrendStats }) {
+export default function TradeTrendSection({
+  tradeStats,
+  extSido,
+  extSigungu,
+}: {
+  tradeStats: TradeTrendStats;
+  extSido?: string;
+  extSigungu?: string;
+}) {
+  const controlled = !!extSido; // 외부에서 시도/시군구 제어 중
   const [tab, setTab]         = useState<TabKey>('rising');
-  const [sido, setSido]       = useState('전국');
-  const [sigungu, setSigungu] = useState('');
+  const [sido, setSido]       = useState(extSido ?? '전국');
+  const [sigungu, setSigungu] = useState(extSigungu ?? '');
   const [dong, setDong]       = useState('');
   const [month, setMonth]     = useState(CURRENT_MONTH);
   const [isMobile, setIsMobile] = useState(false);
+
+  const [regionalStats, setRegionalStats]   = useState<TradeTrendStats>(null);
+  const [availableDongs, setAvailableDongs] = useState<string[]>([]);
+  const [loading, setLoading]               = useState(false);
+  const fetchedRef = useRef('');
+
+  // 외부 sido/sigungu 변경 시 내부 상태 동기화
+  useEffect(() => {
+    if (!controlled || extSido === sido) return;
+    setSido(extSido!); setSigungu(''); setDong(''); setAvailableDongs([]); setRegionalStats(null); fetchedRef.current = '';
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [extSido]);
+  useEffect(() => {
+    if (!controlled || extSigungu === sigungu) return;
+    setSigungu(extSigungu ?? ''); setDong(''); setAvailableDongs([]); setRegionalStats(null); fetchedRef.current = '';
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [extSigungu]);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
@@ -93,8 +119,9 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  // 링크로 진입 시 URL 파라미터로 초기 지역 설정 (예: 단지 클릭 → ?sido=경기&sigungu=양주시)
+  // 링크로 진입 시 URL 파라미터로 초기 지역 설정 (controlled 모드 아닐 때만)
   useEffect(() => {
+    if (controlled) return;
     const sp = new URLSearchParams(window.location.search);
     const sidoParam    = sp.get('sido');
     const sigunguParam = sp.get('sigungu');
@@ -104,12 +131,8 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
       if (sigunguParam) setSigungu(sigunguParam);
     }
     if (monthParam && /^\d{6}$/.test(monthParam)) setMonth(monthParam);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const [regionalStats, setRegionalStats]   = useState<TradeTrendStats>(null);
-  const [availableDongs, setAvailableDongs] = useState<string[]>([]);
-  const [loading, setLoading]               = useState(false);
-  const fetchedRef = useRef('');
 
   // useMemo로 안정적 참조 유지 — sido가 바뀔 때만 재생성 (매 렌더마다 새 []를 만들면 useEffect 무한 루프 발생)
   const sigunguList = useMemo(
@@ -234,16 +257,18 @@ export default function TradeTrendSection({ tradeStats }: { tradeStats: TradeTre
             ))}
           </select>
 
-          <span style={{ fontSize: 12, color: '#d1d5db' }}>|</span>
+          {!controlled && <span style={{ fontSize: 12, color: '#d1d5db' }}>|</span>}
 
-          {/* 시도 */}
-          <select value={sido} onChange={e => handleSidoChange(e.target.value)} style={{ ...SEL, fontWeight: sido === '전국' ? 700 : 500 }}>
-            <option value="전국">전국</option>
-            {SIDOS.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
+          {/* 시도 — controlled 모드에서는 숨김 */}
+          {!controlled && (
+            <select value={sido} onChange={e => handleSidoChange(e.target.value)} style={{ ...SEL, fontWeight: sido === '전국' ? 700 : 500 }}>
+              <option value="전국">전국</option>
+              {SIDOS.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
 
-          {/* 시군구 */}
-          {sido !== '전국' && (
+          {/* 시군구 — controlled 모드에서는 숨김 */}
+          {!controlled && sido !== '전국' && (
             <select value={sigungu} onChange={e => handleSigunguChange(e.target.value)} style={SEL}>
               <option value="">전체</option>
               {sigunguList.map(s => <option key={s.code} value={s.name}>{s.name}</option>)}
