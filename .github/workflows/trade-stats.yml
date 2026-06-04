@@ -65,3 +65,47 @@ jobs:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+  # ── 매주: 거래이력 최신화 + 단지 정보 갱신 ──────────────────────────────────
+  weekly-data-refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.schedule, '* * 1')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: 패키지 설치
+        run: npm ci --ignore-scripts
+
+      - name: 거래이력 최신화 — 전국 최근 2개월
+        # district_trade_monthly + apt_trade_monthly 동시 수집
+        # 이미 있는 (lawd_cd, deal_ym)은 자동 스킵
+        run: |
+          CURRENT=$(date -d "$(date +%Y-%m-01)" "+%Y%m")
+          PREV=$(date -d "$(date +%Y-%m-01) -1 month" "+%Y%m")
+          node scripts/collect-district-monthly.mjs --from=$PREV --to=$CURRENT --force
+        env:
+          MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: 신규 단지 기본정보 보강
+        # phone IS NULL 단지만 처리 → 신규 단지 자동 감지
+        run: node scripts/enrich-apt-basis.mjs
+        env:
+          MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: 신규 단지 평형 보강
+        # unit_types IS NULL + bjd_code 있는 단지만 처리
+        run: node scripts/enrich-unit-types.mjs
+        env:
+          MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

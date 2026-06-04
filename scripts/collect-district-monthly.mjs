@@ -42,7 +42,7 @@ const fromYm     = argMap['--from'] ?? '200601';
 const toD        = new Date(); toD.setMonth(toD.getMonth() - 1);
 const toYm       = argMap['--to'] ?? `${toD.getFullYear()}${String(toD.getMonth() + 1).padStart(2,'0')}`;
 
-const { LAWD_CODE_MAP } = await import('../lib/tradeApi.js');
+const { LAWD_CODE_MAP } = await import('./lawd-codes.mjs');
 
 // 수집 대상 시군구 목록
 const districts = [];
@@ -162,16 +162,12 @@ for (let i = 0; i < tasks.length; i += CONCURRENCY) {
     }, { onConflict: 'lawd_cd,deal_ym' });
 
     // 2. apt_trade_monthly upsert — 단지별 집계 병합
-    const aptMerged = new Map<string, {
-      aptName: string; dong: string;
-      tradeCnt: number; jeonseCnt: number; wolseCnt: number;
-      totalPrice: number; totalDeposit: number;
-    }>();
+    const aptMerged = new Map();
 
     for (const [k, v] of [...trade.aptMap, ...rent.aptMap]) {
       if (!aptMerged.has(k)) aptMerged.set(k, { ...v });
       else {
-        const m = aptMerged.get(k)!;
+        const m = aptMerged.get(k);
         m.tradeCnt    += v.tradeCnt;
         m.jeonseCnt   += v.jeonseCnt;
         m.wolseCnt    += v.wolseCnt;
