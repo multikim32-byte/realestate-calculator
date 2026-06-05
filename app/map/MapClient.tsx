@@ -39,8 +39,8 @@ interface PinInfo {
 }
 
 const KAKAO_KEY      = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
-const UNSOLD_COLOR   = '#1d4ed8';
-const SALE_COLOR     = '#059669';
+const UNSOLD_COLOR   = '#dc2626';
+const SALE_COLOR     = '#dc2626';
 const COMPLEX_COLOR  = '#7c3aed'; // 단지 시세 — 보라
 const CONCURRENCY  = 8;
 
