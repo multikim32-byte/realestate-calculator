@@ -642,16 +642,14 @@ export default function MapClient({ unsoldListings }: Props) {
     };
   }, []);
 
-  // Chrome 태블릿: touchmove를 non-passive로 등록해 Kakao Maps가 제어권 확보
+  // Chrome 태블릿: touchmove만 non-passive로 등록 (touchstart 제외 — click 이벤트 보존)
   useEffect(() => {
     const el = mapRef.current;
     if (!el) return;
-    const prevent = (e: Event) => { e.preventDefault(); };
-    el.addEventListener('touchstart', prevent, { passive: false });
-    el.addEventListener('touchmove',  prevent, { passive: false });
+    const preventMove = (e: Event) => { e.preventDefault(); };
+    el.addEventListener('touchmove', preventMove, { passive: false });
     return () => {
-      el.removeEventListener('touchstart', prevent);
-      el.removeEventListener('touchmove',  prevent);
+      el.removeEventListener('touchmove', preventMove);
     };
   }, []);
 
