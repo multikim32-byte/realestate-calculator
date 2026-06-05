@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import {
   ClipboardList, Calendar, BarChart2, Calculator,
-  Tag, Building2, Map, BookOpen, Star, Mail, Menu, X, Search, ChevronDown,
+  Tag, Building2, Map, BookOpen, Star, Mail, HelpCircle, Menu, X, Search, ChevronDown,
 } from 'lucide-react';
 import ShareButton from './ShareButton';
 import InstallButton from './InstallButton';
@@ -28,6 +28,7 @@ const MORE_NAV = [
   { href: '/region/서울', label: '지역별',   icon: Map, matchPrefix: '/region' },
   { href: '/apt',        label: '부동산정보', icon: BookOpen },
   { href: '/favorites',  label: '관심단지',  icon: Star },
+  { href: '/faq',        label: 'FAQ',       icon: HelpCircle, matchPrefix: '/faq' },
   { href: '/contact',    label: '문의',      icon: Mail },
 ];
 
