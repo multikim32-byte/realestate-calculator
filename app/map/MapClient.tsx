@@ -1501,16 +1501,6 @@ export default function MapClient({ unsoldListings }: Props) {
                       >
                         매물 상세보기 →
                       </Link>
-                      <Link
-                        href={`/complex/${encodeURIComponent(locationToSlug(i.location, i.name))}`}
-                        style={{
-                          flex: 1, display: 'block', textAlign: 'center', padding: '9px 0',
-                          background: '#f0fdf4', color: '#16a34a', borderRadius: 8,
-                          textDecoration: 'none', fontSize: 13, fontWeight: 700, border: '1px solid #bbf7d0',
-                        }}
-                      >
-                        단지 시세 →
-                      </Link>
                     </div>
                   </>
                 );
@@ -1546,16 +1536,6 @@ export default function MapClient({ unsoldListings }: Props) {
                         }}
                       >
                         청약 상세보기 →
-                      </Link>
-                      <Link
-                        href={`/complex/${encodeURIComponent(locationToSlug(i.location, i.name))}`}
-                        style={{
-                          flex: 1, display: 'block', textAlign: 'center', padding: '9px 0',
-                          background: '#f0fdf4', color: '#16a34a', borderRadius: 8,
-                          textDecoration: 'none', fontSize: 13, fontWeight: 700, border: '1px solid #bbf7d0',
-                        }}
-                      >
-                        단지 시세 →
                       </Link>
                     </div>
                   </>
