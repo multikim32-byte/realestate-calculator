@@ -10,6 +10,7 @@
  */
 
 import { fetchWithTimeout } from './fetchWithTimeout';
+import { withCache, getMolitTtl } from './redis';
 
 const RENT_URL =
   'https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent';
@@ -85,26 +86,30 @@ export async function fetchRentList(
   page = 1,
   numOfRows = 100,
 ): Promise<{ items: RentItem[]; total: number }> {
-  const key = process.env.MOLIT_API_KEY?.trim();
-  if (!key) throw new Error('MOLIT_API_KEY가 설정되지 않았습니다.');
+  const molitKey = process.env.MOLIT_API_KEY?.trim();
+  if (!molitKey) throw new Error('MOLIT_API_KEY가 설정되지 않았습니다.');
 
-  const qs = `serviceKey=${key}&pageNo=${page}&numOfRows=${numOfRows}&LAWD_CD=${lawdCd}&DEAL_YMD=${dealYmd}`;
-  const url = `${RENT_URL}?${qs}`;
+  const cacheKey = `molit:rent:${lawdCd}:${dealYmd}:${page}:${numOfRows}`;
 
-  const res = await fetchWithTimeout(url, { cache: 'no-store' });
-  const xml = await res.text();
+  return withCache(cacheKey, getMolitTtl(dealYmd), async () => {
+    const qs = `serviceKey=${molitKey}&pageNo=${page}&numOfRows=${numOfRows}&LAWD_CD=${lawdCd}&DEAL_YMD=${dealYmd}`;
+    const url = `${RENT_URL}?${qs}`;
 
-  if (!res.ok) {
-    throw new Error(`국토부 API ${res.status}: ${xml.slice(0, 300)}`);
-  }
+    const res = await fetchWithTimeout(url, { cache: 'no-store' });
+    const xml = await res.text();
 
-  if (xml.includes('<errMsg>') || xml.includes('SERVICE_KEY') || xml.includes('<returnReasonCode>')) {
-    const msg = xmlVal(xml, 'errMsg') || xmlVal(xml, 'returnAuthMsg') || xmlVal(xml, 'returnReasonCode') || xml.slice(0, 200);
-    throw new Error(`국토부 API 인증오류: ${msg}`);
-  }
+    if (!res.ok) {
+      throw new Error(`국토부 API ${res.status}: ${xml.slice(0, 300)}`);
+    }
 
-  return {
-    items: parseItems(xml),
-    total: parseTotalCount(xml),
-  };
+    if (xml.includes('<errMsg>') || xml.includes('SERVICE_KEY') || xml.includes('<returnReasonCode>')) {
+      const msg = xmlVal(xml, 'errMsg') || xmlVal(xml, 'returnAuthMsg') || xmlVal(xml, 'returnReasonCode') || xml.slice(0, 200);
+      throw new Error(`국토부 API 인증오류: ${msg}`);
+    }
+
+    return {
+      items: parseItems(xml),
+      total: parseTotalCount(xml),
+    };
+  });
 }

@@ -10,6 +10,7 @@
  */
 
 import { fetchWithTimeout } from './fetchWithTimeout';
+import { withCache, getMolitTtl } from './redis';
 
 const TRADE_URL =
   'https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev';
@@ -86,32 +87,33 @@ export async function fetchTradeList(
   page = 1,
   numOfRows = 100,
 ): Promise<{ items: TradeItem[]; total: number }> {
-  const key = process.env.MOLIT_API_KEY?.trim();
-  if (!key) throw new Error('MOLIT_API_KEY가 설정되지 않았습니다.');
+  const molitKey = process.env.MOLIT_API_KEY?.trim();
+  if (!molitKey) throw new Error('MOLIT_API_KEY가 설정되지 않았습니다.');
 
-  // data.go.kr 키는 포털에서 이미 인코딩된 값이므로 추가 인코딩 없이 그대로 사용
-  const qs = `serviceKey=${key}&pageNo=${page}&numOfRows=${numOfRows}&LAWD_CD=${lawdCd}&DEAL_YMD=${dealYmd}`;
-  const url = `${TRADE_URL}?${qs}`;
+  const cacheKey = `molit:trade:${lawdCd}:${dealYmd}:${page}:${numOfRows}`;
 
-  const res = await fetchWithTimeout(url, { cache: 'no-store' });
-  const xml = await res.text();
+  return withCache(cacheKey, getMolitTtl(dealYmd), async () => {
+    // data.go.kr 키는 포털에서 이미 인코딩된 값이므로 추가 인코딩 없이 그대로 사용
+    const qs = `serviceKey=${molitKey}&pageNo=${page}&numOfRows=${numOfRows}&LAWD_CD=${lawdCd}&DEAL_YMD=${dealYmd}`;
+    const url = `${TRADE_URL}?${qs}`;
 
-  if (!res.ok) {
-    // 응답 본문에 오류 내용 포함
-    const errDetail = xml.slice(0, 300);
-    throw new Error(`국토부 API ${res.status}: ${errDetail}`);
-  }
+    const res = await fetchWithTimeout(url, { cache: 'no-store' });
+    const xml = await res.text();
 
-  // 오류 응답 체크 (200이어도 XML에 오류코드가 올 수 있음)
-  if (xml.includes('<errMsg>') || xml.includes('SERVICE_KEY') || xml.includes('<returnReasonCode>')) {
-    const msg = xmlVal(xml, 'errMsg') || xmlVal(xml, 'returnAuthMsg') || xmlVal(xml, 'returnReasonCode') || xml.slice(0, 200);
-    throw new Error(`국토부 API 인증오류: ${msg}`);
-  }
+    if (!res.ok) {
+      throw new Error(`국토부 API ${res.status}: ${xml.slice(0, 300)}`);
+    }
 
-  return {
-    items: parseItems(xml),
-    total: parseTotalCount(xml),
-  };
+    if (xml.includes('<errMsg>') || xml.includes('SERVICE_KEY') || xml.includes('<returnReasonCode>')) {
+      const msg = xmlVal(xml, 'errMsg') || xmlVal(xml, 'returnAuthMsg') || xmlVal(xml, 'returnReasonCode') || xml.slice(0, 200);
+      throw new Error(`국토부 API 인증오류: ${msg}`);
+    }
+
+    return {
+      items: parseItems(xml),
+      total: parseTotalCount(xml),
+    };
+  });
 }
 
 // ─── 지역 코드 매핑 ──────────────────────────────────────────────────────────
