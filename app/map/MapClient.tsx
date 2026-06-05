@@ -836,10 +836,11 @@ export default function MapClient({ unsoldListings }: Props) {
         else                   saleClustererRef.current?.addMarker(marker);
         setPlaced(p => ({ ...p, [type]: p[type] + 1 }));
 
-        // 줌인 시 표시할 라벨 (레벨 5 이하)
+        // 줌인 시 표시할 라벨 (레벨 5 이하) — 아파트 태그와 동일한 스타일
         const ld = document.createElement('div');
-        let labelHtml = '';
-        const borderColor = type === 'unsold' ? UNSOLD_COLOR : SALE_COLOR;
+        const color = type === 'unsold' ? UNSOLD_COLOR : SALE_COLOR;
+        let topLine = '';
+        let bottomLine = '';
         if (type === 'unsold') {
           const u = item as MapUnsoldItem;
           const name = u.name.length > 11 ? u.name.slice(0, 10) + '…' : u.name;
@@ -848,29 +849,20 @@ export default function MapClient({ unsoldListings }: Props) {
                 ? `${fmt(u.min_price)}~${fmt(u.max_price)}`
                 : fmt((u.min_price ?? u.max_price)!))
             : '';
-          labelHtml = `${name}${price ? `<br><span style="font-size:10px;color:${UNSOLD_COLOR};font-weight:600">${price}</span>` : ''}`;
+          topLine    = price ? `<div style="font-size:10px;opacity:0.85;line-height:1.3">${price}</div>` : '';
+          bottomLine = `<div style="font-size:12px;font-weight:800;line-height:1.3">${name}</div>`;
         } else {
           const s = item as MapSaleItem;
           const name = s.name.length > 11 ? s.name.slice(0, 10) + '…' : s.name;
-          labelHtml = `${name}<br><span style="font-size:10px;color:${SALE_COLOR};font-weight:600">${s.status}</span>`;
+          topLine    = `<div style="font-size:10px;opacity:0.85;line-height:1.3">${s.status}</div>`;
+          bottomLine = `<div style="font-size:12px;font-weight:800;line-height:1.3">${name}</div>`;
         }
-        ld.style.cssText = [
-          'transform:translate(-50%,calc(-100% - 14px))',
-          `border:1.5px solid ${borderColor}`,
-          'background:#fff',
-          'border-radius:6px',
-          'padding:3px 8px',
-          'font-size:11px',
-          'font-weight:700',
-          'color:#1e293b',
-          'white-space:nowrap',
-          'box-shadow:0 2px 8px rgba(0,0,0,0.15)',
-          'line-height:1.4',
-          'text-align:center',
-          'cursor:pointer',
-          'pointer-events:auto',
-        ].join(';');
-        ld.innerHTML = labelHtml;
+        ld.style.cssText = 'text-align:center;cursor:pointer;pointer-events:auto';
+        ld.innerHTML = `
+          <div style="display:inline-block;background:${color};color:#fff;border-radius:8px;padding:4px 10px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);min-width:48px;cursor:pointer;">
+            ${topLine}${bottomLine}
+          </div>
+          <div style="width:0;height:0;margin:0 auto;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid ${color}"></div>`;
         ld.addEventListener('click', (e) => {
           e.stopPropagation();
           const href = type === 'unsold'
@@ -883,6 +875,7 @@ export default function MapClient({ unsoldListings }: Props) {
           content: ld,
           map: labelsVisibleRef.current && filterRef.current[type] ? map : null,
           zIndex: 4,
+          yAnchor: 1,
         });
         pinLabelsRef.current.push({ overlay: labelOverlay, type });
       }
