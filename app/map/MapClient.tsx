@@ -1427,11 +1427,6 @@ export default function MapClient({ unsoldListings }: Props) {
       {/* 선택된 매물 카드 */}
       {selected && (
         <>
-          {/* 카드 바깥 클릭 시 닫기 */}
-          <div
-            style={{ position: 'absolute', inset: 0, zIndex: 15 }}
-            onClick={() => setSelected(null)}
-          />
           <div style={{
             position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)',
             width: 'min(380px, calc(100vw - 32px))',
