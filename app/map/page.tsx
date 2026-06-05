@@ -51,7 +51,7 @@ export default async function MapPage() {
   const unsoldListings: MapUnsoldItem[] = (unsoldRaw ?? []).filter(i => i.location);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
+    <div className="map-page" style={{ display: 'flex', flexDirection: 'column', height: '100dvh', touchAction: 'none', overscrollBehavior: 'none' }}>
       <GlobalNav />
       <MapClient unsoldListings={unsoldListings} />
     </div>

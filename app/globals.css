@@ -36,3 +36,7 @@ body {
   to   { transform: translateY(0);    opacity: 1; }
 }
 .mk-toast { animation: mk-slide-up 0.35s ease; }
+
+/* 지도 페이지 — 태블릿 Chrome/Samsung 터치 패닝 보장 */
+.map-page, .map-page * { box-sizing: border-box; }
+.map-page { touch-action: none; overscroll-behavior: none; }
