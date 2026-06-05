@@ -642,6 +642,19 @@ export default function MapClient({ unsoldListings }: Props) {
     };
   }, []);
 
+  // Chrome 태블릿: touchmove를 non-passive로 등록해 Kakao Maps가 제어권 확보
+  useEffect(() => {
+    const el = mapRef.current;
+    if (!el) return;
+    const prevent = (e: Event) => { e.preventDefault(); };
+    el.addEventListener('touchstart', prevent, { passive: false });
+    el.addEventListener('touchmove',  prevent, { passive: false });
+    return () => {
+      el.removeEventListener('touchstart', prevent);
+      el.removeEventListener('touchmove',  prevent);
+    };
+  }, []);
+
   // 청약 데이터 클라이언트 사이드 fetch (서버 타임아웃 방지)
   useEffect(() => {
     fetch('/api/sale?type=all&perPage=100')
