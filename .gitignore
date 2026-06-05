@@ -42,3 +42,7 @@ next-env.d.ts
 
 .vercel
 .env*.local
+
+# runtime logs
+/logs/
+.claude/scheduled_tasks.lock
