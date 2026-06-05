@@ -246,20 +246,20 @@ function makeOverlayHTMLForIdle(c: MapComplex, stage: 1 | 2): string {
     ].filter(Boolean).join(' · ');
 
     return `
-      <div style="display:inline-block;background:#1e3a8a;color:#fff;border-radius:8px;padding:4px 10px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);min-width:56px;pointer-events:auto;cursor:pointer;">
+      <div style="display:inline-block;background:#1e3a8a;color:#fff;border-radius:8px;padding:4px 10px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);min-width:56px;cursor:pointer;">
         ${hasPrice
           ? `<div style="font-size:10px;opacity:0.75;line-height:1.4">${avgPyeong}평${metaLine ? ` · ${metaLine}` : ''}</div>
              <div style="font-size:13px;font-weight:800;line-height:1.3">${priceText}</div>`
           : `<div style="font-size:11px;font-weight:700;line-height:1.4">${nameLabel}</div>
              ${metaLine ? `<div style="font-size:10px;opacity:0.75;line-height:1.3">${metaLine}</div>` : ''}`}
       </div>
-      <div style="width:0;height:0;margin:0 auto;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid #1e3a8a;pointer-events:none"></div>`;
+      <div style="width:0;height:0;margin:0 auto;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid #1e3a8a"></div>`;
   }
   return `
-    <div style="display:inline-block;background:#1e3a8a;color:#fff;border-radius:6px;padding:3px 7px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,0.25);pointer-events:auto;cursor:pointer;">
+    <div style="display:inline-block;background:#1e3a8a;color:#fff;border-radius:6px;padding:3px 7px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,0.25);cursor:pointer;">
       <div style="font-size:11px;font-weight:800;line-height:1.3">${hasPrice ? priceText : nameLabel}</div>
     </div>
-    <div style="width:0;height:0;margin:0 auto;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #1e3a8a;pointer-events:none"></div>`;
+    <div style="width:0;height:0;margin:0 auto;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #1e3a8a"></div>`;
 }
 
 export default function MapClient({ unsoldListings }: Props) {
@@ -385,7 +385,7 @@ export default function MapClient({ unsoldListings }: Props) {
       const marker = new window.kakao.maps.Marker({ position: pos, image: complexImg, title: c.name });
 
       const ld = document.createElement('div');
-      ld.style.cssText = 'transform:translateX(-50%);text-align:center;pointer-events:none';
+      ld.style.cssText = 'transform:translateX(-50%);text-align:center;cursor:pointer';
 
       const level = map.getLevel();
       const initStage: 1 | 2 = level <= 4 ? 1 : 2;
