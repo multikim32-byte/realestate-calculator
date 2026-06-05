@@ -381,7 +381,7 @@ export default function MapClient({ unsoldListings }: Props) {
       });
 
       const level = map.getLevel();
-      if (level <= 7) overlay.setMap(map);
+      if (level <= 5) overlay.setMap(map);
 
       complexMarkersRef.current.push({ m: marker, overlay, data: c });
       complexClustererRef.current?.addMarker(marker);
@@ -714,18 +714,18 @@ export default function MapClient({ unsoldListings }: Props) {
         if (filterRef.current.complex) {
           if (level <= 7) {
             loadComplexesInView();
-          } else {
-            // 줌 아웃 시 라벨만 숨김, 마커는 클러스터러가 관리
-            complexMarkersRef.current.forEach(({ overlay }) => overlay.setMap(null));
           }
-          // 레벨 7 이하에서 라벨 표시
-          if (level <= 7) {
+          // 오버레이(이름+가격 태그): 레벨 5 이하에서만 표시
+          // 레벨 6~7은 클러스터링으로 표시 → 오버레이 숨김
+          if (level <= 5) {
             complexMarkersRef.current.forEach(({ overlay }) => overlay.setMap(map));
+          } else {
+            complexMarkersRef.current.forEach(({ overlay }) => overlay.setMap(null));
           }
         }
 
-        // 핀 라벨: 레벨 7 이하에서 단지명·가격 표시
-        const showLabels = level <= 7;
+        // 핀 라벨: 레벨 5 이하에서만 단지명·가격 표시
+        const showLabels = level <= 5;
         if (showLabels !== labelsVisibleRef.current) {
           labelsVisibleRef.current = showLabels;
           pinLabelsRef.current.forEach(({ overlay, type }) => {
