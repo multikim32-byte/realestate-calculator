@@ -33,6 +33,7 @@ const KAKAO_LOCAL = 'https://dapi.kakao.com/v2/local/search/category.json';
 // ── CLI 옵션 ──────────────────────────────────────────────────────────────────
 const arg = process.argv.find(a => a.startsWith('--only='));
 const only = arg ? arg.replace('--only=', '') : null;
+const force = process.argv.includes('--force');
 
 // ── 카카오 카테고리 코드 ──────────────────────────────────────────────────────
 const CATEGORIES = {
@@ -126,51 +127,53 @@ async function main() {
   // 좌표 있고 보강 안 된 단지 조회
   let query = supabase
     .from('apartment_complexes')
-    .select('kapt_code, name, sido, sigungu, lat, lng')
+    .select('kapt_code, name, sido, sigungu, lat, lng, nearby_transit')
     .not('lat', 'is', null);
 
-  // 이미 보강된 것 스킵 (only 옵션 없을 때)
-  if (!only) {
-    query = query.is('nearby_transit', null);
-  }
-
   // Supabase 기본 1,000행 제한 → 페이지네이션으로 전체 로드
-  const complexes = [];
+  const allRows = [];
   let from = 0;
   const PAGE = 1000;
   while (true) {
     const { data: page, error: pageErr } = await query.order('kapt_code').range(from, from + PAGE - 1);
     if (pageErr) { console.error('조회 오류:', pageErr.message); break; }
     if (!page || page.length === 0) break;
-    complexes.push(...page);
+    allRows.push(...page);
     if (page.length < PAGE) break;
     from += PAGE;
   }
   const error = null;
+
+  // null이거나 빈 배열([])인 단지만 처리 — 실제 데이터 있으면 스킵 (only 옵션 없을 때)
+  const complexes = (!only && !force)
+    ? allRows.filter(c => !c.nearby_transit || c.nearby_transit.length === 0)
+    : allRows;
   if (error) { console.error('❌ 조회 오류:', error.message); process.exit(1); }
 
   console.log(`📍 보강 대상: ${complexes.length.toLocaleString()}개\n`);
 
   let done = 0;
-  for (const complex of complexes) {
-    const enriched = await enrichOne(complex);
+  const CONCURRENCY = 5; // 카카오 API 5 QPS 한도 내
 
-    const { error: upErr } = await supabase
-      .from('apartment_complexes')
-      .update({ ...enriched, updated_at: new Date().toISOString() })
-      .eq('kapt_code', complex.kapt_code);
+  for (let i = 0; i < complexes.length; i += CONCURRENCY) {
+    const batch = complexes.slice(i, i + CONCURRENCY);
 
-    if (upErr) {
-      console.error(`\n⚠️  ${complex.name} 업데이트 실패:`, upErr.message);
-    }
+    await Promise.all(batch.map(async (complex) => {
+      const enriched = await enrichOne(complex);
+      const { error: upErr } = await supabase
+        .from('apartment_complexes')
+        .update({ ...enriched, updated_at: new Date().toISOString() })
+        .eq('kapt_code', complex.kapt_code);
+      if (upErr) console.error(`\n⚠️  ${complex.name}:`, upErr.message);
+    }));
 
-    done++;
+    done += batch.length;
     process.stdout.write(
-      `\r  진행: ${done.toLocaleString()} / ${complexes.length.toLocaleString()} | 현재: ${complex.name}`
+      `\r  진행: ${done.toLocaleString()} / ${complexes.length.toLocaleString()} | ${complexes[i].name}`
         .substring(0, 80)
     );
 
-    await sleep(100);
+    await sleep(200); // 배치 간 간격
   }
 
   console.log('\n\n🎉 보강 완료!');
