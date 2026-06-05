@@ -238,11 +238,20 @@ function makeOverlayHTMLForIdle(c: MapComplex, stage: 1 | 2): string {
   const nameLabel = c.name.length > 8 ? c.name.slice(0, 7) + '…' : c.name;
 
   if (stage === 1) {
+    const builtYear  = c.built_year ?? 0;
+    const totalUnits = c.total_units ?? 0;
+    const metaLine = [
+      builtYear  > 0 ? `${builtYear}년` : '',
+      totalUnits > 0 ? `${totalUnits.toLocaleString()}세대` : '',
+    ].filter(Boolean).join(' · ');
+
     return `
-      <div style="display:inline-block;background:#1e3a8a;color:#fff;border-radius:8px;padding:${hasPrice ? '4px 10px' : '5px 10px'};white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);min-width:48px;">
+      <div style="display:inline-block;background:#1e3a8a;color:#fff;border-radius:8px;padding:4px 10px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);min-width:56px;">
         ${hasPrice
-          ? `<div style="font-size:10px;opacity:0.75;line-height:1.3">${avgPyeong}평</div><div style="font-size:13px;font-weight:800;line-height:1.3">${priceText}</div>`
-          : `<div style="font-size:11px;font-weight:700;line-height:1.4">${nameLabel}</div>`}
+          ? `<div style="font-size:10px;opacity:0.75;line-height:1.4">${avgPyeong}평${metaLine ? ` · ${metaLine}` : ''}</div>
+             <div style="font-size:13px;font-weight:800;line-height:1.3">${priceText}</div>`
+          : `<div style="font-size:11px;font-weight:700;line-height:1.4">${nameLabel}</div>
+             ${metaLine ? `<div style="font-size:10px;opacity:0.75;line-height:1.3">${metaLine}</div>` : ''}`}
       </div>
       <div style="width:0;height:0;margin:0 auto;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid #1e3a8a"></div>`;
   }
