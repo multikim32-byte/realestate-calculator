@@ -1072,7 +1072,6 @@ export default function MapClient({ unsoldListings }: Props) {
 
         return (
           <>
-            <div style={{ position: 'absolute', inset: 0, zIndex: 15 }} onClick={() => setSelectedComplex(null)} />
             <div style={{
               position: 'absolute', left: 0, top: 0, bottom: 0,
               width: 'min(320px, 85vw)',
