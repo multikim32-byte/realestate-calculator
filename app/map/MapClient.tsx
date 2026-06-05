@@ -385,7 +385,7 @@ export default function MapClient({ unsoldListings }: Props) {
       const marker = new window.kakao.maps.Marker({ position: pos, image: complexImg, title: c.name });
 
       const ld = document.createElement('div');
-      ld.style.cssText = 'transform:translateX(-50%);text-align:center;cursor:pointer';
+      ld.style.cssText = 'text-align:center;cursor:pointer';
 
       const level = map.getLevel();
       const initStage: 1 | 2 = level <= 4 ? 1 : 2;
