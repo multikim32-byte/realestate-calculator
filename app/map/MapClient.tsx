@@ -616,15 +616,29 @@ export default function MapClient({ unsoldListings }: Props) {
     setPriceLoadState('done');
   }, []);
 
-  // 지도 페이지에서 body 스크롤 차단 — footer 높이로 인해 페이지가 스크롤 가능해져
-  // 태블릿이 드래그를 페이지 스크롤로 처리하는 문제 방지
+  // 지도 페이지에서 body 스크롤 차단 + Chrome 터치 이벤트 설정
+  // Chrome 태블릿은 html/body에도 touch-action:none이 없으면 터치를 가로챔
   useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
+    const b = document.body;
+    const h = document.documentElement;
+    const prevOverflow   = b.style.overflow;
+    const prevTouch      = b.style.touchAction;
+    const prevOverscroll = b.style.overscrollBehavior;
+
+    b.style.overflow          = 'hidden';
+    h.style.overflow          = 'hidden';
+    b.style.touchAction       = 'none';
+    h.style.touchAction       = 'none';
+    b.style.overscrollBehavior = 'none';
+    h.style.overscrollBehavior = 'none';
+
     return () => {
-      document.body.style.overflow = prev;
-      document.documentElement.style.overflow = '';
+      b.style.overflow          = prevOverflow;
+      h.style.overflow          = '';
+      b.style.touchAction       = prevTouch;
+      h.style.touchAction       = '';
+      b.style.overscrollBehavior = prevOverscroll;
+      h.style.overscrollBehavior = '';
     };
   }, []);
 
