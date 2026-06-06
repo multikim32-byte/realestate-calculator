@@ -17,12 +17,14 @@ const NationalRankings   = dynamic(() => import('@/app/components/NationalRankin
 const TradeTrendSection  = dynamic(() => import('@/app/trade/TradeTrendSection'),       { ssr: false });
 
 type ManageCost = {
-  avg_total_fee: number;
-  avg_fee_per_m2: number | null;
-  area: number | null;
+  per_unit_total: number;
+  per_unit_common: number;
+  per_unit_usage: number;
+  per_unit_longterm: number;
+  total_units: number;
   months: number;
+  ref_ym: string;
   breakdown: Record<string, number>;
-  updated_ym: string;
 };
 
 type Complex = {
@@ -313,24 +315,28 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
             </dl>
 
             {/* 관리비 섹션 */}
-            {complex.manage_cost?.avg_total_fee ? (
+            {complex.manage_cost?.per_unit_total ? (
               <div style={{ marginTop: 20 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>💰 월 평균 관리비</div>
-                <div style={{ display: 'flex', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
-                  <div style={{ flex: 1, minWidth: 120, background: '#eff6ff', borderRadius: 12, padding: '12px 16px' }}>
-                    <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>세대 평균</div>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: '#1d4ed8' }}>
-                      {Math.round(complex.manage_cost.avg_total_fee / 10000).toLocaleString()}만원
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>💰 월 평균 관리비 (세대당)</div>
+                <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: 100, background: '#eff6ff', borderRadius: 12, padding: '12px 14px' }}>
+                    <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>합계</div>
+                    <div style={{ fontSize: 17, fontWeight: 800, color: '#1d4ed8' }}>
+                      {Math.round(complex.manage_cost.per_unit_total / 1000).toLocaleString()}천원
                     </div>
                   </div>
-                  {complex.manage_cost.avg_fee_per_m2 && (
-                    <div style={{ flex: 1, minWidth: 120, background: '#f0fdf4', borderRadius: 12, padding: '12px 16px' }}>
-                      <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>㎡당</div>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: '#16a34a' }}>
-                        {complex.manage_cost.avg_fee_per_m2.toLocaleString()}원
-                      </div>
+                  <div style={{ flex: 1, minWidth: 100, background: '#f0fdf4', borderRadius: 12, padding: '12px 14px' }}>
+                    <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>공용관리비</div>
+                    <div style={{ fontSize: 17, fontWeight: 800, color: '#16a34a' }}>
+                      {Math.round(complex.manage_cost.per_unit_common / 1000).toLocaleString()}천원
                     </div>
-                  )}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 100, background: '#faf5ff', borderRadius: 12, padding: '12px 14px' }}>
+                    <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>개별사용료</div>
+                    <div style={{ fontSize: 17, fontWeight: 800, color: '#7c3aed' }}>
+                      {Math.round(complex.manage_cost.per_unit_usage / 1000).toLocaleString()}천원
+                    </div>
+                  </div>
                 </div>
                 {Object.keys(complex.manage_cost.breakdown).length > 0 && (
                   <div style={{ background: '#f8fafc', borderRadius: 10, padding: '12px 14px' }}>
@@ -339,11 +345,11 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
                       .map(([name, amt]) => (
                         <div key={name} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px solid #f0f0f0', fontSize: 13 }}>
                           <span style={{ color: '#6b7280' }}>{name}</span>
-                          <span style={{ fontWeight: 600, color: '#374151' }}>{Math.round(amt / 1000).toLocaleString()}천원</span>
+                          <span style={{ fontWeight: 600, color: '#374151' }}>{amt.toLocaleString()}원</span>
                         </div>
                       ))}
                     <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 8 }}>
-                      기준: {complex.manage_cost.updated_ym.slice(0, 4)}년 {parseInt(complex.manage_cost.updated_ym.slice(4))}월 기준 최근 {complex.manage_cost.months}개월 평균
+                      {complex.manage_cost.ref_ym.slice(0, 4)}년 {parseInt(complex.manage_cost.ref_ym.slice(4))}월 기준 최근 {complex.manage_cost.months}개월 평균
                     </div>
                   </div>
                 )}
