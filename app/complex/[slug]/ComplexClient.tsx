@@ -216,7 +216,7 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
   const [loading, setLoading] = useState(true);
   const [buildYear, setBuildYear] = useState<number | null>(complex.built_year);
   const [dealType, setDealType] = useState<'매매' | '전세' | '월세'>('매매');
-  const [selArea,  setSelArea]  = useState<number>(0);
+  const [selType,  setSelType]  = useState<string>('');
   const [activeTab, setActiveTab] = useState<'info' | 'transit' | 'school' | 'infra'>('info');
 
   useEffect(() => {
@@ -237,14 +237,18 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
     const match = unitTypes.find(u => Math.abs(u.exclusive_area - exclusiveM2) <= 1.5);
     if (match) return `${match.supply_pyeong}평 (공급 ${Math.round(match.supply_area)}㎡)`;
     const excPy = Math.round(exclusiveM2 / 3.3);
-    return `전용 ${excPy}평 (공급 약 ${Math.round(exclusiveM2 * 1.3 / 3.3)}평)`;
+    return `전용 ${excPy}평 (약 공급 ${Math.round(exclusiveM2 * 1.3 / 3.3)}평)`;
+  }
+
+  function typeOptionLabel(key: string, area: number): string {
+    const ut = unitTypes.find(u => u.house_ty === key);
+    if (ut) return `${key} · ${ut.supply_pyeong}평 (공급 ${Math.round(ut.supply_area)}㎡)`;
+    return supplyLabel(area);
   }
 
   function fmtPrice(v: number) {
     return v >= 10000 ? `${(v / 10000).toFixed(1)}억` : `${Math.round(v / 100) / 10}천만`;
   }
-
-  const toPy = (area: number) => Math.round(area / 3.3);
 
   const rawList = useMemo(() =>
     dealType === '매매' ? trades
@@ -253,19 +257,23 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
     [dealType, trades, rents]
   );
 
-  const exclusiveAreas = useMemo(() =>
-    [...new Set(rawList.map(t => Math.round(t.area * 100) / 100))].sort((a, b) => a - b),
-    [rawList]
-  );
-  const pyeongList = useMemo(() =>
-    [...new Set(rawList.map(t => toPy(t.area)))].sort((a, b) => a - b),
-    [rawList]
-  );
-  const curPy = selArea || pyeongList[0] || 0;
+  // 타입키별 unique 옵션 (전용면적 오름차순)
+  const typeOptions = useMemo(() => {
+    const keyAreaMap = new Map<string, number>();
+    for (const t of rawList) {
+      const key = resolveTypeKey(t.area, complex.unit_types);
+      if (!keyAreaMap.has(key)) keyAreaMap.set(key, t.area);
+    }
+    return Array.from(keyAreaMap.entries())
+      .sort(([, a], [, b]) => a - b)
+      .map(([key, area]) => ({ key, area }));
+  }, [rawList, complex.unit_types]);
+
+  const curType = selType || typeOptions[0]?.key || '';
 
   const filtered = useMemo(() =>
-    rawList.filter(t => toPy(t.area) === curPy),
-    [rawList, curPy]
+    rawList.filter(t => resolveTypeKey(t.area, complex.unit_types) === curType),
+    [rawList, curType, complex.unit_types]
   );
 
   const chartData = useMemo(() => {
@@ -287,13 +295,13 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
   const lastAvg = chartData.at(-1)?.avg ?? 0;
 
   const tradeAvg = useMemo(() => {
-    const f = trades.filter(t => toPy(t.area) === curPy);
+    const f = trades.filter(t => resolveTypeKey(t.area, complex.unit_types) === curType);
     return f.length ? f.reduce((s, t) => s + t.price, 0) / f.length : 0;
-  }, [trades, curPy]);
+  }, [trades, curType, complex.unit_types]);
   const jeonseAvg = useMemo(() => {
-    const f = rents.filter(t => t.monthly === 0 && toPy(t.area) === curPy);
+    const f = rents.filter(t => t.monthly === 0 && resolveTypeKey(t.area, complex.unit_types) === curType);
     return f.length ? f.reduce((s, t) => s + t.deposit, 0) / f.length : 0;
-  }, [rents, curPy]);
+  }, [rents, curType, complex.unit_types]);
   const jeonseRatio = tradeAvg > 0 && jeonseAvg > 0
     ? Math.round(jeonseAvg / tradeAvg * 100) : null;
 
@@ -364,7 +372,7 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
         {/* 탭 */}
         <div style={{ display: 'flex', borderBottom: '2px solid #f1f5f9' }}>
           {(['매매', '전세', '월세'] as const).map(t => (
-            <button key={t} onClick={() => { setDealType(t); setSelArea(0); }}
+            <button key={t} onClick={() => { setDealType(t); setSelType(''); }}
               style={{
                 flex: 1, padding: '13px 0', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700,
                 background: 'none',
@@ -380,16 +388,16 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#9ca3af' }}>조회 중...</div>
           ) : (
             <>
-              {/* 면적 셀렉터 + 평균가 + 전세가율 */}
+              {/* 타입 셀렉터 + 평균가 + 전세가율 */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
-                {exclusiveAreas.length > 0 ? (
+                {typeOptions.length > 0 ? (
                   <select
-                    value={curPy}
-                    onChange={e => setSelArea(Number(e.target.value))}
+                    value={curType}
+                    onChange={e => setSelType(e.target.value)}
                     style={{ fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 8, padding: '6px 10px', color: '#1e293b', background: '#f8fafc', cursor: 'pointer', fontWeight: 600 }}
                   >
-                    {exclusiveAreas.map(area => (
-                      <option key={area} value={toPy(area)}>{supplyLabel(area)}</option>
+                    {typeOptions.map(({ key, area }) => (
+                      <option key={key} value={key}>{typeOptionLabel(key, area)}</option>
                     ))}
                   </select>
                 ) : (
