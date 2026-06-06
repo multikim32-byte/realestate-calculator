@@ -16,6 +16,15 @@ const MaemaeSupplyChart  = dynamic(() => import('@/app/components/MaemaeSupplyCh
 const NationalRankings   = dynamic(() => import('@/app/components/NationalRankings'),   { ssr: false });
 const TradeTrendSection  = dynamic(() => import('@/app/trade/TradeTrendSection'),       { ssr: false });
 
+type ManageCost = {
+  avg_total_fee: number;
+  avg_fee_per_m2: number | null;
+  area: number | null;
+  months: number;
+  breakdown: Record<string, number>;
+  updated_ym: string;
+};
+
 type Complex = {
   kapt_code: string; name: string; slug: string;
   sido: string; sigungu: string; dong: string | null;
@@ -24,6 +33,8 @@ type Complex = {
   nearby_transit: NearbyItem[] | null;
   nearby_schools: SchoolItem[] | null;
   nearby_infra: NearbyItem[] | null;
+  phone: string | null;
+  manage_cost: ManageCost | null;
 };
 type NearbyItem = { name: string; distance: number; address?: string; category?: string; label?: string };
 type SchoolItem = NearbyItem & { school_type: string };
@@ -46,6 +57,18 @@ function fmtDist(m: number) {
 function areaLabel(area: number) {
   const py = Math.round(area / 3.3);
   return `${Math.round(area)}㎡(${py}평)`;
+}
+
+function fmtPhone(raw: string) {
+  const n = raw.replace(/\D/g, '');
+  if (n.startsWith('02')) {
+    return n.length === 9
+      ? `${n.slice(0,2)}-${n.slice(2,5)}-${n.slice(5)}`
+      : `${n.slice(0,2)}-${n.slice(2,6)}-${n.slice(6)}`;
+  }
+  if (n.length === 10) return `${n.slice(0,3)}-${n.slice(3,6)}-${n.slice(6)}`;
+  if (n.length === 11) return `${n.slice(0,3)}-${n.slice(3,7)}-${n.slice(7)}`;
+  return raw;
 }
 
 // ── 차트 컴포넌트 ─────────────────────────────────────────────────────────────
@@ -277,7 +300,55 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
                   <dd style={{ margin: 0, fontSize: 13, color: '#1e293b' }}>{value}</dd>
                 </div>
               ))}
+              {complex.phone && (
+                <div style={{ display: 'flex', borderBottom: '1px solid #f3f4f6', padding: '10px 0' }}>
+                  <dt style={{ width: 100, flexShrink: 0, fontSize: 13, color: '#6b7280', fontWeight: 600 }}>관리사무소</dt>
+                  <dd style={{ margin: 0, fontSize: 13, color: '#1e293b' }}>
+                    <a href={`tel:${complex.phone}`} style={{ color: '#2563eb', textDecoration: 'none', fontWeight: 600 }}>
+                      📞 {fmtPhone(complex.phone)}
+                    </a>
+                  </dd>
+                </div>
+              )}
             </dl>
+
+            {/* 관리비 섹션 */}
+            {complex.manage_cost?.avg_total_fee ? (
+              <div style={{ marginTop: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>💰 월 평균 관리비</div>
+                <div style={{ display: 'flex', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: 120, background: '#eff6ff', borderRadius: 12, padding: '12px 16px' }}>
+                    <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>세대 평균</div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: '#1d4ed8' }}>
+                      {Math.round(complex.manage_cost.avg_total_fee / 10000).toLocaleString()}만원
+                    </div>
+                  </div>
+                  {complex.manage_cost.avg_fee_per_m2 && (
+                    <div style={{ flex: 1, minWidth: 120, background: '#f0fdf4', borderRadius: 12, padding: '12px 16px' }}>
+                      <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>㎡당</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: '#16a34a' }}>
+                        {complex.manage_cost.avg_fee_per_m2.toLocaleString()}원
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {Object.keys(complex.manage_cost.breakdown).length > 0 && (
+                  <div style={{ background: '#f8fafc', borderRadius: 10, padding: '12px 14px' }}>
+                    {Object.entries(complex.manage_cost.breakdown)
+                      .sort(([, a], [, b]) => b - a)
+                      .map(([name, amt]) => (
+                        <div key={name} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px solid #f0f0f0', fontSize: 13 }}>
+                          <span style={{ color: '#6b7280' }}>{name}</span>
+                          <span style={{ fontWeight: 600, color: '#374151' }}>{Math.round(amt / 1000).toLocaleString()}천원</span>
+                        </div>
+                      ))}
+                    <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 8 }}>
+                      기준: {complex.manage_cost.updated_ym.slice(0, 4)}년 {parseInt(complex.manage_cost.updated_ym.slice(4))}월 기준 최근 {complex.manage_cost.months}개월 평균
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : null}
           )}
 
           {/* 교통 */}
@@ -286,15 +357,26 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
               {(complex.nearby_transit?.length ?? 0) === 0 ? (
                 <p style={{ color: '#9ca3af', fontSize: 14, textAlign: 'center', padding: '20px 0' }}>교통 정보 수집 중...</p>
               ) : (
-                complex.nearby_transit!.map((t, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f3f4f6' }}>
-                    <div>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>{t.name}</span>
-                      {t.address && <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>{t.address}</div>}
+                (['subway', 'bus'] as const).map(cat => {
+                  const items = complex.nearby_transit!.filter(t => (t.category ?? 'subway') === cat);
+                  if (items.length === 0) return null;
+                  const sectionLabel = cat === 'subway' ? '🚇 지하철역' : '🚌 버스정류장';
+                  const distColor = cat === 'subway' ? '#2563eb' : '#0891b2';
+                  return (
+                    <div key={cat} style={{ marginBottom: 16 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', marginBottom: 8 }}>{sectionLabel}</div>
+                      {items.map((t, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #f3f4f6' }}>
+                          <div>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>{t.name}</span>
+                            {t.address && <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>{t.address}</div>}
+                          </div>
+                          <span style={{ fontSize: 13, color: distColor, fontWeight: 700 }}>{fmtDist(t.distance)}</span>
+                        </div>
+                      ))}
                     </div>
-                    <span style={{ fontSize: 13, color: '#2563eb', fontWeight: 700 }}>{fmtDist(t.distance)}</span>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           )}

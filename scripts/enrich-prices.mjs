@@ -261,9 +261,16 @@ function recentYMs(n) {
   });
 }
 
+// ── 이름 정규화 (공백 제거 + 소문자 + 아파트 접미사 제거) ─────────────────────
+function normName(s) {
+  return (s ?? '').replace(/아파트$/, '').replace(/\s+/g, '').toLowerCase();
+}
+
 // ── 단지 이름 매칭 ─────────────────────────────────────────────────────────────
 function matchName(tradeName, complexName) {
-  return tradeName.includes(complexName) || complexName.includes(tradeName);
+  const a = normName(tradeName);
+  const b = normName(complexName);
+  return a.includes(b) || b.includes(a);
 }
 
 // ── 대표 평형 + 평균가 계산 ───────────────────────────────────────────────────
