@@ -289,6 +289,7 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
         <div style={{ padding: '20px' }}>
           {/* 단지정보 */}
           {activeTab === 'info' && (
+            <>
             <dl style={{ margin: 0 }}>
               {[
                 { label: '단지명', value: complex.name },
@@ -355,6 +356,7 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
                 )}
               </div>
             ) : null}
+            </>
           )}
 
           {/* 교통 */}

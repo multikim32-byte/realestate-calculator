@@ -23,7 +23,16 @@ type Complex = {
   nearby_schools: SchoolItem[] | null;
   nearby_infra: NearbyItem[] | null;
   phone: string | null;
-  manage_cost: Record<string, unknown> | null;
+  manage_cost: {
+    per_unit_total: number;
+    per_unit_common: number;
+    per_unit_usage: number;
+    per_unit_longterm: number;
+    total_units: number;
+    months: number;
+    ref_ym: string;
+    breakdown: Record<string, number>;
+  } | null;
 };
 
 type NearbyItem = { name: string; distance: number; address?: string; category?: string; label?: string };
