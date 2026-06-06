@@ -7,6 +7,16 @@ import ComplexClient from './ComplexClient';
 export const revalidate = 86400;
 export const dynamicParams = true;
 
+type UnitType = {
+  house_ty: string;
+  supply_area: number;
+  exclusive_area: number;
+  supply_pyeong: number;
+  exclusive_pyeong: number;
+  count: number;
+  source?: string;
+};
+
 type Complex = {
   kapt_code: string;
   name: string;
@@ -23,6 +33,7 @@ type Complex = {
   nearby_schools: SchoolItem[] | null;
   nearby_infra: NearbyItem[] | null;
   phone: string | null;
+  unit_types: UnitType[] | null;
   manage_cost: {
     per_unit_total: number;
     per_unit_common: number;

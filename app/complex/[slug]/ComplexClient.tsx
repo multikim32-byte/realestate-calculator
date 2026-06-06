@@ -27,6 +27,16 @@ type ManageCost = {
   breakdown: Record<string, number>;
 };
 
+type UnitType = {
+  house_ty: string;
+  supply_area: number;
+  exclusive_area: number;
+  supply_pyeong: number;
+  exclusive_pyeong: number;
+  count: number;
+  source?: string;
+};
+
 type Complex = {
   kapt_code: string; name: string; slug: string;
   sido: string; sigungu: string; dong: string | null;
@@ -36,6 +46,7 @@ type Complex = {
   nearby_schools: SchoolItem[] | null;
   nearby_infra: NearbyItem[] | null;
   phone: string | null;
+  unit_types: UnitType[] | null;
   manage_cost: ManageCost | null;
 };
 type NearbyItem = { name: string; distance: number; address?: string; category?: string; label?: string };
@@ -73,49 +84,67 @@ function fmtPhone(raw: string) {
   return raw;
 }
 
+// 전용면적 → 타입키 매핑 (unit_types 있으면 84A/84B, 없으면 면적 문자열)
+function resolveTypeKey(area: number, unitTypes: UnitType[] | null): string {
+  if (unitTypes && unitTypes.length > 0) {
+    let best: UnitType | null = null;
+    let bestDiff = Infinity;
+    for (const ut of unitTypes) {
+      const diff = Math.abs(ut.exclusive_area - area);
+      if (diff < bestDiff) { bestDiff = diff; best = ut; }
+    }
+    if (best && bestDiff < 3) return best.house_ty;
+  }
+  return areaLabel(area);
+}
+
+function typeDisplayLabel(key: string, unitTypes: UnitType[] | null): string {
+  if (unitTypes) {
+    const ut = unitTypes.find(u => u.house_ty === key);
+    if (ut) return `${key} (${Math.round(ut.exclusive_area)}㎡·${ut.exclusive_pyeong}평)`;
+  }
+  return key;
+}
+
 // ── 차트 컴포넌트 ─────────────────────────────────────────────────────────────
-function PriceChart({ trades }: { trades: Trade[] }) {
-  const [selectedArea, setSelectedArea] = useState<number | null>(null);
+function PriceChart({ trades, unitTypes }: { trades: Trade[]; unitTypes: UnitType[] | null }) {
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
-  // 면적 버킷 (5㎡ 단위)
-  const areaBuckets = useMemo(() => {
-    const buckets = new Set(trades.map(t => Math.round(t.area / 5) * 5));
-    return Array.from(buckets).sort((a, b) => a - b);
-  }, [trades]);
+  // 타입키 목록 (전용면적 오름차순)
+  const typeKeys = useMemo(() => {
+    const keyAreaMap = new Map<string, number>();
+    for (const t of trades) {
+      const key = resolveTypeKey(t.area, unitTypes);
+      if (!keyAreaMap.has(key)) keyAreaMap.set(key, t.area);
+    }
+    return Array.from(keyAreaMap.entries())
+      .sort(([, a], [, b]) => a - b)
+      .map(([k]) => k);
+  }, [trades, unitTypes]);
 
-  // 선택된 면적 필터
-  const filtered = useMemo(() =>
-    selectedArea ? trades.filter(t => Math.round(t.area / 5) * 5 === selectedArea) : trades,
-    [trades, selectedArea]
-  );
+  const displayKeys = selectedKey ? [selectedKey] : typeKeys.slice(0, 5);
 
-  // 월별 평균 (면적별 or 전체)
   const chartData = useMemo(() => {
     const byMonth: Record<string, { sum: number; cnt: number }[]> = {};
-    const areaList = selectedArea ? [selectedArea] : areaBuckets.slice(0, 5);
-
-    for (const trade of filtered) {
-      const ym = trade.date.slice(0, 7);
-      const bucket = Math.round(trade.area / 5) * 5;
-      const idx = areaList.indexOf(bucket);
+    for (const trade of trades) {
+      const key = resolveTypeKey(trade.area, unitTypes);
+      const idx = displayKeys.indexOf(key);
       if (idx < 0) continue;
-      if (!byMonth[ym]) byMonth[ym] = areaList.map(() => ({ sum: 0, cnt: 0 }));
+      const ym = trade.date.slice(0, 7);
+      if (!byMonth[ym]) byMonth[ym] = displayKeys.map(() => ({ sum: 0, cnt: 0 }));
       byMonth[ym][idx].sum += trade.price;
       byMonth[ym][idx].cnt++;
     }
-
     return Object.entries(byMonth)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([ym, arr]) => ({
         month: ym,
-        ...Object.fromEntries(areaList.map((a, i) => [
-          areaLabel(a),
+        ...Object.fromEntries(displayKeys.map((k, i) => [
+          k,
           arr[i]?.cnt > 0 ? Math.round(arr[i].sum / arr[i].cnt) : null,
         ])),
       }));
-  }, [filtered, areaBuckets, selectedArea]);
-
-  const displayAreas = selectedArea ? [selectedArea] : areaBuckets.slice(0, 5);
+  }, [trades, unitTypes, displayKeys]);
 
   if (trades.length === 0) return (
     <div style={{ textAlign: 'center', padding: '40px 0', color: '#9ca3af', fontSize: 14 }}>
@@ -125,25 +154,25 @@ function PriceChart({ trades }: { trades: Trade[] }) {
 
   return (
     <div>
-      {/* 평형 탭 */}
+      {/* 타입 탭 */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
         <button
-          onClick={() => setSelectedArea(null)}
+          onClick={() => setSelectedKey(null)}
           style={{
             padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 13,
-            background: !selectedArea ? '#2563eb' : '#f3f4f6',
-            color: !selectedArea ? '#fff' : '#374151', fontWeight: 600,
+            background: !selectedKey ? '#2563eb' : '#f3f4f6',
+            color: !selectedKey ? '#fff' : '#374151', fontWeight: 600,
           }}
         >전체</button>
-        {areaBuckets.map(a => (
-          <button key={a}
-            onClick={() => setSelectedArea(selectedArea === a ? null : a)}
+        {typeKeys.map(k => (
+          <button key={k}
+            onClick={() => setSelectedKey(selectedKey === k ? null : k)}
             style={{
               padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 13,
-              background: selectedArea === a ? '#2563eb' : '#f3f4f6',
-              color: selectedArea === a ? '#fff' : '#374151', fontWeight: 600,
+              background: selectedKey === k ? '#2563eb' : '#f3f4f6',
+              color: selectedKey === k ? '#fff' : '#374151', fontWeight: 600,
             }}
-          >{areaLabel(a)}</button>
+          >{typeDisplayLabel(k, unitTypes)}</button>
         ))}
       </div>
 
@@ -161,12 +190,12 @@ function PriceChart({ trades }: { trades: Trade[] }) {
             formatter={(v: unknown, name: unknown) => [fmt억(v as number), name as string]}
             labelFormatter={l => l + '월'}
           />
-          {displayAreas.length > 1 && <Legend wrapperStyle={{ fontSize: 12 }} />}
-          {displayAreas.slice(0, 5).map((a, i) => (
+          {displayKeys.length > 1 && <Legend wrapperStyle={{ fontSize: 12 }} />}
+          {displayKeys.map((k, i) => (
             <Line
-              key={a}
+              key={k}
               type="monotone"
-              dataKey={areaLabel(a)}
+              dataKey={k}
               stroke={AREA_COLORS[i % AREA_COLORS.length]}
               strokeWidth={2}
               dot={false}
@@ -235,7 +264,7 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
         {tradeLoading ? (
           <div style={{ textAlign: 'center', padding: '40px 0', color: '#9ca3af' }}>조회 중...</div>
         ) : (
-          <PriceChart trades={trades} />
+          <PriceChart trades={trades} unitTypes={complex.unit_types} />
         )}
       </div>
 
@@ -247,20 +276,27 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ background: '#f8fafc' }}>
-                  {['면적', '거래가', '층', '거래일'].map(h => (
+                  {['타입', '면적', '거래가', '층', '거래일'].map(h => (
                     <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600, borderBottom: '1px solid #e5e7eb' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {recentTrades.map((t, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                    <td style={{ padding: '10px 12px', fontWeight: 600, color: '#374151' }}>{areaLabel(t.area)}</td>
-                    <td style={{ padding: '10px 12px', fontWeight: 700, color: '#1d4ed8' }}>{fmt억(t.price)}</td>
-                    <td style={{ padding: '10px 12px', color: '#6b7280' }}>{t.floor}층</td>
-                    <td style={{ padding: '10px 12px', color: '#6b7280' }}>{t.date}</td>
-                  </tr>
-                ))}
+                {recentTrades.map((t, i) => {
+                  const typeKey = resolveTypeKey(t.area, complex.unit_types);
+                  const hasType = complex.unit_types && complex.unit_types.some(u => u.house_ty === typeKey);
+                  return (
+                    <tr key={i} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                      <td style={{ padding: '10px 12px', fontWeight: 700, color: hasType ? '#7c3aed' : '#374151' }}>
+                        {hasType ? typeKey : '-'}
+                      </td>
+                      <td style={{ padding: '10px 12px', fontWeight: 600, color: '#374151' }}>{areaLabel(t.area)}</td>
+                      <td style={{ padding: '10px 12px', fontWeight: 700, color: '#1d4ed8' }}>{fmt억(t.price)}</td>
+                      <td style={{ padding: '10px 12px', color: '#6b7280' }}>{t.floor}층</td>
+                      <td style={{ padding: '10px 12px', color: '#6b7280' }}>{t.date}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
