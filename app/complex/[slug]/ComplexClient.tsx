@@ -51,7 +51,8 @@ type Complex = {
 };
 type NearbyItem = { name: string; distance: number; address?: string; category?: string; label?: string };
 type SchoolItem = NearbyItem & { school_type: string };
-type Trade = { date: string; area: number; price: number; floor: number };
+type Trade = { date: string; area: number; price: number; floor: number; dong?: string; buyerGbn?: string; slerGbn?: string; dealingGbn?: string; agentSgg?: string; rgstDate?: string; cdealType?: string; cdealDay?: string; };
+type RentTrade = { date: string; area: number; floor: number; deposit: number; monthly: number; contractType: string; contractEnd: string; useRRRight: string; preDeposit: number; preMonthly: number; };
 
 const AREA_COLORS = ['#2563eb', '#16a34a', '#dc2626', '#9333ea', '#f59e0b', '#06b6d4'];
 
@@ -93,7 +94,7 @@ function resolveTypeKey(area: number, unitTypes: UnitType[] | null): string {
       const diff = Math.abs(ut.exclusive_area - area);
       if (diff < bestDiff) { bestDiff = diff; best = ut; }
     }
-    if (best && bestDiff < 3) return best.house_ty;
+    if (best && bestDiff < 3 && best.house_ty) return best.house_ty;
   }
   return areaLabel(area);
 }
@@ -210,20 +211,120 @@ function PriceChart({ trades, unitTypes }: { trades: Trade[]; unitTypes: UnitTyp
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
 export default function ComplexClient({ complex }: { complex: Complex }) {
-  const [trades, setTrades]       = useState<Trade[]>([]);
-  const [tradeLoading, setTradeLoading] = useState(true);
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [rents,  setRents]  = useState<RentTrade[]>([]);
+  const [loading, setLoading] = useState(true);
   const [buildYear, setBuildYear] = useState<number | null>(complex.built_year);
+  const [dealType, setDealType] = useState<'매매' | '전세' | '월세'>('매매');
+  const [selArea,  setSelArea]  = useState<number>(0);
   const [activeTab, setActiveTab] = useState<'info' | 'transit' | 'school' | 'infra'>('info');
 
   useEffect(() => {
-    fetch(`/api/complex/trade?name=${encodeURIComponent(complex.name)}&sido=${encodeURIComponent(complex.sido)}&sigungu=${encodeURIComponent(complex.sigungu)}&months=24`)
-      .then(r => r.json())
-      .then(d => { setTrades(d.trades ?? []); if (d.buildYear) setBuildYear(d.buildYear); })
-      .catch(() => {})
-      .finally(() => setTradeLoading(false));
+    const q = `name=${encodeURIComponent(complex.name)}&sido=${encodeURIComponent(complex.sido)}&sigungu=${encodeURIComponent(complex.sigungu)}`;
+    Promise.all([
+      fetch(`/api/complex/trade?${q}&months=24`).then(r => r.json()),
+      fetch(`/api/complex/rent?${q}&months=24`).then(r => r.json()),
+    ]).then(([td, rd]) => {
+      setTrades(td.trades ?? []);
+      if (td.buildYear) setBuildYear(td.buildYear);
+      setRents(rd.trades ?? []);
+    }).catch(() => {}).finally(() => setLoading(false));
   }, [complex.name, complex.sido, complex.sigungu]);
 
-  const recentTrades = trades.slice(0, 10);
+  const unitTypes = complex.unit_types ?? [];
+
+  function supplyLabel(exclusiveM2: number): string {
+    const match = unitTypes.find(u => Math.abs(u.exclusive_area - exclusiveM2) <= 1.5);
+    if (match) return `${match.supply_pyeong}평 (공급 ${Math.round(match.supply_area)}㎡)`;
+    const excPy = Math.round(exclusiveM2 / 3.3);
+    return `전용 ${excPy}평 (공급 약 ${Math.round(exclusiveM2 * 1.3 / 3.3)}평)`;
+  }
+
+  function fmtPrice(v: number) {
+    return v >= 10000 ? `${(v / 10000).toFixed(1)}억` : `${Math.round(v / 100) / 10}천만`;
+  }
+
+  const toPy = (area: number) => Math.round(area / 3.3);
+
+  const rawList = useMemo(() =>
+    dealType === '매매' ? trades
+      : dealType === '전세' ? rents.filter(t => t.monthly === 0)
+      : rents.filter(t => t.monthly > 0),
+    [dealType, trades, rents]
+  );
+
+  const exclusiveAreas = useMemo(() =>
+    [...new Set(rawList.map(t => Math.round(t.area * 100) / 100))].sort((a, b) => a - b),
+    [rawList]
+  );
+  const pyeongList = useMemo(() =>
+    [...new Set(rawList.map(t => toPy(t.area)))].sort((a, b) => a - b),
+    [rawList]
+  );
+  const curPy = selArea || pyeongList[0] || 0;
+
+  const filtered = useMemo(() =>
+    rawList.filter(t => toPy(t.area) === curPy),
+    [rawList, curPy]
+  );
+
+  const chartData = useMemo(() => {
+    const map = new Map<string, number[]>();
+    for (const t of filtered) {
+      const ym = t.date.slice(0, 7);
+      const val = dealType === '매매' ? (t as Trade).price : (t as RentTrade).deposit;
+      if (!map.has(ym)) map.set(ym, []);
+      map.get(ym)!.push(val);
+    }
+    return [...map.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, prices]) => ({
+        month,
+        avg: Math.round(prices.reduce((s, v) => s + v, 0) / prices.length),
+      }));
+  }, [filtered, dealType]);
+
+  const lastAvg = chartData.at(-1)?.avg ?? 0;
+
+  const tradeAvg = useMemo(() => {
+    const f = trades.filter(t => toPy(t.area) === curPy);
+    return f.length ? f.reduce((s, t) => s + t.price, 0) / f.length : 0;
+  }, [trades, curPy]);
+  const jeonseAvg = useMemo(() => {
+    const f = rents.filter(t => t.monthly === 0 && toPy(t.area) === curPy);
+    return f.length ? f.reduce((s, t) => s + t.deposit, 0) / f.length : 0;
+  }, [rents, curPy]);
+  const jeonseRatio = tradeAvg > 0 && jeonseAvg > 0
+    ? Math.round(jeonseAvg / tradeAvg * 100) : null;
+
+  function contractStatus(dateStr: string, isMonthly: boolean, contractType = '', contractEnd = '') {
+    const today = Date.now();
+    const deal = new Date(dateStr).getTime();
+    if (isMonthly) {
+      const exp = contractEnd ? new Date(contractEnd).getTime() : deal + 365.25 * 24 * 3600 * 1000;
+      const d = Math.round((exp - today) / 86400000);
+      if (d < 0)   return { label: '만료됨',          color: '#6b7280', bg: '#f1f5f9' };
+      if (d <= 90) return { label: `만료임박 D-${d}`, color: '#d97706', bg: '#fefce8' };
+      return             { label: `거주중 D-${d}`,    color: '#059669', bg: '#f0fdf4' };
+    }
+    const isRenewed = contractType === '갱신' || contractType === '재계약';
+    if (contractEnd) {
+      const exp = new Date(contractEnd).getTime();
+      const d = Math.round((exp - today) / 86400000);
+      if (d < 0)   return { label: '만료됨',          color: '#6b7280', bg: '#f1f5f9' };
+      if (d <= 90) return { label: `만료임박 D-${d}`, color: '#d97706', bg: '#fefce8' };
+      const tag = isRenewed ? (contractType === '재계약' ? '재계약중' : '갱신중') : '거주중';
+      return             { label: `${tag} D-${d}`,   color: isRenewed ? '#7c3aed' : '#059669', bg: isRenewed ? '#ede9fe' : '#f0fdf4' };
+    }
+    const exp2 = deal + 2 * 365.25 * 24 * 3600 * 1000;
+    const d2 = Math.round((exp2 - today) / 86400000);
+    if (d2 < -365) return { label: '만료됨',                color: '#6b7280', bg: '#f1f5f9' };
+    if (d2 < 0)    return { label: `갱신중 +${-d2}일`,      color: '#7c3aed', bg: '#ede9fe' };
+    if (d2 <= 90)  return { label: `만료임박 D-${d2}`,      color: '#d97706', bg: '#fefce8' };
+    return               { label: `거주중 D-${d2}`,          color: '#059669', bg: '#f0fdf4' };
+  }
+
+  const recentRows = filtered.slice(0, 15);
 
   return (
     <div style={{ maxWidth: 860, margin: '0 auto', padding: '24px 16px 64px' }}>
@@ -258,50 +359,155 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
         </div>
       </div>
 
-      {/* 시세 차트 */}
-      <div style={{ background: '#fff', borderRadius: 16, padding: '24px', marginBottom: 16, boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
-        <h2 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 800, color: '#1e293b' }}>📈 실거래가 시세 (최근 24개월)</h2>
-        {tradeLoading ? (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: '#9ca3af' }}>조회 중...</div>
-        ) : (
-          <PriceChart trades={trades} unitTypes={complex.unit_types} />
-        )}
-      </div>
-
-      {/* 최근 실거래 */}
-      {recentTrades.length > 0 && (
-        <div style={{ background: '#fff', borderRadius: 16, padding: '24px', marginBottom: 16, boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
-          <h2 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 800, color: '#1e293b' }}>🏷️ 최근 실거래</h2>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-              <thead>
-                <tr style={{ background: '#f8fafc' }}>
-                  {['타입', '면적', '거래가', '층', '거래일'].map(h => (
-                    <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600, borderBottom: '1px solid #e5e7eb' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {recentTrades.map((t, i) => {
-                  const typeKey = resolveTypeKey(t.area, complex.unit_types);
-                  const hasType = complex.unit_types && complex.unit_types.some(u => u.house_ty === typeKey);
-                  return (
-                    <tr key={i} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                      <td style={{ padding: '10px 12px', fontWeight: 700, color: hasType ? '#7c3aed' : '#374151' }}>
-                        {hasType ? typeKey : '-'}
-                      </td>
-                      <td style={{ padding: '10px 12px', fontWeight: 600, color: '#374151' }}>{areaLabel(t.area)}</td>
-                      <td style={{ padding: '10px 12px', fontWeight: 700, color: '#1d4ed8' }}>{fmt억(t.price)}</td>
-                      <td style={{ padding: '10px 12px', color: '#6b7280' }}>{t.floor}층</td>
-                      <td style={{ padding: '10px 12px', color: '#6b7280' }}>{t.date}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+      {/* 매매/전세/월세 시세 */}
+      <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', marginBottom: 16, boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+        {/* 탭 */}
+        <div style={{ display: 'flex', borderBottom: '2px solid #f1f5f9' }}>
+          {(['매매', '전세', '월세'] as const).map(t => (
+            <button key={t} onClick={() => { setDealType(t); setSelArea(0); }}
+              style={{
+                flex: 1, padding: '13px 0', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700,
+                background: 'none',
+                color: dealType === t ? '#7c3aed' : '#9ca3af',
+                borderBottom: dealType === t ? '2px solid #7c3aed' : '2px solid transparent',
+                marginBottom: -2,
+              }}>{t}</button>
+          ))}
         </div>
-      )}
+
+        <div style={{ padding: '20px' }}>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: '#9ca3af' }}>조회 중...</div>
+          ) : (
+            <>
+              {/* 면적 셀렉터 + 평균가 + 전세가율 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
+                {exclusiveAreas.length > 0 ? (
+                  <select
+                    value={curPy}
+                    onChange={e => setSelArea(Number(e.target.value))}
+                    style={{ fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 8, padding: '6px 10px', color: '#1e293b', background: '#f8fafc', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    {exclusiveAreas.map(area => (
+                      <option key={area} value={toPy(area)}>{supplyLabel(area)}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <span style={{ fontSize: 13, color: '#9ca3af' }}>거래 데이터 없음</span>
+                )}
+                {lastAvg > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 22, fontWeight: 800, color: '#1e293b' }}>{fmtPrice(lastAvg)}</span>
+                    {jeonseRatio !== null && (dealType === '매매' || dealType === '전세') && (
+                      <span style={{
+                        fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+                        background: jeonseRatio >= 70 ? '#fef2f2' : jeonseRatio >= 50 ? '#fefce8' : '#f0fdf4',
+                        color: jeonseRatio >= 70 ? '#dc2626' : jeonseRatio >= 50 ? '#ca8a04' : '#16a34a',
+                      }}>전세가율 {jeonseRatio}%</span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* 추이 차트 */}
+              {chartData.length > 1 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 8 }}>월별 평균 추이 (최근 24개월)</div>
+                  <ResponsiveContainer width="100%" height={180}>
+                    <LineChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="month" tick={{ fontSize: 10 }} tickFormatter={v => v.slice(2)} />
+                      <YAxis tick={{ fontSize: 10 }} tickFormatter={v => `${Math.round(v / 10000)}억`} width={40} />
+                      <Tooltip
+                        formatter={(v: unknown) => [fmt억(v as number), dealType === '월세' ? '보증금' : dealType]}
+                        labelFormatter={l => l + '월'}
+                      />
+                      <Line type="monotone" dataKey="avg" stroke="#7c3aed" strokeWidth={2} dot={false} connectNulls />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* 타입별 시세 비교 (매매만) */}
+              {dealType === '매매' && trades.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 8 }}>타입별 시세 비교</div>
+                  <PriceChart trades={trades} unitTypes={complex.unit_types} />
+                </div>
+              )}
+
+              {/* 최근 실거래 테이블 */}
+              {recentRows.length > 0 ? (
+                <div style={{ overflowX: 'auto' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 10 }}>최근 실거래</div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                    <thead>
+                      <tr style={{ color: '#9ca3af', borderBottom: '1px solid #e5e7eb' }}>
+                        <th style={{ padding: '6px 8px', textAlign: 'left', fontWeight: 500 }}>계약일</th>
+                        <th style={{ padding: '6px 8px', textAlign: 'left', fontWeight: 500 }}>층</th>
+                        <th style={{ padding: '6px 8px', textAlign: 'left', fontWeight: 500 }}>타입</th>
+                        <th style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 500 }}>
+                          {dealType === '월세' ? '보증/월세' : dealType === '전세' ? '전세가' : '매매가'}
+                        </th>
+                        {(dealType === '전세' || dealType === '월세') && (
+                          <th style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 500 }}>상태</th>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentRows.map((t, i) => {
+                        const typeKey = resolveTypeKey(t.area, complex.unit_types);
+                        const hasType = unitTypes.some(u => u.house_ty === typeKey);
+                        const isCancelled = dealType === '매매' && !!(t as Trade).cdealType;
+                        const priceCell = dealType === '매매'
+                          ? fmt억((t as Trade).price)
+                          : dealType === '전세'
+                            ? fmtPrice((t as RentTrade).deposit)
+                            : `${fmtPrice((t as RentTrade).deposit)}/${(t as RentTrade).monthly}만`;
+                        const status = (dealType === '전세' || dealType === '월세')
+                          ? contractStatus(t.date, dealType === '월세', (t as RentTrade).contractType, (t as RentTrade).contractEnd)
+                          : null;
+                        const tr = t as Trade;
+                        return (
+                          <tr key={i} style={{ borderBottom: '1px solid #f8fafc', opacity: isCancelled ? 0.45 : 1 }}>
+                            <td style={{ padding: '7px 8px', color: '#6b7280', verticalAlign: 'top' }}>
+                              {t.date.slice(2).replace(/-/g, '.')}
+                              {isCancelled && <div style={{ fontSize: 9, color: '#dc2626' }}>해제</div>}
+                            </td>
+                            <td style={{ padding: '7px 8px', color: '#6b7280', verticalAlign: 'top' }}>
+                              {tr.dong ? `${tr.dong} ` : ''}{t.floor}층
+                            </td>
+                            <td style={{ padding: '7px 8px', fontWeight: 700, color: hasType ? '#7c3aed' : '#6b7280', verticalAlign: 'top' }}>
+                              {hasType ? typeKey : supplyLabel(t.area)}
+                            </td>
+                            <td style={{ padding: '7px 8px', textAlign: 'right', fontWeight: 700, color: '#1e293b', verticalAlign: 'top' }}>
+                              {priceCell}
+                              {dealType === '매매' && (tr.buyerGbn || tr.slerGbn) && (
+                                <div style={{ fontSize: 9, color: '#9ca3af', fontWeight: 400 }}>
+                                  {[tr.buyerGbn && `매수 ${tr.buyerGbn}`, tr.slerGbn && `매도 ${tr.slerGbn}`].filter(Boolean).join(' · ')}
+                                </div>
+                              )}
+                            </td>
+                            {status && (
+                              <td style={{ padding: '7px 8px', textAlign: 'right', verticalAlign: 'top' }}>
+                                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 10, background: status.bg, color: status.color, whiteSpace: 'nowrap' }}>
+                                  {status.label}
+                                </span>
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '24px 0', color: '#9ca3af', fontSize: 13 }}>해당 면적 거래 데이터 없음</div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
 
       {/* 단지정보 탭 */}
       <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', marginBottom: 16, boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
