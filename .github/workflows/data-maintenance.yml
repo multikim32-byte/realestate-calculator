@@ -46,11 +46,31 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
+  # ── 신규 단지 청약홈 주택형 보강 ───────────────────────────────────────────
+  enrich-cheongak-unit-types:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    needs: enrich-new-complex-env   # 주변환경 보강 후 실행
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts
+
+      - name: 청약홈 공식 주택형·공급면적 보강 (built_year 2022+)
+        run: node scripts/enrich-cheongak.mjs --year=2022
+        env:
+          PUBLIC_DATA_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
   # ── 데이터 품질 점검 ─────────────────────────────────────────────────────────
   check-data-quality:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: enrich-new-complex-env
+    needs: enrich-cheongak-unit-types
 
     steps:
       - uses: actions/checkout@v4
