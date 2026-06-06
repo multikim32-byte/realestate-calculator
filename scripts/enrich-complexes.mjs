@@ -34,6 +34,7 @@ const KAKAO_LOCAL = 'https://dapi.kakao.com/v2/local/search/category.json';
 const arg = process.argv.find(a => a.startsWith('--only='));
 const only = arg ? arg.replace('--only=', '') : null;
 const force = process.argv.includes('--force');
+const addBus = process.argv.includes('--add-bus'); // 기존 subway 유지하면서 bus만 추가
 
 // ── 카카오 카테고리 코드 ──────────────────────────────────────────────────────
 const CATEGORIES = {
@@ -75,6 +76,27 @@ async function searchNearby(lat, lng, categoryCode, radiusM = 1000) {
   }
 }
 
+// ── 카카오 키워드 검색 (버스정류장 등 카테고리 없는 POI용) ────────────────────
+const KAKAO_KEYWORD = 'https://dapi.kakao.com/v2/local/search/keyword.json';
+async function searchNearbyKeyword(lat, lng, query, radiusM = 500, size = 5) {
+  try {
+    const url = `${KAKAO_KEYWORD}?query=${encodeURIComponent(query)}&x=${lng}&y=${lat}&radius=${radiusM}&size=${size}&sort=distance`;
+    const res = await fetch(url, {
+      headers: { Authorization: `KakaoAK ${KAKAO_KEY}` },
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return (json.documents ?? []).map(d => ({
+      name:     d.place_name,
+      distance: parseInt(d.distance ?? '0'),
+      address:  d.road_address_name || d.address_name,
+      phone:    d.phone || null,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 // ── 학교 타입 분류 (초/중/고) ─────────────────────────────────────────────────
 function classifySchool(name) {
   if (name.includes('초등') || name.endsWith('초')) return '초등';
@@ -83,16 +105,28 @@ function classifySchool(name) {
   return '기타';
 }
 
+// ── --add-bus 전용: 기존 subway 유지 + bus만 추가 ──────────────────────────
+async function enrichBusOnly(complex) {
+  const buses = await searchNearbyKeyword(complex.lat, complex.lng, '버스정류장', 500, 5);
+  await sleep(150);
+  const busItems = buses.map(b => ({ ...b, category: 'bus' }));
+  const existing = (complex.nearby_transit ?? []).filter(t => t.category !== 'bus');
+  return {
+    nearby_transit: [...existing, ...busItems].sort((a, b) => a.distance - b.distance),
+  };
+}
+
 // ── 단지별 주변정보 수집 ─────────────────────────────────────────────────────
 async function enrichOne(complex) {
   const { lat, lng } = complex;
   const result = {};
 
-  // 교통 (지하철 1km, 버스 300m)
+  // 교통 (지하철 1km)
+  // 버스정류장: 카카오 카테고리 없음 → TAGO API 별도 연동 필요
   if (!only || only === 'transit') {
     const subways = await searchNearby(lat, lng, 'SW8', 1000);
     result.nearby_transit = subways.map(s => ({ ...s, category: 'subway' }));
-    await sleep(300); // 속도 제한 방지
+    await sleep(300);
   }
 
   // 학교 (1km)
@@ -121,10 +155,11 @@ async function enrichOne(complex) {
 // ── 메인 ──────────────────────────────────────────────────────────────────────
 async function main() {
   console.log('🏗️  단지 주변환경 보강 시작');
-  if (only) console.log(`   대상: ${only}만 수집`);
+  if (addBus) console.log('   모드: --add-bus (subway 유지 + bus 추가)');
+  else if (only) console.log(`   대상: ${only}만 수집`);
   console.log('');
 
-  // 좌표 있고 보강 안 된 단지 조회
+  // 좌표 있는 단지 조회
   let query = supabase
     .from('apartment_complexes')
     .select('kapt_code, name, sido, sigungu, lat, lng, nearby_transit')
@@ -144,10 +179,12 @@ async function main() {
   }
   const error = null;
 
-  // null이거나 빈 배열([])인 단지만 처리 — 실제 데이터 있으면 스킵 (only 옵션 없을 때)
-  const complexes = (!only && !force)
-    ? allRows.filter(c => !c.nearby_transit || c.nearby_transit.length === 0)
-    : allRows;
+  // 처리 대상 필터링
+  const complexes = addBus
+    ? allRows.filter(c => !(c.nearby_transit ?? []).some(t => t.category === 'bus'))
+    : (!only && !force)
+      ? allRows.filter(c => !c.nearby_transit || c.nearby_transit.length === 0)
+      : allRows;
   if (error) { console.error('❌ 조회 오류:', error.message); process.exit(1); }
 
   console.log(`📍 보강 대상: ${complexes.length.toLocaleString()}개\n`);
@@ -159,7 +196,7 @@ async function main() {
     const batch = complexes.slice(i, i + CONCURRENCY);
 
     await Promise.all(batch.map(async (complex) => {
-      const enriched = await enrichOne(complex);
+      const enriched = addBus ? await enrichBusOnly(complex) : await enrichOne(complex);
       const { error: upErr } = await supabase
         .from('apartment_complexes')
         .update({ ...enriched, updated_at: new Date().toISOString() })

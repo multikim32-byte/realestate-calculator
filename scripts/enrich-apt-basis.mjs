@@ -86,7 +86,8 @@ function parseBass(item) {
   if (topFloor > 0) result.floor_count = topFloor;
 
   // 관리사무소 연락처 / 팩스
-  if (item.kaptTel?.trim()) result.phone = item.kaptTel.trim();
+  // 빈 문자열('')로 저장해야 "시도했지만 없음"과 "아직 미수집(null)"을 구별 가능
+  result.phone = item.kaptTel?.trim() ?? '';
   if (item.kaptFax?.trim()) result.fax   = item.kaptFax.trim();
 
   // 법정동코드 + 지번주소 (건축물대장 조회용)
