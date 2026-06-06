@@ -85,7 +85,8 @@ function fmtPhone(raw: string) {
   return raw;
 }
 
-// 전용면적 → 타입키 매핑 (unit_types 있으면 84A/84B, 없으면 면적 문자열)
+// 전용면적 → 타입키 매핑
+// house_ty 있으면 "84A", 없으면 unit_type의 exclusive_area 문자열(안정적 그룹핑)
 function resolveTypeKey(area: number, unitTypes: UnitType[] | null): string {
   if (unitTypes && unitTypes.length > 0) {
     let best: UnitType | null = null;
@@ -94,15 +95,24 @@ function resolveTypeKey(area: number, unitTypes: UnitType[] | null): string {
       const diff = Math.abs(ut.exclusive_area - area);
       if (diff < bestDiff) { bestDiff = diff; best = ut; }
     }
-    if (best && bestDiff < 3 && best.house_ty) return best.house_ty;
+    if (best && bestDiff < 3) {
+      if (best.house_ty) return best.house_ty;
+      return String(best.exclusive_area); // 타입코드 없으면 전용면적으로 구분
+    }
   }
   return areaLabel(area);
 }
 
+// 차트 범례용 레이블
 function typeDisplayLabel(key: string, unitTypes: UnitType[] | null): string {
   if (unitTypes) {
     const ut = unitTypes.find(u => u.house_ty === key);
     if (ut) return `${key} (${Math.round(ut.exclusive_area)}㎡·${ut.exclusive_pyeong}평)`;
+    const keyArea = parseFloat(key);
+    if (!isNaN(keyArea)) {
+      const ut2 = unitTypes.find(u => u.exclusive_area === keyArea);
+      if (ut2) return `${ut2.supply_pyeong}평 (전용 ${keyArea.toFixed(2)}㎡)`;
+    }
   }
   return key;
 }
@@ -191,7 +201,7 @@ function PriceChart({ trades, unitTypes }: { trades: Trade[]; unitTypes: UnitTyp
             formatter={(v: unknown, name: unknown) => [fmt억(v as number), name as string]}
             labelFormatter={l => l + '월'}
           />
-          {displayKeys.length > 1 && <Legend wrapperStyle={{ fontSize: 12 }} />}
+          {displayKeys.length > 1 && <Legend wrapperStyle={{ fontSize: 12 }} formatter={k => typeDisplayLabel(k, unitTypes)} />}
           {displayKeys.map((k, i) => (
             <Line
               key={k}
@@ -241,8 +251,15 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
   }
 
   function typeOptionLabel(key: string, area: number): string {
+    // house_ty 있으면 "84A · 25평 (공급 84㎡)"
     const ut = unitTypes.find(u => u.house_ty === key);
     if (ut) return `${key} · ${ut.supply_pyeong}평 (공급 ${Math.round(ut.supply_area)}㎡)`;
+    // exclusive_area 키면 "27평 (전용 89.75㎡)"
+    const keyArea = parseFloat(key);
+    if (!isNaN(keyArea)) {
+      const ut2 = unitTypes.find(u => u.exclusive_area === keyArea);
+      if (ut2) return `${ut2.supply_pyeong}평 (전용 ${keyArea.toFixed(2)}㎡)`;
+    }
     return supplyLabel(area);
   }
 
