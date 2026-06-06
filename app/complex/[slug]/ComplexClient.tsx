@@ -323,19 +323,19 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
                   <div style={{ flex: 1, minWidth: 100, background: '#eff6ff', borderRadius: 12, padding: '12px 14px' }}>
                     <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>합계</div>
                     <div style={{ fontSize: 17, fontWeight: 800, color: '#1d4ed8' }}>
-                      {Math.round(complex.manage_cost.per_unit_total / 1000).toLocaleString()}천원
+                      {complex.manage_cost.per_unit_total.toLocaleString()}원
                     </div>
                   </div>
                   <div style={{ flex: 1, minWidth: 100, background: '#f0fdf4', borderRadius: 12, padding: '12px 14px' }}>
                     <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>공용관리비</div>
                     <div style={{ fontSize: 17, fontWeight: 800, color: '#16a34a' }}>
-                      {Math.round(complex.manage_cost.per_unit_common / 1000).toLocaleString()}천원
+                      {complex.manage_cost.per_unit_common.toLocaleString()}원
                     </div>
                   </div>
                   <div style={{ flex: 1, minWidth: 100, background: '#faf5ff', borderRadius: 12, padding: '12px 14px' }}>
                     <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>개별사용료</div>
                     <div style={{ fontSize: 17, fontWeight: 800, color: '#7c3aed' }}>
-                      {Math.round(complex.manage_cost.per_unit_usage / 1000).toLocaleString()}천원
+                      {complex.manage_cost.per_unit_usage.toLocaleString()}원
                     </div>
                   </div>
                 </div>
