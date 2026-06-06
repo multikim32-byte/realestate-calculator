@@ -29,9 +29,9 @@ type ManageCost = {
 
 type UnitType = {
   house_ty: string;
-  supply_area: number;
+  supply_area: number | null;
   exclusive_area: number;
-  supply_pyeong: number;
+  supply_pyeong: number | null;
   exclusive_pyeong: number;
   count: number;
   source?: string;
@@ -245,21 +245,25 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
 
   function supplyLabel(exclusiveM2: number): string {
     const match = unitTypes.find(u => Math.abs(u.exclusive_area - exclusiveM2) <= 1.5);
-    if (match) return `${match.supply_pyeong}평 (공급 ${Math.round(match.supply_area)}㎡)`;
+    if (match && match.supply_area != null) return `${match.supply_pyeong}평 (공급 ${Math.round(match.supply_area)}㎡)`;
     const excPy = Math.round(exclusiveM2 / 3.3);
-    return `전용 ${excPy}평 (약 공급 ${Math.round(exclusiveM2 * 1.3 / 3.3)}평)`;
+    return `전용 ${excPy}평`;
   }
 
   function typeOptionLabel(key: string, area: number): string {
     const ut = unitTypes.find(u => u.house_ty === key);
     if (ut) {
-      const suffix = ` · 전용${ut.exclusive_area}㎡ / 공급${Math.round(ut.supply_area)}㎡`;
+      const supplySuffix = ut.supply_area != null ? ` / 공급${Math.round(ut.supply_area)}㎡` : '';
+      const suffix = ` · 전용${ut.exclusive_area}㎡${supplySuffix}`;
       return `${key}${suffix}`;
     }
     const keyArea = parseFloat(key);
     if (!isNaN(keyArea)) {
       const ut2 = unitTypes.find(u => u.exclusive_area === keyArea);
-      if (ut2) return `${ut2.supply_pyeong}평 · 전용${keyArea}㎡ / 공급${Math.round(ut2.supply_area)}㎡`;
+      if (ut2) {
+        const supplySuffix = ut2.supply_area != null ? ` / 공급${Math.round(ut2.supply_area)}㎡` : '';
+        return `${ut2.supply_pyeong}평 · 전용${keyArea}㎡${supplySuffix}`;
+      }
     }
     return supplyLabel(area);
   }
