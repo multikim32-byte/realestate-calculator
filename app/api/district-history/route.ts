@@ -126,6 +126,7 @@ export async function GET(req: NextRequest) {
       rows = [...ymMap.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([deal_ym, v]) => ({
         deal_ym, trade_cnt: v.T, jeonse_cnt: v.J, wolse_cnt: v.W,
       }));
+    }
   }
 
   const res = NextResponse.json({ data: rows });
