@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
     // 1) apt_trades에서 최근 36개월 집계
     const { data: trades } = await db
       .from('apt_trades')
-      .select('deal_ym, deal_type, price')
+      .select('apt_name, deal_ym, deal_type, price')
       .eq('lawd_cd', lawdCd)
       .gte('deal_ym', (() => {
         const d = new Date(); d.setMonth(d.getMonth() - 36);
@@ -78,15 +78,8 @@ export async function GET(req: NextRequest) {
 
     // aptName 매칭 후 deal_ym별 집계
     if (trades?.length) {
-      // apt_trades의 apt_name 목록 조회 (이 lawd_cd에서 aptName 매칭)
-      const { data: names } = await db
-        .from('apt_trades')
-        .select('apt_name')
-        .eq('lawd_cd', lawdCd)
-        .limit(500);
-
       const matchedNames = new Set(
-        (names ?? []).map(r => r.apt_name).filter(n => matchName(n, aptName))
+        [...new Set(trades.map(t => t.apt_name))].filter(n => matchName(n, aptName))
       );
 
       if (matchedNames.size > 0) {
