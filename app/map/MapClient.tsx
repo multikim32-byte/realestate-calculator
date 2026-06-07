@@ -1098,9 +1098,19 @@ export default function MapClient({ unsoldListings }: Props) {
           background: 'none', color: active ? COMPLEX_COLOR : '#9ca3af',
         } as React.CSSProperties);
 
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
         return (
           <>
-            <div style={{
+            <div style={isMobile ? {
+              position: 'absolute', bottom: 0, left: 0, right: 0,
+              maxHeight: '75dvh',
+              background: '#fff',
+              borderRadius: '16px 16px 0 0',
+              boxShadow: '0 -4px 24px rgba(0,0,0,0.18)',
+              zIndex: 20, display: 'flex', flexDirection: 'column',
+              animation: 'slideInUp 0.22s ease-out',
+              overflowY: 'auto',
+            } : {
               position: 'absolute', left: 0, top: 0, bottom: 0,
               width: 'min(320px, 85vw)',
               background: '#fff',
@@ -1109,10 +1119,15 @@ export default function MapClient({ unsoldListings }: Props) {
               animation: 'slideInLeft 0.22s ease-out',
             }}>
               {/* 헤더 */}
+              {isMobile && (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px', flexShrink: 0, background: COMPLEX_COLOR, borderRadius: '16px 16px 0 0' }}>
+                  <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.4)' }} />
+                </div>
+              )}
               {(() => {
                 const faved = isFav(selectedComplex.kapt_code, 'complex');
                 return (
-                  <div style={{ background: COMPLEX_COLOR, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexShrink: 0 }}>
+                  <div style={{ background: COMPLEX_COLOR, padding: isMobile ? '8px 16px 14px' : '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexShrink: 0 }}>
                     <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
                       <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', lineHeight: 1.3 }}>{selectedComplex.name}</div>
                       <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 3 }}>{selectedComplex.sido} {selectedComplex.sigungu}</div>
@@ -1170,8 +1185,8 @@ export default function MapClient({ unsoldListings }: Props) {
                 ))}
               </div>
 
-              {/* 스크롤 영역 */}
-              <div style={{ flex: 1, overflowY: 'auto' }}>
+              {/* 스크롤 영역 — 데스크탑만 독립 스크롤, 모바일은 외부 패널이 처리 */}
+              <div style={isMobile ? { flex: 1 } : { flex: 1, overflowY: 'auto' }}>
 
                 {detailLoading ? (
                   <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: 13, color: '#9ca3af' }}>불러오는 중…</div>
@@ -1446,7 +1461,10 @@ export default function MapClient({ unsoldListings }: Props) {
                 </div>
               </div>
             </div>
-            <style>{`@keyframes slideInLeft { from { transform: translateX(-100%) } to { transform: translateX(0) } }`}</style>
+            <style>{`
+              @keyframes slideInLeft { from { transform: translateX(-100%) } to { transform: translateX(0) } }
+              @keyframes slideInUp   { from { transform: translateY(100%)  } to { transform: translateY(0)  } }
+            `}</style>
           </>
         );
       })()}
