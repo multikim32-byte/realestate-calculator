@@ -1022,22 +1022,18 @@ export default function MapClient({ unsoldListings }: Props) {
         const fmtPrice = (v: number) => v >= 10000 ? `${(v / 10000).toFixed(1)}억` : `${Math.round(v / 1000)}천만`;
         const toPyeong = (area: number) => Math.round(area / 3.3);
 
-        // 면적 레이블: 청약홈 데이터 있으면 공급면적+타입, 없으면 전용면적으로 구분
+        // 면적 레이블: 평 단위 없이 ㎡만 표시
         const unitTypes = selectedComplex.unit_types ?? [];
         function areaLabel(exclusiveM2: number): string {
-          const excPy = toPyeong(exclusiveM2);
           const match = unitTypes.find(u => Math.abs(u.exclusive_area - exclusiveM2) <= 1.5);
           if (match && match.supply_area != null) {
-            // 청약홈 보강 단지: "공급104.9A㎡ (전용79.99㎡)" — 네이버 유사 형식
+            // 청약홈 보강: "공급104.9A㎡ (전용79.99㎡)"
             const letter = match.house_ty?.match(/([A-Z])$/)?.[1] ?? '';
             return `공급${match.supply_area.toFixed(1)}${letter}㎡ (전용${exclusiveM2}㎡)`;
           }
-          const sameP = exclusiveAreas.filter(a => toPyeong(a) === excPy);
-          const houseTy = match?.house_ty ?? '';
-          if (sameP.length > 1) {
-            return houseTy ? `${houseTy} (전용${exclusiveM2}㎡)` : `전용${exclusiveM2}㎡`;
-          }
-          return houseTy ? `${houseTy} · 전용${exclusiveM2}㎡` : `전용${excPy}평 · ${exclusiveM2}㎡`;
+          // 타입 코드 있으면 끝에 붙임: "전용79.97B㎡"
+          const letter = match?.house_ty?.match(/([A-Z])$/)?.[1] ?? '';
+          return `전용${exclusiveM2}${letter}㎡`;
         }
 
         // 현재 탭 raw 데이터 (전세 = monthly===0, 월세 = monthly>0)

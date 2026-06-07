@@ -253,17 +253,21 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
   function typeOptionLabel(key: string, area: number): string {
     const ut = unitTypes.find(u => u.house_ty === key);
     if (ut && ut.supply_area != null) {
-      // 청약홈 데이터: "공급104.9A㎡ (전용79.99㎡)" 형식
+      // 청약홈 데이터: "공급104.9A㎡ (전용79.99㎡)"
       const letter = ut.house_ty?.match(/([A-Z])$/)?.[1] ?? '';
       return `공급${ut.supply_area.toFixed(1)}${letter}㎡ (전용${ut.exclusive_area}㎡)`;
     }
     if (ut) {
-      return `${key} · 전용${ut.exclusive_area}㎡`;
+      const letter = ut.house_ty?.match(/([A-Z])$/)?.[1] ?? '';
+      return `전용${ut.exclusive_area}${letter}㎡`;
     }
     const keyArea = parseFloat(key);
     if (!isNaN(keyArea)) {
       const ut2 = unitTypes.find(u => u.exclusive_area === keyArea);
-      if (ut2) return `전용${keyArea}㎡`;
+      if (ut2) {
+        const letter = ut2.house_ty?.match(/([A-Z])$/)?.[1] ?? '';
+        return `전용${keyArea}${letter}㎡`;
+      }
     }
     return supplyLabel(area);
   }
