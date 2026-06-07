@@ -253,9 +253,8 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
   function typeOptionLabel(key: string, area: number): string {
     const ut = unitTypes.find(u => u.house_ty === key);
     if (ut && ut.supply_area != null) {
-      // 청약홈 데이터: "공급104.9A㎡ (전용79.99㎡)"
       const letter = ut.house_ty?.match(/([A-Z])$/)?.[1] ?? '';
-      return `공급${ut.supply_area.toFixed(1)}${letter}㎡ (전용${ut.exclusive_area}㎡)`;
+      return `공급${ut.supply_area.toFixed(2)}㎡ (전용${ut.exclusive_area}${letter})`;
     }
     if (ut) {
       const letter = ut.house_ty?.match(/([A-Z])$/)?.[1] ?? '';
