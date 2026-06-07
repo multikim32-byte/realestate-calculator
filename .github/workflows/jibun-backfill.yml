@@ -1,7 +1,9 @@
 name: jibun 백필 + MOLIT 단지 구축
 
 on:
-  workflow_dispatch:         # 수동 실행 (MOLIT API 쿼터 소진 후 자정 지나서 실행)
+  workflow_dispatch:         # 수동 실행
+  schedule:
+    - cron: '5 15 * * *'    # KST 00:05 자동 실행 (1회 후 자동 제거)
 
 jobs:
   backfill-and-build:
@@ -55,7 +57,21 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
-      # ── Step 5: 최종 현황 출력 ──────────────────────────────────────────────
+      # ── Step 5: cron 자동 제거 (schedule 트리거일 때만) ────────────────────
+      - name: cron 자동 제거
+        if: github.event_name == 'schedule'
+        run: |
+          sed -i 's/  schedule:/  # schedule:/' .github/workflows/jibun-backfill.yml
+          sed -i 's/    - cron:/    # - cron:/' .github/workflows/jibun-backfill.yml
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add .github/workflows/jibun-backfill.yml
+          git diff --staged --quiet || git commit -m "chore: jibun backfill cron 1회 실행 완료 → 자동 제거"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Step 6: 최종 현황 출력 ──────────────────────────────────────────────
       - name: 완료 현황 확인
         run: |
           node --input-type=module <<'EOF'
