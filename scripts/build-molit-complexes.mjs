@@ -42,6 +42,22 @@ const filterSido = argMap['sido'];
 
 const { LAWD_CODE_MAP } = await import('./lawd-codes.mjs');
 
+// ── slug 생성 ─────────────────────────────────────────────────────────────────
+const SIDO_MAP = {
+  '서울특별시': '서울', '부산광역시': '부산', '대구광역시': '대구',
+  '인천광역시': '인천', '광주광역시': '광주', '대전광역시': '대전',
+  '울산광역시': '울산', '세종특별자치시': '세종', '경기도': '경기',
+  '강원특별자치도': '강원', '강원도': '강원', '충청북도': '충북',
+  '충청남도': '충남', '전라북도': '전북', '전북특별자치도': '전북',
+  '전라남도': '전남', '경상북도': '경북', '경상남도': '경남',
+  '제주특별자치도': '제주',
+};
+function makeSlug(sido, sigungu, name) {
+  const sidoAbbr = SIDO_MAP[sido] ?? sido.replace(/(특별시|광역시|특별자치시|특별자치도|도)$/, '');
+  const norm = (s) => (s ?? '').replace(/\s+/g, '-').replace(/[^\w가-힣-]/g, '');
+  return `${norm(sidoAbbr)}-${norm(sigungu)}-${norm(name)}`;
+}
+
 // ── 이름 정규화 ───────────────────────────────────────────────────────────────
 const BRAND_NORM = [
   [/^lg/i, '엘지'], [/^gs/i, '지에스'], [/^sk/i, '에스케이'],
@@ -218,10 +234,12 @@ async function main() {
         ? Math.round(c.buildYears.reduce((a,b)=>a+b,0) / c.buildYears.length)
         : null;
 
+      const kaptCode = molitKaptCode(c.lawd_cd, c.apt_name);
       insertQueue.push({
-        kapt_code:  molitKaptCode(c.lawd_cd, c.apt_name),
+        kapt_code:  kaptCode,
         molit_key:  molitKey(c.lawd_cd, c.apt_name),
         name:       c.apt_name,
+        slug:       `${makeSlug(sido, sigungu, c.apt_name)}-${kaptCode.toLowerCase()}`,
         source:     'molit',
         sido, sigungu,
         dong:       c.dong,
@@ -256,14 +274,14 @@ async function main() {
 
 async function flushUpdates(batch) {
   await Promise.all(batch.map(({ kapt_code, ...update }) =>
-    db.from('apartment_complexes').update(update).eq('kapt_code', kapt_code)
+    db.from('apartment_complexes').update(update).eq('kapt_code', kapt_code).is('molit_key', null)
       .then(({ error }) => { if (error) console.error(`\n⚠️  update ${kapt_code}:`, error.message); })
   ));
 }
 
 async function flushInserts(batch) {
   const { error } = await db.from('apartment_complexes')
-    .upsert(batch, { onConflict: 'molit_key', ignoreDuplicates: false });
+    .upsert(batch, { onConflict: 'kapt_code', ignoreDuplicates: true });
   if (error) console.error('\n⚠️  insert 오류:', error.message);
 }
 
