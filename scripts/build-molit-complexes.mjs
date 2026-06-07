@@ -109,7 +109,7 @@ async function fetchMolitComplexes() {
       .select('lawd_cd, apt_name, dong, jibun, build_year')
       .eq('deal_type', 'T')
       .not('jibun', 'is', null)
-      .range(from, from + 9999);
+      .range(from, from + 999);
 
     if (error || !data?.length) break;
 
@@ -124,8 +124,8 @@ async function fetchMolitComplexes() {
       if (r.build_year > 1900) entry.buildYears.push(r.build_year);
     }
 
-    if (data.length < 10000) break;
-    from += 10000;
+    if (data.length < 1000) break;
+    from += 1000;
     process.stdout.write('.');
   }
   console.log(` ${map.size.toLocaleString()}개`);
