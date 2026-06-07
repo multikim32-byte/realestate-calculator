@@ -1014,14 +1014,22 @@ export default function MapClient({ unsoldListings }: Props) {
         const fmtPrice = (v: number) => v >= 10000 ? `${(v / 10000).toFixed(1)}억` : `${Math.round(v / 1000)}천만`;
         const toPyeong = (area: number) => Math.round(area / 3.3);
 
-        // 공급면적 표시 레이블 생성
+        // 면적 레이블: 청약홈 데이터 있으면 공급면적+타입, 없으면 전용면적으로 구분
         const unitTypes = selectedComplex.unit_types ?? [];
         function areaLabel(exclusiveM2: number): string {
           const excPy = toPyeong(exclusiveM2);
-          // 청약 데이터 있으면 정확한 공급면적 사용
           const match = unitTypes.find(u => Math.abs(u.exclusive_area - exclusiveM2) <= 1.5);
-          if (match && match.supply_area != null) return `${match.supply_pyeong}평 (공급 ${match.supply_area.toFixed(0)}㎡)`;
-          return `전용 ${excPy}평`;
+          if (match && match.supply_area != null) {
+            // 청약홈 보강 단지: "공급104.9A㎡ (전용79.99㎡)" — 네이버 유사 형식
+            const letter = match.house_ty?.match(/([A-Z])$/)?.[1] ?? '';
+            return `공급${match.supply_area.toFixed(1)}${letter}㎡ (전용${exclusiveM2}㎡)`;
+          }
+          const sameP = exclusiveAreas.filter(a => toPyeong(a) === excPy);
+          const houseTy = match?.house_ty ?? '';
+          if (sameP.length > 1) {
+            return houseTy ? `${houseTy} (전용${exclusiveM2}㎡)` : `전용${exclusiveM2}㎡`;
+          }
+          return houseTy ? `${houseTy} · 전용${exclusiveM2}㎡` : `전용${excPy}평 · ${exclusiveM2}㎡`;
         }
 
         // 현재 탭 raw 데이터 (전세 = monthly===0, 월세 = monthly>0)
@@ -1031,13 +1039,13 @@ export default function MapClient({ unsoldListings }: Props) {
             ? (complexRents ?? []).filter(t => t.monthly === 0)
             : (complexRents ?? []).filter(t => t.monthly > 0);
 
-        // 면적 목록: 전용면적 기준 unique 목록
+        // 면적 목록: 전용면적 기준 unique 목록 (m² 기준)
         const exclusiveAreas = [...new Set(rawList.map(t => Math.round(t.area * 100) / 100))].sort((a, b) => a - b);
-        const pyeongList = [...new Set(rawList.map(t => toPyeong(t.area)))].sort((a, b) => a - b);
-        const curPyeong  = selPyeong || (pyeongList[0] ?? 0);
+        const pyeongList = exclusiveAreas; // 빈 여부 체크용
+        const curArea = selPyeong > 0 ? selPyeong : (exclusiveAreas[0] ?? 0);
 
-        // 선택 면적으로 필터
-        const filtered = rawList.filter(t => toPyeong(t.area) === curPyeong);
+        // 선택 면적으로 필터 (±0.1㎡ 허용)
+        const filtered = rawList.filter(t => Math.abs(Math.round(t.area * 100) / 100 - curArea) < 0.11);
 
         // 최근 10건 테이블
         const tableRows = filtered.slice(0, 10);
@@ -1069,8 +1077,8 @@ export default function MapClient({ unsoldListings }: Props) {
         }).join(' ');
 
         // 전세가율 계산 (매매·전세 같은 평형 평균 기준)
-        const tradeFiltered  = (complexTrades ?? []).filter(t => toPyeong(t.area) === curPyeong);
-        const jeonseFiltered = (complexRents  ?? []).filter(t => t.monthly === 0 && toPyeong(t.area) === curPyeong);
+        const tradeFiltered  = (complexTrades ?? []).filter(t => Math.abs(Math.round(t.area * 100) / 100 - curArea) < 0.11);
+        const jeonseFiltered = (complexRents  ?? []).filter(t => t.monthly === 0 && Math.abs(Math.round(t.area * 100) / 100 - curArea) < 0.11);
         const tradeAvgAll  = tradeFiltered.length  ? tradeFiltered.reduce((s, t)  => s + t.price,   0) / tradeFiltered.length  : 0;
         const jeonseAvgAll = jeonseFiltered.length ? jeonseFiltered.reduce((s, t) => s + t.deposit, 0) / jeonseFiltered.length : 0;
         const jeonseRatio  = tradeAvgAll > 0 && jeonseAvgAll > 0
@@ -1214,14 +1222,13 @@ export default function MapClient({ unsoldListings }: Props) {
                           <span style={{ fontSize: 12, color: '#9ca3af' }}>거래 데이터 없음</span>
                         ) : (
                           <select
-                            value={curPyeong}
+                            value={curArea}
                             onChange={e => setSelPyeong(Number(e.target.value))}
                             style={{ fontSize: 12, border: '1px solid #e5e7eb', borderRadius: 6, padding: '3px 8px', color: '#1e293b', background: '#fff', cursor: 'pointer' }}
                           >
-                            {exclusiveAreas.map(area => {
-                            const py = toPyeong(area);
-                            return <option key={area} value={py}>{areaLabel(area)}</option>;
-                          })}
+                            {exclusiveAreas.map(area => (
+                              <option key={area} value={area}>{areaLabel(area)}</option>
+                            ))}
                           </select>
                         )}
                       </div>
