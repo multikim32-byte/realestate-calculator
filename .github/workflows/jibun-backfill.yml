@@ -1,9 +1,7 @@
 name: jibun 백필 + MOLIT 단지 구축
 
 on:
-  schedule:
-    - cron: '5 15 * * *'   # 매일 00:05 KST (15:05 UTC) — MOLIT API 쿼터 자정 리셋 후
-  workflow_dispatch:         # 수동 실행 가능
+  workflow_dispatch:         # 수동 실행 (MOLIT API 쿼터 소진 후 자정 지나서 실행)
 
 jobs:
   backfill-and-build:
