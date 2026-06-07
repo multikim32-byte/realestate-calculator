@@ -149,12 +149,25 @@ async function fetchTrades(url, lawdCd, dealYmd, dealType) {
 }
 
 // ── DB 배치 저장 ──────────────────────────────────────────────────────────────
+function dedup(rows) {
+  // --overwrite 시 같은 배치 안에 동일 키가 있으면 PostgreSQL이 오류를 냄 → 중복 제거
+  // exclusive_area는 NUMERIC(7,2) 기준으로 비교 (float 표현 차이 방지)
+  const seen = new Map();
+  for (const r of rows) {
+    const area = r.exclusive_area != null ? parseFloat(r.exclusive_area).toFixed(2) : 'null';
+    const k = `${r.lawd_cd}|${r.apt_name}|${r.dong}|${area}|${r.floor ?? 'null'}|${r.deal_ym}|${r.deal_day ?? 'null'}|${r.deal_type}`;
+    if (!seen.has(k) || (r.jibun && !seen.get(k).jibun)) seen.set(k, r);
+  }
+  return [...seen.values()];
+}
+
 async function saveRows(rows) {
   if (!rows.length) return 0;
   const BATCH = 500;
   let saved = 0;
-  for (let i = 0; i < rows.length; i += BATCH) {
-    const slice = rows.slice(i, i + BATCH);
+  const toSave = overwrite ? dedup(rows) : rows;
+  for (let i = 0; i < toSave.length; i += BATCH) {
+    const slice = toSave.slice(i, i + BATCH);
     const { error } = await db
       .from('apt_trades')
       .upsert(slice, { onConflict: 'lawd_cd,apt_name,dong,exclusive_area,floor,deal_ym,deal_day,deal_type', ignoreDuplicates: !overwrite });
