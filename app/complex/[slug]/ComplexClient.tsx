@@ -111,7 +111,7 @@ function typeDisplayLabel(key: string, unitTypes: UnitType[] | null): string {
     const keyArea = parseFloat(key);
     if (!isNaN(keyArea)) {
       const ut2 = unitTypes.find(u => u.exclusive_area === keyArea);
-      if (ut2) return `${ut2.supply_pyeong}평 (전용 ${keyArea.toFixed(2)}㎡)`;
+      if (ut2) return `${ut2.exclusive_pyeong}평 (전용 ${keyArea.toFixed(2)}㎡)`;
     }
   }
   return key;

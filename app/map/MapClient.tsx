@@ -1020,10 +1020,8 @@ export default function MapClient({ unsoldListings }: Props) {
           const excPy = toPyeong(exclusiveM2);
           // 청약 데이터 있으면 정확한 공급면적 사용
           const match = unitTypes.find(u => Math.abs(u.exclusive_area - exclusiveM2) <= 1.5);
-          if (match) return `${match.supply_pyeong}평 (공급 ${match.supply_area.toFixed(0)}㎡)`;
-          // 없으면 추산 (전용 × 1.3)
-          const supplyPy = Math.round(exclusiveM2 * 1.3 / 3.3);
-          return `전용 ${excPy}평 (공급 약 ${supplyPy}평)`;
+          if (match && match.supply_area != null) return `${match.supply_pyeong}평 (공급 ${match.supply_area.toFixed(0)}㎡)`;
+          return `전용 ${excPy}평`;
         }
 
         // 현재 탭 raw 데이터 (전세 = monthly===0, 월세 = monthly>0)
