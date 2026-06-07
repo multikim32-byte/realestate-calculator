@@ -1,0 +1,270 @@
+/**
+ * MOLIT 실거래가 기반 단지 목록 구축
+ *
+ * apt_trades(jibun 포함)에서 DISTINCT 단지를 추출해
+ * 카카오 Geocoding으로 좌표를 확보한 뒤
+ * apartment_complexes 를 갱신한다.
+ *
+ * 동작:
+ *  1) K-apt 기존 단지 → molit_key 매칭 업데이트 (lat/lng null 이면 보강)
+ *  2) MOLIT에만 있는 신규 단지 → INSERT (source='molit')
+ *
+ * 실행:
+ *   node scripts/build-molit-complexes.mjs            # 전체
+ *   node scripts/build-molit-complexes.mjs --sido=부산 # 특정 시도
+ *   node scripts/build-molit-complexes.mjs --dry-run   # DB 저장 없이 확인
+ */
+
+import { createClient }  from '@supabase/supabase-js';
+import { createHash }    from 'node:crypto';
+import { config }        from 'dotenv';
+import { resolve }       from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { setTimeout as sleep } from 'node:timers/promises';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
+config({ path: resolve(__dirname, '../.env.local') });
+
+const SB_URL      = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SB_KEY      = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const KAKAO_KEY   = process.env.KAKAO_REST_API_KEY;
+
+if (!SB_URL || !SB_KEY || !KAKAO_KEY) {
+  console.error('❌ 필수 환경변수 없음: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, KAKAO_REST_API_KEY');
+  process.exit(1);
+}
+
+const db     = createClient(SB_URL, SB_KEY);
+const args   = process.argv.slice(2);
+const argMap = Object.fromEntries(args.filter(a => a.includes('=')).map(a => a.replace('--','').split('=')));
+const dryRun     = args.includes('--dry-run');
+const filterSido = argMap['sido'];
+
+const { LAWD_CODE_MAP } = await import('./lawd-codes.mjs');
+
+// ── 이름 정규화 ───────────────────────────────────────────────────────────────
+const BRAND_NORM = [
+  [/^lg/i, '엘지'], [/^gs/i, '지에스'], [/^sk/i, '에스케이'],
+  [/^kcc/i, '케이씨씨'], [/^hdc/i, '에이치디씨'], [/^dl/i, '디엘'],
+  [/^e편한세상/, '이편한세상'], [/^eg/i, '이지'],
+];
+function normName(s) {
+  let n = (s ?? '').replace(/아파트$/, '').replace(/\s+/g, '').toLowerCase();
+  for (const [pat, rep] of BRAND_NORM) n = n.replace(pat, rep);
+  return n;
+}
+function matchName(a, b) {
+  const na = normName(a), nb = normName(b);
+  return na === nb || na.includes(nb) || nb.includes(na);
+}
+
+// ── molit_key 생성 ────────────────────────────────────────────────────────────
+function molitKey(lawdCd, aptName) {
+  return `${lawdCd}|${aptName}`;
+}
+
+// ── 합성 kapt_code (MOLIT 전용) ───────────────────────────────────────────────
+function molitKaptCode(lawdCd, aptName) {
+  const h = createHash('md5').update(lawdCd + '|' + aptName).digest('hex').slice(0, 8);
+  return 'M' + h.toUpperCase();
+}
+
+// ── lawd_cd → sido/sigungu 역 매핑 ────────────────────────────────────────────
+const lawdToInfo = new Map();
+for (const [sido, list] of Object.entries(LAWD_CODE_MAP)) {
+  for (const { code, name } of list) {
+    lawdToInfo.set(code, { sido, sigungu: name });
+  }
+}
+
+// ── 카카오 Geocoding (지번 주소) ──────────────────────────────────────────────
+const geoCache = new Map();
+async function geocode(sido, sigungu, dong, jibun) {
+  const query = `${sido} ${sigungu} ${dong} ${jibun}`.trim();
+  if (geoCache.has(query)) return geoCache.get(query);
+  try {
+    const url = `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(query)}&analyze_type=similar`;
+    const res = await fetch(url, { headers: { Authorization: `KakaoAK ${KAKAO_KEY}` }, signal: AbortSignal.timeout(5000) });
+    const json = await res.json();
+    const doc = json.documents?.[0];
+    if (doc) {
+      const result = { lat: parseFloat(doc.y), lng: parseFloat(doc.x) };
+      geoCache.set(query, result);
+      return result;
+    }
+  } catch { /* geocoding 실패 시 null 반환 */ }
+  geoCache.set(query, null);
+  return null;
+}
+
+// ── MOLIT 단지 목록 추출 (apt_trades에서 DISTINCT) ────────────────────────────
+async function fetchMolitComplexes() {
+  const map = new Map(); // key: lawd_cd|apt_name → { lawd_cd, apt_name, dong, jibun, tradeCnt, buildYears }
+  let from = 0;
+
+  process.stdout.write('apt_trades에서 단지 목록 추출 중...');
+  while (true) {
+    const { data, error } = await db
+      .from('apt_trades')
+      .select('lawd_cd, apt_name, dong, jibun, build_year')
+      .eq('deal_type', 'T')
+      .not('jibun', 'is', null)
+      .range(from, from + 9999);
+
+    if (error || !data?.length) break;
+
+    for (const r of data) {
+      const k = molitKey(r.lawd_cd, r.apt_name);
+      if (!map.has(k)) {
+        map.set(k, { lawd_cd: r.lawd_cd, apt_name: r.apt_name, dong: r.dong, jibun: r.jibun, tradeCnt: 0, buildYears: [] });
+      }
+      const entry = map.get(k);
+      entry.tradeCnt++;
+      if (r.jibun && !entry.jibun) entry.jibun = r.jibun;
+      if (r.build_year > 1900) entry.buildYears.push(r.build_year);
+    }
+
+    if (data.length < 10000) break;
+    from += 10000;
+    process.stdout.write('.');
+  }
+  console.log(` ${map.size.toLocaleString()}개`);
+  return [...map.values()];
+}
+
+// ── K-apt 기존 단지 로드 ──────────────────────────────────────────────────────
+async function fetchKaptComplexes() {
+  const list = [];
+  let from = 0;
+  while (true) {
+    const { data } = await db.from('apartment_complexes')
+      .select('kapt_code, name, sido, sigungu, dong, lat, lng, molit_key')
+      .not('sido', 'is', null).range(from, from + 999);
+    if (!data?.length) break;
+    list.push(...data);
+    if (data.length < 1000) break;
+    from += 1000;
+  }
+  return list;
+}
+
+// ── 메인 ──────────────────────────────────────────────────────────────────────
+async function main() {
+  console.log(`🏗️  MOLIT 기반 단지 구축 시작 (${dryRun ? 'DRY-RUN' : '실제 저장'})\n`);
+
+  const molitList = await fetchMolitComplexes();
+  // sido 필터
+  const filtered = filterSido
+    ? molitList.filter(c => {
+        const info = lawdToInfo.get(c.lawd_cd);
+        return info?.sido === filterSido || info?.sido.includes(filterSido);
+      })
+    : molitList;
+
+  console.log(`📍 처리 대상: ${filtered.length.toLocaleString()}개 (거래 기록 있음)\n`);
+
+  // K-apt 전체 로드 + normName 맵
+  const kapts = await fetchKaptComplexes();
+  console.log(`🗃️  K-apt 단지: ${kapts.length.toLocaleString()}개\n`);
+
+  // K-apt를 (sido+sigungu+normName)으로 인덱싱
+  const kaptIndex = new Map(); // sido|sigungu|normName → kapt entry
+  for (const k of kapts) {
+    const key = `${k.sido}|${k.sigungu}|${normName(k.name)}`;
+    if (!kaptIndex.has(key)) kaptIndex.set(key, k);
+  }
+
+  let matched = 0, inserted = 0, geocodeFail = 0;
+  const updateQueue = []; // K-apt 업데이트 배치
+  const insertQueue = []; // MOLIT 신규 단지 배치
+
+  for (let i = 0; i < filtered.length; i++) {
+    const c = filtered[i];
+    const info = lawdToInfo.get(c.lawd_cd);
+    if (!info) continue;
+
+    if (filterSido && !info.sido.includes(filterSido)) continue;
+
+    const { sido, sigungu } = info;
+    const normApt = normName(c.apt_name);
+
+    // K-apt 매칭 시도
+    const kaptKey = `${sido}|${sigungu}|${normApt}`;
+    const kaptEntry = kaptIndex.get(kaptKey)
+      ?? [...kaptIndex.entries()]
+          .find(([k]) => k.startsWith(`${sido}|${sigungu}|`) && matchName(k.split('|')[2], normApt))?.[1];
+
+    if (kaptEntry) {
+      // K-apt 매칭됨 → molit_key 업데이트 + lat/lng 보강
+      const update = { molit_key: molitKey(c.lawd_cd, c.apt_name), source: 'kapt' };
+      if (!kaptEntry.lat && c.jibun) {
+        const geo = await geocode(sido, sigungu, c.dong, c.jibun);
+        if (geo) { update.lat = geo.lat; update.lng = geo.lng; }
+        await sleep(30);
+      }
+      updateQueue.push({ kapt_code: kaptEntry.kapt_code, ...update });
+      matched++;
+    } else {
+      // MOLIT 전용 신규 단지 → 좌표 확보 후 INSERT
+      let lat = null, lng = null;
+      if (c.jibun) {
+        const geo = await geocode(sido, sigungu, c.dong, c.jibun);
+        if (geo) { lat = geo.lat; lng = geo.lng; }
+        else geocodeFail++;
+        await sleep(30);
+      }
+
+      const builtYear = c.buildYears.length
+        ? Math.round(c.buildYears.reduce((a,b)=>a+b,0) / c.buildYears.length)
+        : null;
+
+      insertQueue.push({
+        kapt_code:  molitKaptCode(c.lawd_cd, c.apt_name),
+        molit_key:  molitKey(c.lawd_cd, c.apt_name),
+        name:       c.apt_name,
+        source:     'molit',
+        sido, sigungu,
+        dong:       c.dong,
+        lat, lng,
+        built_year: builtYear,
+      });
+      inserted++;
+    }
+
+    if ((i + 1) % 100 === 0 || i + 1 === filtered.length) {
+      process.stdout.write(`\r  처리: ${i+1}/${filtered.length} | 매칭: ${matched} | 신규: ${inserted} | 좌표실패: ${geocodeFail}`);
+    }
+
+    // 배치 저장 (100건마다)
+    if (!dryRun) {
+      if (updateQueue.length >= 100) await flushUpdates(updateQueue.splice(0, 100));
+      if (insertQueue.length >= 50)  await flushInserts(insertQueue.splice(0, 50));
+    }
+  }
+
+  // 잔여 저장
+  if (!dryRun) {
+    if (updateQueue.length) await flushUpdates(updateQueue);
+    if (insertQueue.length) await flushInserts(insertQueue);
+  }
+
+  console.log(`\n\n✅ 완료!`);
+  console.log(`   K-apt 매칭 업데이트: ${matched}개`);
+  console.log(`   MOLIT 신규 삽입:     ${inserted}개`);
+  console.log(`   좌표 확보 실패:      ${geocodeFail}개`);
+}
+
+async function flushUpdates(batch) {
+  await Promise.all(batch.map(({ kapt_code, ...update }) =>
+    db.from('apartment_complexes').update(update).eq('kapt_code', kapt_code)
+      .then(({ error }) => { if (error) console.error(`\n⚠️  update ${kapt_code}:`, error.message); })
+  ));
+}
+
+async function flushInserts(batch) {
+  const { error } = await db.from('apartment_complexes')
+    .upsert(batch, { onConflict: 'molit_key', ignoreDuplicates: false });
+  if (error) console.error('\n⚠️  insert 오류:', error.message);
+}
+
+main().catch(e => { console.error('❌', e); process.exit(1); });

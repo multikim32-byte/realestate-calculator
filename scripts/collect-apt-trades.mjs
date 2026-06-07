@@ -42,6 +42,7 @@ const rawArgs = process.argv.slice(2);
 const argMap  = Object.fromEntries(rawArgs.filter(a => a.includes('=')).map(a => a.replace('--','').split('=')));
 
 const filterSido = argMap['sido'];
+const overwrite  = rawArgs.includes('--overwrite');       // jibun 백필용: 기존 행도 UPDATE
 const typeArg    = (argMap['type'] ?? 'T,J').split(',');  // T=매매, J=전세
 const collectT   = typeArg.includes('T');
 const collectJ   = typeArg.includes('J');
@@ -110,26 +111,27 @@ async function fetchTrades(url, lawdCd, dealYmd, dealType) {
         const dong    = (getTag(block, 'umdNm') || getTag(block, 'umd_nm') || '').trim();
         if (!aptName) continue;
 
-        const excl     = parseFloat(getTag(block, 'excluUseAr') || getTag(block, 'exclu_use_ar') || '0') || null;
-        const floorStr = getTag(block, 'floor') || getTag(block, 'umdNo') || '';
-        const floor    = parseInt(floorStr) || null;
-        const dayStr   = getTag(block, 'dealDay') || getTag(block, 'deal_day') || '';
-        const dealDay  = parseInt(dayStr) || null;
-        const byStr    = getTag(block, 'buildYear') || getTag(block, 'build_year') || '';
+        const excl      = parseFloat(getTag(block, 'excluUseAr') || getTag(block, 'exclu_use_ar') || '0') || null;
+        const floorStr  = getTag(block, 'floor') || getTag(block, 'umdNo') || '';
+        const floor     = parseInt(floorStr) || null;
+        const dayStr    = getTag(block, 'dealDay') || getTag(block, 'deal_day') || '';
+        const dealDay   = parseInt(dayStr) || null;
+        const byStr     = getTag(block, 'buildYear') || getTag(block, 'build_year') || '';
         const buildYear = parseInt(byStr) || null;
+        const jibun     = getTag(block, 'jibun')?.trim() || null;
 
         if (dealType === 'T') {
           const priceStr = getTag(block, 'dealAmount') || getTag(block, 'deal_amount') || '0';
           const price    = parseInt(priceStr.replace(/,/g,'')) || null;
           if (!price) continue;
-          rows.push({ lawd_cd: lawdCd, apt_name: aptName, dong, exclusive_area: excl, floor, price, monthly_rent: null, deal_ym: dealYmd, deal_day: dealDay, build_year: buildYear, deal_type: 'T' });
+          rows.push({ lawd_cd: lawdCd, apt_name: aptName, dong, exclusive_area: excl, floor, price, monthly_rent: null, deal_ym: dealYmd, deal_day: dealDay, build_year: buildYear, deal_type: 'T', jibun });
 
         } else {
-          const deposit    = parseInt((getTag(block, 'deposit') || '0').replace(/,/g,'')) || 0;
-          const monthly    = parseInt(getTag(block, 'monthlyRent') || '0') || 0;
-          const type       = monthly === 0 ? 'J' : 'W';
+          const deposit = parseInt((getTag(block, 'deposit') || '0').replace(/,/g,'')) || 0;
+          const monthly = parseInt(getTag(block, 'monthlyRent') || '0') || 0;
+          const type    = monthly === 0 ? 'J' : 'W';
           if ((type === 'J' && !collectJ) || (type === 'W' && !collectW)) continue;
-          rows.push({ lawd_cd: lawdCd, apt_name: aptName, dong, exclusive_area: excl, floor, price: deposit || null, monthly_rent: monthly || null, deal_ym: dealYmd, deal_day: dealDay, build_year: buildYear, deal_type: type });
+          rows.push({ lawd_cd: lawdCd, apt_name: aptName, dong, exclusive_area: excl, floor, price: deposit || null, monthly_rent: monthly || null, deal_ym: dealYmd, deal_day: dealDay, build_year: buildYear, deal_type: type, jibun });
         }
       }
 
@@ -155,7 +157,7 @@ async function saveRows(rows) {
     const slice = rows.slice(i, i + BATCH);
     const { error } = await db
       .from('apt_trades')
-      .upsert(slice, { onConflict: 'lawd_cd,apt_name,dong,exclusive_area,floor,deal_ym,deal_day,deal_type', ignoreDuplicates: true });
+      .upsert(slice, { onConflict: 'lawd_cd,apt_name,dong,exclusive_area,floor,deal_ym,deal_day,deal_type', ignoreDuplicates: !overwrite });
     if (error) console.error('  저장 오류:', error.message);
     else saved += slice.length;
   }

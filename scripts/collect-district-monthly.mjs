@@ -112,6 +112,7 @@ async function fetchAndAggregate(url, lawdCd, dealYmd) {
         const floor     = parseInt(getTag(block, 'floor') || '0') || null;
         const dealDay   = parseInt(getTag(block, 'dealDay') || '0') || null;
         const buildYear = parseInt(getTag(block, 'buildYear') || '0') || null;
+        const jibun     = getTag(block, 'jibun')?.trim() || null;
 
         if (!aptMap.has(key)) aptMap.set(key, { aptName, dong, tradeCnt: 0, jeonseCnt: 0, wolseCnt: 0, totalPrice: 0, totalDeposit: 0 });
         const a = aptMap.get(key);
@@ -124,7 +125,7 @@ async function fetchAndAggregate(url, lawdCd, dealYmd) {
           // 건별 저장 (해제 건 제외)
           const cdeal = getTag(block, 'cdealType').trim();
           if (price > 0 && !cdeal) {
-            rawTrades.push({ lawd_cd: lawdCd, apt_name: aptName, dong, exclusive_area: excl, floor, price, monthly_rent: null, deal_ym: dealYmd, deal_day: dealDay, build_year: buildYear, deal_type: 'T' });
+            rawTrades.push({ lawd_cd: lawdCd, apt_name: aptName, dong, exclusive_area: excl, floor, price, monthly_rent: null, deal_ym: dealYmd, deal_day: dealDay, build_year: buildYear, deal_type: 'T', jibun });
           }
         } else {
           const monthly = parseInt(getTag(block, 'monthlyRent') || '0') || 0;
@@ -133,7 +134,7 @@ async function fetchAndAggregate(url, lawdCd, dealYmd) {
           else                { a.wolseCnt++;                              districtWolse++; }
           // 전세/월세 건별 저장
           const type = monthly === 0 ? 'J' : 'W';
-          rawTrades.push({ lawd_cd: lawdCd, apt_name: aptName, dong, exclusive_area: excl, floor, price: deposit || null, monthly_rent: monthly || null, deal_ym: dealYmd, deal_day: dealDay, build_year: buildYear, deal_type: type });
+          rawTrades.push({ lawd_cd: lawdCd, apt_name: aptName, dong, exclusive_area: excl, floor, price: deposit || null, monthly_rent: monthly || null, deal_ym: dealYmd, deal_day: dealDay, build_year: buildYear, deal_type: type, jibun });
         }
       }
 
