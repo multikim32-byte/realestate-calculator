@@ -713,19 +713,25 @@ export default function MapClient({ unsoldListings }: Props) {
       if (!mapRef.current || mapInst.current) return;
       try {
 
-      // 기본: 서울시청 / 접속자 위치 허용 시 해당 위치로 이동
+      // 마지막 위치 복원 (localStorage) → 없으면 서울시청
+      const saved = (() => { try { return JSON.parse(localStorage.getItem('map_pos') ?? 'null'); } catch { return null; } })();
+      const initLat  = saved?.lat  ?? 37.5665;
+      const initLng  = saved?.lng  ?? 126.9780;
+      const initLevel = saved?.level ?? 5;
+
       const map = new window.kakao.maps.Map(mapRef.current, {
-        center: new window.kakao.maps.LatLng(37.5665, 126.9780),
-        level: 5,
+        center: new window.kakao.maps.LatLng(initLat, initLng),
+        level: initLevel,
       });
       mapInst.current = map;
 
-      if (navigator.geolocation) {
+      // 저장된 위치 없을 때만 geolocation으로 이동
+      if (!saved && navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           ({ coords }) => {
             map.setCenter(new window.kakao.maps.LatLng(coords.latitude, coords.longitude));
             map.setLevel(5);
-            loadedComplexBoundsRef.current = null; // 위치 이동 후 단지 핀 강제 재로드
+            loadedComplexBoundsRef.current = null;
           },
           () => { /* 거부 시 서울시청 유지 */ },
           { timeout: 5000, maximumAge: 60000 },
@@ -757,6 +763,8 @@ export default function MapClient({ unsoldListings }: Props) {
       // 지도 이동/줌 시 처리
       window.kakao.maps.event.addListener(map, 'idle', () => {
         const level = map.getLevel();
+        const c = map.getCenter();
+        try { localStorage.setItem('map_pos', JSON.stringify({ lat: c.getLat(), lng: c.getLng(), level })); } catch { /* noop */ }
 
         // 단지 핀 — 4단계 레벨 처리
         if (filterRef.current.complex) {
