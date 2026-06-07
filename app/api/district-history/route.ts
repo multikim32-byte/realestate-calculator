@@ -111,16 +111,6 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 2) apt_trades에 데이터 없으면 apt_trade_monthly fallback
-    if (!rows.length) {
-      const { data } = await db
-        .from('apt_trade_monthly')
-        .select('deal_ym, trade_cnt, jeonse_cnt, wolse_cnt, avg_trade_price, avg_jeonse_price')
-        .eq('lawd_cd', lawdCd)
-        .eq('apt_name', aptName)
-        .order('deal_ym', { ascending: true });
-      rows = data ?? [];
-    }
 
   // ── dong 모드: apt_trades 집계 ──────────────────────────────────────────────
   } else {
@@ -143,22 +133,6 @@ export async function GET(req: NextRequest) {
       rows = [...ymMap.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([deal_ym, v]) => ({
         deal_ym, trade_cnt: v.T, jeonse_cnt: v.J, wolse_cnt: v.W,
       }));
-    } else {
-      // fallback: apt_trade_monthly
-      const { data } = await db
-        .from('apt_trade_monthly')
-        .select('deal_ym, trade_cnt, jeonse_cnt, wolse_cnt')
-        .eq('lawd_cd', lawdCd)
-        .eq('dong', dong)
-        .order('deal_ym', { ascending: true });
-      const ymMap = new Map<string, { trade_cnt: number; jeonse_cnt: number; wolse_cnt: number }>();
-      for (const r of data ?? []) {
-        if (!ymMap.has(r.deal_ym)) ymMap.set(r.deal_ym, { trade_cnt: 0, jeonse_cnt: 0, wolse_cnt: 0 });
-        const m = ymMap.get(r.deal_ym)!;
-        m.trade_cnt += r.trade_cnt; m.jeonse_cnt += r.jeonse_cnt; m.wolse_cnt += r.wolse_cnt;
-      }
-      rows = [...ymMap.entries()].sort().map(([deal_ym, v]) => ({ deal_ym, ...v }));
-    }
   }
 
   const res = NextResponse.json({ data: rows });

@@ -30,7 +30,7 @@ if (!SB_URL || !SB_KEY) {
 
 const db    = createClient(SB_URL, SB_KEY);
 const force = process.argv.includes('--force');
-const MONTHS = 6;
+const MONTHS = 12;
 
 // ── 최근 N개월 YYYYMM 목록 ────────────────────────────────────────────────────
 function recentYMs(n) {
