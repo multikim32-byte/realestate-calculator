@@ -86,10 +86,10 @@ function getTag(block, tag) {
   return block.match(new RegExp(`<${tag}>([^<]*)</${tag}>`))?.[1]?.trim() ?? '';
 }
 
-// MOLIT API 전체 페이지 수집 → 단지별 집계 반환
+// MOLIT API 전체 페이지 수집 → 단지별 집계 + 건별 원시 데이터 반환
 async function fetchAndAggregate(url, lawdCd, dealYmd) {
-  // aptKey → { cnt, totalPrice, totalDeposit, jeonseCnt, wolseCnt }
   const aptMap = new Map();
+  const rawTrades = []; // apt_trades 테이블용 건별 데이터
   let districtTrade = 0, districtJeonse = 0, districtWolse = 0;
   let page = 1;
 
@@ -102,9 +102,16 @@ async function fetchAndAggregate(url, lawdCd, dealYmd) {
       if (!items.length) break;
 
       for (const block of items) {
-        const aptName = getTag(block, 'aptNm') || getTag(block, 'apt_nm') || '(미상)';
-        const dong    = getTag(block, 'umdNm') || getTag(block, 'umd_nm') || '';
+        const aptName = (getTag(block, 'aptNm') || getTag(block, 'apt_nm') || '').trim();
+        const dong    = (getTag(block, 'umdNm') || getTag(block, 'umd_nm') || '').trim();
+        if (!aptName) continue;
         const key     = `${aptName}||${dong}`;
+
+        // 건별 공통 필드
+        const excl      = parseFloat(getTag(block, 'excluUseAr') || '0') || null;
+        const floor     = parseInt(getTag(block, 'floor') || '0') || null;
+        const dealDay   = parseInt(getTag(block, 'dealDay') || '0') || null;
+        const buildYear = parseInt(getTag(block, 'buildYear') || '0') || null;
 
         if (!aptMap.has(key)) aptMap.set(key, { aptName, dong, tradeCnt: 0, jeonseCnt: 0, wolseCnt: 0, totalPrice: 0, totalDeposit: 0 });
         const a = aptMap.get(key);
@@ -114,11 +121,19 @@ async function fetchAndAggregate(url, lawdCd, dealYmd) {
           a.tradeCnt++;
           if (price > 0) a.totalPrice += price;
           districtTrade++;
+          // 건별 저장 (해제 건 제외)
+          const cdeal = getTag(block, 'cdealType').trim();
+          if (price > 0 && !cdeal) {
+            rawTrades.push({ lawd_cd: lawdCd, apt_name: aptName, dong, exclusive_area: excl, floor, price, monthly_rent: null, deal_ym: dealYmd, deal_day: dealDay, build_year: buildYear, deal_type: 'T' });
+          }
         } else {
           const monthly = parseInt(getTag(block, 'monthlyRent') || '0') || 0;
           const deposit = parseInt((getTag(block, 'deposit') || '0').replace(/,/g,'')) || 0;
           if (monthly === 0) { a.jeonseCnt++; a.totalDeposit += deposit; districtJeonse++; }
           else                { a.wolseCnt++;                              districtWolse++; }
+          // 전세/월세 건별 저장
+          const type = monthly === 0 ? 'J' : 'W';
+          rawTrades.push({ lawd_cd: lawdCd, apt_name: aptName, dong, exclusive_area: excl, floor, price: deposit || null, monthly_rent: monthly || null, deal_ym: dealYmd, deal_day: dealDay, build_year: buildYear, deal_type: type });
         }
       }
 
@@ -129,7 +144,7 @@ async function fetchAndAggregate(url, lawdCd, dealYmd) {
     } catch { break; }
   }
 
-  return { districtTrade, districtJeonse, districtWolse, aptMap };
+  return { districtTrade, districtJeonse, districtWolse, aptMap, rawTrades };
 }
 
 // 메인 루프
@@ -193,6 +208,15 @@ for (let i = 0; i < tasks.length; i += CONCURRENCY) {
       await db.from('apt_trade_monthly').upsert(
         aptRows.slice(j, j + 100),
         { onConflict: 'lawd_cd,apt_name,deal_ym' }
+      );
+    }
+
+    // 3. apt_trades upsert — 건별 원시 데이터
+    const allRaw = [...trade.rawTrades, ...rent.rawTrades];
+    for (let j = 0; j < allRaw.length; j += 500) {
+      await db.from('apt_trades').upsert(
+        allRaw.slice(j, j + 500),
+        { onConflict: 'lawd_cd,apt_name,dong,exclusive_area,floor,deal_ym,deal_day,deal_type', ignoreDuplicates: true }
       );
     }
 

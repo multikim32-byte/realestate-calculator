@@ -83,7 +83,7 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: 거래이력 최신화 — 전국 최근 2개월
-        # district_trade_monthly + apt_trade_monthly 동시 수집
+        # district_trade_monthly + apt_trade_monthly + apt_trades 동시 수집
         # 이미 있는 (lawd_cd, deal_ym)은 자동 스킵
         run: |
           CURRENT=$(date -d "$(date +%Y-%m-01)" "+%Y%m")
