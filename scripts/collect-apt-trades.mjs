@@ -178,7 +178,7 @@ async function saveRows(rows) {
 }
 
 // ── 메인 루프 ─────────────────────────────────────────────────────────────────
-const CONCURRENCY = 4;
+const CONCURRENCY = 2;  // 과거 대량 수집 시 API 쿼터 보호용
 let totalSaved = 0, done = 0;
 const tasks = districts.flatMap(d => months.map(ym => ({ ...d, ym })));
 
@@ -196,7 +196,7 @@ for (let i = 0; i < tasks.length; i += CONCURRENCY) {
   if (done % 50 === 0 || done === tasks.length) {
     process.stdout.write(`\r  진행: ${done}/${tasks.length} 작업 | 저장: ${totalSaved.toLocaleString()}건`);
   }
-  await sleep(150);
+  await sleep(300);  // API 쿼터 보호: 150ms → 300ms
 }
 
 console.log(`\n\n✅ 완료: ${totalSaved.toLocaleString()}건 저장`);
