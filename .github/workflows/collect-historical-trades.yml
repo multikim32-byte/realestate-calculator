@@ -1,16 +1,16 @@
 name: MOLIT 실거래 과거 데이터 수집
 
 on:
+  schedule:
+    - cron: '10 15 * * *'  # 매일 00:10 KST (API 쿼터 자정 리셋 후 10분 대기)
   workflow_dispatch:
     inputs:
       from:
-        description: '시작 연월 (예: 201401)'
-        required: true
-        default: '201401'
+        description: '시작 연월 (비워두면 자동 감지)'
+        required: false
       to:
-        description: '종료 연월 (예: 201512)'
-        required: true
-        default: '201512'
+        description: '종료 연월 (비워두면 자동 감지)'
+        required: false
 
 jobs:
   collect:
@@ -28,11 +28,57 @@ jobs:
 
       - run: npm ci --ignore-scripts
 
-      - name: MOLIT 실거래 수집 (${{ github.event.inputs.from }}~${{ github.event.inputs.to }}, 매매+전세)
+      - name: 수집 기간 자동 결정
+        id: period
+        run: |
+          if [ -n "${{ github.event.inputs.from }}" ] && [ -n "${{ github.event.inputs.to }}" ]; then
+            echo "from=${{ github.event.inputs.from }}" >> $GITHUB_OUTPUT
+            echo "to=${{ github.event.inputs.to }}" >> $GITHUB_OUTPUT
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "수동 입력: ${{ github.event.inputs.from }} ~ ${{ github.event.inputs.to }}"
+            exit 0
+          fi
+
+          # Supabase에서 현재 최소 deal_ym 조회
+          MIN_YM=$(curl -sf "${{ secrets.SUPABASE_URL }}/rest/v1/apt_trades?select=deal_ym&order=deal_ym.asc&limit=1" \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" | \
+            python3 -c "import sys,json; d=json.load(sys.stdin); print(d[0]['deal_ym'] if d else '999999')")
+
+          echo "현재 최소 deal_ym: $MIN_YM"
+
+          if [ "$MIN_YM" -le "201401" ]; then
+            echo "✅ 2014년 이전까지 수집 완료 — 워크플로우 종료"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # TO_YM = 현재 최소 deal_ym의 전달
+          TO_YM=$(python3 -c "
+          ym='$MIN_YM'; y,m=int(ym[:4]),int(ym[4:])
+          m-=1
+          if m==0: m=12; y-=1
+          print(f'{y}{m:02d}')")
+
+          # FROM_YM = TO_YM 기준 24개월 전 (최소 201401)
+          FROM_YM=$(python3 -c "
+          ym='$TO_YM'; y,m=int(ym[:4]),int(ym[4:])
+          m-=23
+          while m<=0: m+=12; y-=1
+          from_ym=f'{y}{m:02d}'
+          print(from_ym if from_ym>='201401' else '201401')")
+
+          echo "수집 기간: $FROM_YM ~ $TO_YM"
+          echo "from=$FROM_YM" >> $GITHUB_OUTPUT
+          echo "to=$TO_YM" >> $GITHUB_OUTPUT
+          echo "skip=false" >> $GITHUB_OUTPUT
+
+      - name: MOLIT 실거래 수집 (매매+전세)
+        if: steps.period.outputs.skip == 'false'
         run: |
           node scripts/collect-apt-trades.mjs \
-            --from=${{ github.event.inputs.from }} \
-            --to=${{ github.event.inputs.to }} \
+            --from=${{ steps.period.outputs.from }} \
+            --to=${{ steps.period.outputs.to }} \
             --type=T,J
         env:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
