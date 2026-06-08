@@ -9,6 +9,8 @@ jobs:
   backfill-and-build:
     runs-on: ubuntu-latest
     timeout-minutes: 180     # jibun 백필 최대 3시간
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
     steps:
       - uses: actions/checkout@v4
