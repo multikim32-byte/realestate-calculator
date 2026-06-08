@@ -2,8 +2,8 @@ name: jibun 백필 + MOLIT 단지 구축
 
 on:
   workflow_dispatch:         # 수동 실행
-  schedule:
-    - cron: '5 15 * * *'    # KST 00:05 자동 실행 (1회 후 자동 제거)
+  # schedule:
+  #   - cron: '5 15 * * *'    # KST 00:05 자동 실행 (수동 실행으로 대체 → 비활성화)
 
 jobs:
   backfill-and-build:
