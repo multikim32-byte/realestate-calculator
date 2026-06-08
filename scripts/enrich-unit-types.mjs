@@ -114,15 +114,57 @@ function parseItem(item) {
   };
 }
 
+// ── apt_trades 기반 unit_types 추출 (K-apt API 실패 시 fallback) ──────────────
+async function fetchUnitTypesFromTrades(lawdCd, aptName) {
+  if (!lawdCd || !aptName) return [];
+  try {
+    const { data, error } = await supabase
+      .from('apt_trades')
+      .select('exclusive_area')
+      .eq('lawd_cd', lawdCd)
+      .eq('apt_name', aptName)
+      .eq('deal_type', 'T')  // 매매만
+      .not('exclusive_area', 'is', null);
+    if (error || !data?.length) return [];
+
+    // exclusive_area별 거래 건수 집계
+    const counts = new Map();
+    for (const row of data) {
+      const area = Math.round(parseFloat(row.exclusive_area) * 100) / 100;
+      counts.set(area, (counts.get(area) ?? 0) + 1);
+    }
+
+    // 5건 이상 거래된 면적만 (노이즈 제거)
+    return [...counts.entries()]
+      .filter(([, cnt]) => cnt >= 5)
+      .sort(([a], [b]) => a - b)
+      .map(([area, count]) => {
+        const exclusivePy = Math.round(area / 3.3);
+        const supplyArea  = Math.round(area * 1.3 * 100) / 100;  // 공급면적 추정
+        return {
+          house_ty:         null,
+          exclusive_area:   area,
+          supply_area:      supplyArea,
+          exclusive_pyeong: exclusivePy,
+          supply_pyeong:    Math.round(supplyArea / 3.3),
+          count,
+          source:           'trades',
+        };
+      });
+  } catch {
+    return [];
+  }
+}
+
 // ── 메인 ─────────────────────────────────────────────────────────────────────
 async function main() {
-  console.log('🏗️  unit_types 보강 시작 (AptBasisInfoServiceV4 / getAphusHouseInfoV4)');
+  console.log('🏗️  unit_types 보강 시작 (K-apt API → apt_trades fallback)');
   console.log(`   모드: ${force ? '전체 재수집' : '미보강만'} | testMode: ${testMode}\n`);
 
-  // 대상 단지 로드
+  // 대상 단지 로드 (molit_key도 함께 가져와서 trades fallback에 사용)
   let query = supabase
     .from('apartment_complexes')
-    .select('kapt_code, name, sido, sigungu');
+    .select('kapt_code, name, sido, sigungu, molit_key');
 
   if (kaptArg) {
     query = query.eq('kapt_code', kaptArg);
@@ -144,41 +186,35 @@ async function main() {
   console.log(`🏢 대상: ${targets.length.toLocaleString()}개\n`);
   if (!targets.length) { console.log('✅ 처리할 단지 없음'); return; }
 
-  let done = 0, success = 0, noData = 0, fail = 0;
+  let done = 0, success = 0, successTrades = 0, noData = 0, fail = 0;
   const now = new Date().toISOString();
 
   for (const c of targets) {
-    const { items, raw, error } = await fetchHouseTypes(c.kapt_code);
+    let unitTypes = [];
+    let source = 'kapt';
 
-    if (testMode) {
-      console.log(`\n── ${c.name} (${c.kapt_code}) ──`);
-      console.log('raw:', JSON.stringify(raw, null, 2));
+    // 1차: K-apt API
+    if (c.kapt_code) {
+      const { items, raw, error } = await fetchHouseTypes(c.kapt_code);
+      if (testMode) {
+        console.log(`\n── ${c.name} (${c.kapt_code}) ──`);
+        console.log('raw:', JSON.stringify(raw, null, 2));
+      }
+      if (!error && items.length) {
+        unitTypes = items.map(parseItem).filter(Boolean).sort((a, b) => a.exclusive_area - b.exclusive_area);
+      }
+      await sleep(150);
     }
 
-    if (error) {
-      console.error(`\n⚠️  API 오류 [${c.name}]: ${error}`);
-      fail++;
-      done++;
-      continue;
+    // 2차: apt_trades fallback (K-apt 데이터 없을 때)
+    if (!unitTypes.length && c.molit_key) {
+      const [lawdCd, aptName] = c.molit_key.split('|');
+      unitTypes = await fetchUnitTypesFromTrades(lawdCd, aptName);
+      source = 'trades';
     }
 
-    if (!items.length) {
-      noData++;
-      done++;
-      await sleep(120);
-      process.stdout.write(
-        `\r  진행: ${done}/${targets.length} | 성공: ${success} | 데이터없음: ${noData} | 실패: ${fail}   `
-      );
-      continue;
-    }
-
-    const unitTypes = items
-      .map(parseItem)
-      .filter(Boolean)
-      .sort((a, b) => a.exclusive_area - b.exclusive_area);
-
-    if (testMode) {
-      console.log('parsed unit_types:', JSON.stringify(unitTypes, null, 2));
+    if (testMode && unitTypes.length) {
+      console.log(`parsed unit_types (${source}):`, JSON.stringify(unitTypes, null, 2));
     }
 
     if (unitTypes.length > 0) {
@@ -191,7 +227,8 @@ async function main() {
         console.error(`\n⚠️  DB 오류 [${c.name}]: ${dbErr.message}`);
         fail++;
       } else {
-        success++;
+        if (source === 'trades') successTrades++;
+        else success++;
       }
     } else {
       noData++;
@@ -199,15 +236,15 @@ async function main() {
 
     done++;
     process.stdout.write(
-      `\r  진행: ${done}/${targets.length} | 성공: ${success} | 데이터없음: ${noData} | 실패: ${fail}   `
+      `\r  진행: ${done}/${targets.length} | K-apt: ${success} | trades: ${successTrades} | 없음: ${noData} | 실패: ${fail}   `
     );
 
-    await sleep(150); // API rate limit
     if (done % 200 === 0) await sleep(1000);
   }
 
   console.log(`\n\n🎉 완료!`);
-  console.log(`   성공: ${success.toLocaleString()}`);
+  console.log(`   K-apt 성공: ${success.toLocaleString()}`);
+  console.log(`   trades fallback 성공: ${successTrades.toLocaleString()}`);
   console.log(`   데이터없음: ${noData.toLocaleString()}`);
   console.log(`   실패: ${fail.toLocaleString()}`);
 }
