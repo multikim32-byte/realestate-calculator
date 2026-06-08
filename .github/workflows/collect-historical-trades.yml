@@ -1,0 +1,42 @@
+name: MOLIT 실거래 과거 데이터 수집 (2014~2024)
+
+on:
+  workflow_dispatch:  # 수동 1회 실행 전용
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      max-parallel: 3   # 3개 기간 동시 실행 (API 부하 분산)
+      fail-fast: false   # 한 기간 실패해도 나머지 계속
+      matrix:
+        period:
+          - { from: '201401', to: '201512', label: '2014~2015' }
+          - { from: '201601', to: '201712', label: '2016~2017' }
+          - { from: '201801', to: '201912', label: '2018~2019' }
+          - { from: '202001', to: '202112', label: '2020~2021' }
+          - { from: '202201', to: '202312', label: '2022~2023' }
+          - { from: '202401', to: '202405', label: '2024.01~05' }
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - run: npm ci --ignore-scripts
+
+      - name: MOLIT 실거래 수집 (${{ matrix.period.label }}, 매매+전세)
+        run: |
+          node scripts/collect-apt-trades.mjs \
+            --from=${{ matrix.period.from }} \
+            --to=${{ matrix.period.to }} \
+            --type=T,J
+        env:
+          MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
