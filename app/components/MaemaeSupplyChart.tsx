@@ -52,6 +52,7 @@ export default function MaemaeSupplyChart({ lawdCd, sigunguName, aptName, dong }
 
   useEffect(() => {
     if (!lawdCd || loadedFor === cacheKey) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     const params = new URLSearchParams({ lawdCd });
     if (aptName) params.set('aptName', aptName);

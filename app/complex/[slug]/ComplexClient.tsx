@@ -47,6 +47,7 @@ type Complex = {
   nearby_infra: NearbyItem[] | null;
   phone: string | null;
   unit_types: UnitType[] | null;
+  molit_key: string | null;
   manage_cost: ManageCost | null;
 };
 type NearbyItem = { name: string; distance: number; address?: string; category?: string; label?: string };
@@ -133,7 +134,10 @@ function PriceChart({ trades, unitTypes }: { trades: Trade[]; unitTypes: UnitTyp
       .map(([k]) => k);
   }, [trades, unitTypes]);
 
-  const displayKeys = selectedKey ? [selectedKey] : typeKeys.slice(0, 5);
+  const displayKeys = useMemo(
+    () => (selectedKey ? [selectedKey] : typeKeys.slice(0, 5)),
+    [selectedKey, typeKeys],
+  );
 
   const chartData = useMemo(() => {
     const byMonth: Record<string, { sum: number; cnt: number }[]> = {};
@@ -230,9 +234,9 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
   const [activeTab, setActiveTab] = useState<'info' | 'transit' | 'school' | 'infra'>('info');
 
   useEffect(() => {
-    const q = `name=${encodeURIComponent(complex.name)}&sido=${encodeURIComponent(complex.sido)}&sigungu=${encodeURIComponent(complex.sigungu)}`;
+    const q = `name=${encodeURIComponent(complex.name)}&sido=${encodeURIComponent(complex.sido)}&sigungu=${encodeURIComponent(complex.sigungu)}&kapt_code=${encodeURIComponent(complex.kapt_code)}`;
     Promise.all([
-      fetch(`/api/complex/trade?${q}&months=24`).then(r => r.json()),
+      fetch(`/api/complex/trade?${q}&months=60`).then(r => r.json()),
       fetch(`/api/complex/rent?${q}&months=24`).then(r => r.json()),
     ]).then(([td, rd]) => {
       setTrades(td.trades ?? []);
@@ -263,9 +267,9 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
     const keyArea = parseFloat(key);
     if (!isNaN(keyArea)) {
       const ut2 = unitTypes.find(u => u.exclusive_area === keyArea);
-      if (ut2) {
+      if (ut2 && ut2.supply_area != null) {
         const letter = ut2.house_ty?.match(/([A-Z])$/)?.[1] ?? '';
-        return `전용${keyArea}${letter}㎡`;
+        return `공급${ut2.supply_area.toFixed(2)}㎡ (전용${keyArea}${letter})`;
       }
     }
     return supplyLabel(area);
@@ -330,8 +334,11 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
   const jeonseRatio = tradeAvg > 0 && jeonseAvg > 0
     ? Math.round(jeonseAvg / tradeAvg * 100) : null;
 
+  // eslint-disable-next-line react-hooks/purity
+  const todayMs = useMemo(() => Date.now(), []);
+
   function contractStatus(dateStr: string, isMonthly: boolean, contractType = '', contractEnd = '') {
-    const today = Date.now();
+    const today = todayMs;
     const deal = new Date(dateStr).getTime();
     if (isMonthly) {
       const exp = contractEnd ? new Date(contractEnd).getTime() : deal + 365.25 * 24 * 3600 * 1000;

@@ -1,16 +1,19 @@
 /**
- * unit_types 보강 스크립트 v4 (국토부 AptBasisInfoServiceV4 기반)
+ * unit_types 보강 스크립트 v6 (MOLIT 실거래 기준)
  *
- * getAphusHouseInfoV4 → house_ty, supply_area, exclusive_area, count
- * → apartment_complexes.unit_types JSONB 업데이트
+ * 순서:
+ *  1) apt_trades DISTINCT exclusive_area → 실제 거래된 면적 목록 (진실)
+ *  2) DB에 이미 저장된 unit_types의 supply_area 재활용 (cheongak/수동 입력 등)
+ *  3) 매칭 없으면 전용×1.3 추정 + auto house_ty (84A/B)
+ *
+ * K-apt API 호출 없음 — K-apt 면적 데이터 사용 안 함
  *
  * 실행: node scripts/enrich-unit-types.mjs
  * 옵션:
  *   --force        기존 unit_types 덮어쓰기 (기본: null인 단지만)
- *   --test         첫 5개만 실행, 원본 응답 로그 출력
- *   --kapt=XXXXX   특정 단지 1개만 실행
+ *   --test         첫 5개만 실행, 상세 로그
+ *   --kapt=XXXXX   특정 단지 1개만
  *   --limit=N      최대 N개 처리
- * 필수 env: MOLIT_API_KEY, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  */
 
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -22,100 +25,24 @@ import { fileURLToPath } from 'node:url';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 config({ path: resolve(__dirname, '../.env.local') });
 
-const MOLIT_KEY = process.env.MOLIT_API_KEY?.trim();
-const SB_URL    = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
-const SB_KEY    = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
+const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!MOLIT_KEY || !SB_URL || !SB_KEY) {
-  console.error('❌ 필수 환경변수 없음 (MOLIT_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)');
+if (!SB_URL || !SB_KEY) {
+  console.error('❌ 필수 환경변수 없음 (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)');
   process.exit(1);
 }
 
-const supabase  = createClient(SB_URL, SB_KEY);
-const BASE_URL  = 'https://apis.data.go.kr/1613000/AptBasisInfoServiceV4';
+const supabase = createClient(SB_URL, SB_KEY);
 
-const force     = process.argv.includes('--force');
-const testMode  = process.argv.includes('--test');
-const kaptArg   = process.argv.find(a => a.startsWith('--kapt='))?.replace('--kapt=', '');
-const limitArg  = process.argv.find(a => a.startsWith('--limit='))?.replace('--limit=', '');
-const LIMIT     = limitArg ? parseInt(limitArg) : (testMode ? 5 : Infinity);
+const force    = process.argv.includes('--force');
+const testMode = process.argv.includes('--test');
+const kaptArg  = process.argv.find(a => a.startsWith('--kapt='))?.replace('--kapt=', '');
+const limitArg = process.argv.find(a => a.startsWith('--limit='))?.replace('--limit=', '');
+const LIMIT    = limitArg ? parseInt(limitArg) : (testMode ? 5 : Infinity);
 
-// ── APT2YOU 주택형 정보 조회 ──────────────────────────────────────────────────
-async function fetchHouseTypes(kaptCode) {
-  try {
-    const url = `${BASE_URL}/getAphusHouseInfoV4?serviceKey=${encodeURIComponent(MOLIT_KEY)}&kaptCode=${kaptCode}&_type=json&numOfRows=100`;
-    const res  = await fetch(url, { signal: AbortSignal.timeout(12000) });
-    if (!res.ok) return { items: [], raw: null };
-
-    const json = await res.json();
-    const body = json?.response?.body;
-
-    // items.item이 배열이거나 단일 객체일 수 있음
-    const raw  = body?.items?.item ?? body?.item ?? null;
-    const items = !raw ? []
-      : Array.isArray(raw) ? raw
-      : [raw];
-
-    return { items, raw };
-  } catch (e) {
-    return { items: [], raw: null, error: e.message };
-  }
-}
-
-// ── 응답 항목 → unit_type 객체 변환 ──────────────────────────────────────────
-function parseItem(item) {
-  // 필드명이 API 버전마다 다를 수 있어 여러 이름 시도
-  const houseTy = (
-    item.houseTy        ??   // 주택형 코드 (예: "84A", "109B")
-    item.houseType      ??
-    item.housingType    ??
-    item.aptHouseTy     ??
-    ''
-  ).trim();
-
-  const supplyArea = parseFloat(
-    item.supplyAreaVer  ??
-    item.splyArea       ??
-    item.supplyArea     ??
-    item.kaptdaSplyArea ??
-    0
-  ) || 0;
-
-  const exclusiveArea = parseFloat(
-    item.exclusiveAreaVer ??
-    item.exclusiveArea    ??
-    item.excluArea        ??
-    item.kaptdaExcluArea  ??
-    0
-  ) || 0;
-
-  const count = parseInt(
-    item.houseCnt       ??
-    item.hoCnt          ??
-    item.householdCount ??
-    item.kaptdaHoCnt    ??
-    0
-  ) || 0;
-
-  if (exclusiveArea <= 0 || count <= 0) return null;
-
-  const exclusivePy = Math.round(exclusiveArea / 3.3);
-  const supplyPy    = supplyArea > 0 ? Math.round(supplyArea / 3.3) : Math.round(exclusiveArea * 1.3 / 3.3);
-  const finalSupply = supplyArea > 0 ? Math.round(supplyArea * 100) / 100 : Math.round(exclusiveArea * 1.3 * 100) / 100;
-
-  return {
-    house_ty:         houseTy || null,
-    exclusive_area:   Math.round(exclusiveArea * 100) / 100,
-    supply_area:      finalSupply,
-    exclusive_pyeong: exclusivePy,
-    supply_pyeong:    supplyPy,
-    count,
-    source:           'apt2you',
-  };
-}
-
-// ── apt_trades 기반 unit_types 추출 (K-apt API 실패 시 fallback) ──────────────
-async function fetchUnitTypesFromTrades(lawdCd, aptName) {
+// ── 1단계: apt_trades에서 실거래 면적 목록 추출 ───────────────────────────────
+async function fetchTradesAreas(lawdCd, aptName) {
   if (!lawdCd || !aptName) return [];
   try {
     const { data, error } = await supabase
@@ -123,48 +50,88 @@ async function fetchUnitTypesFromTrades(lawdCd, aptName) {
       .select('exclusive_area')
       .eq('lawd_cd', lawdCd)
       .eq('apt_name', aptName)
-      .eq('deal_type', 'T')  // 매매만
+      .eq('deal_type', 'T')
       .not('exclusive_area', 'is', null);
     if (error || !data?.length) return [];
 
-    // exclusive_area별 거래 건수 집계
     const counts = new Map();
     for (const row of data) {
       const area = Math.round(parseFloat(row.exclusive_area) * 100) / 100;
       counts.set(area, (counts.get(area) ?? 0) + 1);
     }
 
-    // 5건 이상 거래된 면적만 (노이즈 제거)
-    return [...counts.entries()]
-      .filter(([, cnt]) => cnt >= 5)
-      .sort(([a], [b]) => a - b)
-      .map(([area, count]) => {
-        const exclusivePy = Math.round(area / 3.3);
-        const supplyArea  = Math.round(area * 1.3 * 100) / 100;  // 공급면적 추정
-        return {
-          house_ty:         null,
-          exclusive_area:   area,
-          supply_area:      supplyArea,
-          exclusive_pyeong: exclusivePy,
-          supply_pyeong:    Math.round(supplyArea / 3.3),
-          count,
-          source:           'trades',
-        };
-      });
-  } catch {
-    return [];
-  }
+    // 2건 이상 등장한 면적만 (단순 오기 제거)
+    const areas = [...counts.entries()]
+      .filter(([, cnt]) => cnt >= 2)
+      .sort(([a], [b]) => a - b);
+
+    // floor(area) 기준 버킷 → A/B/C 코드 부여
+    const buckets = new Map();
+    for (const [area] of areas) {
+      const key = Math.floor(area);
+      if (!buckets.has(key)) buckets.set(key, []);
+      buckets.get(key).push(area);
+    }
+
+    return areas.map(([area, count]) => {
+      const bucket = buckets.get(Math.floor(area)) ?? [area];
+      const idx    = bucket.indexOf(area);
+      const letter = bucket.length > 1 ? String.fromCharCode(65 + idx) : '';
+      return {
+        exclusive_area:   area,
+        exclusive_pyeong: Math.round(area / 3.3),
+        count,
+        auto_house_ty:    `${Math.floor(area)}${letter}`,
+      };
+    });
+  } catch { return []; }
+}
+
+// ── 2단계: 기존 DB unit_types에서 supply_area 매칭 (±1㎡) ────────────────────
+function matchSupplyArea(tradesAreas, existingUnitTypes) {
+  if (!existingUnitTypes?.length) return tradesAreas.map(t => ({ ...t, supply_area: null, house_ty: null }));
+
+  return tradesAreas.map(trade => {
+    // 기존 unit_types에서 가장 가까운 exclusive_area 찾기
+    let best = null, bestDiff = Infinity;
+    for (const existing of existingUnitTypes) {
+      if (!existing.exclusive_area) continue;
+      const diff = Math.abs(existing.exclusive_area - trade.exclusive_area);
+      if (diff < bestDiff) { bestDiff = diff; best = existing; }
+    }
+
+    if (best && bestDiff <= 1.0 && best.supply_area) {
+      return {
+        ...trade,
+        house_ty:      best.house_ty ?? trade.auto_house_ty,
+        supply_area:   best.supply_area,
+        supply_pyeong: best.supply_pyeong ?? Math.round(best.supply_area / 3.3),
+        source:        best.source === 'cheongak' ? 'molit+cheongak' : 'molit+existing',
+      };
+    }
+
+    // 매칭 없음 → 전용 × 1.3 추정
+    const est = Math.round(trade.exclusive_area * 1.3 * 100) / 100;
+    return {
+      exclusive_area:   trade.exclusive_area,
+      exclusive_pyeong: trade.exclusive_pyeong,
+      supply_area:      est,
+      supply_pyeong:    Math.round(est / 3.3),
+      house_ty:         trade.auto_house_ty,
+      count:            trade.count,
+      source:           'molit',
+    };
+  });
 }
 
 // ── 메인 ─────────────────────────────────────────────────────────────────────
 async function main() {
-  console.log('🏗️  unit_types 보강 시작 (K-apt API → apt_trades fallback)');
-  console.log(`   모드: ${force ? '전체 재수집' : '미보강만'} | testMode: ${testMode}\n`);
+  console.log('🏗️  unit_types 보강 시작 (MOLIT 실거래 기준, K-apt API 미사용)');
+  console.log(`   모드: ${force ? '전체 재처리' : 'unit_types=null만'} | test: ${testMode}\n`);
 
-  // 대상 단지 로드 (molit_key도 함께 가져와서 trades fallback에 사용)
   let query = supabase
     .from('apartment_complexes')
-    .select('kapt_code, name, sido, sigungu, molit_key');
+    .select('kapt_code, name, molit_key, unit_types');
 
   if (kaptArg) {
     query = query.eq('kapt_code', kaptArg);
@@ -186,66 +153,58 @@ async function main() {
   console.log(`🏢 대상: ${targets.length.toLocaleString()}개\n`);
   if (!targets.length) { console.log('✅ 처리할 단지 없음'); return; }
 
-  let done = 0, success = 0, successTrades = 0, noData = 0, fail = 0;
+  let done = 0, withExisting = 0, estimated = 0, noData = 0, fail = 0;
   const now = new Date().toISOString();
 
   for (const c of targets) {
-    let unitTypes = [];
-    let source = 'kapt';
+    if (testMode) console.log(`\n── ${c.name} (${c.kapt_code}) molit_key=${c.molit_key}`);
 
-    // 1차: K-apt API
-    if (c.kapt_code) {
-      const { items, raw, error } = await fetchHouseTypes(c.kapt_code);
-      if (testMode) {
-        console.log(`\n── ${c.name} (${c.kapt_code}) ──`);
-        console.log('raw:', JSON.stringify(raw, null, 2));
-      }
-      if (!error && items.length) {
-        unitTypes = items.map(parseItem).filter(Boolean).sort((a, b) => a.exclusive_area - b.exclusive_area);
-      }
-      await sleep(150);
+    if (!c.molit_key) { noData++; done++; continue; }
+
+    const [lawdCd, aptName] = c.molit_key.split('|');
+
+    // 1단계: 실거래 면적
+    const tradesAreas = await fetchTradesAreas(lawdCd, aptName);
+
+    if (!tradesAreas.length) {
+      if (testMode) console.log('  → apt_trades 데이터 없음');
+      noData++; done++;
+      if (done % 200 === 0) await sleep(500);
+      continue;
     }
 
-    // 2차: apt_trades fallback (K-apt 데이터 없을 때)
-    if (!unitTypes.length && c.molit_key) {
-      const [lawdCd, aptName] = c.molit_key.split('|');
-      unitTypes = await fetchUnitTypesFromTrades(lawdCd, aptName);
-      source = 'trades';
+    // 2단계: 기존 unit_types supply_area 매칭
+    const unitTypes = matchSupplyArea(tradesAreas, c.unit_types);
+
+    if (testMode) {
+      console.log(`  trades: ${tradesAreas.length}개, 기존: ${c.unit_types?.length ?? 0}개`);
+      console.log('  result:', JSON.stringify(unitTypes, null, 2));
     }
 
-    if (testMode && unitTypes.length) {
-      console.log(`parsed unit_types (${source}):`, JSON.stringify(unitTypes, null, 2));
-    }
+    const { error: dbErr } = await supabase
+      .from('apartment_complexes')
+      .update({ unit_types: unitTypes, updated_at: now })
+      .eq('kapt_code', c.kapt_code);
 
-    if (unitTypes.length > 0) {
-      const { error: dbErr } = await supabase
-        .from('apartment_complexes')
-        .update({ unit_types: unitTypes, updated_at: now })
-        .eq('kapt_code', c.kapt_code);
-
-      if (dbErr) {
-        console.error(`\n⚠️  DB 오류 [${c.name}]: ${dbErr.message}`);
-        fail++;
-      } else {
-        if (source === 'trades') successTrades++;
-        else success++;
-      }
+    if (dbErr) {
+      console.error(`\n⚠️  DB 오류 [${c.name}]: ${dbErr.message}`);
+      fail++;
     } else {
-      noData++;
+      const hasExisting = unitTypes.some(u => u.source?.includes('+'));
+      if (hasExisting) withExisting++; else estimated++;
     }
 
     done++;
     process.stdout.write(
-      `\r  진행: ${done}/${targets.length} | K-apt: ${success} | trades: ${successTrades} | 없음: ${noData} | 실패: ${fail}   `
+      `\r  진행: ${done}/${targets.length} | 기존데이터매칭: ${withExisting} | 추정: ${estimated} | 없음: ${noData} | 실패: ${fail}   `
     );
-
-    if (done % 200 === 0) await sleep(1000);
+    if (done % 200 === 0) await sleep(500);
   }
 
   console.log(`\n\n🎉 완료!`);
-  console.log(`   K-apt 성공: ${success.toLocaleString()}`);
-  console.log(`   trades fallback 성공: ${successTrades.toLocaleString()}`);
-  console.log(`   데이터없음: ${noData.toLocaleString()}`);
+  console.log(`   기존 데이터 매칭: ${withExisting.toLocaleString()}`);
+  console.log(`   추정(×1.3): ${estimated.toLocaleString()}`);
+  console.log(`   데이터 없음: ${noData.toLocaleString()}`);
   console.log(`   실패: ${fail.toLocaleString()}`);
 }
 

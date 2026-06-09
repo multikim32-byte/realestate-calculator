@@ -11,20 +11,6 @@ import { useFavorites } from '@/lib/useFavorites';
 type AgeTab = 'all' | 'y5' | 'y10' | 'y15' | 'y20';
 
 // 주소 문자열에서 sido-sigungu-name 슬러그 생성
-const SIDO_ABBR: Record<string, string> = {
-  '서울특별시': '서울', '부산광역시': '부산', '대구광역시': '대구', '인천광역시': '인천',
-  '광주광역시': '광주', '대전광역시': '대전', '울산광역시': '울산', '세종특별자치시': '세종',
-  '경기도': '경기', '강원특별자치도': '강원', '강원도': '강원',
-  '충청북도': '충북', '충청남도': '충남', '전라북도': '전북', '전북특별자치도': '전북',
-  '전라남도': '전남', '경상북도': '경북', '경상남도': '경남', '제주특별자치도': '제주',
-};
-function locationToSlug(location: string, name: string): string {
-  const parts = location.trim().split(/\s+/);
-  const sido = SIDO_ABBR[parts[0]] ?? parts[0].replace(/(특별시|광역시|특별자치시|특별자치도|도)$/, '');
-  const sigungu = parts[1] ?? '';
-  const normalize = (s: string) => s.replace(/\s+/g, '-').replace(/[^\w가-힣-]/g, '');
-  return `${normalize(sido)}-${normalize(sigungu)}-${normalize(name)}`;
-}
 type PriceOverlayItem = { overlay: KakaoCustomOverlay; div: HTMLDivElement; data: DistrictPrice };
 
 interface Props {
@@ -53,13 +39,6 @@ const PRICE_TIERS = [
   { label: '400만 미만/전용㎡',    min: 0,    bg: 'rgba(37,99,235,0.9)',  border: '#1d4ed8' },
 ] as const;
 
-const AGE_TABS: { key: AgeTab; label: string }[] = [
-  { key: 'all', label: '전체' },
-  { key: 'y5',  label: '신축(5년↓)' },
-  { key: 'y10', label: '준신축(10년↓)' },
-  { key: 'y15', label: '중축(15년↓)' },
-  { key: 'y20', label: '구축(20년↑)' },
-];
 
 // Kakao coord2RegionCode 반환 시도명 → LAWD_CODE_MAP 키 변환
 const REGION_NAME_MAP: Record<string, string> = {
@@ -267,12 +246,11 @@ export default function MapClient({ unsoldListings }: Props) {
   const mapInst    = useRef<KakaoMapInstance | null>(null);
   const markersRef = useRef<{ m: KakaoMarker; type: PinType }[]>([]);
 
-  const [filter, setFilter]   = useState({ unsold: true, sale: true, complex: true });
   const filterRef = useRef({ unsold: true, sale: true, complex: true });
 
   // 실제 지도에 올라간 마커 수 (geocoding 성공한 것만)
-  const [placed, setPlaced]   = useState({ unsold: 0, sale: 0, complex: 0 });
-  const [total, setTotal]     = useState({ unsold: unsoldListings.length, sale: 0, complex: 0 });
+  const [, setPlaced]   = useState({ unsold: 0, sale: 0, complex: 0 });
+  const [, setTotal]    = useState({ unsold: unsoldListings.length, sale: 0, complex: 0 });
 
   // 단지 관련
   type KakaoClusterer = { clear(): void; addMarker(m: KakaoMarker): void; addMarkers(m: KakaoMarker[]): void };
@@ -294,12 +272,12 @@ export default function MapClient({ unsoldListings }: Props) {
   const [dealType, setDealType] = useState<'매매' | '전세' | '월세'>('매매');
   const [selPyeong, setSelPyeong] = useState<number>(0);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [selected, setSelected] = useState<PinInfo | null>(null);
 
-  const [priceMode, setPriceMode] = useState(false);
-  const [priceLoadState, setPriceLoadState] = useState<'idle' | 'loading' | 'done'>('idle');
-  const [ageTab, setAgeTab] = useState<AgeTab>('all');
+  const [priceMode] = useState(false);
+  const [, setPriceLoadState] = useState<'idle' | 'loading' | 'done'>('idle');
+  const [ageTab] = useState<AgeTab>('all');
   const [dongPanel, setDongPanel] = useState<{ districtName: string; code: string; dongs: DongPrice[] } | null>(null);
   const [dongLoading, setDongLoading] = useState(false);
   const [mapSearch, setMapSearch] = useState('');
@@ -319,35 +297,6 @@ export default function MapClient({ unsoldListings }: Props) {
   const saleDataRef     = useRef<MapSaleItem[]>([]);
   const saleLoadedRef   = useRef(false);
   const saleResolverRef = useRef<((items: MapSaleItem[]) => void) | null>(null);
-
-  function applyFilter(next: typeof filter) {
-    filterRef.current = next;
-    setFilter(next);
-    for (const { ref, type, active } of [
-      { ref: unsoldClustererRef, type: 'unsold' as PinType, active: next.unsold },
-      { ref: saleClustererRef,   type: 'sale'   as PinType, active: next.sale   },
-    ]) {
-      if (!ref.current) continue;
-      ref.current.clear();
-      if (active) {
-        ref.current.addMarkers(markersRef.current.filter(m => m.type === type).map(m => m.m));
-      }
-    }
-    // 단지 핀 토글
-    if (complexClustererRef.current) {
-      complexClustererRef.current.clear();
-      if (next.complex) {
-        complexClustererRef.current.addMarkers(complexMarkersRef.current.map(c => c.m));
-      }
-    }
-    complexMarkersRef.current.forEach(({ overlay }) => {
-      overlay.setMap(next.complex && mapInst.current ? mapInst.current : null);
-    });
-    // 라벨도 함께 토글
-    pinLabelsRef.current.forEach(({ overlay, type }) => {
-      overlay.setMap(next[type] && labelsVisibleRef.current ? mapInst.current : null);
-    });
-  }
 
   // 뷰포트 내 단지 핀 로드
   const loadComplexesInView = useCallback(async () => {
@@ -445,60 +394,6 @@ export default function MapClient({ unsoldListings }: Props) {
       { timeout: 8000 },
     );
   }, []);
-
-  // 탭 변경 시 오버레이 색상/내용 즉시 업데이트
-  function applyAgeTab(tab: AgeTab) {
-    ageTabRef.current = tab;
-    setAgeTab(tab);
-    priceOverlaysRef.current.forEach(({ div, data }) => {
-      const stats: PriceStats = data[tab];
-      if (!stats || stats.count === 0) {
-        div.style.opacity = '0.25';
-        return;
-      }
-      div.style.opacity = '1';
-      const color = priceColor(stats.avgPerM2);
-      div.style.background = color.bg;
-      div.style.borderColor = color.border;
-      const label = data.name.split(' ').at(-1) ?? data.name;
-      div.innerHTML = `${label}<br><span style="font-size:10px;font-weight:600;opacity:0.92">${fmtW(stats.avgPerM2)}/전용㎡</span>`;
-      div.title = `${data.name}\n평균 ${fmtW(stats.avgTotal)} (${stats.count}건)\n㎡당 ${fmtW(stats.avgPerM2)}`;
-    });
-  }
-
-  // 시세 오버레이 ON/OFF
-  function togglePriceMode() {
-    const next = !priceModeRef.current;
-    priceModeRef.current = next;
-    setPriceMode(next);
-    if (!next) {
-      priceOverlaysRef.current.forEach(({ overlay }) => overlay.setMap(null));
-      return;
-    }
-    if (mapInst.current) {
-      // 레벨 8 미만(너무 줌인)이면 구/시 오버레이가 보이도록 레벨 8로 조정
-      if (mapInst.current.getLevel() < 8) mapInst.current.setLevel(8);
-      priceOverlaysRef.current.forEach(({ overlay }) => overlay.setMap(mapInst.current));
-    }
-    loadSidoByCenter();
-  }
-
-  // 지도 중심 좌표 → 시도명 → 해당 시도 로드 (실패 시 서울 fallback)
-  function loadSidoByCenter() {
-    if (!mapInst.current) return;
-
-    const tryLoad = (lat: number, lng: number) => {
-      if (!geocoderRef.current) { loadSido('서울'); return; }
-      geocoderRef.current.coord2RegionCode(lng, lat, (result: KakaoRegionResult[]) => {
-        const region = result?.find((r: KakaoRegionResult) => r.region_type === 'H');
-        const sido = region ? REGION_NAME_MAP[region.region_1depth_name] : null;
-        loadSido(sido ?? '서울');
-      });
-    };
-
-    const center = mapInst.current.getCenter();
-    tryLoad(center.getLat(), center.getLng());
-  }
 
   // 단일 시도 데이터 로드 (중복 방지 포함)
   const loadSido = useCallback(async (sido: string) => {
@@ -704,6 +599,7 @@ export default function MapClient({ unsoldListings }: Props) {
       if (tradeData.buildYear) setComplexBuildYear(tradeData.buildYear);
       setDetailLoading(false);
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedComplex?.kapt_code]);
 
   useEffect(() => {
@@ -1020,8 +916,6 @@ export default function MapClient({ unsoldListings }: Props) {
       {/* 단지 시세 — 왼쪽 슬라이드 패널 */}
       {selectedComplex && !selected && (() => {
         const fmtPrice = (v: number) => v >= 10000 ? `${(v / 10000).toFixed(1)}억` : `${Math.round(v / 1000)}천만`;
-        const toPyeong = (area: number) => Math.round(area / 3.3);
-
         // 면적 레이블: 평 단위 없이 ㎡만 표시
         const unitTypes = selectedComplex.unit_types ?? [];
         function areaLabel(exclusiveM2: number): string {

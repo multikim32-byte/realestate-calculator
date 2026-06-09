@@ -88,3 +88,45 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+  # ── MOLIT 실거래 기반 신규 단지 등록 ──────────────────────────────────────────
+  build-molit-complexes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    needs: check-data-quality
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts
+
+      - name: MOLIT 실거래 기반 신규 단지 등록 (apt_trades → apartment_complexes)
+        run: node scripts/build-molit-complexes.mjs
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+
+  # ── unit_types 보강 (apt_trades 기준 + K-apt 코드 보강) ──────────────────────
+  enrich-unit-types:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    needs: build-molit-complexes
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts
+
+      - name: unit_types 보강 (미보강 단지만)
+        run: node scripts/enrich-unit-types.mjs
+        env:
+          MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import {
   AreaChart, Area, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -64,6 +64,7 @@ export default function DistrictTrendChart({ lawdCd, sigunguName }: Props) {
 
   useEffect(() => {
     if (!lawdCd || loadedFor === lawdCd) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setMonthData([]);
 

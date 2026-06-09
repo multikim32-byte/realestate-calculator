@@ -119,19 +119,20 @@ async function fetchTrades(url, lawdCd, dealYmd, dealType) {
         const byStr     = getTag(block, 'buildYear') || getTag(block, 'build_year') || '';
         const buildYear = parseInt(byStr) || null;
         const jibun     = getTag(block, 'jibun')?.trim() || null;
+        const aptSeq    = getTag(block, 'aptSeq')?.trim() || null;  // MOLIT 단지 일련번호 (예: 11110-2339)
 
         if (dealType === 'T') {
           const priceStr = getTag(block, 'dealAmount') || getTag(block, 'deal_amount') || '0';
           const price    = parseInt(priceStr.replace(/,/g,'')) || null;
           if (!price) continue;
-          rows.push({ lawd_cd: lawdCd, apt_name: aptName, dong, exclusive_area: excl, floor, price, monthly_rent: null, deal_ym: dealYmd, deal_day: dealDay, build_year: buildYear, deal_type: 'T', jibun });
+          rows.push({ lawd_cd: lawdCd, apt_name: aptName, dong, exclusive_area: excl, floor, price, monthly_rent: null, deal_ym: dealYmd, deal_day: dealDay, build_year: buildYear, deal_type: 'T', jibun, apt_seq: aptSeq });
 
         } else {
           const deposit = parseInt((getTag(block, 'deposit') || '0').replace(/,/g,'')) || 0;
           const monthly = parseInt(getTag(block, 'monthlyRent') || '0') || 0;
           const type    = monthly === 0 ? 'J' : 'W';
           if ((type === 'J' && !collectJ) || (type === 'W' && !collectW)) continue;
-          rows.push({ lawd_cd: lawdCd, apt_name: aptName, dong, exclusive_area: excl, floor, price: deposit || null, monthly_rent: monthly || null, deal_ym: dealYmd, deal_day: dealDay, build_year: buildYear, deal_type: type, jibun });
+          rows.push({ lawd_cd: lawdCd, apt_name: aptName, dong, exclusive_area: excl, floor, price: deposit || null, monthly_rent: monthly || null, deal_ym: dealYmd, deal_day: dealDay, build_year: buildYear, deal_type: type, jibun, apt_seq: aptSeq });
         }
       }
 
@@ -156,7 +157,8 @@ function dedup(rows) {
   for (const r of rows) {
     const area = r.exclusive_area != null ? parseFloat(r.exclusive_area).toFixed(2) : 'null';
     const k = `${r.lawd_cd}|${r.apt_name}|${r.dong}|${area}|${r.floor ?? 'null'}|${r.deal_ym}|${r.deal_day ?? 'null'}|${r.deal_type}`;
-    if (!seen.has(k) || (r.jibun && !seen.get(k).jibun)) seen.set(k, r);
+    const prev = seen.get(k);
+    if (!prev || (r.jibun && !prev.jibun) || (r.apt_seq && !prev.apt_seq)) seen.set(k, r);
   }
   return [...seen.values()];
 }

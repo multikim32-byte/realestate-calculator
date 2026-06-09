@@ -298,6 +298,7 @@ export default function SaleDetailClient({ content, initialItem }: { content: Sa
       .then(r => r.json())
       .then(data => { if (data.item) setUnsoldLink(data.item); })
       .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   async function fetchDetail(houseManageNo: string, fallback: SaleDetail | null) {
