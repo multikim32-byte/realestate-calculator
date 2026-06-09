@@ -28,7 +28,7 @@ type ManageCost = {
 };
 
 type UnitType = {
-  house_ty: string;
+  house_ty: string | null;
   supply_area: number | null;
   exclusive_area: number;
   supply_pyeong: number | null;
