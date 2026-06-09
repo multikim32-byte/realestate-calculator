@@ -9,7 +9,7 @@ jobs:
   # ── 신규 아파트 단지 등록 ────────────────────────────────────────────────────
   collect-new-complexes:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
     steps:
