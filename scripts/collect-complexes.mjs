@@ -99,7 +99,11 @@ async function geocode(name, sido, sigungu, dong) {
     const json = await res.json();
     const doc = json?.documents?.[0];
     if (!doc) return null;
-    return { lat: parseFloat(doc.y), lng: parseFloat(doc.x) };
+    return {
+      lat:          parseFloat(doc.y),
+      lng:          parseFloat(doc.x),
+      road_address: doc.road_address_name || null,
+    };
   } catch {
     return null;
   }
@@ -142,14 +146,15 @@ async function main() {
       await sleep(50); // 카카오 QPS 제한 대비
 
       rows.push({
-        kapt_code:   item.kaptCode,
+        kapt_code:    item.kaptCode,
         name,
         slug,
-        sido:        SIDO_MAP[sido] ?? sido,
+        sido:         SIDO_MAP[sido] ?? sido,
         sigungu,
         dong,
-        lat:         coord?.lat ?? null,
-        lng:         coord?.lng ?? null,
+        lat:          coord?.lat ?? null,
+        lng:          coord?.lng ?? null,
+        road_address: coord?.road_address ?? null,
         collected_at: new Date().toISOString(),
         updated_at:   new Date().toISOString(),
       });
@@ -157,12 +162,26 @@ async function main() {
       if (coord) success++; else fail++;
     }
 
-    // Supabase upsert
+    // Supabase upsert — slug 충돌 시 개별 재시도
     const { error } = await supabase
       .from('apartment_complexes')
       .upsert(rows, { onConflict: 'kapt_code', ignoreDuplicates: false });
 
-    if (error) console.error('\n⚠️  upsert 오류:', error.message);
+    if (error?.message?.includes('slug')) {
+      // slug 충돌 → 개별 행 재시도 (dong 접미사 추가)
+      for (const row of rows) {
+        const { error: rowErr } = await supabase
+          .from('apartment_complexes')
+          .upsert(row, { onConflict: 'kapt_code', ignoreDuplicates: false });
+        if (rowErr?.message?.includes('slug')) {
+          await supabase
+            .from('apartment_complexes')
+            .upsert({ ...row, slug: `${row.slug}-${row.dong ?? row.sigungu}` }, { onConflict: 'kapt_code', ignoreDuplicates: false });
+        }
+      }
+    } else if (error) {
+      console.error('\n⚠️  upsert 오류:', error.message);
+    }
 
     const total = i + chunk.length;
     process.stdout.write(
