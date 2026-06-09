@@ -10,7 +10,7 @@
  *   node scripts/collect-apt-trades.mjs --months=6   # 최근 6개월
  *   node scripts/collect-apt-trades.mjs --from=202401 --to=202412  # 기간 지정
  *   node scripts/collect-apt-trades.mjs --sido=서울  # 특정 시도만
- *   node scripts/collect-apt-trades.mjs --type=T     # T=매매 J=전세 W=월세 (기본: T,J)
+ *   node scripts/collect-apt-trades.mjs --type=T     # T=매매 J=전세 W=월세 N=분양권/입주권 (기본: T,J)
  */
 
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -36,6 +36,7 @@ const encKey = encodeURIComponent(MOLIT_KEY);
 
 const TRADE_URL = 'https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev';
 const RENT_URL  = 'https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent';
+const NRG_URL   = 'https://apis.data.go.kr/1613000/RTMSDataSvcSilvTrade/getRTMSDataSvcSilvTrade';  // 분양권/입주권
 
 // ── 옵션 파싱 ─────────────────────────────────────────────────────────────────
 const rawArgs = process.argv.slice(2);
@@ -43,10 +44,11 @@ const argMap  = Object.fromEntries(rawArgs.filter(a => a.includes('=')).map(a =>
 
 const filterSido = argMap['sido'];
 const overwrite  = rawArgs.includes('--overwrite');       // jibun 백필용: 기존 행도 UPDATE
-const typeArg    = (argMap['type'] ?? 'T,J').split(',');  // T=매매, J=전세
+const typeArg    = (argMap['type'] ?? 'T,J').split(',');  // T=매매, J=전세, W=월세, N=분양권/입주권
 const collectT   = typeArg.includes('T');
 const collectJ   = typeArg.includes('J');
 const collectW   = typeArg.includes('W');
+const collectN   = typeArg.includes('N');
 
 // 기간 계산
 function getMonths(from, to) {
@@ -85,7 +87,7 @@ for (const [sido, list] of Object.entries(LAWD_CODE_MAP)) {
   for (const d of list) districts.push({ sido, ...d });
 }
 console.log(`수집 대상: ${districts.length}개 시군구 × ${months.length}개월`);
-console.log(`유형: ${[collectT&&'매매', collectJ&&'전세', collectW&&'월세'].filter(Boolean).join('/')}`);
+console.log(`유형: ${[collectT&&'매매', collectJ&&'전세', collectW&&'월세', collectN&&'분양권/입주권'].filter(Boolean).join('/')}`);
 console.log('');
 
 // ── XML 파싱 헬퍼 ─────────────────────────────────────────────────────────────
@@ -121,11 +123,11 @@ async function fetchTrades(url, lawdCd, dealYmd, dealType) {
         const jibun     = getTag(block, 'jibun')?.trim() || null;
         const aptSeq    = getTag(block, 'aptSeq')?.trim() || null;  // MOLIT 단지 일련번호 (예: 11110-2339)
 
-        if (dealType === 'T') {
+        if (dealType === 'T' || dealType === 'N') {
           const priceStr = getTag(block, 'dealAmount') || getTag(block, 'deal_amount') || '0';
           const price    = parseInt(priceStr.replace(/,/g,'')) || null;
           if (!price) continue;
-          rows.push({ lawd_cd: lawdCd, apt_name: aptName, dong, exclusive_area: excl, floor, price, monthly_rent: null, deal_ym: dealYmd, deal_day: dealDay, build_year: buildYear, deal_type: 'T', jibun, apt_seq: aptSeq });
+          rows.push({ lawd_cd: lawdCd, apt_name: aptName, dong, exclusive_area: excl, floor, price, monthly_rent: null, deal_ym: dealYmd, deal_day: dealDay, build_year: buildYear, deal_type: dealType, jibun, apt_seq: aptSeq });
 
         } else {
           const deposit = parseInt((getTag(block, 'deposit') || '0').replace(/,/g,'')) || 0;
@@ -190,6 +192,7 @@ for (let i = 0; i < tasks.length; i += CONCURRENCY) {
     const rows = [];
     if (collectT) rows.push(...await fetchTrades(TRADE_URL, code, ym, 'T'));
     if (collectJ || collectW) rows.push(...await fetchTrades(RENT_URL, code, ym, 'R'));
+    if (collectN) rows.push(...await fetchTrades(NRG_URL, code, ym, 'N'));
     return saveRows(rows);
   }));
   totalSaved += results.reduce((a,b) => a+b, 0);
