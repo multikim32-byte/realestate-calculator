@@ -1108,8 +1108,8 @@ export default function TradeClient({ initialItems = [], initialDong = '개포�
             <JeonseExpiryChart lawdCd={lawdCd} sigunguName={sigunguName} />
             <MaemaeSupplyChart lawdCd={lawdCd} sigunguName={sigunguName} />
           </div>
-          <NationalRankings />
           <TradeTrendSection tradeStats={tradeStats} extSido={sido} extSigungu={sigunguName} />
+          <NationalRankings />
         </>
       )}
 
