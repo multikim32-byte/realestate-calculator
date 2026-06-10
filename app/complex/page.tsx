@@ -6,15 +6,15 @@ import ComplexLandingClient from './ComplexLandingClient';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: '아파트 단지 실거래가 시세 조회 | 아파트집사',
+  title: '아파트 단지 실거래가 시세 조회 | 단지집사',
   description: '전국 21,000개 아파트 단지 실거래가 시세를 조회하세요. 평형별 가격 추이, 교통, 학군, 주변 인프라 정보를 한눈에.',
   alternates: { canonical: 'https://www.danjizipsa.kr/complex' },
   openGraph: {
-    title: '아파트 단지 실거래가 시세 조회 | 아파트집사',
+    title: '아파트 단지 실거래가 시세 조회 | 단지집사',
     description: '전국 21,000개 아파트 단지 실거래가 시세. 평형별 가격 추이, 교통, 학군 정보.',
     url: 'https://www.danjizipsa.kr/complex',
     type: 'website',
-    siteName: '아파트집사',
+    siteName: '단지집사',
   },
 };
 

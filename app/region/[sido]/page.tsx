@@ -216,7 +216,7 @@ export async function generateMetadata({ params }: { params: Promise<{ sido: str
     description: `${fullName} 아파트 청약 일정, 미분양 분양 매물, 실거래가를 한 페이지에서 확인하세요. 2026년 최신 ${sido} 청약·분양 정보.`,
     alternates: { canonical: `https://www.danjizipsa.kr/region/${encodeURIComponent(sido)}` },
     openGraph: {
-      title: `${sido} 청약·분양 모아보기 | 아파트집사`,
+      title: `${sido} 청약·분양 모아보기 | 단지집사`,
       description: `${fullName} 아파트 청약정보 & 분양 매물 한눈에`,
       url: `https://www.danjizipsa.kr/region/${encodeURIComponent(sido)}`,
     },
@@ -297,7 +297,7 @@ export default async function RegionPage({ params }: { params: Promise<{ sido: s
         name: `${sido} 청약·분양 모아보기`,
         description: `${fullName} 아파트 청약 일정, 미분양 분양 매물, 실거래가를 한 페이지에서 확인하세요.`,
         url: `https://www.danjizipsa.kr/region/${encodeURIComponent(sido)}`,
-        isPartOf: { '@type': 'WebSite', url: 'https://www.danjizipsa.kr', name: '아파트집사' },
+        isPartOf: { '@type': 'WebSite', url: 'https://www.danjizipsa.kr', name: '단지집사' },
       },
     ],
   };

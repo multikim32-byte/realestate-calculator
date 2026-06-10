@@ -6,12 +6,13 @@ import { supabase } from '@/lib/supabase';
 export const revalidate = 3600; // 1시간
 
 export const metadata: Metadata = {
-  title: '부동산 지도 — 미분양·청약 한눈에 | 아파트집사',
-  description: '전국 미분양 매물과 청약 단지를 지도에서 한 번에 확인하세요. 아파트집사 부동산 지도.',
+  title: '아파트 부동산 지도 — 전국 단지·미분양·청약 위치 조회 | 단지집사',
+  description: '전국 아파트 단지 실거래가 시세, 미분양 매물, 청약 단지를 지도에서 한눈에 확인하세요. 시세 오버레이·지역별 필터 제공. 단지집사.',
+  keywords: ['부동산 지도', '아파트 지도', '미분양 지도', '청약 지도', '아파트 단지 위치', '단지집사'],
   alternates: { canonical: 'https://www.danjizipsa.kr/map' },
   openGraph: {
-    title: '부동산 지도 | 아파트집사',
-    description: '전국 미분양 매물과 청약 단지를 지도에서 한 번에 확인하세요.',
+    title: '아파트 부동산 지도 — 전국 단지·미분양·청약 위치 조회 | 단지집사',
+    description: '전국 아파트 단지 실거래가 시세, 미분양 매물, 청약 단지를 지도에서 한눈에 확인하세요.',
     url: 'https://www.danjizipsa.kr/map',
   },
 };

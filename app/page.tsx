@@ -10,15 +10,15 @@ import { fetchPublicSaleList } from '@/lib/publicDataApi';
 export const revalidate = 7200;
 
 export const metadata: Metadata = {
-  title: '아파트 분양정보·청약정보·실거래가',
-  description: '전국 아파트 분양정보, 청약 일정, 실거래가를 한눈에. 취득세·대출 계산기 무료 제공. 집 살 때, 아파트집사.',
-  keywords: ['아파트 분양정보', '청약정보', '실거래가', '청약 일정', '아파트집사', 'aptzipsa'],
+  title: '단지집사 — 전국 아파트 단지 실거래가·청약·분양정보 무료 조회',
+  description: '전국 아파트 단지 실거래가·전세가·청약·분양정보를 한눈에. 취득세·대출·중개수수료 계산기, 부동산 지도, 미분양, LH 임대공고 무료 제공.',
+  keywords: ['단지집사', '아파트 실거래가', '아파트 단지', '청약정보', '분양정보', '아파트 시세', '취득세 계산기', '중개수수료 계산기', '청약달력', '미분양', 'danjizipsa'],
   alternates: { canonical: 'https://www.danjizipsa.kr' },
   openGraph: {
-    title: '아파트 분양정보·청약정보·실거래가 | 아파트집사',
-    description: '전국 아파트 분양·청약 정보와 실거래가를 무료로. 집 살 때, 아파트집사.',
+    title: '단지집사 — 전국 아파트 단지 실거래가·청약·분양정보 무료 조회',
+    description: '전국 아파트 단지 실거래가·전세가·청약·분양정보를 한눈에. 취득세·대출·중개수수료 계산기, 부동산 지도 무료 제공.',
     url: 'https://www.danjizipsa.kr',
-    siteName: '아파트집사',
+    siteName: '단지집사',
   },
 };
 
@@ -27,13 +27,13 @@ const orgJsonLd = {
   '@graph': [
     {
       '@type': 'WebSite',
-      name: '아파트집사',
+      name: '단지집사',
       url: 'https://www.danjizipsa.kr',
       description: '전국 아파트·오피스텔 청약 정보, 실거래가 조회, 부동산 계산기를 무료로 제공합니다.',
     },
     {
       '@type': 'Organization',
-      name: '아파트집사',
+      name: '단지집사',
       url: 'https://www.danjizipsa.kr',
       logo: 'https://www.danjizipsa.kr/icon-192.png',
       contactPoint: { '@type': 'ContactPoint', contactType: 'customer support', email: 'multikim@naver.com' },

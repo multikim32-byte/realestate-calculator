@@ -56,7 +56,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: post.title,
       description: post.description,
       publishedTime: post.date,
-      siteName: '아파트집사',
+      siteName: '단지집사',
       images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
     },
     twitter: {
@@ -87,7 +87,7 @@ export default async function PostPage({ params }: Props) {
     datePublished: post.date,
     dateModified: post.date,
     author: { '@type': 'Person', name: '김경래', jobTitle: '공인중개사', url: `${BASE_URL}/about` },
-    publisher: { '@type': 'Organization', name: '아파트집사', url: BASE_URL },
+    publisher: { '@type': 'Organization', name: '단지집사', url: BASE_URL },
     url: `${BASE_URL}/blog/${slug}`,
     mainEntityOfPage: { '@type': 'WebPage', '@id': `${BASE_URL}/blog/${slug}` },
   };

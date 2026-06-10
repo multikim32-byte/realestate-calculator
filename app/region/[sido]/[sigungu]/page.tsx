@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: { params: Promise<{ sido: str
       canonical: `https://www.danjizipsa.kr/region/${encodeURIComponent(sido)}/${encodeURIComponent(sigungu)}`,
     },
     openGraph: {
-      title: `${sido} ${sigungu} 아파트 정보 | 아파트집사`,
+      title: `${sido} ${sigungu} 아파트 정보 | 단지집사`,
       description,
       url: `https://www.danjizipsa.kr/region/${encodeURIComponent(sido)}/${encodeURIComponent(sigungu)}`,
     },

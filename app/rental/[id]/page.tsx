@@ -27,7 +27,7 @@ export async function generateMetadata({ params, searchParams: _sp }: PageProps)
 
   if (!item) {
     return {
-      title: 'LH 임대공고 상세 — 아파트집사',
+      title: 'LH 임대공고 상세 — 단지집사',
       alternates: { canonical },
     };
   }
@@ -48,7 +48,7 @@ export async function generateMetadata({ params, searchParams: _sp }: PageProps)
       description,
       type: 'article',
       url: canonical,
-      siteName: '아파트집사',
+      siteName: '단지집사',
     },
     twitter: { card: 'summary', title, description },
     alternates: { canonical },

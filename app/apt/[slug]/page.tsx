@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: post.title,
       description: post.description,
       publishedTime: post.date,
-      siteName: '아파트집사',
+      siteName: '단지집사',
       images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
     },
     twitter: {

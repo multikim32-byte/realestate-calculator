@@ -104,7 +104,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         url: `https://www.danjizipsa.kr/unsold/${canonical}`,
         type: 'website',
         locale: 'ko_KR',
-        siteName: '아파트집사',
+        siteName: '단지집사',
         images: item.thumbnail_url
           ? [{ url: item.thumbnail_url, width: 1200, height: 630 }]
           : [{ url: 'https://www.danjizipsa.kr/opengraph-image', width: 1200, height: 630 }],
@@ -112,14 +112,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     };
   } catch {
     return {
-      title: '분양정보 | 아파트집사',
+      title: '분양정보 | 단지집사',
       openGraph: {
-        title: '분양정보 | 아파트집사',
+        title: '분양정보 | 단지집사',
         description: '미분양·잔여세대 선착순 분양정보를 확인하세요.',
         url: 'https://www.danjizipsa.kr/unsold',
         type: 'website',
         locale: 'ko_KR',
-        siteName: '아파트집사',
+        siteName: '단지집사',
         images: [{ url: 'https://www.danjizipsa.kr/opengraph-image', width: 1200, height: 630 }],
       },
     };

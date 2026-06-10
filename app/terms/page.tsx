@@ -6,7 +6,7 @@ export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
   title: '이용약관',
-  description: '아파트집사 서비스 이용약관입니다. 서비스 이용 조건, 책임 한계, 면책 조항 등을 안내합니다.',
+  description: '단지집사 서비스 이용약관입니다. 서비스 이용 조건, 책임 한계, 면책 조항 등을 안내합니다.',
   alternates: { canonical: 'https://www.danjizipsa.kr/terms' },
   robots: { index: false, follow: false },
 };

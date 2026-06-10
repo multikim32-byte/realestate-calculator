@@ -86,7 +86,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const complex = await getComplex(decodeURIComponent(slug));
-  if (!complex) return { title: '단지 정보 | 아파트집사' };
+  if (!complex) return { title: '단지 정보 | 단지집사' };
 
   const title = `${complex.name} 실거래가 시세 — ${complex.sido} ${complex.sigungu}`;
   const description = `${complex.name}(${complex.sido} ${complex.sigungu}${complex.dong ? ' ' + complex.dong : ''}) 아파트 실거래가 시세 조회. ${complex.total_units ? complex.total_units.toLocaleString() + '세대' : ''}${complex.built_year ? ' ' + complex.built_year + '년 준공' : ''}. 평형별 가격 추이, 교통, 학군 정보.`;
@@ -102,7 +102,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       url,
       type: 'website',
       locale: 'ko_KR',
-      siteName: '아파트집사',
+      siteName: '단지집사',
       images: [{ url: 'https://www.danjizipsa.kr/opengraph-image', width: 1200, height: 630 }],
     },
     keywords: [

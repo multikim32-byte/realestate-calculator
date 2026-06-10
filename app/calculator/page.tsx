@@ -7,14 +7,14 @@ export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
   title: "취득세·주택담보대출 계산기 무료",
-  description: "아파트 취득세, 중개수수료, 주택담보대출, 중도금 이자 계산기를 무료로. 2026년 최신 기준 반영. 집 살 때 필요한 모든 계산, 아파트집사.",
-  keywords: ['취득세 계산기', '주택담보대출 계산기', '중도금 이자', '중개수수료 계산기', '부동산 계산기', '아파트집사'],
+  description: "아파트 취득세, 중개수수료, 주택담보대출, 중도금 이자 계산기를 무료로. 2026년 최신 기준 반영. 집 살 때 필요한 모든 계산, 단지집사.",
+  keywords: ['취득세 계산기', '주택담보대출 계산기', '중도금 이자', '중개수수료 계산기', '부동산 계산기', '단지집사'],
   alternates: { canonical: 'https://www.danjizipsa.kr/calculator' },
   openGraph: {
-    title: '취득세·주택담보대출 계산기 무료 | 아파트집사',
+    title: '취득세·주택담보대출 계산기 무료 | 단지집사',
     description: '아파트 취득세, 중개수수료, 주택담보대출, 중도금 이자 계산기를 무료로. 2026년 최신 기준 반영.',
     url: 'https://www.danjizipsa.kr/calculator',
-    siteName: '아파트집사',
+    siteName: '단지집사',
   },
 };
 

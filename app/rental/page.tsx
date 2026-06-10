@@ -9,14 +9,14 @@ export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: 'LH 공공임대 아파트 정보 — 행복주택·전세임대',
-  description: 'LH 공공임대, 행복주택, 전세임대 등 전국 공공임대 아파트 정보를 한눈에. 입주 자격·신청 방법까지. 아파트집사.',
-  keywords: ['LH 공공임대', '행복주택', '전세임대', '국민임대', '장기전세', '임대아파트', '아파트집사'],
+  description: 'LH 공공임대, 행복주택, 전세임대 등 전국 공공임대 아파트 정보를 한눈에. 입주 자격·신청 방법까지. 단지집사.',
+  keywords: ['LH 공공임대', '행복주택', '전세임대', '국민임대', '장기전세', '임대아파트', '단지집사'],
   openGraph: {
-    title: 'LH 공공임대 아파트 정보 — 행복주택·전세임대 | 아파트집사',
+    title: 'LH 공공임대 아파트 정보 — 행복주택·전세임대 | 단지집사',
     description: 'LH 공공임대, 행복주택, 전세임대 등 전국 공공임대 아파트 정보를 한눈에. 입주 자격·신청 방법까지.',
     type: 'website',
     url: 'https://www.danjizipsa.kr/rental',
-    siteName: '아파트집사',
+    siteName: '단지집사',
   },
   alternates: { canonical: 'https://www.danjizipsa.kr/rental' },
 };

@@ -8,15 +8,15 @@ import UnsoldList from './UnsoldList';
 const REGIONS = ['서울','경기','인천','부산','대구','광주','대전','울산','세종','강원','충북','충남','전북','전남','경북','경남','제주'];
 
 export const metadata: Metadata = {
-  title: '미분양 아파트 분양정보 — 전국 선착순 계약 매물 | 아파트집사',
-  description: '전국 미분양 아파트 분양정보를 한눈에. 청약 없이 선착순 동·호 지정 계약 가능한 매물을 지역별로 확인하세요. 아파트집사에서 실시간 업데이트.',
-  keywords: ['미분양 아파트', '미분양 분양정보', '선착순 분양', '청약없이 분양', '아파트 선착순 계약', '아파트집사'],
+  title: '미분양 아파트 분양정보 — 전국 선착순 계약 매물 | 단지집사',
+  description: '전국 미분양 아파트 분양정보를 한눈에. 청약 없이 선착순 동·호 지정 계약 가능한 매물을 지역별로 확인하세요. 단지집사에서 실시간 업데이트.',
+  keywords: ['미분양 아파트', '미분양 분양정보', '선착순 분양', '청약없이 분양', '아파트 선착순 계약', '단지집사'],
   alternates: { canonical: 'https://www.danjizipsa.kr/unsold' },
   openGraph: {
-    title: '미분양 아파트 분양정보 — 전국 선착순 계약 매물 | 아파트집사',
+    title: '미분양 아파트 분양정보 — 전국 선착순 계약 매물 | 단지집사',
     description: '전국 미분양 아파트 분양정보를 한눈에. 청약 없이 선착순 동·호 지정 계약 가능한 매물을 지역별로 확인하세요.',
     url: 'https://www.danjizipsa.kr/unsold',
-    siteName: '아파트집사',
+    siteName: '단지집사',
   },
 };
 
@@ -48,7 +48,7 @@ export default async function UnsoldPage() {
         name: '전국 미분양 아파트 분양정보',
         description: '전국 미분양 아파트 분양정보. 청약 없이 선착순 동·호 지정 계약 가능한 매물 및 계약 혜택 정보 제공.',
         url: 'https://www.danjizipsa.kr/unsold',
-        isPartOf: { '@type': 'WebSite', url: 'https://www.danjizipsa.kr', name: '아파트집사' },
+        isPartOf: { '@type': 'WebSite', url: 'https://www.danjizipsa.kr', name: '단지집사' },
       },
     ],
   };
