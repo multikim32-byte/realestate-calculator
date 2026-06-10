@@ -48,6 +48,8 @@ type Complex = {
   phone: string | null;
   unit_types: UnitType[] | null;
   molit_key: string | null;
+  kapt_addr: string | null;
+  road_address: string | null;
   manage_cost: ManageCost | null;
 };
 type NearbyItem = { name: string; distance: number; address?: string; category?: string; label?: string };
@@ -72,6 +74,12 @@ function fmtDist(m: number) {
 function areaLabel(area: number) {
   const py = Math.round(area / 3.3);
   return `${Math.round(area)}㎡(${py}평)`;
+}
+
+function stripComplexName(addr: string | null, name: string): string | null {
+  if (!addr) return null;
+  const stripped = addr.endsWith(name) ? addr.slice(0, addr.length - name.length).trim() : addr;
+  return stripped || null;
 }
 
 function fmtPhone(raw: string) {
@@ -377,9 +385,15 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
       {/* 헤더 */}
       <div style={{ background: '#fff', borderRadius: 16, padding: '24px 24px 20px', marginBottom: 16, boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
         <h1 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 800, color: '#1e293b' }}>{complex.name}</h1>
-        <p style={{ margin: '0 0 16px', fontSize: 14, color: '#6b7280' }}>
-          📍 {complex.sido} {complex.sigungu}{complex.dong ? ' ' + complex.dong : ''}
+        <p style={{ margin: '0 0 4px', fontSize: 14, color: '#6b7280' }}>
+          📍 {complex.road_address ?? [complex.sido, complex.sigungu, complex.dong].filter(Boolean).join(' ')}
         </p>
+        {complex.kapt_addr && (
+          <p style={{ margin: '0 0 16px', fontSize: 12, color: '#9ca3af' }}>
+            지번 {stripComplexName(complex.kapt_addr, complex.name)}
+          </p>
+        )}
+        {!complex.kapt_addr && <div style={{ marginBottom: 16 }} />}
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           {complex.total_units && (
             <span style={{ fontSize: 13, background: '#eff6ff', color: '#1d4ed8', padding: '4px 12px', borderRadius: 20, fontWeight: 600 }}>
@@ -575,7 +589,9 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
             <dl style={{ margin: 0 }}>
               {[
                 { label: '단지명', value: complex.name },
-                { label: '주소', value: [complex.sido, complex.sigungu, complex.dong].filter(Boolean).join(' ') },
+                ...(complex.road_address ? [{ label: '도로명주소', value: complex.road_address }] : []),
+                ...(complex.kapt_addr ? [{ label: '지번주소', value: stripComplexName(complex.kapt_addr, complex.name) ?? complex.kapt_addr }] : []),
+                ...(!complex.road_address && !complex.kapt_addr ? [{ label: '주소', value: [complex.sido, complex.sigungu, complex.dong].filter(Boolean).join(' ') }] : []),
                 { label: '총 세대수', value: complex.total_units ? `${complex.total_units.toLocaleString()}세대` : '-' },
                 { label: '준공연도', value: buildYear ? `${buildYear}년` : '-' },
                 { label: '최고층수', value: complex.floor_count ? `${complex.floor_count}층` : '-' },

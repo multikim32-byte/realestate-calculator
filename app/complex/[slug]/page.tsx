@@ -35,6 +35,8 @@ type Complex = {
   phone: string | null;
   unit_types: UnitType[] | null;
   molit_key: string | null;
+  kapt_addr: string | null;
+  road_address: string | null;
   manage_cost: {
     per_unit_total: number;
     per_unit_common: number;
