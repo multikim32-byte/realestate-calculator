@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
     .select('slug, name, sido, sigungu, dong, total_units, built_year')
     .ilike('name', `%${q}%`)
     .not('lat', 'is', null)
+    .neq('source', 'kapt_deprecated')
     .order('name')
     .limit(10);
 

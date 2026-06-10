@@ -50,6 +50,7 @@ export async function GET(req: NextRequest) {
     .gte('lat', swLat).lte('lat', neLat)
     .gte('lng', swLng).lte('lng', neLng)
     .not('lat', 'is', null)
+    .neq('source', 'kapt_deprecated')
     .limit(300);
 
   return NextResponse.json({ complexes: data ?? [] }, {
