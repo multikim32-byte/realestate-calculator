@@ -21,7 +21,7 @@
     "@upstash/redis": "^1.38.0",
     "isomorphic-dompurify": "^3.14.0",
     "lucide-react": "^0.577.0",
-    "next": "16.1.6",
+    "next": "16.2.9",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "^3.8.0",
@@ -36,7 +36,7 @@
     "@types/web-push": "^3.6.4",
     "dotenv": "^17.4.2",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
     "typescript": "^5",
     "xlsx": "^0.18.5"

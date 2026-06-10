@@ -5,11 +5,11 @@ const OLD_HOSTS = ['mk-land.kr', 'www.mk-land.kr'];
 export function proxy(req: NextRequest) {
   const host = req.headers.get('host') ?? '';
 
-  // mk-land.kr → aptzipsa.kr 301 영구 리다이렉트
+  // mk-land.kr → danjizipsa.kr 301 영구 리다이렉트
   if (OLD_HOSTS.some(h => host === h || host.startsWith(h + ':'))) {
     const url = req.nextUrl.clone();
     url.protocol = 'https:';
-    url.host = 'www.aptzipsa.kr';
+    url.host = 'www.danjizipsa.kr';
     url.port = '';
     return NextResponse.redirect(url, { status: 301 });
   }
