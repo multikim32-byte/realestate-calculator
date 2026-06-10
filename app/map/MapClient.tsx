@@ -937,9 +937,12 @@ export default function MapClient({ unsoldListings }: Props) {
             ? (complexRents ?? []).filter(t => t.monthly === 0)
             : (complexRents ?? []).filter(t => t.monthly > 0);
 
-        // 면적 목록: 전용면적 기준 unique 목록 (m² 기준)
-        const exclusiveAreas = [...new Set(rawList.map(t => Math.round(t.area * 100) / 100))].sort((a, b) => a - b);
-        const pyeongList = exclusiveAreas; // 빈 여부 체크용
+        // 면적 목록: unit_types + 거래 데이터 합산 (거래 없는 타입도 표시)
+        const tradeAreas = new Set(rawList.map(t => Math.round(t.area * 100) / 100));
+        const unitTypeAreas = new Set(unitTypes.map(u => Math.round(u.exclusive_area * 100) / 100));
+        const allAreas = [...new Set([...tradeAreas, ...unitTypeAreas])].sort((a, b) => a - b);
+        const exclusiveAreas = allAreas;
+        const pyeongList = exclusiveAreas;
         const curArea = selPyeong > 0 ? selPyeong : (exclusiveAreas[0] ?? 0);
 
         // 선택 면적으로 필터 (±0.1㎡ 허용)
@@ -1147,9 +1150,14 @@ export default function MapClient({ unsoldListings }: Props) {
                             onChange={e => setSelPyeong(Number(e.target.value))}
                             style={{ fontSize: 12, border: '1px solid #e5e7eb', borderRadius: 6, padding: '3px 8px', color: '#1e293b', background: '#fff', cursor: 'pointer' }}
                           >
-                            {exclusiveAreas.map(area => (
-                              <option key={area} value={area}>{areaLabel(area)}</option>
-                            ))}
+                            {exclusiveAreas.map(area => {
+                              const hasTrade = tradeAreas.has(area);
+                              return (
+                                <option key={area} value={area} style={{ color: hasTrade ? '#1e293b' : '#9ca3af' }}>
+                                  {areaLabel(area)}{hasTrade ? '' : ' (거래없음)'}
+                                </option>
+                              );
+                            })}
                           </select>
                         )}
                       </div>
