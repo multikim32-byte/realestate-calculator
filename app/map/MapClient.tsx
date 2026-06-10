@@ -1053,13 +1053,21 @@ export default function MapClient({ unsoldListings }: Props) {
               {/* 기본 정보 */}
               {(() => {
                 const dong = complexNearby?.dong;
-                const address = [selectedComplex.sido, selectedComplex.sigungu, dong].filter(Boolean).join(' ');
+                const adminAddr = [selectedComplex.sido, selectedComplex.sigungu, dong].filter(Boolean).join(' ');
+                const roadAddr = selectedComplex.road_address;
+                const jibunAddr = selectedComplex.kapt_addr;
                 const builtYear = selectedComplex.built_year ?? complexBuildYear;
                 const yearCount = builtYear ? new Date().getFullYear() - builtYear : null;
                 const floorCount = complexNearby?.floor_count;
                 return (
                   <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', flexShrink: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', marginBottom: 6 }}>{address}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', marginBottom: 2 }}>
+                      📍 {roadAddr ?? adminAddr}
+                    </div>
+                    {jibunAddr && (
+                      <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 6 }}>지번 {jibunAddr}</div>
+                    )}
+                    {!jibunAddr && <div style={{ marginBottom: 6 }} />}
                     <div style={{ fontSize: 12, color: '#6b7280', display: 'flex', flexWrap: 'wrap', gap: '2px 12px' }}>
                       <span>{selectedComplex.total_units ? `${selectedComplex.total_units.toLocaleString()}세대` : '세대 정보 없음'}</span>
                       {builtYear
