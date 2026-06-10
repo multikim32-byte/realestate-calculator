@@ -5,10 +5,25 @@ export const runtime = 'edge';
 
 export type NearbyItem = { name: string; distance: number; category?: string; label?: string; school_type?: string };
 
+export type ManageCost = {
+  per_unit_total: number;
+  per_unit_common: number;
+  per_unit_usage: number;
+  per_unit_longterm: number;
+  total_units: number;
+  ref_ym: string;
+  breakdown: Record<string, number>;
+};
+
 export type ComplexNearby = {
+  dong: string | null;
+  floor_count: number | null;
   nearby_transit: NearbyItem[] | null;
   nearby_schools: NearbyItem[] | null;
   nearby_infra:   NearbyItem[] | null;
+  parking_total:  number | null;
+  manage_cost:    ManageCost | null;
+  avg_pyeong:     number | null;
 };
 
 export async function GET(req: NextRequest) {
@@ -22,7 +37,7 @@ export async function GET(req: NextRequest) {
 
   const { data } = await supabase
     .from('apartment_complexes')
-    .select('dong, floor_count, nearby_transit, nearby_schools, nearby_infra')
+    .select('dong, floor_count, nearby_transit, nearby_schools, nearby_infra, parking_total, manage_cost, avg_pyeong')
     .eq('kapt_code', kapt_code)
     .single();
 

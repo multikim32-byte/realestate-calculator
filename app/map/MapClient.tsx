@@ -268,7 +268,7 @@ export default function MapClient({ unsoldListings }: Props) {
   }> | null>(null);
   const [complexRents, setComplexRents]   = useState<Array<{ date: string; area: number; floor: number; deposit: number; monthly: number; contractType: string; contractEnd: string; useRRRight: string; preDeposit: number; preMonthly: number }> | null>(null);
   const [complexBuildYear, setComplexBuildYear] = useState<number | null>(null);
-  const [complexNearby, setComplexNearby] = useState<{ dong?: string; floor_count?: number; nearby_transit?: Array<{ name: string; distance: number; category?: string }>; nearby_schools?: Array<{ name: string; distance: number; school_type?: string }>; nearby_infra?: Array<{ name: string; distance: number; label?: string; category?: string }> } | null>(null);
+  const [complexNearby, setComplexNearby] = useState<{ dong?: string; floor_count?: number; nearby_transit?: Array<{ name: string; distance: number; category?: string }>; nearby_schools?: Array<{ name: string; distance: number; school_type?: string }>; nearby_infra?: Array<{ name: string; distance: number; label?: string; category?: string }>; parking_total?: number | null; manage_cost?: { per_unit_total: number; per_unit_common: number; per_unit_usage: number; per_unit_longterm: number; ref_ym: string; breakdown: Record<string, number> } | null; avg_pyeong?: number | null } | null>(null);
   const [dealType, setDealType] = useState<'매매' | '전세' | '월세'>('매매');
   const [selPyeong, setSelPyeong] = useState<number>(0);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -1313,6 +1313,62 @@ export default function MapClient({ unsoldListings }: Props) {
                               </tbody>
                             </table>
                           )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* 관리비 · 주차 */}
+                    {(complexNearby?.manage_cost || complexNearby?.parking_total) && (() => {
+                      const mc = complexNearby.manage_cost;
+                      const parking = complexNearby.parking_total;
+                      const avgPyeong = complexNearby.avg_pyeong ?? selectedComplex.avg_pyeong;
+
+                      // 선택 타입 면적 기반 관리비 추정 (전용면적 비례)
+                      let estTotal: number | null = null;
+                      if (mc && curArea > 0 && avgPyeong && avgPyeong > 0) {
+                        const avgM2 = avgPyeong * 3.3058;
+                        estTotal = Math.round(mc.per_unit_total * (curArea / avgM2));
+                      } else if (mc) {
+                        estTotal = mc.per_unit_total;
+                      }
+
+                      const fmtWon = (v: number) => v >= 10000
+                        ? `${(v / 10000).toFixed(1)}만원`
+                        : `${Math.round(v / 1000)}천원`;
+
+                      return (
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>단지 정보</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            {parking != null && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                                <span style={{ color: '#6b7280' }}>주차</span>
+                                <span style={{ color: '#1e293b', fontWeight: 500 }}>
+                                  {parking.toLocaleString()}대
+                                  {selectedComplex.total_units ? ` (세대당 ${(parking / selectedComplex.total_units).toFixed(1)}대)` : ''}
+                                </span>
+                              </div>
+                            )}
+                            {mc && estTotal != null && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                                <span style={{ color: '#6b7280' }}>
+                                  관리비
+                                  {curArea > 0 && avgPyeong && Math.abs(curArea - avgPyeong * 3.3058) > 2
+                                    ? <span style={{ color: '#9ca3af' }}> (추정)</span>
+                                    : null}
+                                </span>
+                                <span style={{ color: '#1e293b', fontWeight: 500 }}>
+                                  {fmtWon(estTotal)}/월
+                                </span>
+                              </div>
+                            )}
+                            {mc && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9ca3af' }}>
+                                <span>공용 {fmtWon(mc.per_unit_common)} · 사용 {fmtWon(mc.per_unit_usage)}{mc.per_unit_longterm > 0 ? ` · 장충 ${fmtWon(mc.per_unit_longterm)}` : ''}</span>
+                                <span>{mc.ref_ym.slice(0,4)}.{mc.ref_ym.slice(4)} 기준</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       );
                     })()}
