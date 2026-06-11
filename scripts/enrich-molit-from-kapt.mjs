@@ -1,12 +1,16 @@
 /**
- * M prefix 단지에 관리비·주차 정보 보강
+ * M prefix 단지에 K-apt 데이터 보강
  *
- * A prefix (K-apt) 단지의 manage_cost, parking_total을
- * road_address 완전 일치 매칭으로 M prefix 단지에 복사한다.
+ * A prefix (K-apt) 단지의 manage_cost, parking_total, total_units,
+ * floor_count, dong_count, built_year, unit_types, phone, fax,
+ * heating_type, welfare_facility, cctv_count, education_facility,
+ * nearby_transit, nearby_schools, nearby_infra 를
+ * M prefix 단지에 복사한다.
  *
- * 매칭 전략:
- *   1순위: road_address 완전 일치
- *   2순위: road_address 일치 + total_units 유사 (중복 주소 구분)
+ * 매칭 전략 (우선순위 순):
+ *   1. molit_key 역추적: M-prefix의 molit_key와 같은 lawd_cd|apt_name을 가진 A-prefix
+ *   2. road_address 완전 일치
+ *   3. 좌표 근거리 (<150m) + 이름 유사도 ≥0.3
  *
  * 실행: node scripts/enrich-molit-from-kapt.mjs
  * 옵션: --force  (이미 보강된 단지도 재처리)
@@ -20,128 +24,186 @@ import { fileURLToPath } from 'node:url';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 config({ path: resolve(__dirname, '../.env.local') });
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-);
+const sb    = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const force = process.argv.includes('--force');
 
-async function loadAllPages(query) {
+// ── 유틸 ─────────────────────────────────────────────────────────────────────
+function distanceM(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.asin(Math.sqrt(a));
+}
+
+function normName(s) {
+  return (s ?? '').replace(/아파트$/, '').replace(/\s+/g, '').toLowerCase();
+}
+
+function bigrams(s) {
+  const r = new Set();
+  for (let i = 0; i < s.length - 1; i++) r.add(s.slice(i, i+2));
+  return r;
+}
+function nameSimilarity(a, b) {
+  const na = normName(a), nb = normName(b);
+  if (!na || !nb) return 0;
+  if (na === nb) return 1;
+  const ba = bigrams(na), bb = bigrams(nb);
+  if (!ba.size || !bb.size) return 0;
+  let inter = 0;
+  for (const g of ba) if (bb.has(g)) inter++;
+  return (2 * inter) / (ba.size + bb.size);
+}
+
+const COPY_FIELDS = [
+  'manage_cost', 'parking_total', 'total_units', 'floor_count',
+  'dong_count', 'built_year', 'unit_types', 'phone', 'fax',
+  'heating_type', 'welfare_facility', 'cctv_count', 'education_facility',
+  'nearby_transit', 'nearby_schools', 'nearby_infra',
+];
+
+function hasData(row) {
+  const hasMc = row.manage_cost && Object.keys(row.manage_cost).length > 0;
+  const hasPk = row.parking_total != null;
+  const hasUt = Array.isArray(row.unit_types) && row.unit_types.length > 0;
+  return hasMc || hasPk || hasUt || row.total_units != null;
+}
+
+async function loadAllPages(baseQuery) {
   const rows = [];
   let from = 0;
   while (true) {
-    const { data: page, error } = await query.order('kapt_code').range(from, from + 999);
+    const { data, error } = await baseQuery.order('kapt_code').range(from, from + 999);
     if (error) throw new Error(error.message);
-    if (!page?.length) break;
-    rows.push(...page);
+    if (!data?.length) break;
+    rows.push(...data);
+    if (data.length < 1000) break;
     from += 1000;
-    if (page.length < 1000) break;
   }
   return rows;
 }
 
 async function main() {
-  console.log('🔄 M prefix 관리비·주차 보강 시작 (road_address 매칭)');
+  console.log('🔄 M prefix K-apt 데이터 보강 시작');
   console.log(`   모드: ${force ? '전체 재처리' : '미보강만'}\n`);
 
-  // ── 1. A prefix 소스 데이터 로드 ────────────────────────────────────────────
-  console.log('📥 A prefix 데이터 로딩...');
+  // ── 1. A prefix 로드 (데이터 있는 것) ────────────────────────────────────────
+  console.log('📥 A prefix 로딩...');
+  const aFields = ['kapt_code', 'name', 'molit_key', 'road_address', 'lat', 'lng', ...COPY_FIELDS].join(', ');
   const aRows = await loadAllPages(
-    supabase
-      .from('apartment_complexes')
-      .select('kapt_code, name, road_address, manage_cost, parking_total, total_units')
-      .like('kapt_code', 'A%')
-      .not('road_address', 'is', null)
+    sb.from('apartment_complexes').select(aFields).like('kapt_code', 'A%')
   );
+  const aWithData = aRows.filter(hasData);
+  console.log(`   A prefix 전체: ${aRows.length.toLocaleString()}개 | 데이터 있는 것: ${aWithData.length.toLocaleString()}개\n`);
 
-  // road_address → A prefix row(들) 맵
-  const aMap = new Map(); // road_address → row[] (중복 대비 배열)
-  for (const row of aRows) {
-    const hasMc = row.manage_cost && Object.keys(row.manage_cost).length > 0;
-    const hasPk = row.parking_total != null;
-    if (!hasMc && !hasPk) continue;
-    const addr = row.road_address.trim();
-    if (!aMap.has(addr)) aMap.set(addr, []);
-    aMap.get(addr).push(row);
+  // 인덱스 구성
+  const aByMolitKey  = new Map(); // molit_key → A row
+  const aByRoadAddr  = new Map(); // road_address → A row[]
+  for (const a of aWithData) {
+    if (a.molit_key) aByMolitKey.set(a.molit_key, a);
+    if (a.road_address) {
+      const addr = a.road_address.trim();
+      if (!aByRoadAddr.has(addr)) aByRoadAddr.set(addr, []);
+      aByRoadAddr.get(addr).push(a);
+    }
   }
-  console.log(`   A prefix 유효 단지: ${aRows.length.toLocaleString()}개 (관리비/주차 있는 것: ${aMap.size.toLocaleString()}개)\n`);
 
   // ── 2. M prefix 대상 로드 ────────────────────────────────────────────────────
-  let mQuery = supabase
-    .from('apartment_complexes')
-    .select('kapt_code, name, road_address, manage_cost, parking_total, total_units')
+  console.log('📥 M prefix 로딩...');
+  let mQuery = sb.from('apartment_complexes')
+    .select(`kapt_code, name, molit_key, road_address, lat, lng, total_units, manage_cost, unit_types`)
     .like('kapt_code', 'M%')
-    .not('road_address', 'is', null);
-
+    .neq('source', 'kapt_deprecated');
   if (!force) {
-    mQuery = mQuery.is('manage_cost', null).is('parking_total', null);
+    mQuery = mQuery.is('manage_cost', null);
   }
+  const mRows = await loadAllPages(mQuery);
+  console.log(`   M prefix 대상: ${mRows.length.toLocaleString()}개\n`);
 
-  console.log('📥 M prefix 데이터 로딩...');
-  const mComplexes = await loadAllPages(mQuery);
-  console.log(`📍 M prefix 보강 대상: ${mComplexes.length.toLocaleString()}개\n`);
-
-  // ── 3. 매칭 & 업데이트 ───────────────────────────────────────────────────────
-  let matched = 0, ambiguous = 0, noMatch = 0, updated = 0;
-
+  let byKey = 0, byAddr = 0, byGeo = 0, noMatch = 0, updated = 0;
   const BATCH = 50;
-  for (let i = 0; i < mComplexes.length; i += BATCH) {
-    const batch = mComplexes.slice(i, i + BATCH);
 
+  for (let i = 0; i < mRows.length; i += BATCH) {
+    const batch = mRows.slice(i, i + BATCH);
     const updates = [];
+
     for (const m of batch) {
-      const addr = m.road_address.trim();
-      const candidates = aMap.get(addr);
+      let src = null;
+      let method = '';
 
-      if (!candidates?.length) { noMatch++; continue; }
+      // ── 전략 1: molit_key 역추적 ───────────────────────────────────────────
+      if (!src && m.molit_key) {
+        const a = aByMolitKey.get(m.molit_key);
+        if (a) { src = a; method = 'molit_key'; byKey++; }
+      }
 
-      let src;
-      if (candidates.length === 1) {
-        src = candidates[0];
-      } else {
-        // 중복 주소: total_units가 가장 가까운 것 선택
-        ambiguous++;
-        if (m.total_units != null) {
-          src = candidates.reduce((best, c) => {
-            const db = Math.abs((c.total_units ?? 0) - m.total_units);
-            const dBest = Math.abs((best.total_units ?? 0) - m.total_units);
-            return db < dBest ? c : best;
-          });
-        } else {
-          src = candidates[0]; // 세대수 없으면 첫 번째
+      // ── 전략 2: road_address 일치 ─────────────────────────────────────────
+      if (!src && m.road_address) {
+        const candidates = aByRoadAddr.get(m.road_address.trim());
+        if (candidates?.length) {
+          if (candidates.length === 1) {
+            src = candidates[0]; method = 'road_addr'; byAddr++;
+          } else if (m.total_units != null) {
+            src = candidates.reduce((best, c) =>
+              Math.abs((c.total_units ?? 0) - m.total_units) < Math.abs((best.total_units ?? 0) - m.total_units) ? c : best
+            );
+            method = 'road_addr'; byAddr++;
+          } else {
+            src = candidates[0]; method = 'road_addr'; byAddr++;
+          }
         }
       }
 
-      const update = {};
-      const hasMc = src.manage_cost && Object.keys(src.manage_cost).length > 0;
-      if (hasMc) update.manage_cost = src.manage_cost;
-      if (src.parking_total != null) update.parking_total = src.parking_total;
-      if (Object.keys(update).length === 0) { noMatch++; continue; }
+      // ── 전략 3: 좌표 근거리 + 이름 유사도 ────────────────────────────────
+      if (!src && m.lat && m.lng) {
+        const LAT_D = 0.0014, LNG_D = 0.0018; // ~150m
+        let bestSim = 0.3, bestA = null; // 최소 유사도 0.3
+        for (const a of aWithData) {
+          if (!a.lat || !a.lng) continue;
+          if (Math.abs(a.lat - m.lat) > LAT_D || Math.abs(a.lng - m.lng) > LNG_D) continue;
+          const dist = distanceM(m.lat, m.lng, a.lat, a.lng);
+          if (dist > 150) continue;
+          const sim = nameSimilarity(m.name, a.name);
+          if (sim > bestSim) { bestSim = sim; bestA = a; }
+        }
+        if (bestA) { src = bestA; method = 'geo'; byGeo++; }
+      }
 
+      if (!src) { noMatch++; continue; }
+
+      // 복사할 필드 추출
+      const update = {};
+      for (const f of COPY_FIELDS) {
+        if (src[f] == null) continue;
+        if (f === 'manage_cost' && (!src[f] || Object.keys(src[f]).length === 0)) continue;
+        if (f === 'unit_types' && (!Array.isArray(src[f]) || src[f].length === 0)) continue;
+        // built_year는 apt_trades 계산값이 더 정확할 수 있어서, 이미 있으면 스킵
+        if (f === 'built_year' && m.built_year) continue;
+        update[f] = src[f];
+      }
+      if (Object.keys(update).length === 0) { noMatch++; continue; }
       updates.push({ kapt_code: m.kapt_code, update });
-      matched++;
     }
 
     for (const { kapt_code, update } of updates) {
-      const { error } = await supabase
-        .from('apartment_complexes')
-        .update(update)
-        .eq('kapt_code', kapt_code);
+      const { error } = await sb.from('apartment_complexes').update(update).eq('kapt_code', kapt_code);
       if (error) console.error(`\n⚠️  ${kapt_code}:`, error.message);
       else updated++;
     }
 
     process.stdout.write(
-      `\r  진행: ${Math.min(i + BATCH, mComplexes.length)}/${mComplexes.length} | 매칭: ${matched} | 미매칭: ${noMatch} | 업데이트: ${updated}`
-        .padEnd(100).slice(0, 100)
+      `\r  [${Math.min(i + BATCH, mRows.length)}/${mRows.length}] 매칭: key=${byKey} addr=${byAddr} geo=${byGeo} | 미매칭: ${noMatch} | 업데이트: ${updated}`
     );
   }
 
   console.log('\n');
   console.log('🎉 완료!');
-  console.log(`   매칭 성공: ${matched.toLocaleString()} (중복주소 처리: ${ambiguous})`);
-  console.log(`   미매칭: ${noMatch.toLocaleString()}`);
-  console.log(`   DB 업데이트: ${updated.toLocaleString()}`);
+  console.log(`   molit_key 매칭: ${byKey}`);
+  console.log(`   road_address 매칭: ${byAddr}`);
+  console.log(`   좌표 근거리 매칭: ${byGeo}`);
+  console.log(`   미매칭: ${noMatch}`);
+  console.log(`   DB 업데이트: ${updated}`);
 }
 
 main().catch(e => { console.error('❌ 오류:', e); process.exit(1); });
