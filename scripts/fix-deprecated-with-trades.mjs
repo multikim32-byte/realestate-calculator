@@ -18,8 +18,10 @@ config({ path: resolve(__dirname, '../.env.local') });
 
 const sb  = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const DRY = !process.argv.includes('--confirm');
+const SKIP_TYPE1 = process.argv.includes('--skip-type1');
 
 if (DRY) console.log('🔍 DRY-RUN (--confirm 없음)\n');
+if (SKIP_TYPE1) console.log('⏭️  유형1 스킵\n');
 
 async function fetchAll(baseQuery) {
   const rows = [];
@@ -53,25 +55,22 @@ async function getTradeNamesForLawd(lawd) {
   return names;
 }
 
-// lawd_cd에 해당하는 apt_name → exclusive_area Set 조회
-async function getTradeAreasForLawd(lawd) {
-  const areasMap = new Map(); // apt_name → Set<area>
+// 특정 단지(lawd+name)의 거래 면적 Set 조회 (단지별 개별 쿼리, statement timeout 방지)
+async function getDistinctAreasForApt(lawd, aptName) {
+  const areas = new Set();
   let from = 0;
   while (true) {
     const { data } = await sb.from('apt_trades')
-      .select('apt_name, exclusive_area')
+      .select('exclusive_area')
       .eq('lawd_cd', lawd)
-      .order('apt_name')
+      .eq('apt_name', aptName)
       .range(from, from + 999);
     if (!data?.length) break;
-    for (const t of data) {
-      if (!areasMap.has(t.apt_name)) areasMap.set(t.apt_name, new Set());
-      areasMap.get(t.apt_name).add(Math.round(t.exclusive_area * 100) / 100);
-    }
+    for (const t of data) areas.add(Math.round(t.exclusive_area * 100) / 100);
     if (data.length < 1000) break;
     from += 1000;
   }
-  return areasMap;
+  return areas;
 }
 
 // 이름 유사도 (bigram)
@@ -157,77 +156,91 @@ async function fixType1() {
   return toRestore;
 }
 
+// Haversine 거리 (미터)
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371000, d2r = Math.PI / 180;
+  const dLat = (lat2 - lat1) * d2r, dLng = (lng2 - lng1) * d2r;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*d2r) * Math.cos(lat2*d2r) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
 // ── 유형2 ─────────────────────────────────────────────────────────────────────
 async function fixType2() {
-  console.log('\n【유형2】 unit_types 재분배\n');
+  console.log('\n【유형2】 unit_types 재분배 (좌표+이름 매칭)\n');
 
-  // unit_types 없는 active 단지
-  const noUT = await fetchAll(
+  // active 전체 조회 → JS 필터 (unit_types is null 서버 필터가 statement timeout 유발)
+  process.stdout.write('  active 단지 전체 조회...');
+  const allActive = await fetchAll(
     sb.from('apartment_complexes')
-      .select('kapt_code, name, molit_key, total_units')
+      .select('kapt_code, name, lat, lng, molit_key, total_units')
       .eq('source', 'molit')
-      .is('unit_types', null)
-      .not('molit_key', 'is', null)
   );
-  console.log(`  unit_types 없는 active 단지: ${noUT.length}개`);
+  const noUT = allActive.filter(r => !r.lat || !r.molit_key ? false : true)
+    .filter(r => {
+      // unit_types는 select에서 제외했으므로 별도 확인 필요 없음 - 이미 noUT 목록임
+      return true;
+    });
+  // unit_types가 null인지는 별도로 확인
+  const { data: noUTCodes } = await sb.from('apartment_complexes')
+    .select('kapt_code').eq('source','molit').is('unit_types', null)
+    .not('molit_key','is',null).range(0, 999);
+  // 3페이지 이내이므로 한번에
+  let noUTSet = new Set(noUTCodes?.map(r => r.kapt_code) ?? []);
+  let from2 = 1000;
+  while (noUTCodes?.length >= 1000) {
+    const { data: more } = await sb.from('apartment_complexes')
+      .select('kapt_code').eq('source','molit').is('unit_types', null)
+      .not('molit_key','is',null).range(from2, from2+999);
+    if (!more?.length) break;
+    for (const r of more) noUTSet.add(r.kapt_code);
+    if (more.length < 1000) break;
+    from2 += 1000;
+  }
 
-  // deprecated 단지 unit_types 인덱스 (lawd_cd 기준)
-  const depUT = await fetchAll(
+  const candidates = allActive.filter(r => noUTSet.has(r.kapt_code) && r.lat && r.molit_key);
+  console.log(` ${candidates.length}개\n`);
+
+  // deprecated unit_types 있는 단지 전체 조회
+  process.stdout.write('  deprecated 단지 조회...');
+  const depAll = await fetchAll(
     sb.from('apartment_complexes')
-      .select('kapt_code, name, molit_key, total_units, unit_types')
+      .select('kapt_code, name, lat, lng, unit_types')
       .eq('source', 'kapt_deprecated')
-      .not('unit_types', 'is', null)
   );
-  const depByLawd = new Map();
-  for (const d of depUT) {
-    if (!d.molit_key) continue;
-    const [lawd] = d.molit_key.split('|');
-    if (!depByLawd.has(lawd)) depByLawd.set(lawd, []);
-    depByLawd.get(lawd).push(d);
-  }
-  console.log(`  deprecated (unit_types 있음): ${depUT.length}개 (${depByLawd.size}개 lawd_cd)`);
-
-  // noUT를 lawd_cd로 그룹핑 (deprecated 단지 있는 lawd만)
-  const noUTbyLawd = new Map();
-  for (const m of noUT) {
-    const [lawd] = m.molit_key.split('|');
-    if (!depByLawd.has(lawd)) continue;
-    if (!noUTbyLawd.has(lawd)) noUTbyLawd.set(lawd, []);
-    noUTbyLawd.get(lawd).push(m);
-  }
-  console.log(`  매칭 가능 lawd_cd: ${noUTbyLawd.size}개\n`);
+  const depUT = depAll.filter(r => r.unit_types && r.lat);
+  console.log(` ${depUT.length}개 (좌표+unit_types)\n`);
 
   const updates = [];
   let checked = 0;
-  for (const [lawd, mList] of noUTbyLawd) {
-    const depCandidates = depByLawd.get(lawd) ?? [];
-    // 해당 lawd_cd의 apt_trades 면적 인덱스 (apt_name → Set<area>)
-    const areasMap = await getTradeAreasForLawd(lawd);
+  for (const m of candidates) {
+    const [lawd, aptName] = m.molit_key.split('|');
 
-    for (const m of mList) {
-      const [, aptName] = m.molit_key.split('|');
-      const myAreas = areasMap.get(aptName);
-      if (!myAreas?.size) continue;
+    // 좌표 1km 이내 + 이름 완전 일치 (다른 차수 단지 오매칭 방지)
+    const normM = normName(m.name);
+    const depCandidates = depUT.filter(d =>
+      haversine(m.lat, m.lng, d.lat, d.lng) < 1000 &&
+      normName(d.name) === normM
+    );
+    if (!depCandidates.length) { checked++; continue; }
 
-      // deprecated 단지의 unit_types에서 내 거래 면적과 겹치는 타입 찾기
-      // 이름 유사도 0.25 이상인 경우만 허용 (전혀 다른 단지 오매칭 방지)
-      let matchedTypes = [];
-      let bestDepName = '';
-      for (const dep of depCandidates) {
-        const sim = nameSimilarity(m.name, dep.name);
-        if (sim < 0.25) continue; // 이름 유사도 최소 기준
-        const utArr = Array.isArray(dep.unit_types) ? dep.unit_types : [];
-        const matched = utArr.filter(u => {
-          const ua = Math.round((u.exclusive_area ?? 0) * 100) / 100;
-          return [...myAreas].some(ta => Math.abs(ta - ua) <= 0.5);
-        });
-        if (matched.length > matchedTypes.length) {
-          matchedTypes = matched;
-          bestDepName = dep.name;
-        }
+    // 거래 면적으로 unit_types 매칭
+    const myAreas = await getDistinctAreasForApt(lawd, aptName);
+    if (!myAreas?.size) { checked++; continue; }
+
+    let matchedTypes = [], bestDepName = '';
+    for (const dep of depCandidates) {
+      const utArr = Array.isArray(dep.unit_types) ? dep.unit_types : [];
+      const matched = utArr.filter(u => {
+        const ua = Math.round((u.exclusive_area ?? 0) * 100) / 100;
+        return [...myAreas].some(ta => Math.abs(ta - ua) <= 0.5);
+      });
+      if (matched.length > matchedTypes.length) {
+        matchedTypes = matched;
+        bestDepName = dep.name;
       }
+    }
 
-      if (!matchedTypes.length) continue;
+    if (matchedTypes.length) {
       const unitCount = matchedTypes.reduce((s, u) => s + (u.count ?? 0), 0);
       updates.push({
         kapt_code: m.kapt_code,
@@ -238,7 +251,7 @@ async function fixType2() {
       });
     }
     checked++;
-    process.stdout.write(`\r  처리: ${checked}/${noUTbyLawd.size} lawd_cd (재분배: ${updates.length})`);
+    process.stdout.write(`\r  처리: ${checked}/${candidates.length}개 (재분배: ${updates.length})`);
   }
   console.log(`\n\n재분배 가능: ${updates.length}개\n`);
 
@@ -272,7 +285,7 @@ async function main() {
   console.log(`  모드: ${DRY ? 'DRY-RUN' : '실제 실행'}`);
   console.log('══════════════════════════════════════════════════════\n');
 
-  const restored = await fixType1();
+  const restored = SKIP_TYPE1 ? [] : await fixType1();
   const redistributed = await fixType2();
 
   console.log('\n══════════════════════════════════════════════════════');
