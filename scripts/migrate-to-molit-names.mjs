@@ -34,6 +34,18 @@ const limitArg = parseInt(args.find(a => a.startsWith('--limit='))?.replace('--l
 
 const runPhase = (n) => !phaseArg || phaseArg === String(n);
 
+// ── 이름 정규화 (build-molit-complexes.mjs와 동일) ───────────────────────────
+const BRAND_NORM = [
+  [/^lg/i, '엘지'], [/^gs/i, '지에스'], [/^sk/i, '에스케이'],
+  [/^kcc/i, '케이씨씨'], [/^hdc/i, '에이치디씨'], [/^dl/i, '디엘'],
+  [/^e편한세상/, '이편한세상'], [/^eg/i, '이지'],
+];
+function normName(s) {
+  let n = (s ?? '').replace(/아파트$/, '').replace(/\s+/g, '').toLowerCase();
+  for (const [pat, rep] of BRAND_NORM) n = n.replace(pat, rep);
+  return n;
+}
+
 // ── kapt_addr에서 지번 추출 ───────────────────────────────────────────────────
 // 예: "경상남도 창원성산구 대원동 80 대원대동2차" → { dong: "대원동", jibun: "80" }
 // 예: "서울특별시 강남구 개포동 660-1 단지명" → { dong: "개포동", jibun: "660-1" }
@@ -97,130 +109,160 @@ async function phase1() {
   return list.length;
 }
 
-// ── Phase 2: molit_key 없는 A-prefix → jibun 매칭 ───────────────────────────
-async function phase2() {
-  console.log('\n━━━ Phase 2: kapt_addr 지번으로 molit_key + 이름 매칭 ━━━\n');
+// ── Phase 2: molit_key 없는 A-prefix → lat/lng 근접 + 이름 유사도 매칭 ─────────
+// 이전 jibun 매칭 방식은 K-apt와 MOLIT의 지번 체계 불일치로 효과 없었음.
+// 대신: A-prefix의 lat/lng 기준 150m 이내 M-prefix 중 이름이 가장 유사한 것을 매칭.
 
-  // molit_key 없는 A-prefix with kapt_addr
-  const rows = [];
+// 위도 1도 ≈ 111km, 경도 1도 ≈ 88km (한국 기준)
+const LAT_DEG_PER_M = 1 / 111000;
+const LNG_DEG_PER_M = 1 / 88000;
+const RADIUS_M = 150;
+
+function distanceM(lat1, lng1, lat2, lng2) {
+  const dlat = (lat1 - lat2) / LAT_DEG_PER_M;
+  const dlng = (lng1 - lng2) / LNG_DEG_PER_M;
+  return Math.sqrt(dlat * dlat + dlng * dlng);
+}
+
+// 이름 유사도: 정규화 후 공통 문자 비율
+function nameSimilarity(a, b) {
+  const na = normName(a), nb = normName(b);
+  if (na === nb) return 1;
+  if (na.includes(nb) || nb.includes(na)) return 0.9;
+  // 공통 앞4글자
+  if (na.length >= 4 && nb.length >= 4 && na.slice(0, 4) === nb.slice(0, 4)) return 0.8;
+  // bigram overlap
+  const bigrams = s => new Set(Array.from({ length: s.length - 1 }, (_, i) => s.slice(i, i + 2)));
+  const ba = bigrams(na), bb = bigrams(nb);
+  if (!ba.size || !bb.size) return 0;
+  const inter = [...ba].filter(b => bb.has(b)).length;
+  return (2 * inter) / (ba.size + bb.size);
+}
+
+async function phase2() {
+  console.log('\n━━━ Phase 2: lat/lng 근접(150m) + 이름 유사도 molit_key 매칭 ━━━\n');
+
+  // ── A-prefix: molit_key 없음 + lat/lng 있음 ─────────────────────────────────
+  const aRows = [];
   let from = 0;
   while (true) {
-    const { data, error } = await sb.from('apartment_complexes')
-      .select('kapt_code, name, kapt_addr, sigungu, sido')
+    const { data } = await sb.from('apartment_complexes')
+      .select('kapt_code, name, sigungu, lat, lng')
       .like('kapt_code', 'A%')
       .is('molit_key', null)
-      .not('kapt_addr', 'is', null)
-      .order('kapt_code')
+      .not('lat', 'is', null)
       .range(from, from + 999);
-    if (error || !data?.length) break;
-    rows.push(...data);
+    if (!data?.length) break;
+    aRows.push(...data);
     from += 1000;
     if (data.length < 1000) break;
   }
-  console.log(`대상: ${rows.length.toLocaleString()}개`);
+  console.log(`A-prefix 대상: ${aRows.length.toLocaleString()}개`);
 
-  // lawd_cd 룩업: sigungu → lawd_cd[] (기존 molit_key에서 추출)
-  console.log('lawd_cd 룩업 테이블 구축 중...');
-  const { data: molitKeys } = await sb.from('apartment_complexes')
-    .select('sigungu, molit_key')
-    .not('molit_key', 'is', null)
-    .limit(5000);
-
-  const lawdMap = new Map(); // sigungu → Set<lawd_cd>
-  for (const r of molitKeys ?? []) {
-    const lawd = r.molit_key?.split('|')[0];
-    if (!lawd || !r.sigungu) continue;
-    if (!lawdMap.has(r.sigungu)) lawdMap.set(r.sigungu, new Set());
-    lawdMap.get(r.sigungu).add(lawd);
+  // ── M-prefix: molit_key + lat/lng 있음 → 시군구별 인덱스 ────────────────────
+  console.log('M-prefix 인덱스 구축 중...');
+  const mRows = [];
+  from = 0;
+  while (true) {
+    const { data } = await sb.from('apartment_complexes')
+      .select('kapt_code, name, molit_key, sigungu, lat, lng')
+      .like('kapt_code', 'M%')
+      .not('molit_key', 'is', null)
+      .not('lat', 'is', null)
+      .neq('source', 'kapt_deprecated')
+      .range(from, from + 999);
+    if (!data?.length) break;
+    mRows.push(...data);
+    from += 1000;
+    if (data.length < 1000) break;
   }
-  console.log(`lawd_cd 룩업: ${lawdMap.size}개 시군구\n`);
 
-  const list = limitArg ? rows.slice(0, limitArg) : rows;
+  // 시군구별 그룹화
+  const mBySigungu = new Map();
+  for (const m of mRows) {
+    if (!mBySigungu.has(m.sigungu)) mBySigungu.set(m.sigungu, []);
+    mBySigungu.get(m.sigungu).push(m);
+  }
+  console.log(`M-prefix: ${mRows.length.toLocaleString()}개, ${mBySigungu.size}개 시군구\n`);
 
-  let matched = 0, ambiguous = 0, noMatch = 0;
+  const list = limitArg ? aRows.slice(0, limitArg) : aRows;
+  let matched = 0, ambiguous = 0, noNearby = 0;
   const updates = [];
 
   for (let i = 0; i < list.length; i++) {
-    const r = list[i];
-    const parsed = parseKaptAddr(r.kapt_addr);
-    if (!parsed) { noMatch++; continue; }
+    const a = list[i];
+    const candidates = mBySigungu.get(a.sigungu) ?? [];
 
-    const lawdSet = lawdMap.get(r.sigungu);
-    if (!lawdSet?.size) { noMatch++; continue; }
+    // 150m 이내 M-prefix 후보
+    const nearby = candidates
+      .map(m => ({ ...m, dist: distanceM(a.lat, a.lng, m.lat, m.lng) }))
+      .filter(m => m.dist <= RADIUS_M)
+      .sort((x, y) => x.dist - y.dist);
 
-    const lawdCds = [...lawdSet];
+    if (!nearby.length) { noNearby++; continue; }
 
-    // apt_trades에서 같은 지번 찾기
-    let tradeMatches = null;
-    for (const lawd of lawdCds) {
-      const { data } = await sb.from('apt_trades')
-        .select('apt_name, lawd_cd, dong')
-        .eq('lawd_cd', lawd)
-        .eq('jibun', parsed.jibun)
-        .eq('deal_type', 'T')
-        .gte('deal_ym', '202001')
-        .limit(20);
-      if (data?.length) {
-        tradeMatches = data;
-        break;
-      }
+    // 이름 유사도 계산
+    const scored = nearby.map(m => ({ ...m, sim: nameSimilarity(a.name, m.name) }));
+    const best   = scored.reduce((a, b) => b.sim > a.sim ? b : a);
+
+    if (best.sim < 0.5) { noNearby++; continue; }
+
+    // 유사도 top과 2위의 차이가 작으면 ambiguous
+    const sorted = [...scored].sort((x, y) => y.sim - x.sim);
+    if (sorted.length > 1 && sorted[0].sim - sorted[1].sim < 0.15) {
+      ambiguous++;
+      continue;
     }
 
-    if (!tradeMatches?.length) { noMatch++; continue; }
+    const nameChanged = a.name !== best.name;
+    updates.push({
+      kapt_code:  a.kapt_code,
+      molit_key:  best.molit_key,
+      newName:    best.name,
+      nameChanged,
+      oldName:    a.name,
+      dist:       Math.round(best.dist),
+      sim:        best.sim.toFixed(2),
+    });
+    matched++;
 
-    // 고유 apt_name 추출
-    const uniqNames = [...new Set(tradeMatches.map(t => t.apt_name))];
-
-    let chosenName = null;
-    let chosenLawd = null;
-
-    if (uniqNames.length === 1) {
-      chosenName = uniqNames[0];
-      chosenLawd = tradeMatches[0].lawd_cd;
-      matched++;
-    } else {
-      // 여러 이름 → 정규화 유사도로 선택
-      const norm = s => (s||'').replace(/[\s아파트]/g,'').toLowerCase();
-      const baseNorm = norm(r.name);
-      const best = uniqNames.find(n => norm(n) === baseNorm)
-        ?? uniqNames.find(n => norm(n).includes(baseNorm.slice(0,4)) || baseNorm.includes(norm(n).slice(0,4)));
-      if (best) {
-        chosenName = best;
-        chosenLawd = tradeMatches.find(t => t.apt_name === best)?.lawd_cd;
-        matched++;
-      } else {
-        ambiguous++;
-        continue;
-      }
-    }
-
-    const newMolitKey = `${chosenLawd}|${chosenName}`;
-    const nameChanged = r.name !== chosenName;
-    updates.push({ kapt_code: r.kapt_code, molit_key: newMolitKey, newName: chosenName, nameChanged, oldName: r.name });
-
-    if ((i + 1) % 50 === 0) {
-      process.stdout.write(`\r  진행: ${i+1}/${list.length} | 매칭: ${matched} | 중복: ${ambiguous} | 미매칭: ${noMatch}`);
+    if ((i + 1) % 200 === 0) {
+      process.stdout.write(`\r  진행: ${i+1}/${list.length} | 매칭: ${matched} | 근처없음: ${noNearby} | 모호: ${ambiguous}`);
     }
   }
-  console.log(`\r  진행: ${list.length}/${list.length} | 매칭: ${matched} | 중복: ${ambiguous} | 미매칭: ${noMatch}`);
+  console.log(`\r  진행: ${list.length}/${list.length} | 매칭: ${matched} | 근처없음: ${noNearby} | 모호: ${ambiguous}`);
 
-  // DB 업데이트
+  if (dryRun && updates.length > 0) {
+    console.log('\nDRY-RUN 샘플 (거리·유사도 포함):');
+    updates.slice(0, 10).forEach(u =>
+      console.log(`  [${u.dist}m, sim=${u.sim}] "${u.oldName}" → molit_key=${u.molit_key}${u.nameChanged ? ` / 이름:"${u.newName}"` : ''}`)
+    );
+  }
+
   if (!dryRun && updates.length) {
     console.log(`\nDB 업데이트 중... (${updates.length}개)`);
-    let saved = 0;
+    let saved = 0, deprecated = 0;
     for (const u of updates) {
+      // molit_key가 M-prefix에 이미 있으면 먼저 deprecated 처리 (unique constraint 해소)
+      const { data: clash } = await sb.from('apartment_complexes')
+        .select('kapt_code')
+        .eq('molit_key', u.molit_key)
+        .like('kapt_code', 'M%')
+        .neq('source', 'kapt_deprecated')
+        .maybeSingle();
+      if (clash) {
+        await sb.from('apartment_complexes')
+          .update({ source: 'kapt_deprecated', molit_key: null })
+          .eq('kapt_code', clash.kapt_code);
+        deprecated++;
+      }
       const upd = { molit_key: u.molit_key };
       if (u.nameChanged) upd.name = u.newName;
       const { error } = await sb.from('apartment_complexes').update(upd).eq('kapt_code', u.kapt_code);
       if (!error) saved++;
       else console.error(`\n⚠️  ${u.kapt_code}:`, error.message);
     }
-    console.log(`✅ ${saved}개 업데이트 완료`);
-  } else if (dryRun && updates.length > 0) {
-    console.log('\nDRY-RUN 샘플:');
-    updates.slice(0, 5).forEach(u =>
-      console.log(`  "${u.oldName}" → molit_key=${u.molit_key}${u.nameChanged ? ` / 이름:"${u.newName}"` : ''}`)
-    );
+    console.log(`✅ ${saved}개 업데이트, M-prefix deprecated: ${deprecated}개`);
   }
 
   console.log(`✅ Phase 2 완료: ${matched}개 매칭${dryRun ? ' (DRY-RUN)' : ''}`);
