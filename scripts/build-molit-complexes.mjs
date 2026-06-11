@@ -119,30 +119,35 @@ async function fetchMolitComplexes() {
   let from = 0;
 
   process.stdout.write('apt_trades에서 단지 목록 추출 중...');
-  while (true) {
-    const { data, error } = await db
-      .from('apt_trades')
-      .select('lawd_cd, apt_name, dong, jibun, build_year')
-      .eq('deal_type', 'T')
-      .not('jibun', 'is', null)
-      .range(from, from + 999);
+  for (const dealType of ['T', 'N']) {
+    from = 0;
+    while (true) {
+      const { data, error } = await db
+        .from('apt_trades')
+        .select('lawd_cd, apt_name, dong, jibun, build_year, deal_type')
+        .eq('deal_type', dealType)
+        .not('jibun', 'is', null)
+        .range(from, from + 999);
 
-    if (error || !data?.length) break;
+      if (error || !data?.length) break;
 
-    for (const r of data) {
-      const k = molitKey(r.lawd_cd, r.apt_name);
-      if (!map.has(k)) {
-        map.set(k, { lawd_cd: r.lawd_cd, apt_name: r.apt_name, dong: r.dong, jibun: r.jibun, tradeCnt: 0, buildYears: [] });
+      for (const r of data) {
+        const k = molitKey(r.lawd_cd, r.apt_name);
+        if (!map.has(k)) {
+          map.set(k, { lawd_cd: r.lawd_cd, apt_name: r.apt_name, dong: r.dong, jibun: r.jibun, tradeCnt: 0, buildYears: [], isPresale: r.deal_type === 'N' });
+        }
+        const entry = map.get(k);
+        entry.tradeCnt++;
+        if (r.jibun && !entry.jibun) entry.jibun = r.jibun;
+        if (r.build_year > 1900) entry.buildYears.push(r.build_year);
+        // T 타입이 하나라도 있으면 분양권 전용 아님
+        if (r.deal_type === 'T') entry.isPresale = false;
       }
-      const entry = map.get(k);
-      entry.tradeCnt++;
-      if (r.jibun && !entry.jibun) entry.jibun = r.jibun;
-      if (r.build_year > 1900) entry.buildYears.push(r.build_year);
-    }
 
-    if (data.length < 1000) break;
-    from += 1000;
-    process.stdout.write('.');
+      if (data.length < 1000) break;
+      from += 1000;
+      process.stdout.write('.');
+    }
   }
   console.log(` ${map.size.toLocaleString()}개`);
   return [...map.values()];
