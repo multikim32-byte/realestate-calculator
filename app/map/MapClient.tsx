@@ -1362,7 +1362,7 @@ export default function MapClient({ unsoldListings }: Props) {
                                 </span>
                               </div>
                             )}
-                            {mc && (
+                            {mc && mc.ref_ym && (
                               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9ca3af' }}>
                                 <span>공용 {fmtWon(mc.per_unit_common)} · 사용 {fmtWon(mc.per_unit_usage)}{mc.per_unit_longterm > 0 ? ` · 장충 ${fmtWon(mc.per_unit_longterm)}` : ''}</span>
                                 <span>{mc.ref_ym.slice(0,4)}.{mc.ref_ym.slice(4)} 기준</span>
