@@ -116,7 +116,8 @@ async function phase1() {
 // 위도 1도 ≈ 111km, 경도 1도 ≈ 88km (한국 기준)
 const LAT_DEG_PER_M = 1 / 111000;
 const LNG_DEG_PER_M = 1 / 88000;
-const RADIUS_M = 150;
+const RADIUS_M        = 150; // 다수 후보 시 매칭 반경
+const RADIUS_SINGLE_M = 500; // 단일 후보 시 매칭 반경 (이름이 달라도 허용)
 
 function distanceM(lat1, lng1, lat2, lng2) {
   const dlat = (lat1 - lat2) / LAT_DEG_PER_M;
@@ -177,11 +178,13 @@ async function phase2() {
     if (data.length < 1000) break;
   }
 
-  // 시군구별 그룹화
+  // 시군구별 그룹화 (공백 제거 정규화: "안양 만안구" == "안양만안구")
+  const normSgg = s => (s ?? '').replace(/\s+/g, '');
   const mBySigungu = new Map();
   for (const m of mRows) {
-    if (!mBySigungu.has(m.sigungu)) mBySigungu.set(m.sigungu, []);
-    mBySigungu.get(m.sigungu).push(m);
+    const key = normSgg(m.sigungu);
+    if (!mBySigungu.has(key)) mBySigungu.set(key, []);
+    mBySigungu.get(key).push(m);
   }
   console.log(`M-prefix: ${mRows.length.toLocaleString()}개, ${mBySigungu.size}개 시군구\n`);
 
@@ -191,27 +194,32 @@ async function phase2() {
 
   for (let i = 0; i < list.length; i++) {
     const a = list[i];
-    const candidates = mBySigungu.get(a.sigungu) ?? [];
+    const candidates = mBySigungu.get(normSgg(a.sigungu)) ?? [];
 
-    // 150m 이내 M-prefix 후보
-    const nearby = candidates
+    // 500m 이내 전체 후보 (단일 여부 판단용)
+    const allNearby = candidates
       .map(m => ({ ...m, dist: distanceM(a.lat, a.lng, m.lat, m.lng) }))
-      .filter(m => m.dist <= RADIUS_M)
+      .filter(m => m.dist <= RADIUS_SINGLE_M)
       .sort((x, y) => x.dist - y.dist);
 
-    if (!nearby.length) { noNearby++; continue; }
+    if (!allNearby.length) { noNearby++; continue; }
 
-    // 이름 유사도 계산
-    const scored = nearby.map(m => ({ ...m, sim: nameSimilarity(a.name, m.name) }));
-    const best   = scored.reduce((a, b) => b.sim > a.sim ? b : a);
-
-    if (best.sim < 0.5) { noNearby++; continue; }
-
-    // 유사도 top과 2위의 차이가 작으면 ambiguous
-    const sorted = [...scored].sort((x, y) => y.sim - x.sim);
-    if (sorted.length > 1 && sorted[0].sim - sorted[1].sim < 0.15) {
-      ambiguous++;
-      continue;
+    let best;
+    if (allNearby.length === 1) {
+      // 500m 이내 단일 후보 → 근접 매칭
+      // 단, sim<0.2이고 100m 초과면 명백한 오매칭(차수분리, 다른 단지)이므로 스킵
+      const sim = nameSimilarity(a.name, allNearby[0].name);
+      if (sim < 0.2 && allNearby[0].dist > 100) { noNearby++; continue; }
+      best = { ...allNearby[0], sim };
+    } else {
+      // 다수 후보 → 150m 이내로 좁히고 이름 유사도 매칭
+      const nearby = allNearby.filter(m => m.dist <= RADIUS_M);
+      if (!nearby.length) { noNearby++; continue; }
+      const scored = nearby.map(m => ({ ...m, sim: nameSimilarity(a.name, m.name) }))
+                           .sort((x, y) => y.sim - x.sim);
+      if (scored[0].sim < 0.3) { noNearby++; continue; }
+      if (scored[1] && scored[0].sim - scored[1].sim < 0.15) { ambiguous++; continue; }
+      best = scored[0];
     }
 
     const nameChanged = a.name !== best.name;

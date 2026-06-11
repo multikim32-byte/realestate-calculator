@@ -15,9 +15,11 @@ function db() {
 
 function getLawdCode(sido: string, sigungu: string): string | null {
   const districts = LAWD_CODE_MAP[sido as keyof typeof LAWD_CODE_MAP] ?? [];
-  const exact = districts.find(d => d.name === sigungu);
+  const norm = (s: string) => s.replace(/\s+/g, '');
+  const ns = norm(sigungu);
+  const exact = districts.find(d => norm(d.name) === ns);
   if (exact) return exact.code;
-  const partial = districts.find(d => sigungu.includes(d.name) || d.name.includes(sigungu));
+  const partial = districts.find(d => { const nd = norm(d.name); return ns.includes(nd) || nd.includes(ns); });
   return partial?.code ?? null;
 }
 

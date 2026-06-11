@@ -15,9 +15,11 @@ function db() {
 
 function getLawdCode(sido: string, sigungu: string): string | null {
   const districts = LAWD_CODE_MAP[sido as keyof typeof LAWD_CODE_MAP] ?? [];
-  const exact = districts.find(d => d.name === sigungu);
+  const norm = (s: string) => s.replace(/\s+/g, '');
+  const ns = norm(sigungu);
+  const exact = districts.find(d => norm(d.name) === ns);
   if (exact) return exact.code;
-  const partial = districts.find(d => sigungu.includes(d.name) || d.name.includes(sigungu));
+  const partial = districts.find(d => { const nd = norm(d.name); return ns.includes(nd) || nd.includes(ns); });
   return partial?.code ?? null;
 }
 
@@ -93,20 +95,36 @@ export async function GET(req: NextRequest) {
   try {
     const supabase = db();
 
-    // kapt_code로 molit_key 조회 → 정확한 apt_name 매칭
+    // kapt_code로 molit_key + 좌표 조회 → 정확한 apt_name 매칭
     let molitAptName: string | null = null;
+    let molitAptNames: string[] | null = null; // 1:N 차수 분리 케이스
     let molitLawdCd = lawdCode;
 
     if (kaptCode) {
       const { data: cx } = await supabase
         .from('apartment_complexes')
-        .select('molit_key')
+        .select('molit_key, lat, lng')
         .eq('kapt_code', kaptCode)
         .maybeSingle();
       if (cx?.molit_key) {
         const [lc, an] = cx.molit_key.split('|');
         molitLawdCd = lc;
         molitAptName = an;
+      } else if (cx?.lat && cx?.lng) {
+        // molit_key 없으면 근처 M-prefix의 apt_name으로 OR 매칭
+        // (차수 분리, 이름 불일치 케이스 모두 처리)
+        const LAT_D = 0.005, LNG_D = 0.006; // ≈500m bbox
+        const { data: nearby } = await supabase
+          .from('apartment_complexes')
+          .select('molit_key')
+          .like('kapt_code', 'M%')
+          .not('molit_key', 'is', null)
+          .neq('source', 'kapt_deprecated')
+          .gte('lat', cx.lat - LAT_D).lte('lat', cx.lat + LAT_D)
+          .gte('lng', cx.lng - LNG_D).lte('lng', cx.lng + LNG_D);
+        if (nearby?.length) {
+          molitAptNames = nearby.map(m => (m.molit_key as string).split('|')[1]).filter(Boolean);
+        }
       }
     }
 
@@ -121,12 +139,14 @@ export async function GET(req: NextRequest) {
 
     if (molitAptName) {
       query = query.eq('apt_name', molitAptName) as typeof query;
+    } else if (molitAptNames?.length) {
+      query = query.in('apt_name', molitAptNames) as typeof query;
     }
 
     const { data, error } = await query;
 
     if (!error && data) {
-      const matched = molitAptName
+      const matched = (molitAptName || molitAptNames?.length)
         ? data
         : data.filter(t => matchName(t.apt_name ?? '', name));
 

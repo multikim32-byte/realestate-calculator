@@ -30,7 +30,8 @@ if (!SB_URL || !SB_KEY) {
 
 const db    = createClient(SB_URL, SB_KEY);
 const force = process.argv.includes('--force');
-const MONTHS = 12;
+const MONTHS      = 12; // 1차: 최근 12개월
+const MONTHS_LONG = 24; // 폴백: 최근 24개월 (12개월 거래 없는 단지용)
 
 // ── 최근 N개월 YYYYMM 목록 ────────────────────────────────────────────────────
 function recentYMs(n) {
@@ -100,14 +101,18 @@ const { LAWD_CODE_MAP } = await import('./lawd-codes.mjs');
 
 function getLawdCode(sido, sigungu) {
   const list = LAWD_CODE_MAP[sido] ?? [];
-  return (list.find(d => d.name === sigungu) ?? list.find(d => sigungu.includes(d.name) || d.name.includes(sigungu)))?.code ?? null;
+  const norm = s => s.replace(/\s+/g, '');
+  const ns = norm(sigungu);
+  return (list.find(d => norm(d.name) === ns) ?? list.find(d => { const nd = norm(d.name); return ns.includes(nd) || nd.includes(ns); }))?.code ?? null;
 }
 
 // ── 메인 ──────────────────────────────────────────────────────────────────────
 async function main() {
-  const yms     = recentYMs(MONTHS);
-  const fromYm  = yms[yms.length - 1];
-  console.log(`💰 단지 실거래가 보강 시작 (apt_trades 기반, 최근 ${MONTHS}개월: ${fromYm}~)`);
+  const yms      = recentYMs(MONTHS);
+  const fromYm   = yms[yms.length - 1];
+  const ymsLong  = recentYMs(MONTHS_LONG);
+  const fromYmL  = ymsLong[ymsLong.length - 1];
+  console.log(`💰 단지 실거래가 보강 시작 (apt_trades 기반, 최근 ${MONTHS}개월: ${fromYm}~ / 폴백 ${MONTHS_LONG}개월: ${fromYmL}~)`);
   console.log(`   모드: ${force ? '전체 재계산' : '미보강 단지만'}\n`);
 
   // 1. 보강 대상 단지 로드
@@ -147,21 +152,24 @@ async function main() {
   for (const [lawdCd, group] of groups) {
     process.stdout.write(`\r  [${++groupDone}/${totalGroups}] lawd_cd=${lawdCd} (${group.length}개 단지)`.padEnd(60));
 
-    // apt_trades에서 이 시군구 최근 6개월 매매 전체 로드
+    // apt_trades에서 이 시군구 최근 24개월 매매 전체 로드 (12개월 + 폴백용)
     const { data: trades, error } = await db
       .from('apt_trades')
-      .select('apt_name, exclusive_area, price, build_year')
+      .select('apt_name, exclusive_area, price, build_year, deal_ym')
       .eq('lawd_cd', lawdCd)
       .eq('deal_type', 'T')
-      .gte('deal_ym', fromYm)
+      .gte('deal_ym', fromYmL)
       .not('price', 'is', null);
 
     if (error || !trades?.length) { skipped += group.length; continue; }
 
-    // 단지별 이름 매칭 + 통계
+    const trades12 = trades.filter(t => t.deal_ym >= fromYm);
+
+    // 단지별 이름 매칭 + 통계 (12개월 우선, 없으면 24개월 폴백)
     for (const c of group) {
-      const matched = trades.filter(t => matchName(t.apt_name, c.name));
-      const stats   = calcStats(matched);
+      const matched12 = trades12.filter(t => matchName(t.apt_name, c.name));
+      const matched24 = matched12.length ? matched12 : trades.filter(t => matchName(t.apt_name, c.name));
+      const stats     = calcStats(matched24);
       if (stats) { updates.push({ kapt_code: c.kapt_code, ...stats }); enriched++; }
       else skipped++;
     }
