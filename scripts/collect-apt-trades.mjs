@@ -81,10 +81,15 @@ console.log(`기간: ${fromYm} ~ ${toYm} (${months.length}개월)`);
 
 const { LAWD_CODE_MAP } = await import('./lawd-codes.mjs');
 
+const filterLawd = argMap['lawd']?.split(','); // 특정 시군구 코드만 (쉼표 구분)
+
 const districts = [];
 for (const [sido, list] of Object.entries(LAWD_CODE_MAP)) {
   if (filterSido && sido !== filterSido) continue;
-  for (const d of list) districts.push({ sido, ...d });
+  for (const d of list) {
+    if (filterLawd && !filterLawd.includes(d.code)) continue;
+    districts.push({ sido, ...d });
+  }
 }
 console.log(`수집 대상: ${districts.length}개 시군구 × ${months.length}개월`);
 console.log(`유형: ${[collectT&&'매매', collectJ&&'전세', collectW&&'월세', collectN&&'분양권/입주권'].filter(Boolean).join('/')}`);
