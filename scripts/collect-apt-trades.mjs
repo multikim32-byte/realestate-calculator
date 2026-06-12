@@ -127,12 +127,13 @@ async function fetchTrades(url, lawdCd, dealYmd, dealType) {
         const buildYear = parseInt(byStr) || null;
         const jibun     = getTag(block, 'jibun')?.trim() || null;
         const aptSeq    = getTag(block, 'aptSeq')?.trim() || null;  // MOLIT 단지 일련번호 (예: 11110-2339)
+        const aptDong   = getTag(block, 'aptDong')?.trim() || null; // 건물 동 (예: 202동) — 매매/분양권만 제공
 
         if (dealType === 'T' || dealType === 'N') {
           const priceStr = getTag(block, 'dealAmount') || getTag(block, 'deal_amount') || '0';
           const price    = parseInt(priceStr.replace(/,/g,'')) || null;
           if (!price) continue;
-          rows.push({ lawd_cd: lawdCd, apt_name: aptName, dong, exclusive_area: excl, floor, price, monthly_rent: null, deal_ym: dealYmd, deal_day: dealDay, build_year: buildYear, deal_type: dealType, jibun, apt_seq: aptSeq });
+          rows.push({ lawd_cd: lawdCd, apt_name: aptName, dong, exclusive_area: excl, floor, price, monthly_rent: null, deal_ym: dealYmd, deal_day: dealDay, build_year: buildYear, deal_type: dealType, jibun, apt_seq: aptSeq, apt_dong: aptDong });
 
         } else {
           const deposit = parseInt((getTag(block, 'deposit') || '0').replace(/,/g,'')) || 0;

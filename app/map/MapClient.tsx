@@ -265,7 +265,7 @@ export default function MapClient({ unsoldListings }: Props) {
     dong: string; buyerGbn: string; slerGbn: string;
     dealingGbn: string; agentSgg: string;
     rgstDate: string; cdealType: string; cdealDay: string;
-    presale?: boolean;
+    presale?: boolean; aptDong?: string;
   }> | null>(null);
   const [complexRents, setComplexRents]   = useState<Array<{ date: string; area: number; floor: number; deposit: number; monthly: number; contractType: string; contractEnd: string; useRRRight: string; preDeposit: number; preMonthly: number }> | null>(null);
   const [complexBuildYear, setComplexBuildYear] = useState<number | null>(null);
@@ -1277,7 +1277,7 @@ export default function MapClient({ unsoldListings }: Props) {
                                     dong?: string; buyerGbn?: string; slerGbn?: string;
                                     rgstDate?: string; cdealType?: string; cdealDay?: string;
                                     contractType?: string; contractEnd?: string;
-                                    presale?: boolean;
+                                    presale?: boolean; aptDong?: string;
                                   };
                                   const isCancelled = !!tr.cdealType;
                                   return (
@@ -1289,7 +1289,7 @@ export default function MapClient({ unsoldListings }: Props) {
                                         {isCancelled && <div style={{ fontSize: 9, color: '#dc2626' }}>해제 {tr.cdealDay}</div>}
                                       </td>
                                       <td style={{ padding: '5px 0', textAlign: 'right', color: '#6b7280', verticalAlign: 'top' }}>
-                                        {tr.dong ? `${tr.dong} ` : ''}{t.floor}층
+                                        {tr.aptDong ? `${tr.aptDong} ` : ''}{t.floor}층
                                       </td>
                                       <td style={{ padding: '5px 0', textAlign: 'right', fontWeight: 700, color: '#1e293b', verticalAlign: 'top' }}>
                                         {priceCell}
