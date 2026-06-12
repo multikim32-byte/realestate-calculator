@@ -61,20 +61,24 @@ function makeSlug(sido, sigungu, name) {
   return `${norm(sidoAbbr)}-${norm(sigungu)}-${norm(name)}`;
 }
 
-// M-prefix + molit_key + 좌표 있는 단지 전체
+// M-prefix 단지 전체 (PK 인덱스 쿼리만 사용 — 복합 필터는 statement timeout 유발, JS에서 필터)
 const rows = [];
 let from = 0;
 while (true) {
-  const { data, error } = await sb.from('apartment_complexes')
-    .select('kapt_code, name, sido, sigungu, lat, lng, molit_key')
-    .like('kapt_code', 'M%')
-    .eq('source', 'molit')
-    .not('lat', 'is', null)
-    .order('kapt_code')
-    .range(from, from + 999);
-  if (error) { console.error(error.message); break; }
-  if (!data?.length) break;
-  rows.push(...data);
+  let data = null, lastErr = null;
+  for (let retry = 0; retry < 3; retry++) {
+    const r = await sb.from('apartment_complexes')
+      .select('kapt_code, name, sido, sigungu, lat, lng, molit_key, source')
+      .like('kapt_code', 'M%')
+      .order('kapt_code')
+      .range(from, from + 999);
+    if (!r.error) { data = r.data; break; }
+    lastErr = r.error;
+    await sleep(2000);
+  }
+  if (!data) { console.error('조회 실패:', lastErr?.message); break; }
+  if (!data.length) break;
+  rows.push(...data.filter(r => r.source === 'molit' && r.lat != null));
   if (data.length < 1000) break;
   from += 1000;
 }
