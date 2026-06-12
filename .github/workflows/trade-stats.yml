@@ -20,8 +20,8 @@ jobs:
           node-version: '24'
       - run: npm ci --ignore-scripts
 
-      - name: 매매·전세 최근 2개월 수집
-        run: node scripts/collect-apt-trades.mjs --type=T,J --months=2
+      - name: 매매·전세·월세 최근 2개월 수집
+        run: node scripts/collect-apt-trades.mjs --type=T,J,W --months=2
         env:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
