@@ -86,9 +86,9 @@ export async function GET(req: NextRequest) {
 
     let query = supabase
       .from('apt_trades')
-      .select('deal_ym, deal_day, exclusive_area, price, floor, dong, apt_name')
+      .select('deal_ym, deal_day, exclusive_area, price, floor, dong, apt_name, deal_type')
       .eq('lawd_cd', molitLawdCd)
-      .eq('deal_type', 'T')
+      .in('deal_type', ['T', 'N']) // N = 분양권/입주권 — 신축 단지는 매매 전 유일한 거래
       .gte('deal_ym', fromYm)
       .order('deal_ym', { ascending: false })
       .limit(3000);
@@ -114,6 +114,7 @@ export async function GET(req: NextRequest) {
       price: t.price,
       floor: t.floor ?? 0,
       dong: t.dong ?? '',
+      presale: t.deal_type === 'N',
     }));
     trades.sort((a, b) => b.date.localeCompare(a.date));
     return NextResponse.json({ trades }, {

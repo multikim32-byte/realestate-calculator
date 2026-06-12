@@ -54,7 +54,7 @@ type Complex = {
 };
 type NearbyItem = { name: string; distance: number; address?: string; category?: string; label?: string };
 type SchoolItem = NearbyItem & { school_type: string };
-type Trade = { date: string; area: number; price: number; floor: number; dong?: string; buyerGbn?: string; slerGbn?: string; dealingGbn?: string; agentSgg?: string; rgstDate?: string; cdealType?: string; cdealDay?: string; };
+type Trade = { date: string; area: number; price: number; floor: number; dong?: string; buyerGbn?: string; slerGbn?: string; dealingGbn?: string; agentSgg?: string; rgstDate?: string; cdealType?: string; cdealDay?: string; presale?: boolean; };
 type RentTrade = { date: string; area: number; floor: number; deposit: number; monthly: number; contractType: string; contractEnd: string; useRRRight: string; preDeposit: number; preMonthly: number; };
 
 const AREA_COLORS = ['#2563eb', '#16a34a', '#dc2626', '#9333ea', '#f59e0b', '#06b6d4'];
@@ -526,6 +526,7 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
                           <tr key={i} style={{ borderBottom: '1px solid #f8fafc', opacity: isCancelled ? 0.45 : 1 }}>
                             <td style={{ padding: '7px 8px', color: '#6b7280', verticalAlign: 'top' }}>
                               {t.date.slice(2).replace(/-/g, '.')}
+                              {tr.presale && <div><span style={{ fontSize: 9, fontWeight: 700, color: '#7c3aed', background: '#ede9fe', padding: '1px 4px', borderRadius: 4 }}>분양권</span></div>}
                               {isCancelled && <div style={{ fontSize: 9, color: '#dc2626' }}>해제</div>}
                             </td>
                             <td style={{ padding: '7px 8px', color: '#6b7280', verticalAlign: 'top' }}>

@@ -159,9 +159,9 @@ async function main() {
     while (true) {
       const { data, error } = await db
         .from('apt_trades')
-        .select('apt_name, exclusive_area, price, build_year, deal_ym')
+        .select('apt_name, exclusive_area, price, build_year, deal_ym, deal_type')
         .eq('lawd_cd', lawdCd)
-        .eq('deal_type', 'T')
+        .in('deal_type', ['T', 'N']) // N = 분양권/입주권 (매매 없는 신축 단지 폴백용)
         .gte('deal_ym', fromYmL)
         .not('price', 'is', null)
         .order('deal_ym')
@@ -181,7 +181,9 @@ async function main() {
     for (const c of group) {
       const matched12 = trades12.filter(t => matchName(t.apt_name, c.name));
       const matched24 = matched12.length ? matched12 : trades.filter(t => matchName(t.apt_name, c.name));
-      const stats     = calcStats(matched24);
+      // 매매(T) 우선, 매매가 없으면 분양권/입주권(N)으로 폴백
+      const tOnly     = matched24.filter(t => t.deal_type === 'T');
+      const stats     = calcStats(tOnly.length ? tOnly : matched24);
       if (stats) { updates.push({ kapt_code: c.kapt_code, ...stats }); enriched++; }
       else skipped++;
     }

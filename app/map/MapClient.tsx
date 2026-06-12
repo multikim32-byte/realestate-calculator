@@ -265,6 +265,7 @@ export default function MapClient({ unsoldListings }: Props) {
     dong: string; buyerGbn: string; slerGbn: string;
     dealingGbn: string; agentSgg: string;
     rgstDate: string; cdealType: string; cdealDay: string;
+    presale?: boolean;
   }> | null>(null);
   const [complexRents, setComplexRents]   = useState<Array<{ date: string; area: number; floor: number; deposit: number; monthly: number; contractType: string; contractEnd: string; useRRRight: string; preDeposit: number; preMonthly: number }> | null>(null);
   const [complexBuildYear, setComplexBuildYear] = useState<number | null>(null);
@@ -1270,12 +1271,14 @@ export default function MapClient({ unsoldListings }: Props) {
                                     dong?: string; buyerGbn?: string; slerGbn?: string;
                                     rgstDate?: string; cdealType?: string; cdealDay?: string;
                                     contractType?: string; contractEnd?: string;
+                                    presale?: boolean;
                                   };
                                   const isCancelled = !!tr.cdealType;
                                   return (
                                     <tr key={i} style={{ borderTop: '1px solid #f8fafc', opacity: isCancelled ? 0.45 : 1 }}>
                                       <td style={{ padding: '5px 0', color: '#6b7280', verticalAlign: 'top' }}>
                                         {t.date.slice(2).replace(/-/g, '.')}
+                                        {tr.presale && <div><span style={{ fontSize: 9, fontWeight: 700, color: '#7c3aed', background: '#ede9fe', padding: '1px 4px', borderRadius: 4 }}>분양권</span></div>}
                                         {tr.rgstDate && <div style={{ fontSize: 9, color: '#9ca3af' }}>등기 {tr.rgstDate.slice(2).replace(/\./g, '.')}</div>}
                                         {isCancelled && <div style={{ fontSize: 9, color: '#dc2626' }}>해제 {tr.cdealDay}</div>}
                                       </td>
