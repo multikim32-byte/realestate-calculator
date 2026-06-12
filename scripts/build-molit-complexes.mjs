@@ -320,10 +320,19 @@ async function main() {
 }
 
 async function flushUpdates(batch) {
-  await Promise.all(batch.map(({ kapt_code, ...update }) =>
-    db.from('apartment_complexes').update(update).eq('kapt_code', kapt_code).is('molit_key', null)
-      .then(({ error }) => { if (error) console.error(`\n⚠️  update ${kapt_code}:`, error.message); })
-  ));
+  await Promise.all(batch.map(async ({ kapt_code, lat, lng, ...update }) => {
+    // molit_key/source는 미설정(null)일 때만 — 기존 매칭 덮어쓰기 방지
+    const { error } = await db.from('apartment_complexes')
+      .update(update).eq('kapt_code', kapt_code).is('molit_key', null);
+    if (error) console.error(`\n⚠️  update ${kapt_code}:`, error.message);
+    // 좌표는 molit_key 유무와 무관하게 비어있으면 보강
+    // (기존엔 molit_key 조건에 묶여 한 번 매칭된 단지의 좌표가 영영 안 채워졌음)
+    if (lat != null) {
+      const { error: e2 } = await db.from('apartment_complexes')
+        .update({ lat, lng }).eq('kapt_code', kapt_code).is('lat', null);
+      if (e2) console.error(`\n⚠️  coord ${kapt_code}:`, e2.message);
+    }
+  }));
 }
 
 async function flushInserts(batch) {
