@@ -44,8 +44,11 @@ const AREA_RANGES: { label: string; value: AreaRange; min: number; max: number }
   { label: '102㎡~', value: '102~', min: 102, max: Infinity },
 ];
 
+// 실거래가는 반올림 금지 — 정확한 금액 표기
 function fmt만원(v: number) {
-  if (v >= 10000) return `${(v / 10000).toFixed(1)}억`;
+  const eok = Math.floor(v / 10000), rest = v % 10000;
+  if (eok > 0 && rest > 0) return `${eok}억 ${rest.toLocaleString()}`;
+  if (eok > 0) return `${eok}억`;
   return `${v.toLocaleString()}만`;
 }
 

@@ -283,8 +283,9 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
     return supplyLabel(area);
   }
 
+  // 실거래가는 반올림 금지 — 정확한 금액 표기
   function fmtPrice(v: number) {
-    return v >= 10000 ? `${(v / 10000).toFixed(1)}억` : `${Math.round(v / 100) / 10}천만`;
+    return fmt억(v);
   }
 
   const rawList = useMemo(() =>

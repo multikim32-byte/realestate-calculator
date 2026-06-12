@@ -916,7 +916,13 @@ export default function MapClient({ unsoldListings }: Props) {
 
       {/* 단지 시세 — 왼쪽 슬라이드 패널 */}
       {selectedComplex && !selected && (() => {
-        const fmtPrice = (v: number) => v >= 10000 ? `${(v / 10000).toFixed(1)}억` : `${Math.round(v / 1000)}천만`;
+        // 실거래가는 반올림 금지 — 정확한 금액 표기 (예: 47500 → "4억 7,500")
+        const fmtPrice = (v: number) => {
+          const eok = Math.floor(v / 10000), rest = v % 10000;
+          if (eok > 0 && rest > 0) return `${eok}억 ${rest.toLocaleString()}`;
+          if (eok > 0) return `${eok}억`;
+          return `${v.toLocaleString()}만`;
+        };
         // 면적 레이블: 평 단위 없이 ㎡만 표시
         const unitTypes = selectedComplex.unit_types ?? [];
         function areaLabel(exclusiveM2: number): string {
