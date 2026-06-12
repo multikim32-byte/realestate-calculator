@@ -32,10 +32,20 @@ function normName(s) {
   for (const [pat, rep] of BRAND_NORM) n = n.replace(pat, rep);
   return n;
 }
-function matchName(a, b) {
+// 이름 유사도 (bigram) — 0.3 미만이면 진짜 개명, 이상이면 표기 변형(MOLIT 이름 유지)
+function nameSimilarity(a, b) {
   const na = normName(a), nb = normName(b);
-  return na === nb || na.includes(nb) || nb.includes(na);
+  if (!na || !nb) return 0;
+  if (na === nb || na.includes(nb) || nb.includes(na)) return 1;
+  const bg = s => { const r = new Set(); for (let i = 0; i < s.length - 1; i++) r.add(s.slice(i, i + 2)); return r; };
+  const ba = bg(na), bb = bg(nb);
+  if (!ba.size || !bb.size) return 0;
+  let inter = 0;
+  for (const g of ba) if (bb.has(g)) inter++;
+  return (2 * inter) / (ba.size + bb.size);
 }
+// 노이즈 제외: 상가/부속건물, 지번 괄호, 차수 합본(쉼표)
+function isJunkName(n) { return n.includes('상가') || /\(\d/.test(n) || n.includes(','); }
 function haversineM(lat1, lng1, lat2, lng2) {
   const R = 6371000, d2r = Math.PI / 180;
   const dLat = (lat2 - lat1) * d2r, dLng = (lng2 - lng1) * d2r;
@@ -96,7 +106,7 @@ for (const c of rows) {
     const doc = json.documents?.find(d => d.category_name?.includes('아파트'));
     if (doc && haversineM(c.lat, c.lng, parseFloat(doc.y), parseFloat(doc.x)) <= 300) {
       const kakaoName = cleanPlaceName(doc.place_name);
-      if (kakaoName && !matchName(kakaoName, c.name)) {
+      if (kakaoName && nameSimilarity(kakaoName, c.name) < 0.3 && !isJunkName(kakaoName)) {
         renamed.push({ ...c, newName: kakaoName, kakaoRaw: doc.place_name });
         console.log(`\n  📛 ${c.kapt_code} | ${c.name} → ${kakaoName}  (카카오: ${doc.place_name})`);
       }
@@ -108,15 +118,16 @@ for (const c of rows) {
 console.log(`\n\n감지: ${renamed.length}개 (API 오류 ${apiErr}건)\n`);
 
 if (!DRY && renamed.length) {
+  // SEO 보호: slug는 유지하고 name만 변경 (molit_key도 불변)
   let done = 0;
   for (const r of renamed) {
     const { error } = await sb.from('apartment_complexes')
-      .update({ name: r.newName, slug: `${makeSlug(r.sido, r.sigungu, r.newName)}-${r.kapt_code.toLowerCase()}` })
+      .update({ name: r.newName })
       .eq('kapt_code', r.kapt_code);
     if (error) console.error(`  ⚠️ ${r.kapt_code}: ${error.message}`);
     else done++;
   }
-  console.log(`✅ ${done}개 이름 갱신 완료`);
+  console.log(`✅ ${done}개 이름 갱신 완료 (name만 변경, slug 유지)`);
 } else if (renamed.length) {
   console.log('실제 갱신: node scripts/detect-renamed-complexes.mjs --confirm');
 }

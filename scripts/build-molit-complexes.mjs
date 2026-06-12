@@ -130,6 +130,21 @@ function cleanPlaceName(s) {
     .trim();
 }
 
+// 이름 유사도 (bigram) — 0.3 미만이면 진짜 개명(리브랜딩), 이상이면 표기 변형(MOLIT 이름 유지)
+function nameSimilarity(a, b) {
+  const na = normName(a), nb = normName(b);
+  if (!na || !nb) return 0;
+  if (na === nb || na.includes(nb) || nb.includes(na)) return 1;
+  const bg = s => { const r = new Set(); for (let i = 0; i < s.length - 1; i++) r.add(s.slice(i, i + 2)); return r; };
+  const ba = bg(na), bb = bg(nb);
+  if (!ba.size || !bb.size) return 0;
+  let inter = 0;
+  for (const g of ba) if (bb.has(g)) inter++;
+  return (2 * inter) / (ba.size + bb.size);
+}
+// 노이즈 제외: 상가/부속건물, 지번 괄호, 차수 합본(쉼표)
+function isJunkName(n) { return n.includes('상가') || /\(\d/.test(n) || n.includes(','); }
+
 async function kakaoCurrentName(sigungu, aptName, lat, lng) {
   try {
     const url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(`${sigungu} ${aptName}`)}`;
@@ -274,7 +289,7 @@ async function main() {
       let displayName = c.apt_name;
       if (lat != null) {
         const kakaoName = await kakaoCurrentName(sigungu, c.apt_name, lat, lng);
-        if (kakaoName && !matchName(kakaoName, c.apt_name)) {
+        if (kakaoName && nameSimilarity(kakaoName, c.apt_name) < 0.3 && !isJunkName(kakaoName)) {
           displayName = kakaoName;
           console.log(`\n  📛 개명 감지: ${c.apt_name} → ${displayName}`);
         }
