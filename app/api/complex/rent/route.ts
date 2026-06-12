@@ -131,7 +131,8 @@ export async function GET(req: NextRequest) {
         ? data
         : data.filter(t => matchName(t.apt_name ?? '', name));
 
-      if (matched.length >= 3) {
+      // molit_key 정확 매칭이면 1건이라도 신뢰 — MOLIT API 폴백(외부 호출, ~10초) 방지
+      if (matched.length >= (molitAptName ? 1 : 3)) {
         const trades = matched.map(t => ({
           date: `${String(t.deal_ym).slice(0, 4)}-${String(t.deal_ym).slice(4, 6)}-${String(t.deal_day ?? 1).padStart(2, '0')}`,
           area: parseFloat(t.exclusive_area),

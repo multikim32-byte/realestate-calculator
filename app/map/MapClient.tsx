@@ -587,7 +587,7 @@ export default function MapClient({ unsoldListings }: Props) {
     setComplexTrades(null); setComplexRents(null); setComplexNearby(null);
     setComplexBuildYear(null);
     setDealType('매매'); setSelPyeong(0);
-    const q = `name=${encodeURIComponent(selectedComplex.name)}&sido=${encodeURIComponent(selectedComplex.sido)}&sigungu=${encodeURIComponent(selectedComplex.sigungu)}&months=12`;
+    const q = `name=${encodeURIComponent(selectedComplex.name)}&sido=${encodeURIComponent(selectedComplex.sido)}&sigungu=${encodeURIComponent(selectedComplex.sigungu)}&kapt_code=${encodeURIComponent(selectedComplex.kapt_code)}&months=12`;
     Promise.all([
       fetch(`/api/complex/trade?${q}`).then(r => r.json()).catch(() => ({ trades: [] })),
       fetch(`/api/complex/rent?${q}`).then(r => r.json()).catch(() => ({ trades: [] })),

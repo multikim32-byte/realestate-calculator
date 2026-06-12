@@ -153,15 +153,27 @@ async function main() {
     process.stdout.write(`\r  [${++groupDone}/${totalGroups}] lawd_cd=${lawdCd} (${group.length}개 단지)`.padEnd(60));
 
     // apt_trades에서 이 시군구 최근 24개월 매매 전체 로드 (12개월 + 폴백용)
-    const { data: trades, error } = await db
-      .from('apt_trades')
-      .select('apt_name, exclusive_area, price, build_year, deal_ym')
-      .eq('lawd_cd', lawdCd)
-      .eq('deal_type', 'T')
-      .gte('deal_ym', fromYmL)
-      .not('price', 'is', null);
+    // Supabase 1회 응답은 최대 1000행 — 대형 시군구는 수만 건이므로 페이징 필수
+    const trades = [];
+    let tFrom = 0;
+    while (true) {
+      const { data, error } = await db
+        .from('apt_trades')
+        .select('apt_name, exclusive_area, price, build_year, deal_ym')
+        .eq('lawd_cd', lawdCd)
+        .eq('deal_type', 'T')
+        .gte('deal_ym', fromYmL)
+        .not('price', 'is', null)
+        .order('deal_ym')
+        .range(tFrom, tFrom + 999);
+      if (error) { console.error(`\n⚠️  ${lawdCd}:`, error.message); break; }
+      if (!data?.length) break;
+      trades.push(...data);
+      if (data.length < 1000) break;
+      tFrom += 1000;
+    }
 
-    if (error || !trades?.length) { skipped += group.length; continue; }
+    if (!trades.length) { skipped += group.length; continue; }
 
     const trades12 = trades.filter(t => t.deal_ym >= fromYm);
 
