@@ -113,6 +113,36 @@ async function geocode(sido, sigungu, dong, jibun) {
   return null;
 }
 
+// ── 카카오 키워드 검색: 현재 단지명 확인 (개명/리브랜딩 자동 감지) ────────────
+// MOLIT 신고명은 분양 당시 이름으로 고정되지만 카카오는 변경된 이름을 반영함
+// (예: "양주 덕정역 한라비발디 퍼스티어" → "양주덕정역에피트아파트 (2027년06월예정)")
+function haversineM(lat1, lng1, lat2, lng2) {
+  const R = 6371000, d2r = Math.PI / 180;
+  const dLat = (lat2 - lat1) * d2r, dLng = (lng2 - lng1) * d2r;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*d2r) * Math.cos(lat2*d2r) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function cleanPlaceName(s) {
+  return (s ?? '')
+    .replace(/\([^)]*\)\s*$/, '')  // 끝 괄호 제거: "(2027년06월예정)" 등
+    .replace(/아파트$/, '')
+    .trim();
+}
+
+async function kakaoCurrentName(sigungu, aptName, lat, lng) {
+  try {
+    const url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(`${sigungu} ${aptName}`)}`;
+    const res = await fetch(url, { headers: { Authorization: `KakaoAK ${KAKAO_KEY}` }, signal: AbortSignal.timeout(5000) });
+    const json = await res.json();
+    const doc = json.documents?.find(d => d.category_name?.includes('아파트'));
+    if (!doc) return null;
+    // 지번 좌표와 300m 이내일 때만 신뢰 (다른 단지 오매칭 방지)
+    if (haversineM(lat, lng, parseFloat(doc.y), parseFloat(doc.x)) > 300) return null;
+    return cleanPlaceName(doc.place_name) || null;
+  } catch { return null; }
+}
+
 // ── MOLIT 단지 목록 추출 (apt_trades에서 DISTINCT) ────────────────────────────
 async function fetchMolitComplexes() {
   const map = new Map(); // key: lawd_cd|apt_name → { lawd_cd, apt_name, dong, jibun, tradeCnt, buildYears }
@@ -239,12 +269,24 @@ async function main() {
         ? Math.round(c.buildYears.reduce((a,b)=>a+b,0) / c.buildYears.length)
         : null;
 
+      // 개명/리브랜딩 감지: 카카오 장소명이 신고명과 전혀 다르면 카카오 이름 채택
+      // (molit_key는 신고명 유지 — 실거래 매칭용)
+      let displayName = c.apt_name;
+      if (lat != null) {
+        const kakaoName = await kakaoCurrentName(sigungu, c.apt_name, lat, lng);
+        if (kakaoName && !matchName(kakaoName, c.apt_name)) {
+          displayName = kakaoName;
+          console.log(`\n  📛 개명 감지: ${c.apt_name} → ${displayName}`);
+        }
+        await sleep(30);
+      }
+
       const kaptCode = molitKaptCode(c.lawd_cd, c.apt_name);
       insertQueue.push({
         kapt_code:  kaptCode,
         molit_key:  molitKey(c.lawd_cd, c.apt_name),
-        name:       c.apt_name,
-        slug:       `${makeSlug(sido, sigungu, c.apt_name)}-${kaptCode.toLowerCase()}`,
+        name:       displayName,
+        slug:       `${makeSlug(sido, sigungu, displayName)}-${kaptCode.toLowerCase()}`,
         source:     'molit',
         sido, sigungu,
         dong:       c.dong,
