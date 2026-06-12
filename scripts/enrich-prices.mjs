@@ -117,7 +117,7 @@ async function main() {
 
   // 1. 보강 대상 단지 로드
   let query = db.from('apartment_complexes')
-    .select('kapt_code, name, sido, sigungu')
+    .select('kapt_code, name, sido, sigungu, molit_key')
     .not('sido', 'is', null)
     .not('sigungu', 'is', null);
   if (!force) query = query.is('avg_price', null);
@@ -177,10 +177,17 @@ async function main() {
 
     const trades12 = trades.filter(t => t.deal_ym >= fromYm);
 
-    // 단지별 이름 매칭 + 통계 (12개월 우선, 없으면 24개월 폴백)
+    // 단지별 매칭 + 통계 (12개월 우선, 없으면 24개월 폴백)
+    // molit_key 정확 매칭 우선 — 개명 단지(표시명 ≠ MOLIT 신고명)도 보강 가능
     for (const c of group) {
-      const matched12 = trades12.filter(t => matchName(t.apt_name, c.name));
-      const matched24 = matched12.length ? matched12 : trades.filter(t => matchName(t.apt_name, c.name));
+      const exactName = c.molit_key?.split('|')[1];
+      let matched12 = exactName ? trades12.filter(t => t.apt_name === exactName) : [];
+      let matched24 = matched12.length ? matched12
+        : exactName ? trades.filter(t => t.apt_name === exactName) : [];
+      if (!matched24.length) {
+        matched12 = trades12.filter(t => matchName(t.apt_name, c.name));
+        matched24 = matched12.length ? matched12 : trades.filter(t => matchName(t.apt_name, c.name));
+      }
       // 매매(T) 우선, 매매가 없으면 분양권/입주권(N)으로 폴백
       const tOnly     = matched24.filter(t => t.deal_type === 'T');
       const stats     = calcStats(tOnly.length ? tOnly : matched24);
