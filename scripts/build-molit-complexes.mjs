@@ -162,42 +162,55 @@ async function kakaoCurrentName(sigungu, aptName, lat, lng) {
 async function fetchMolitComplexes() {
   const map = new Map(); // key: lawd_cd|apt_name → { lawd_cd, apt_name, dong, jibun, tradeCnt, buildYears }
 
-  process.stdout.write('apt_trades에서 단지 목록 추출 중...');
-  for (const dealType of ['T', 'N']) {
-    // keyset 페이징 (id 기준) — 정렬 없는 offset 페이징은 스캔 중 동시 INSERT 시
-    // 페이지 경계가 밀려 행을 건너뜀 (청송군 단지 누락 사례). offset+order는 깊어질수록 느려서 keyset 사용
-    let lastId = 0;
-    while (true) {
-      const { data, error } = await db
-        .from('apt_trades')
-        .select('id, lawd_cd, apt_name, dong, jibun, build_year, deal_type')
-        .eq('deal_type', dealType)
-        .not('jibun', 'is', null)
-        .gt('id', lastId)
-        .order('id')
-        .limit(1000);
+  // 시군구(lawd_cd)별 분할 스캔 — 전체 테이블 keyset/offset 스캔은 동시 INSERT·statement
+  // timeout으로 행 누락이 발생했음 (청송군 사례). lawd_cd 인덱스를 타는 소규모 쿼리로 분할.
+  const lawdCodes = [...lawdToInfo.keys()];
+  console.log(`apt_trades에서 단지 목록 추출 중 (${lawdCodes.length}개 시군구 분할)...`);
 
-      if (error || !data?.length) break;
-      lastId = data[data.length - 1].id;
-
-      for (const r of data) {
-        const k = molitKey(r.lawd_cd, r.apt_name);
-        if (!map.has(k)) {
-          map.set(k, { lawd_cd: r.lawd_cd, apt_name: r.apt_name, dong: r.dong, jibun: r.jibun, tradeCnt: 0, buildYears: [], isPresale: r.deal_type === 'N' });
+  let scanned = 0;
+  for (const lawd of lawdCodes) {
+    for (const dealType of ['T', 'N']) {
+      let lastId = 0;
+      while (true) {
+        let data = null, lastErr = null;
+        for (let retry = 0; retry < 3; retry++) {
+          const r = await db
+            .from('apt_trades')
+            .select('id, lawd_cd, apt_name, dong, jibun, build_year, deal_type')
+            .eq('lawd_cd', lawd)
+            .eq('deal_type', dealType)
+            .not('jibun', 'is', null)
+            .gt('id', lastId)
+            .order('id')
+            .limit(1000);
+          if (!r.error) { data = r.data; break; }
+          lastErr = r.error;
+          await sleep(2000);
         }
-        const entry = map.get(k);
-        entry.tradeCnt++;
-        if (r.jibun && !entry.jibun) entry.jibun = r.jibun;
-        if (r.build_year > 1900) entry.buildYears.push(r.build_year);
-        // T 타입이 하나라도 있으면 분양권 전용 아님
-        if (r.deal_type === 'T') entry.isPresale = false;
-      }
+        if (!data) { console.error(`\n⚠️  스캔 실패 ${lawd}/${dealType}:`, lastErr?.message); break; }
+        if (!data.length) break;
+        lastId = data[data.length - 1].id;
 
-      if (data.length < 1000) break;
-      process.stdout.write('.');
+        for (const r of data) {
+          const k = molitKey(r.lawd_cd, r.apt_name);
+          if (!map.has(k)) {
+            map.set(k, { lawd_cd: r.lawd_cd, apt_name: r.apt_name, dong: r.dong, jibun: r.jibun, tradeCnt: 0, buildYears: [], isPresale: r.deal_type === 'N' });
+          }
+          const entry = map.get(k);
+          entry.tradeCnt++;
+          if (r.jibun && !entry.jibun) entry.jibun = r.jibun;
+          if (r.build_year > 1900) entry.buildYears.push(r.build_year);
+          // T 타입이 하나라도 있으면 분양권 전용 아님
+          if (r.deal_type === 'T') entry.isPresale = false;
+        }
+
+        if (data.length < 1000) break;
+      }
     }
+    scanned++;
+    process.stdout.write(`\r  스캔: ${scanned}/${lawdCodes.length} 시군구 (단지 ${map.size.toLocaleString()}개)`);
   }
-  console.log(` ${map.size.toLocaleString()}개`);
+  console.log(`\n  → 총 ${map.size.toLocaleString()}개`);
   return [...map.values()];
 }
 
@@ -356,7 +369,13 @@ async function flushUpdates(batch) {
 async function flushInserts(batch) {
   const { error } = await db.from('apartment_complexes')
     .upsert(batch, { onConflict: 'kapt_code', ignoreDuplicates: true });
-  if (error) console.error('\n⚠️  insert 오류:', error.message);
+  if (!error) return;
+  // 배치 실패(molit_key 중복 등) 시 개별 재시도 — 1건 충돌로 배치 전체가 버려지는 것 방지
+  for (const row of batch) {
+    const { error: e } = await db.from('apartment_complexes')
+      .upsert(row, { onConflict: 'kapt_code', ignoreDuplicates: true });
+    if (e) console.error(`\n⚠️  insert ${row.kapt_code} (${row.name}):`, e.message);
+  }
 }
 
 main().catch(e => { console.error('❌', e); process.exit(1); });
