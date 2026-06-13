@@ -928,11 +928,11 @@ export default function MapClient({ unsoldListings }: Props) {
         function areaLabel(exclusiveM2: number): string {
           const match = unitTypes.find(u => Math.abs(u.exclusive_area - exclusiveM2) <= 1.5);
           if (match && match.supply_area != null) {
-            // 청약홈 보강: "공급104.9A㎡ (전용79.99㎡)"
+            // 절대 규칙: 공급 2자리㎡ (전용 + 타입코드) — 타입코드는 전용면적 뒤
             const letter = match.house_ty?.match(/([A-Z])$/)?.[1] ?? '';
-            return `공급${match.supply_area.toFixed(1)}${letter}㎡ (전용${exclusiveM2}㎡)`;
+            return `공급${match.supply_area.toFixed(2)}㎡ (전용${exclusiveM2}${letter})`;
           }
-          // 타입 코드 있으면 끝에 붙임: "전용79.97B㎡"
+          // 공급면적 없으면: "전용79.97B㎡"
           const letter = match?.house_ty?.match(/([A-Z])$/)?.[1] ?? '';
           return `전용${exclusiveM2}${letter}㎡`;
         }

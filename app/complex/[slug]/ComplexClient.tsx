@@ -71,9 +71,9 @@ function fmtDist(m: number) {
   return m >= 1000 ? `${(m / 1000).toFixed(1)}km` : `${m}m`;
 }
 
+// 면적 표시는 ㎡ 기준 (절대 규칙) — 평 단위 금지, 소수점 2자리
 function areaLabel(area: number) {
-  const py = Math.round(area / 3.3);
-  return `${Math.round(area)}㎡(${py}평)`;
+  return `전용${area.toFixed(2)}㎡`;
 }
 
 function stripComplexName(addr: string | null, name: string): string | null {
@@ -112,15 +112,23 @@ function resolveTypeKey(area: number, unitTypes: UnitType[] | null): string {
   return areaLabel(area);
 }
 
-// 차트 범례용 레이블
+// 차트 범례용 레이블 — ㎡ 기준 (절대 규칙)
 function typeDisplayLabel(key: string, unitTypes: UnitType[] | null): string {
   if (unitTypes) {
     const ut = unitTypes.find(u => u.house_ty === key);
-    if (ut) return `${key} (${Math.round(ut.exclusive_area)}㎡·${ut.exclusive_pyeong}평)`;
+    if (ut) {
+      const letter = ut.house_ty?.match(/([A-Z])$/)?.[1] ?? '';
+      if (ut.supply_area != null) return `공급${ut.supply_area.toFixed(2)}㎡ (전용${ut.exclusive_area}${letter})`;
+      return `전용${ut.exclusive_area}${letter}㎡`;
+    }
     const keyArea = parseFloat(key);
     if (!isNaN(keyArea)) {
       const ut2 = unitTypes.find(u => u.exclusive_area === keyArea);
-      if (ut2) return `${ut2.exclusive_pyeong}평 (전용 ${keyArea.toFixed(2)}㎡)`;
+      if (ut2) {
+        const letter = ut2.house_ty?.match(/([A-Z])$/)?.[1] ?? '';
+        if (ut2.supply_area != null) return `공급${ut2.supply_area.toFixed(2)}㎡ (전용${keyArea.toFixed(2)}${letter})`;
+        return `전용${keyArea.toFixed(2)}${letter}㎡`;
+      }
     }
   }
   return key;
@@ -255,11 +263,15 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
 
   const unitTypes = complex.unit_types ?? [];
 
+  // 면적 표시는 ㎡ 기준 (절대 규칙) — 평 단위 금지, 소수점 2자리
   function supplyLabel(exclusiveM2: number): string {
     const match = unitTypes.find(u => Math.abs(u.exclusive_area - exclusiveM2) <= 1.5);
-    if (match && match.supply_area != null) return `${match.supply_pyeong}평 (공급 ${Math.round(match.supply_area)}㎡)`;
-    const excPy = Math.round(exclusiveM2 / 3.3);
-    return `전용 ${excPy}평`;
+    if (match) {
+      const letter = match.house_ty?.match(/([A-Z])$/)?.[1] ?? '';
+      if (match.supply_area != null) return `공급${match.supply_area.toFixed(2)}㎡ (전용${match.exclusive_area}${letter})`;
+      return `전용${match.exclusive_area}${letter}㎡`;
+    }
+    return `전용${exclusiveM2.toFixed(2)}㎡`;
   }
 
   function typeOptionLabel(key: string, area: number): string {
