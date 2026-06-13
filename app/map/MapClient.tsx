@@ -376,19 +376,23 @@ export default function MapClient({ unsoldListings }: Props) {
     setTotal(t => ({ ...t, complex: complexes.length }));
   }, []);
 
-  // 지역 검색 → 지도 이동
+  // 검색 → 지도 이동 (단지명이면 가깝게, 지역이면 넓게)
   const handleMapSearch = useCallback((query: string) => {
     const map = mapInst.current;
     const ps  = placesRef.current;
     if (!map || !ps || !query.trim()) return;
     setMapSearching(true);
-    ps.keywordSearch(query.trim(), (result: { y: string; x: string }[], status: string) => {
+    ps.keywordSearch(query.trim(), (result: { y: string; x: string; category_name?: string; category_group_code?: string }[], status: string) => {
       setMapSearching(false);
       if (status !== 'OK' || !result.length) return;
-      const lat = parseFloat(result[0].y);
-      const lng = parseFloat(result[0].x);
+      const first = result[0];
+      const lat = parseFloat(first.y);
+      const lng = parseFloat(first.x);
       map.setCenter(new window.kakao.maps.LatLng(lat, lng));
-      map.setLevel(5);
+      // 아파트 단지 검색이면 단지가 크게 보이게 줌인(레벨 3), 지역 검색이면 넓게(레벨 5)
+      // 카카오 카테고리: 아파트 = "부동산 > 주거시설 > 아파트"
+      const isComplex = first.category_name?.includes('아파트') ?? false;
+      map.setLevel(isComplex ? 3 : 5);
       loadedComplexBoundsRef.current = null;
     });
   }, []);
