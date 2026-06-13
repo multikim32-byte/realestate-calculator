@@ -221,9 +221,14 @@ function makeOverlayHTMLForIdle(c: MapComplex, stage: 1 | 2): string {
   if (stage === 1) {
     const builtYear  = c.built_year ?? 0;
     const totalUnits = c.total_units ?? 0;
+    // 입주예정(준공연도가 미래)이면 "N년 입주예정", 아니면 "N년"(준공)
+    const nowYear = new Date().getFullYear();
+    const yearText = builtYear > 0
+      ? (builtYear > nowYear ? `${builtYear}년 입주예정` : `${builtYear}년`)
+      : '';
     const metaLine = [
       areaText,
-      builtYear  > 0 ? `${builtYear}년` : '',
+      yearText,
       totalUnits > 0 ? `${totalUnits.toLocaleString()}세대` : '',
     ].filter(Boolean).join(' · ');
 
@@ -1097,7 +1102,9 @@ export default function MapClient({ unsoldListings }: Props) {
                     <div style={{ fontSize: 12, color: '#6b7280', display: 'flex', flexWrap: 'wrap', gap: '2px 12px' }}>
                       <span>{selectedComplex.total_units ? `${selectedComplex.total_units.toLocaleString()}세대` : '세대 정보 없음'}</span>
                       {builtYear
-                        ? <span>{builtYear}년 준공{yearCount !== null && yearCount >= 0 ? ` (${yearCount}년차)` : ''}</span>
+                        ? <span>{builtYear > new Date().getFullYear()
+                            ? `${builtYear}년 입주예정`
+                            : `${builtYear}년 준공${yearCount !== null && yearCount >= 0 ? ` (${yearCount}년차)` : ''}`}</span>
                         : null
                       }
                       {floorCount ? <span>최고 {floorCount}층</span> : null}

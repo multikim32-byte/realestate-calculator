@@ -415,7 +415,7 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
           )}
           {buildYear && (
             <span style={{ fontSize: 13, background: '#f0fdf4', color: '#16a34a', padding: '4px 12px', borderRadius: 20, fontWeight: 600 }}>
-              {buildYear}년 준공
+              {buildYear > new Date().getFullYear() ? `${buildYear}년 입주예정` : `${buildYear}년 준공`}
             </span>
           )}
           {complex.floor_count && (
@@ -607,7 +607,9 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
                 ...(complex.kapt_addr ? [{ label: '지번주소', value: stripComplexName(complex.kapt_addr, complex.name) ?? complex.kapt_addr }] : []),
                 ...(!complex.road_address && !complex.kapt_addr ? [{ label: '주소', value: [complex.sido, complex.sigungu, complex.dong].filter(Boolean).join(' ') }] : []),
                 { label: '총 세대수', value: complex.total_units ? `${complex.total_units.toLocaleString()}세대` : '-' },
-                { label: '준공연도', value: buildYear ? `${buildYear}년` : '-' },
+                buildYear && buildYear > new Date().getFullYear()
+                  ? { label: '입주예정', value: `${buildYear}년` }
+                  : { label: '준공연도', value: buildYear ? `${buildYear}년` : '-' },
                 { label: '최고층수', value: complex.floor_count ? `${complex.floor_count}층` : '-' },
               ].map(({ label, value }) => (
                 <div key={label} style={{ display: 'flex', borderBottom: '1px solid #f3f4f6', padding: '10px 0' }}>
