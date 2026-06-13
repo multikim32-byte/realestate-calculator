@@ -351,7 +351,7 @@ export default function MapClient({ unsoldListings }: Props) {
         return Math.abs(p.getLat() - c.lat) < 0.0007 && Math.abs(p.getLng() - c.lng) < 0.0009;
       });
       const overlayPos = overlap
-        ? new window.kakao.maps.LatLng(c.lat - 0.0009, c.lng + 0.0013)
+        ? new window.kakao.maps.LatLng(c.lat - 0.0004, c.lng + 0.0006)
         : pos;
       const overlay = new window.kakao.maps.CustomOverlay({ position: overlayPos, content: ld, yAnchor: 1 });
 
