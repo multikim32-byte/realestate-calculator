@@ -85,6 +85,16 @@ function calcStats(trades) {
   const prices   = byPyeong.get(modePyeong);
   const avgPrice = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
 
+  // 대표 평형의 대표 전용면적(최빈) — 마커 ㎡ 표기용 (평 역산은 오차 커서 실측 사용)
+  const areaFreq = new Map();
+  for (const t of trades) {
+    if (Math.round((t.exclusive_area ?? 0) / 3.3058) !== modePyeong) continue;
+    const a = Math.round((t.exclusive_area ?? 0) * 100) / 100;
+    areaFreq.set(a, (areaFreq.get(a) ?? 0) + 1);
+  }
+  let avgArea = null, maxAF = 0;
+  for (const [a, f] of areaFreq) if (f > maxAF) { maxAF = f; avgArea = a; }
+
   const byYear = new Map();
   for (const t of trades) {
     if (t.build_year > 1900) byYear.set(t.build_year, (byYear.get(t.build_year) ?? 0) + 1);
@@ -93,7 +103,7 @@ function calcStats(trades) {
     ? [...byYear.entries()].sort((a, b) => b[1] - a[1])[0][0]
     : null;
 
-  return { avg_pyeong: modePyeong, avg_price: avgPrice, built_year };
+  return { avg_pyeong: modePyeong, avg_area: avgArea, avg_price: avgPrice, built_year };
 }
 
 // ── LAWD 코드 맵 로드 ─────────────────────────────────────────────────────────
@@ -205,8 +215,9 @@ async function main() {
 
 async function flush(batch) {
   const now = new Date().toISOString();
-  await Promise.all(batch.map(({ kapt_code, avg_pyeong, avg_price, built_year }) => {
+  await Promise.all(batch.map(({ kapt_code, avg_pyeong, avg_area, avg_price, built_year }) => {
     const payload = { avg_pyeong, avg_price, updated_at: now };
+    if (avg_area != null) payload.avg_area = avg_area;
     if (built_year) payload.built_year = built_year;
     return db.from('apartment_complexes').update(payload).eq('kapt_code', kapt_code)
       .then(({ error }) => { if (error) console.error(`\n⚠️  ${kapt_code}:`, error.message); });
