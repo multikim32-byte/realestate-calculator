@@ -40,8 +40,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'name, sido, sigungu 필수' }, { status: 400 });
   }
 
+  // sido 표기 차이(경기/경기도 등)로 실패할 수 있음 — kaptCode가 있으면 molit_key로 lawd 확보
   const lawdCode = getLawdCode(sido, sigungu);
-  if (!lawdCode) return NextResponse.json({ trades: [], message: '시군구 코드 없음' });
 
   const now = new Date();
   const fromDate = new Date(now.getFullYear(), now.getMonth() - months, 1);
@@ -93,6 +93,10 @@ export async function GET(req: NextRequest) {
           molitAptNames = nearby.map(m => (m.molit_key as string).split('|')[1]).filter(Boolean);
         }
       }
+    }
+
+    if (!molitLawdCd) {
+      return NextResponse.json({ trades: [] }, { headers: { 'Cache-Control': 'no-store' } });
     }
 
     let query = supabase
