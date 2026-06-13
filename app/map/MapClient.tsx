@@ -344,7 +344,16 @@ export default function MapClient({ unsoldListings }: Props) {
       const initStage: 1 | 2 = level <= 4 ? 1 : 2;
       ld.innerHTML = makeOverlayHTMLForIdle(c, initStage);
 
-      const overlay = new window.kakao.maps.CustomOverlay({ position: pos, content: ld, yAnchor: 1 });
+      // 청약/미분양 마커와 좌표가 겹치면 말풍선을 우하단으로 비켜서 둘 다 보이게
+      // (분양 중 단지가 실거래 단지로도 등록된 경우 — 지웰엘리움 양주덕계역 등)
+      const overlap = markersRef.current.some(({ m }) => {
+        const p = m.getPosition();
+        return Math.abs(p.getLat() - c.lat) < 0.0007 && Math.abs(p.getLng() - c.lng) < 0.0009;
+      });
+      const overlayPos = overlap
+        ? new window.kakao.maps.LatLng(c.lat - 0.0009, c.lng + 0.0013)
+        : pos;
+      const overlay = new window.kakao.maps.CustomOverlay({ position: overlayPos, content: ld, yAnchor: 1 });
 
       window.kakao.maps.event.addListener(marker, 'click', () => {
         setSelectedComplex(c);
