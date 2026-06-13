@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
   try {
     const supabase = db();
 
-    let molitAptName: string | null = null;
+    let molitAptNames: string[] | null = null; // 띄어쓰기 변형·차수 분리 통합 매칭
     let molitLawdCd = lawdCode;
 
     if (kaptCode) {
@@ -63,7 +63,18 @@ export async function GET(req: NextRequest) {
       if (cx?.molit_key) {
         const [lc, an] = cx.molit_key.split('|');
         molitLawdCd = lc;
-        molitAptName = an;
+        // 같은 lawd + 정규화 이름이 같은 모든 단지의 apt_name 변형 수집 (띄어쓰기 차이 통합)
+        const targetNorm = normName(an);
+        const { data: sib } = await supabase
+          .from('apartment_complexes')
+          .select('molit_key')
+          .like('molit_key', `${lc}|%`);
+        const variants = new Set([an]);
+        for (const s of sib ?? []) {
+          const sn = (s.molit_key as string)?.split('|')[1];
+          if (sn && normName(sn) === targetNorm) variants.add(sn);
+        }
+        molitAptNames = [...variants];
       }
     }
 
@@ -76,8 +87,8 @@ export async function GET(req: NextRequest) {
       .order('deal_ym', { ascending: false })
       .limit(3000);
 
-    if (molitAptName) {
-      query = query.eq('apt_name', molitAptName) as typeof query;
+    if (molitAptNames?.length) {
+      query = query.in('apt_name', molitAptNames) as typeof query;
     }
 
     const { data, error } = await query;
@@ -86,7 +97,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ trades: [] }, { headers: { 'Cache-Control': 'no-store' } });
     }
 
-    const matched = molitAptName
+    const matched = molitAptNames?.length
       ? data
       : data.filter(t => matchName(t.apt_name ?? '', name));
 

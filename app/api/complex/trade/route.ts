@@ -52,8 +52,7 @@ export async function GET(req: NextRequest) {
     const supabase = db();
 
     // kapt_code로 molit_key + 좌표 조회 → 정확한 apt_name 매칭
-    let molitAptName: string | null = null;
-    let molitAptNames: string[] | null = null; // 1:N 차수 분리 케이스
+    let molitAptNames: string[] | null = null; // 띄어쓰기 변형·차수 분리 통합 매칭
     let molitLawdCd = lawdCode;
 
     if (kaptCode) {
@@ -65,7 +64,19 @@ export async function GET(req: NextRequest) {
       if (cx?.molit_key) {
         const [lc, an] = cx.molit_key.split('|');
         molitLawdCd = lc;
-        molitAptName = an;
+        // 같은 lawd + 정규화 이름이 같은 모든 단지의 apt_name 변형 수집
+        // (입주권 신고명과 매매 신고명의 띄어쓰기 차이 통합 — 잠실래미안아이파크 ↔ 잠실 래미안아이파크)
+        const targetNorm = normName(an);
+        const { data: sib } = await supabase
+          .from('apartment_complexes')
+          .select('molit_key')
+          .like('molit_key', `${lc}|%`);
+        const variants = new Set([an]);
+        for (const s of sib ?? []) {
+          const sn = (s.molit_key as string)?.split('|')[1];
+          if (sn && normName(sn) === targetNorm) variants.add(sn);
+        }
+        molitAptNames = [...variants];
       } else if (cx?.lat && cx?.lng) {
         // molit_key 없으면 근처 M-prefix의 apt_name으로 OR 매칭
         // (차수 분리, 이름 불일치 케이스 모두 처리)
@@ -93,9 +104,7 @@ export async function GET(req: NextRequest) {
       .order('deal_ym', { ascending: false })
       .limit(3000);
 
-    if (molitAptName) {
-      query = query.eq('apt_name', molitAptName) as typeof query;
-    } else if (molitAptNames?.length) {
+    if (molitAptNames?.length) {
       query = query.in('apt_name', molitAptNames) as typeof query;
     }
 
@@ -105,7 +114,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ trades: [] }, { headers: { 'Cache-Control': 'no-store' } });
     }
 
-    const exact = Boolean(molitAptName || molitAptNames?.length);
+    const exact = Boolean(molitAptNames?.length);
     const matched = exact ? data : data.filter(t => matchName(t.apt_name ?? '', name));
 
     const trades = matched.map(t => ({
