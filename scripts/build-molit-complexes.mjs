@@ -161,20 +161,24 @@ async function kakaoCurrentName(sigungu, aptName, lat, lng) {
 // ── MOLIT 단지 목록 추출 (apt_trades에서 DISTINCT) ────────────────────────────
 async function fetchMolitComplexes() {
   const map = new Map(); // key: lawd_cd|apt_name → { lawd_cd, apt_name, dong, jibun, tradeCnt, buildYears }
-  let from = 0;
 
   process.stdout.write('apt_trades에서 단지 목록 추출 중...');
   for (const dealType of ['T', 'N']) {
-    from = 0;
+    // keyset 페이징 (id 기준) — 정렬 없는 offset 페이징은 스캔 중 동시 INSERT 시
+    // 페이지 경계가 밀려 행을 건너뜀 (청송군 단지 누락 사례). offset+order는 깊어질수록 느려서 keyset 사용
+    let lastId = 0;
     while (true) {
       const { data, error } = await db
         .from('apt_trades')
-        .select('lawd_cd, apt_name, dong, jibun, build_year, deal_type')
+        .select('id, lawd_cd, apt_name, dong, jibun, build_year, deal_type')
         .eq('deal_type', dealType)
         .not('jibun', 'is', null)
-        .range(from, from + 999);
+        .gt('id', lastId)
+        .order('id')
+        .limit(1000);
 
       if (error || !data?.length) break;
+      lastId = data[data.length - 1].id;
 
       for (const r of data) {
         const k = molitKey(r.lawd_cd, r.apt_name);
@@ -190,7 +194,6 @@ async function fetchMolitComplexes() {
       }
 
       if (data.length < 1000) break;
-      from += 1000;
       process.stdout.write('.');
     }
   }
