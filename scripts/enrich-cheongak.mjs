@@ -43,6 +43,7 @@ const BASE = 'https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1';
 const dryRun  = process.argv.includes('--dry-run');
 const testMode = process.argv.includes('--test');
 const presaleMode = process.argv.includes('--presale'); // 분양권 거래 있는 built_year null 단지 보강
+const skipDone = process.argv.includes('--skip-done'); // 이미 청약홈 공급면적 있는 단지 건너뛰기 (빈 단지만)
 const kaptArg = process.argv.find(a => a.startsWith('--kapt='))?.replace('--kapt=', '');
 const fromArg = parseInt(process.argv.find(a => a.startsWith('--from='))?.replace('--from=', '') || '0');
 const yearArg = parseInt(process.argv.find(a => a.startsWith('--year='))?.replace('--year=', '') || '2020');
@@ -283,9 +284,13 @@ async function main() {
     let from = 0;
     while (true) {
       const { data, error } = await supabase.from('apartment_complexes')
-        .select(SEL).gte('built_year', yearArg).order('kapt_code').range(from, from + 999);
+        .select(SEL).eq('source', 'molit').gte('built_year', yearArg).order('kapt_code').range(from, from + 999);
       if (error || !data?.length) break;
-      complexes.push(...data);
+      for (const c of data) {
+        // --skip-done: 이미 청약홈 공급면적 있으면 건너뛰기 (빈 단지만 채움)
+        if (skipDone && Array.isArray(c.unit_types) && c.unit_types.some(t => t.source === 'cheongak')) continue;
+        complexes.push(c);
+      }
       if (data.length < 1000) break;
       from += 1000;
     }

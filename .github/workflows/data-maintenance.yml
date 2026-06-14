@@ -62,8 +62,8 @@ jobs:
           node-version: '24'
       - run: npm ci --ignore-scripts
 
-      - name: 청약홈 공식 주택형·공급면적 보강 (built_year 2022+)
-        run: node scripts/enrich-cheongak.mjs --year=2022
+      - name: 청약홈 공식 주택형·공급면적 보강 (built_year 2021+, 미보강 단지만)
+        run: node scripts/enrich-cheongak.mjs --year=2021 --skip-done
         env:
           PUBLIC_DATA_API_KEY: ${{ secrets.MOLIT_API_KEY }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
