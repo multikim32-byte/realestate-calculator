@@ -973,8 +973,18 @@ export default function MapClient({ unsoldListings }: Props) {
         const pyeongList = exclusiveAreas;
         const curArea = selPyeong > 0 ? selPyeong : (exclusiveAreas[0] ?? 0);
 
-        // 선택 면적으로 필터 (±0.1㎡ 허용)
-        const filtered = rawList.filter(t => Math.abs(Math.round(t.area * 100) / 100 - curArea) < 0.11);
+        // 거래를 "가장 가까운 면적 옵션"에 배정 — 59.95/59.97처럼 0.02㎡ 차이로
+        // 별개 타입인 면적이 한 그룹으로 묶이지 않도록 (고정 허용오차 대신 최근접)
+        const areaMatch = (area: number) => {
+          const a = Math.round(area * 100) / 100;
+          if (exclusiveAreas.length === 0) return false;
+          let best = exclusiveAreas[0], bd = Math.abs(exclusiveAreas[0] - a);
+          for (const x of exclusiveAreas) { const d = Math.abs(x - a); if (d < bd) { bd = d; best = x; } }
+          return best === curArea;
+        };
+
+        // 선택 면적으로 필터 (최근접 면적 옵션 기준)
+        const filtered = rawList.filter(t => areaMatch(t.area));
 
         // 최근 10건 테이블
         const tableRows = filtered.slice(0, 10);
@@ -1006,8 +1016,8 @@ export default function MapClient({ unsoldListings }: Props) {
         }).join(' ');
 
         // 전세가율 계산 (매매·전세 같은 평형 평균 기준)
-        const tradeFiltered  = (complexTrades ?? []).filter(t => Math.abs(Math.round(t.area * 100) / 100 - curArea) < 0.11);
-        const jeonseFiltered = (complexRents  ?? []).filter(t => t.monthly === 0 && Math.abs(Math.round(t.area * 100) / 100 - curArea) < 0.11);
+        const tradeFiltered  = (complexTrades ?? []).filter(t => areaMatch(t.area));
+        const jeonseFiltered = (complexRents  ?? []).filter(t => t.monthly === 0 && areaMatch(t.area));
         const tradeAvgAll  = tradeFiltered.length  ? tradeFiltered.reduce((s, t)  => s + t.price,   0) / tradeFiltered.length  : 0;
         const jeonseAvgAll = jeonseFiltered.length ? jeonseFiltered.reduce((s, t) => s + t.deposit, 0) / jeonseFiltered.length : 0;
         const jeonseRatio  = tradeAvgAll > 0 && jeonseAvgAll > 0
@@ -1359,10 +1369,13 @@ export default function MapClient({ unsoldListings }: Props) {
                     })()}
 
                     {/* 관리비 · 주차 */}
-                    {(complexNearby?.manage_cost || complexNearby?.parking_total) && (() => {
-                      const mc = complexNearby.manage_cost;
-                      const parking = complexNearby.parking_total;
-                      const avgPyeong = complexNearby.avg_pyeong ?? selectedComplex.avg_pyeong;
+                    {(() => {
+                      // 빈 객체({}) 등 per_unit_total 없는 관리비는 무효 처리 (NaN 표시 방지)
+                      const mc = typeof complexNearby?.manage_cost?.per_unit_total === 'number'
+                        ? complexNearby.manage_cost : null;
+                      const parking = complexNearby?.parking_total;
+                      if (!mc && parking == null) return null;
+                      const avgPyeong = complexNearby?.avg_pyeong ?? selectedComplex.avg_pyeong;
 
                       // 선택 타입 면적 기반 관리비 추정 (전용면적 비례)
                       let estTotal: number | null = null;
