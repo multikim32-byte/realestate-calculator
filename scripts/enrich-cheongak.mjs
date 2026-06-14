@@ -56,9 +56,15 @@ async function loadPresaleKeys() {
   for (const list of Object.values(LAWD_CODE_MAP)) for (const d of list) lawds.push(d.code);
   const keys = new Set();
   for (const lawd of lawds) {
-    const { data } = await supabase.from('apt_trades')
-      .select('apt_name').eq('lawd_cd', lawd).eq('deal_type', 'N').limit(1000);
-    for (const r of data ?? []) keys.add(`${lawd}|${r.apt_name}`);
+    let lastId = 0;
+    while (true) { // 페이징 (1000건 초과 lawd에서 단지명 누락 방지 — 양주 등)
+      const { data } = await supabase.from('apt_trades').select('id, apt_name')
+        .eq('lawd_cd', lawd).eq('deal_type', 'N').gt('id', lastId).order('id').limit(1000);
+      if (!data?.length) break;
+      for (const r of data) keys.add(`${lawd}|${r.apt_name}`);
+      lastId = data[data.length - 1].id;
+      if (data.length < 1000) break;
+    }
   }
   return keys;
 }
