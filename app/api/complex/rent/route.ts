@@ -57,22 +57,28 @@ export async function GET(req: NextRequest) {
     if (kaptCode) {
       const { data: cx } = await supabase
         .from('apartment_complexes')
-        .select('molit_key')
+        .select('molit_key, lat, lng')
         .eq('kapt_code', kaptCode)
         .maybeSingle();
       if (cx?.molit_key) {
         const [lc, an] = cx.molit_key.split('|');
         molitLawdCd = lc;
-        // 같은 lawd + 정규화 이름이 같은 모든 단지의 apt_name 변형 수집 (띄어쓰기 차이 통합)
-        const targetNorm = normName(an);
-        const { data: sib } = await supabase
-          .from('apartment_complexes')
-          .select('molit_key')
-          .like('molit_key', `${lc}|%`);
+        // 같은 위치(±300m)의 정규화 이름이 같은 단지 apt_name 변형 수집 (띄어쓰기 차이 통합)
+        // molit_key LIKE는 인덱스를 못 타 느려서 좌표 bbox 사용
         const variants = new Set([an]);
-        for (const s of sib ?? []) {
-          const sn = (s.molit_key as string)?.split('|')[1];
-          if (sn && normName(sn) === targetNorm) variants.add(sn);
+        if (cx.lat && cx.lng) {
+          const targetNorm = normName(an);
+          const D = 0.003; // ≈300m
+          const { data: sib } = await supabase
+            .from('apartment_complexes')
+            .select('molit_key')
+            .not('molit_key', 'is', null)
+            .gte('lat', cx.lat - D).lte('lat', cx.lat + D)
+            .gte('lng', cx.lng - D).lte('lng', cx.lng + D);
+          for (const s of sib ?? []) {
+            const [sl, sn] = (s.molit_key as string).split('|');
+            if (sl === lc && sn && normName(sn) === targetNorm) variants.add(sn);
+          }
         }
         molitAptNames = [...variants];
       }
