@@ -138,6 +138,13 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
+      - name: 입주예정일 카카오 보강 (임의공급 재공고 등 지연 일정 반영)
+        run: node scripts/enrich-kakao-movein.mjs --confirm
+        env:
+          KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
   # ── 중복 단지 정리 (띄어쓰기 변형으로 분리된 잉여 단지 deprecated) ────────────
   dedup-complexes:
     runs-on: ubuntu-latest
