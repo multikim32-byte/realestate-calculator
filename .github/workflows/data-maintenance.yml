@@ -145,6 +145,12 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
+      - name: 마커 면적(avg_area) 빈 단지 보강
+        run: node scripts/enrich-avg-area.mjs --confirm
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
       - name: 비공식 공급면적 정리 (K-apt 관리비면적·추정값 null화 — cheongak/manual만 유지)
         run: node scripts/clear-kapt-supply-area.mjs
         env:
