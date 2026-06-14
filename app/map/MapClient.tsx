@@ -1090,6 +1090,8 @@ export default function MapClient({ unsoldListings }: Props) {
                 const builtYear = selectedComplex.built_year ?? complexBuildYear;
                 const yearCount = builtYear ? new Date().getFullYear() - builtYear : null;
                 const floorCount = complexNearby?.floor_count;
+                const moveInYm = selectedComplex.move_in_ym;
+                const winnerDate = selectedComplex.winner_date;
                 return (
                   <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', flexShrink: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', marginBottom: 2 }}>
@@ -1101,14 +1103,21 @@ export default function MapClient({ unsoldListings }: Props) {
                     {!jibunAddr && <div style={{ marginBottom: 6 }} />}
                     <div style={{ fontSize: 12, color: '#6b7280', display: 'flex', flexWrap: 'wrap', gap: '2px 12px' }}>
                       <span>{selectedComplex.total_units ? `${selectedComplex.total_units.toLocaleString()}세대` : '세대 정보 없음'}</span>
-                      {builtYear
-                        ? <span>{builtYear > new Date().getFullYear()
-                            ? `${builtYear}년 입주예정`
-                            : `${builtYear}년 준공${yearCount !== null && yearCount >= 0 ? ` (${yearCount}년차)` : ''}`}</span>
-                        : null
+                      {moveInYm
+                        ? <span>입주예정 {moveInYm.slice(0, 4)}.{moveInYm.slice(4, 6)}</span>
+                        : builtYear
+                          ? <span>{builtYear > new Date().getFullYear()
+                              ? `${builtYear}년 입주예정`
+                              : `${builtYear}년 준공${yearCount !== null && yearCount >= 0 ? ` (${yearCount}년차)` : ''}`}</span>
+                          : null
                       }
                       {floorCount ? <span>최고 {floorCount}층</span> : null}
                     </div>
+                    {winnerDate && (
+                      <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
+                        당첨자발표 {winnerDate.replace(/-/g, '.')}
+                      </div>
+                    )}
                   </div>
                 );
               })()}

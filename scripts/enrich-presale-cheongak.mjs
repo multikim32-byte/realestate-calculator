@@ -70,7 +70,7 @@ for (const u of unsolds ?? []) {
 
   // 좌표 근접 active 단지 매칭 (≈400m bbox)
   const { data: near } = await sb.from('apartment_complexes')
-    .select('kapt_code, name, unit_types, total_units, built_year')
+    .select('kapt_code, name, unit_types, total_units, built_year, move_in_ym, winner_date')
     .neq('source', 'kapt_deprecated')
     .gte('lat', u.lat - 0.004).lte('lat', u.lat + 0.004)
     .gte('lng', u.lng - 0.005).lte('lng', u.lng + 0.005);
@@ -80,9 +80,9 @@ for (const u of unsolds ?? []) {
   if (!cx) { noComplex++; continue; }
   matched++;
 
-  // 이미 청약홈 unit_types 있으면 스킵 (cheongak source)
+  // 이미 청약홈 unit_types + 날짜까지 다 있으면 스킵
   const hasCheongak = Array.isArray(cx.unit_types) && cx.unit_types.some(t => t.source === 'cheongak');
-  if (hasCheongak && cx.total_units && cx.built_year) continue;
+  if (hasCheongak && cx.total_units && cx.built_year && cx.move_in_ym && cx.winner_date) continue;
 
   const [detail, mdl] = await Promise.all([
     cheongak('getAPTLttotPblancDetail', { 'cond[HOUSE_MANAGE_NO::EQ]': String(u.house_manage_no) }),
@@ -93,15 +93,19 @@ for (const u of unsolds ?? []) {
   const unitTypes = (mdl ?? []).map(parseMdlRecord).filter(Boolean);
   if (!unitTypes.length) { noData++; continue; }
   const totalUnits = unitTypes.reduce((s, t) => s + (t.count ?? 0), 0) || null;
-  const moveInYm = detail?.[0]?.MVN_PREARNGE_YM; // "202904"
-  const builtYear = moveInYm ? parseInt(String(moveInYm).slice(0, 4)) : cx.built_year;
+  const d = detail?.[0];
+  const moveInYm = d?.MVN_PREARNGE_YM ? String(d.MVN_PREARNGE_YM) : null;  // "202904"
+  const winnerDate = d?.PRZWNER_PRESNATN_DE || null;                        // "2025-09-10"
+  const builtYear = moveInYm ? parseInt(moveInYm.slice(0, 4)) : cx.built_year;
 
-  console.log(`  ${cx.kapt_code} "${cx.name}" → ${unitTypes.length}타입, ${totalUnits}세대, 입주 ${moveInYm ?? '?'}`);
+  console.log(`  ${cx.kapt_code} "${cx.name}" → ${unitTypes.length}타입, ${totalUnits}세대, 입주 ${moveInYm ?? '?'}, 당첨발표 ${winnerDate ?? '?'}`);
 
   if (!DRY) {
     const payload = { unit_types: unitTypes };
     if (totalUnits) payload.total_units = totalUnits;
     if (builtYear) payload.built_year = builtYear;
+    if (moveInYm) payload.move_in_ym = moveInYm;
+    if (winnerDate) payload.winner_date = winnerDate;
     const { error } = await sb.from('apartment_complexes').update(payload).eq('kapt_code', cx.kapt_code);
     if (error) console.error(`    ⚠️ ${error.message}`);
     else enriched++;

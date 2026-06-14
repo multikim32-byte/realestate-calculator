@@ -50,6 +50,8 @@ type Complex = {
   molit_key: string | null;
   kapt_addr: string | null;
   road_address: string | null;
+  move_in_ym: string | null;
+  winner_date: string | null;
   manage_cost: ManageCost | null;
 };
 type NearbyItem = { name: string; distance: number; address?: string; category?: string; label?: string };
@@ -607,9 +609,12 @@ export default function ComplexClient({ complex }: { complex: Complex }) {
                 ...(complex.kapt_addr ? [{ label: '지번주소', value: stripComplexName(complex.kapt_addr, complex.name) ?? complex.kapt_addr }] : []),
                 ...(!complex.road_address && !complex.kapt_addr ? [{ label: '주소', value: [complex.sido, complex.sigungu, complex.dong].filter(Boolean).join(' ') }] : []),
                 { label: '총 세대수', value: complex.total_units ? `${complex.total_units.toLocaleString()}세대` : '-' },
-                buildYear && buildYear > new Date().getFullYear()
-                  ? { label: '입주예정', value: `${buildYear}년` }
-                  : { label: '준공연도', value: buildYear ? `${buildYear}년` : '-' },
+                complex.move_in_ym
+                  ? { label: '입주예정', value: `${complex.move_in_ym.slice(0, 4)}.${complex.move_in_ym.slice(4, 6)}` }
+                  : buildYear && buildYear > new Date().getFullYear()
+                    ? { label: '입주예정', value: `${buildYear}년` }
+                    : { label: '준공연도', value: buildYear ? `${buildYear}년` : '-' },
+                ...(complex.winner_date ? [{ label: '당첨자발표', value: complex.winner_date.replace(/-/g, '.') }] : []),
                 { label: '최고층수', value: complex.floor_count ? `${complex.floor_count}층` : '-' },
               ].map(({ label, value }) => (
                 <div key={label} style={{ display: 'flex', borderBottom: '1px solid #f3f4f6', padding: '10px 0' }}>

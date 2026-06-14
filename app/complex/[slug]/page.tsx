@@ -37,6 +37,8 @@ type Complex = {
   molit_key: string | null;
   kapt_addr: string | null;
   road_address: string | null;
+  move_in_ym: string | null;
+  winner_date: string | null;
   manage_cost: {
     per_unit_total: number;
     per_unit_common: number;

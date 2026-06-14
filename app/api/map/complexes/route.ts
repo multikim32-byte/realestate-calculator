@@ -29,6 +29,8 @@ export type MapComplex = {
   unit_types: UnitType[] | null;
   road_address: string | null;
   kapt_addr: string | null;
+  move_in_ym: string | null;
+  winner_date: string | null;
 };
 
 export async function GET(req: NextRequest) {
@@ -49,7 +51,7 @@ export async function GET(req: NextRequest) {
 
   const { data } = await supabase
     .from('apartment_complexes')
-    .select('kapt_code, name, slug, sido, sigungu, lat, lng, total_units, built_year, avg_pyeong, avg_area, avg_price, unit_types, road_address, kapt_addr')
+    .select('kapt_code, name, slug, sido, sigungu, lat, lng, total_units, built_year, avg_pyeong, avg_area, avg_price, unit_types, road_address, kapt_addr, move_in_ym, winner_date')
     .gte('lat', swLat).lte('lat', neLat)
     .gte('lng', swLng).lte('lng', neLng)
     .not('lat', 'is', null)
