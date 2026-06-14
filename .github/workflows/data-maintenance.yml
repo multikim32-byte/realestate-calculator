@@ -145,6 +145,12 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
+      - name: 비공식 공급면적 정리 (K-apt 관리비면적·추정값 null화 — cheongak/manual만 유지)
+        run: node scripts/clear-kapt-supply-area.mjs
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
   # ── 중복 단지 정리 (띄어쓰기 변형으로 분리된 잉여 단지 deprecated) ────────────
   dedup-complexes:
     runs-on: ubuntu-latest

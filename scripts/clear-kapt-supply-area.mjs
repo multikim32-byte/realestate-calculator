@@ -1,6 +1,7 @@
 /**
- * K-apt unit_types의 supply_area·supply_pyeong을 null로 초기화
- * cheongak source는 공식 공급면적이 정확하므로 유지
+ * 비공식 공급면적 null 초기화 (K-apt·trade·trades 등)
+ * K-apt 공급면적 = 관리비 부과면적이라 실제와 다름. 추정(trade) 공급면적도 부정확.
+ * cheongak(청약홈 공식)·manual(수동 검증) source만 유지.
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -31,19 +32,21 @@ async function main() {
       .select('kapt_code, unit_types')
       .not('unit_types', 'is', null)
       .neq('unit_types', '[]')
+      .order('kapt_code') // 정렬 필수 — 없으면 offset 페이징이 행 건너뜀
       .range(from, from + PAGE - 1);
 
     if (error) { console.error(error); break; }
     if (!data || !data.length) break;
 
+    const KEEP = new Set(['cheongak', 'manual']); // 유효 공급면적 source
     for (const row of data) {
       const types = row.unit_types ?? [];
-      // cheongak source가 하나라도 있으면 전부 cheongak → skip
-      if (types.every(t => t.source === 'cheongak')) { skipped++; continue; }
+      // 전부 유효 source면 skip
+      if (types.every(t => KEEP.has(t.source))) { skipped++; continue; }
 
       let changed = false;
       const newTypes = types.map(t => {
-        if (t.source === 'cheongak') return t; // 청약홈 데이터는 유지
+        if (KEEP.has(t.source)) return t; // 청약홈·수동 데이터는 유지
         if (t.supply_area == null && t.supply_pyeong == null) return t; // 이미 null
         changed = true;
         return { ...t, supply_area: null, supply_pyeong: null };
