@@ -131,6 +131,13 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
+      - name: 분양권 단지 청약홈 보강 (공급면적·입주예정·당첨발표·세대수)
+        run: node scripts/enrich-cheongak.mjs --presale
+        env:
+          PUBLIC_DATA_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
   # ── 중복 단지 정리 (띄어쓰기 변형으로 분리된 잉여 단지 deprecated) ────────────
   dedup-complexes:
     runs-on: ubuntu-latest

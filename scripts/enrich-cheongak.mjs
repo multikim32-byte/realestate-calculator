@@ -42,11 +42,26 @@ const BASE = 'https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1';
 
 const dryRun  = process.argv.includes('--dry-run');
 const testMode = process.argv.includes('--test');
+const presaleMode = process.argv.includes('--presale'); // 분양권 거래 있는 built_year null 단지 보강
 const kaptArg = process.argv.find(a => a.startsWith('--kapt='))?.replace('--kapt=', '');
 const fromArg = parseInt(process.argv.find(a => a.startsWith('--from='))?.replace('--from=', '') || '0');
 const yearArg = parseInt(process.argv.find(a => a.startsWith('--year='))?.replace('--year=', '') || '2020');
 
 const supabase = createClient(SB_URL, SB_KEY);
+
+// 분양권(N) 거래 있는 단지키 수집 (lawd_cd별 분할 — deal_type 단독 필터는 statement timeout)
+async function loadPresaleKeys() {
+  const { LAWD_CODE_MAP } = await import('./lawd-codes.mjs');
+  const lawds = [];
+  for (const list of Object.values(LAWD_CODE_MAP)) for (const d of list) lawds.push(d.code);
+  const keys = new Set();
+  for (const lawd of lawds) {
+    const { data } = await supabase.from('apt_trades')
+      .select('apt_name').eq('lawd_cd', lawd).eq('deal_type', 'N').limit(1000);
+    for (const r of data ?? []) keys.add(`${lawd}|${r.apt_name}`);
+  }
+  return keys;
+}
 
 // ── house_ty 파싱 ──────────────────────────────────────────────────────────────
 // 예: "059.9400A" → { exclusive_area: 59.94, letter: "A" }
@@ -85,7 +100,7 @@ const BRANDS = [
 ];
 
 // ── Step 1: 단지명으로 house_manage_no 검색 ────────────────────────────────────
-async function findHouseManageNo(name, sigungu) {
+async function findHouseManageNo(name, sigungu, sido) {
   const cleaned = name.trim();
   if (!cleaned) return [];
 
@@ -114,7 +129,7 @@ async function findHouseManageNo(name, sigungu) {
 
   for (const kw of candidates) {
     if (kw.length < 3) continue;
-    const result = await trySearch(kw, name, sigungu);
+    const result = await trySearch(kw, name, sigungu, sido);
     if (result.length) return result;
     await sleep(80);
   }
@@ -122,12 +137,12 @@ async function findHouseManageNo(name, sigungu) {
   return [];
 }
 
-async function trySearch(keyword, ourName, sigungu) {
+async function trySearch(keyword, ourName, sigungu, sido) {
   const data = await cheongakFetch('getAPTLttotPblancDetail', {
     'cond[HOUSE_NM::LIKE]': keyword,
   });
   if (!data?.length) return [];
-  return filterByLocation(data, ourName, sigungu);
+  return filterByLocation(data, ourName, sigungu, sido);
 }
 
 // 단지 번호 추출: "1단지" → 1, "2BL" → 2, 없으면 null
@@ -152,8 +167,20 @@ function trigramDice(a, b) {
   return (2 * shared) / (ta.size + tb.size);
 }
 
-function filterByLocation(records, ourName, sigungu) {
+// 시도 축약형 → 주소에 나타날 수 있는 별칭 (충북 ≠ 충청북도 부분문자열이라 별도 매핑 필요)
+const SIDO_ALIASES = {
+  '서울': ['서울'], '부산': ['부산'], '대구': ['대구'], '인천': ['인천'],
+  '광주': ['광주'], '대전': ['대전'], '울산': ['울산'], '세종': ['세종'],
+  '경기': ['경기'], '강원': ['강원'], '충북': ['충북', '충청북'], '충남': ['충남', '충청남'],
+  '전북': ['전북', '전라북'], '전남': ['전남', '전라남'], '경북': ['경북', '경상북'],
+  '경남': ['경남', '경상남'], '제주': ['제주'],
+};
+
+function filterByLocation(records, ourName, sigungu, sido) {
   const ourNo = extractComplexNo(ourName);
+  const sidoAliases = SIDO_ALIASES[sido] ?? (sido ? [sido] : []);
+  // 시군구 토큰 (복합 "포항 남구" → ["포항","남구"]), 시/군/구 접미사 제거형도 허용
+  const sgTokens = (sigungu ?? '').split(/\s+/).filter(t => t.length >= 2);
 
   return records.filter(r => {
     const theirName = r.HOUSE_NM ?? '';
@@ -165,13 +192,14 @@ function filterByLocation(records, ourName, sigungu) {
       if (theirNo !== null && theirNo !== ourNo) return false;
     }
 
-    // 시/군/구 주소 검증 (sigungu가 3자 이상이고 주소 정보 있으면)
-    if (sigungu && sigungu.length >= 3 && theirAddr) {
-      // "김포시" → "인천광역시 서구..." 같은 오매칭 방지
-      const addrContains = theirAddr.includes(sigungu);
-      const sigunguPrefix = sigungu.slice(0, 2); // 최소 앞 2글자
-      const addrContainsPrefix = theirAddr.includes(sigunguPrefix);
-      if (!addrContains && !addrContainsPrefix) return false;
+    // 시도 검증 (광역 오매칭 방지: 영종(인천) → 목동(서울) 차단)
+    if (sidoAliases.length && theirAddr && !sidoAliases.some(a => theirAddr.includes(a))) return false;
+
+    // 시군구 검증 (모든 토큰이 주소에 있어야 — "중구" 같은 2글자도 검증)
+    if (sgTokens.length && theirAddr) {
+      const ok = sgTokens.every(t =>
+        theirAddr.includes(t) || theirAddr.includes(t.replace(/[시군구]$/, '')));
+      if (!ok) return false;
     }
 
     // trigram Dice ≥ 0.45 이면 매칭
@@ -219,31 +247,42 @@ function parseMdlRecord(r) {
 
 // ── 메인 ─────────────────────────────────────────────────────────────────────
 async function main() {
-  console.log(`🏗️  청약홈 unit_types 보강 시작 (built_year >= ${yearArg})`);
+  const SEL = 'kapt_code, name, sido, sigungu, dong, built_year, unit_types, molit_key, move_in_ym';
+  console.log(`🏗️  청약홈 unit_types 보강 시작 (${presaleMode ? '분양권 미보강 단지' : `built_year >= ${yearArg}`})`);
   console.log(`   dry-run: ${dryRun} | test: ${testMode}\n`);
 
-  // 대상 단지 로드
-  let query = supabase
-    .from('apartment_complexes')
-    .select('kapt_code, name, sido, sigungu, dong, built_year, unit_types')
-    .gte('built_year', yearArg)
-    .order('kapt_code');
-
-  if (kaptArg) {
-    query = supabase
-      .from('apartment_complexes')
-      .select('kapt_code, name, sido, sigungu, dong, built_year, unit_types')
-      .eq('kapt_code', kaptArg);
-  }
-
   const complexes = [];
-  let from = 0;
-  while (true) {
-    const { data, error } = await query.range(from, from + 999);
-    if (error || !data?.length) break;
-    complexes.push(...data);
-    if (data.length < 1000) break;
-    from += 1000;
+  if (kaptArg) {
+    const { data } = await supabase.from('apartment_complexes').select(SEL).eq('kapt_code', kaptArg);
+    complexes.push(...(data ?? []));
+  } else if (presaleMode) {
+    // 분양권(N) 거래 있고 미보강(built_year null 또는 청약홈 unit_types 없음)인 active 단지
+    process.stdout.write('  분양권 거래키 수집 중...');
+    const nKeys = await loadPresaleKeys();
+    console.log(` ${nKeys.size}개`);
+    let from = 0;
+    while (true) {
+      const { data } = await supabase.from('apartment_complexes')
+        .select(SEL).neq('source', 'kapt_deprecated').order('kapt_code').range(from, from + 999);
+      if (!data?.length) break;
+      for (const c of data) {
+        if (!c.molit_key || !nKeys.has(c.molit_key)) continue;
+        const hasCheongak = Array.isArray(c.unit_types) && c.unit_types.some(t => t.source === 'cheongak');
+        if (!c.built_year || !hasCheongak || !c.move_in_ym) complexes.push(c);
+      }
+      if (data.length < 1000) break;
+      from += 1000;
+    }
+  } else {
+    let from = 0;
+    while (true) {
+      const { data, error } = await supabase.from('apartment_complexes')
+        .select(SEL).gte('built_year', yearArg).order('kapt_code').range(from, from + 999);
+      if (error || !data?.length) break;
+      complexes.push(...data);
+      if (data.length < 1000) break;
+      from += 1000;
+    }
   }
 
   const targets = complexes.slice(fromArg, testMode ? fromArg + 20 : undefined);
@@ -257,7 +296,7 @@ async function main() {
     done++;
 
     // 청약홈에서 단지 검색
-    const matches = await findHouseManageNo(c.name, c.sigungu);
+    const matches = await findHouseManageNo(c.name, c.sigungu, c.sido);
     await sleep(100);
 
     if (!matches.length) {
@@ -302,10 +341,25 @@ async function main() {
       );
     }
 
+    // 분양 정보: 입주예정월·당첨발표일 (있으면 항상 저장), 분양 세대수·입주예정연도(built_year 비어있을 때)
+    const payload = { unit_types: unitTypes, updated_at: now };
+    const moveInYm = best.MVN_PREARNGE_YM ? String(best.MVN_PREARNGE_YM) : null;
+    const winnerDate = best.PRZWNER_PRESNATN_DE || null;
+    if (moveInYm) payload.move_in_ym = moveInYm;
+    if (winnerDate) payload.winner_date = winnerDate;
+    // 분양권 단지는 입주예정연도가 준공/입주 기준 — presale 모드면 stale built_year 덮어씀
+    if (moveInYm && (presaleMode || !c.built_year)) {
+      payload.built_year = parseInt(moveInYm.slice(0, 4));
+    }
+    if (presaleMode && !c.total_units) {
+      const totalUnits = unitTypes.reduce((s, u) => s + (u.count ?? 0), 0) || null;
+      if (totalUnits) payload.total_units = totalUnits;
+    }
+
     if (!dryRun) {
       const { error } = await supabase
         .from('apartment_complexes')
-        .update({ unit_types: unitTypes, updated_at: now })
+        .update(payload)
         .eq('kapt_code', c.kapt_code);
 
       if (error) {
