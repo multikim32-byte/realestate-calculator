@@ -295,8 +295,14 @@ async function main() {
   for (const c of targets) {
     done++;
 
-    // 청약홈에서 단지 검색
-    const matches = await findHouseManageNo(c.name, c.sigungu, c.sido);
+    // 청약홈에서 단지 검색 (표시명 → 실패 시 molit_key 신고명으로 재검색)
+    // 개명 단지(에피트←한라비발디)·띄어쓰기 차이는 molit 신고명이 청약홈과 일치
+    let matches = await findHouseManageNo(c.name, c.sigungu, c.sido);
+    const molitName = c.molit_key?.split('|')[1];
+    if (!matches.length && molitName && molitName !== c.name) {
+      await sleep(100);
+      matches = await findHouseManageNo(molitName, c.sigungu, c.sido);
+    }
     await sleep(100);
 
     if (!matches.length) {
